@@ -1,0 +1,7 @@
+.*.swp
+.*.swo
+_build
+*.native
+.session
+TAGS
+*.docdir
