@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# small configure script
+
+ocaml setup.ml -configure $@
