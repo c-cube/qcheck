@@ -235,6 +235,7 @@ val mk_test : ?n:int -> ?pp:'a PP.t -> ?name:string ->
       @param name is the name of the property that is checked
       @param pp is a pretty printer for failing instances
       @out is the channel to print results onto
+      @n is the number of tests (default 100)
       @rand is the random generator to use *)
 
 val run : ?out:out_channel -> ?rand:Random.State.t -> test -> bool
