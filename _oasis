@@ -5,7 +5,7 @@ Homepage:    https://github.com/c-cube/qcheck
 Authors:     Simon Cruanes
 License:     BSD3
 LicenseFile: LICENSE
-Plugins:     META (0.3)
+Plugins:     META (0.3), DevFiles (0.3)
 BuildTools:  ocamlbuild
 
 Synopsis:    QuickCheck inspired property based testing
