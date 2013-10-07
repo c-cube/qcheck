@@ -92,6 +92,9 @@ module Arbitrary : sig
   val int_range : start:int -> stop:int -> int t
     (* Integer range start .. stop-1 *)
 
+  val (--) : int -> int -> int t
+    (** Infix synonym for {!int_range} *)
+
   val small_int : int t
     (** Ints lower than 100 *)
 
