@@ -37,8 +37,8 @@ setup.data:
 
 # OASIS_STOP
 
-push_doc: lib
-	scp -r qCheck.docdir/* cedeela.fr:~/simon/root/software/qcheck
+push_doc: doc
+	scp -r qcheck.docdir/* cedeela.fr:~/simon/root/software/qcheck
 
 tags:
-	otags *.ml *.mli
+	otags qCheck.ml qCheck.mli
