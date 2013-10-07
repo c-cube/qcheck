@@ -95,19 +95,21 @@ module Arbitrary = struct
 
   let among l = among_array (Array.of_list l)
 
-  let choose l =
-    assert (l <> []);
-    let a = Array.of_list l in
-    fun st ->
-      let i = Random.State.int st (Array.length a) in
-      a.(i) st
+  let choose l = match l with
+    | [] -> failwith "cannot choose from empty list"
+    | [x] -> x
+    | _ ->
+      let a = Array.of_list l in
+      fun st ->
+        let i = Random.State.int st (Array.length a) in
+        a.(i) st
 
   let _fix ~max ~depth recursive f =
     let rec ar = lazy (fun st -> (Lazy.force ar_rec) st)
     and ar_rec = lazy (f ar) in
     Lazy.force ar
 
-  let fix ?(max=max_int) ~base f =
+  let fix ?(max=15) ~base f =
     let rec ar = lazy
       (fun depth st ->
         if depth >= max || Random.State.int st max < depth

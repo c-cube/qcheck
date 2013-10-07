@@ -151,7 +151,7 @@ module Arbitrary : sig
 
   val fix : ?max:int -> base:'a t -> ('a t -> 'a t) -> 'a t
     (** Recursive arbitrary values. The optional value [max] defines
-        the maximal depth, if needed. [base] is the base case. *)
+        the maximal depth, if needed (default 15). [base] is the base case. *)
 
   val fix_depth : depth:int t -> base:'a t -> ('a t -> 'a t) -> 'a t
     (** Recursive values of at most given random depth *)
