@@ -171,22 +171,22 @@ module PP = struct
 
   let list pp l =
     let b = Buffer.create 25 in
-    Buffer.add_char b '(';
+    Buffer.add_char b '[';
     List.iteri (fun i x ->
       if i > 0 then Buffer.add_string b ", ";
       Buffer.add_string b (pp x))
       l;
-    Buffer.add_char b ')';
+    Buffer.add_char b ']';
     Buffer.contents b
 
   let array pp a = 
     let b = Buffer.create 25 in
-    Buffer.add_char b '[';
+    Buffer.add_string b "[|";
     Array.iteri (fun i x ->
       if i > 0 then Buffer.add_string b ", ";
       Buffer.add_string b (pp x))
       a;
-    Buffer.add_char b ']';
+    Buffer.add_string b "|]";
     Buffer.contents b
 end
 
