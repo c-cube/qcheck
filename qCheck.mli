@@ -120,7 +120,7 @@ module Arbitrary : sig
     (** Transform an arbitrary into another *)
 
   val list : ?len:int t -> 'a t -> 'a list t
-    (** List of arbitrary length *)
+    (** List of arbitrary length. Default [len] is between 0 and 10. *)
 
   val opt : 'a t -> 'a option t
     (** May return a value, or None *)

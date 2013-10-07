@@ -90,10 +90,15 @@ module Arbitrary = struct
     Array.init n (fun _ -> ar st)
 
   let among_array a st =
+    if Array.length a < 1
+      then failwith "Arbitrary.among: cannot choose in empty array ";
     let i = Random.State.int st (Array.length a) in
     a.(i)
 
-  let among l = among_array (Array.of_list l)
+  let among l =
+    if List.length l < 1
+      then failwith "Arbitrary.among: cannot choose in empty list";
+    among_array (Array.of_list l)
 
   let choose l = match l with
     | [] -> failwith "cannot choose from empty list"
@@ -103,11 +108,6 @@ module Arbitrary = struct
       fun st ->
         let i = Random.State.int st (Array.length a) in
         a.(i) st
-
-  let _fix ~max ~depth recursive f =
-    let rec ar = lazy (fun st -> (Lazy.force ar_rec) st)
-    and ar_rec = lazy (f ar) in
-    Lazy.force ar
 
   let fix ?(max=15) ~base f =
     let rec ar = lazy
