@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 30bba7328124890f9a8e5f3abad63e9f)
+# DO NOT EDIT (digest: 23d22aee09d278332a4e46d2eb9ef2d2)
 # Ignore VCS directories, you can use the same kind of rule outside 
 # OASIS_START/STOP if you want to exclude directories that contains 
 # useless stuff for the build process
@@ -15,4 +15,5 @@
 "_darcs": not_hygienic
 # Library qcheck
 "qcheck.cmxs": use_qcheck
+<*.ml{,i}>: pkg_unix
 # OASIS_STOP
