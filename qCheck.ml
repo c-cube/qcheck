@@ -249,13 +249,23 @@ type 'a test_cell = {
   prop : 'a Prop.t;
   gen : 'a Arbitrary.t;
   name : string;
+  limit : int;
+  size : ('a -> int) option;
 }
 type test =
   | Test : 'a test_cell -> test
   (** GADT needed for the existential type *)
 
-let mk_test ?(n=100) ?pp ?(name="<anon prop>") gen prop =
-  Test { prop; gen; name; n; pp; }
+let mk_test ?(n=100) ?pp ?(name="<anon prop>") ?size ?(limit=10) gen prop =
+  if limit < 0 then failwith "QCheck: limit needs be >= 0";
+  if n <= 0 then failwith "QCheck: n needs be >= 0";
+  Test { prop; gen; name; n; pp; size; limit; }
+
+(* tail call version of take, that returns (at most) [n] elements of [l] *)
+let rec _list_take acc l n = match l, n with
+  | _, 0
+  | [], _ -> List.rev acc
+  | x::l', _ -> _list_take (x::acc) l' (n-1)
 
 let run ?(out=stdout) ?(rand=Random.State.make __seed) (Test test) =
   Printf.fprintf out "testing property %s...\n" test.name;
@@ -267,10 +277,21 @@ let run ?(out=stdout) ?(rand=Random.State.make __seed) (Test test) =
     begin match test.pp with
     | None -> Printf.fprintf out "  [×] %d failures\n" (List.length l)
     | Some pp ->
-      Printf.fprintf out "  [×] %d failures:\n" (List.length l);
+      Printf.fprintf out "  [×] %d failures (print %d):\n" (List.length l) test.limit;
+      let to_print = match test.size with
+      | None -> l
+      | Some size ->
+        (* sort by increasing size *)
+        let l = List.map (fun x -> x, size x) l in
+        let l = List.sort (fun (x,sx) (y,sy) -> sx - sy) l in
+        List.map fst l
+      in
+      (* only keep [limit] counter examples *)
+      let to_print = _list_take [] to_print test.limit in
+      (* print the counter examples *)
       List.iter
         (fun x -> Printf.fprintf out "  %s\n" (pp x))
-        l
+        to_print
     end;
     false
   | Error e ->
