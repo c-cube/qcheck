@@ -102,6 +102,10 @@ module Arbitrary : sig
   val small_int : int t
     (** Ints lower than 100 *)
 
+  val split_int : int t -> (int * int) t
+    (** [split_int gen] generates a number [n] from [gen], and
+        returns [i, j] where [i + j = n] *)
+
   val bool : bool t
     (** Arbitrary boolean *)
 
@@ -167,6 +171,9 @@ module Arbitrary : sig
 
   val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
     (** Monadic bind *)
+
+  val retry : 'a option t -> 'a t
+    (** Generate until a Some value is returned *)
 
   val generate : ?n:int -> ?rand:Random.State.t -> 'a t -> 'a list
     (** Generate [n] random values of the given type *)

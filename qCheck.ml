@@ -43,6 +43,12 @@ module Arbitrary = struct
 
   let small_int = int 100
 
+  let split_int gen st =
+    let n = gen st in
+    if n > 0
+      then let i = Random.State.int st (n+1) in i, n-i
+      else 0, 0
+
   let bool = Random.State.bool
 
   let float f st = Random.State.float st f
@@ -123,6 +129,10 @@ module Arbitrary = struct
   let fix_depth ~depth ~base f st =
     let max = depth st in
     fix ~max ~base f st
+
+  let rec retry gen st = match gen st with
+    | None -> retry gen st
+    | Some x -> x
 
   let lift f a st = f (a st)
 
