@@ -227,8 +227,8 @@ end
 
 type 'a result =
   | Ok of int * int  (** total number of tests / number of failed preconditions *)
-  | Failed of 'a list
-  | Error of exn
+  | Failed of 'a list (** Failed instances *)
+  | Error of 'a option * exn  (** Error, and possibly instance that triggered it *)
 
 val check : ?rand:Random.State.t -> ?n:int -> 
             'a Arbitrary.t -> 'a Prop.t -> 'a result
