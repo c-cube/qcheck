@@ -45,7 +45,7 @@ tags:
 
 man:
 	mkdir -p man/man3/
-	ocamlfind ocamldoc -I _build/ -man -d man/man3 qCheck.ml{,i}
+	ocamlfind ocamldoc -I _build/ -man -d man/man3 qCheck.ml qCheck.mli
 
 install_file: doc man
 	
