@@ -42,3 +42,23 @@ push_doc: doc
 
 tags:
 	otags qCheck.ml qCheck.mli
+
+man:
+	mkdir -p man/man3/
+	ocamlfind ocamldoc -I _build/ -man -d man/man3 qCheck.ml{,i}
+
+install_file: doc man
+	
+	@rm qcheck.install || true
+	@echo 'doc: [' >> qcheck.install
+	@for m in $(wildcard qcheck.docdir/*.html) ; do \
+		echo "  \"?$${m}\"" >> qcheck.install; \
+	done
+	@echo ']' >> qcheck.install
+	@echo 'man: [' >> qcheck.install
+	@for m in $(wildcard man/man3/[A-Z]*.3o) ; do \
+		echo "  \"?$${m}\"" >> qcheck.install; \
+	done
+	@echo ']' >> qcheck.install
+
+.PHONY: man install_file tags
