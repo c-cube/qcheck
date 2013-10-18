@@ -287,9 +287,10 @@ let run ?(out=stdout) ?(rand=Random.State.make __seed) (Test test) =
     true
   | Failed l ->
     begin match test.pp with
-    | None -> Printf.fprintf out "  [×] %d failures\n" (List.length l)
+    | None -> Printf.fprintf out "  [×] %d failures over %d\n" (List.length l) test.n
     | Some pp ->
-      Printf.fprintf out "  [×] %d failures (print %d):\n" (List.length l) test.limit;
+      Printf.fprintf out "  [×] %d failures over %d (print at most %d):\n"
+        (List.length l) test.n test.limit;
       let to_print = match test.size with
       | None -> l
       | Some size ->
@@ -323,11 +324,12 @@ let flatten = List.flatten
 
 let run_tests ?(out=stdout) ?(rand=Random.State.make __seed) l =
   let start = Unix.gettimeofday () in
+  let n = List.length l in
   let failed = ref 0 in
   Printf.fprintf out "check %d properties...\n" (List.length l);
   List.iter (fun test -> if not (run ~out ~rand test) then incr failed) l;
   Printf.fprintf out "tests run in %.2fs\n" (Unix.gettimeofday() -. start);
   if !failed = 0
-    then Printf.fprintf out "[✔] Success!\n"
-    else Printf.fprintf out "[×] Failure (%d tests failed).\n" !failed;
+    then Printf.fprintf out "[✔] Success! (passed %d tests)\n" n
+    else Printf.fprintf out "[×] Failure. (%d tests failed over %d)\n" !failed n;
   !failed = 0
