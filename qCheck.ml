@@ -213,6 +213,13 @@ module Prop = struct
   let assume_lazy (lazy p) =
     if not p then raise PrecondFail
 
+  let raises ~e ~f ~x =
+    try
+      f x;
+      false
+    with e' ->
+      e = e'
+
   let (==>) a b =
     fun x ->
       assume (a x);
@@ -327,7 +334,12 @@ let run_tests ?(out=stdout) ?(rand=Random.State.make __seed) l =
   let n = List.length l in
   let failed = ref 0 in
   Printf.fprintf out "check %d properties...\n" (List.length l);
-  List.iter (fun test -> if not (run ~out ~rand test) then incr failed) l;
+  List.iter
+    (fun test ->
+      let res = run ~out ~rand test in
+      flush out;
+      if not res then incr failed)
+    l;
   Printf.fprintf out "tests run in %.2fs\n" (Unix.gettimeofday() -. start);
   if !failed = 0
     then Printf.fprintf out "[✔] Success! (passed %d tests)\n" n

@@ -200,6 +200,17 @@ end
 
 (** {2 Testing} *)
 
+(** QCheck helps you test {b invariants}, or {b properties}. This submodule
+    helps dealing with such properties. A property of the ['a] type
+    is a predicate ['a -> bool].
+
+    If the property doesn't have to hold for all values of type ['a],
+    you can use {!Prop.assume} or {!Prop.assume_lazy} in the body
+    of the property. Doing so will "filter" irrelevant values
+    (the one which do not satisfy the assumption) out (in practice it raises
+    an exception).
+*)
+
 module Prop : sig
   type 'a t = 'a -> bool
 
@@ -214,6 +225,14 @@ module Prop : sig
 
   val assume_lazy : bool lazy_t -> unit
     (** Assume the given (lazy) precondition holds. See {!assume}. *)
+
+  val raises : e:exn -> f:('a -> 'b) -> x:'a -> bool
+    (** [raise ~e ~f ~x] is true if and only if calling
+        [f x] raises the exception [exn].
+        
+        For instance (on lists):
+        [let prop l = Prop.(assume (l = []); raises ~f:List.hd ~x:l ~e:(Failure "hd"));;]
+    *)
 
   val (&&&) : 'a t -> 'a t -> 'a t
     (** Logical 'and' on tests *)
