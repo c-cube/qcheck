@@ -157,8 +157,8 @@ module Arbitrary : sig
   val choose : 'a t list -> 'a t
     (** Choice among a list generators *)
 
-  val (||) : 'a t -> 'a t -> 'a t
-    (** Choice among two generators. [a || b] is the same as [choose [a;b]]. *)
+  val (|||) : 'a t -> 'a t -> 'a t
+    (** Choice among two generators. [a ||| b] is the same as [choose [a;b]]. *)
 
   val fix : ?max:int -> base:'a t -> ('a t -> 'a t) -> 'a t
     (** Recursive arbitrary values. The optional value [max] defines

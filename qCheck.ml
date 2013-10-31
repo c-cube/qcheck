@@ -115,7 +115,7 @@ module Arbitrary = struct
         let i = Random.State.int st (Array.length a) in
         a.(i) st
 
-  let (||) a b st =
+  let (|||) a b st =
     if Random.State.bool st
       then a st
       else b st
