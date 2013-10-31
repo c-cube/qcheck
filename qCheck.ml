@@ -24,7 +24,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *)
 
-(** {6 Quickcheck inspired property-based testing} *)
+(** {1 Quickcheck inspired property-based testing} *)
 
 module Arbitrary = struct
   type 'a t = Random.State.t -> 'a

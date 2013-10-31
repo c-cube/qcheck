@@ -79,6 +79,10 @@ QCheck.run test;;
 
  Arbitrary.generate ~n:20 ar;;
  ]}
+
+More complex and powerful combinators can be found in Gabriel Scherer's
+{!Generator} module. Its documentation can be found
+{{:http://gasche.github.io/random-generator/doc/Generator.html } here}.
 *)
 
 (** {2 Description of how to generate arbitrary values for some type} *)

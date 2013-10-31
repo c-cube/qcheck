@@ -1,4 +1,5 @@
 #directory "_build";;
+#directory "_build/generator/";;
 #load "qcheck.cma";;
 open QCheck;;
 (* vim: syntax=ocaml:

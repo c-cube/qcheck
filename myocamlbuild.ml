@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: bc6d6cf544f88bbc30dd20c9b5df0ad1) *)
+(* DO NOT EDIT (digest: a8c0da58d992f8890c1d59f737dbe698) *)
 module OASISGettext = struct
 (* # 21 "src/oasis/OASISGettext.ml" *)
 
@@ -30,9 +30,9 @@ module OASISExpr = struct
 
   open OASISGettext
 
-  type test = string
+  type test = string 
 
-  type flag = string
+  type flag = string 
 
   type t =
     | EBool of bool
@@ -41,9 +41,9 @@ module OASISExpr = struct
     | EOr of t * t
     | EFlag of flag
     | ETest of test * string
+    
 
-
-  type 'a choices = (t * 'a) list
+  type 'a choices = (t * 'a) list 
 
   let eval var_get t =
     let rec eval' =
@@ -334,10 +334,10 @@ module MyOCamlbuildBase = struct
   open Ocamlbuild_plugin
   module OC = Ocamlbuild_pack.Ocaml_compiler
 
-  type dir = string
-  type file = string
-  type name = string
-  type tag = string
+  type dir = string 
+  type file = string 
+  type name = string 
+  type tag = string 
 
 (* # 56 "src/plugins/ocamlbuild/MyOCamlbuildBase.ml" *)
 
@@ -350,7 +350,7 @@ module MyOCamlbuildBase = struct
          * directory.
          *)
         includes:  (dir * dir list) list; 
-      }
+      } 
 
   let env_filename =
     Pathname.basename 
@@ -477,10 +477,10 @@ end
 open Ocamlbuild_plugin;;
 let package_default =
   {
-     MyOCamlbuildBase.lib_ocaml = [("qcheck", [])];
+     MyOCamlbuildBase.lib_ocaml = [("qcheck", ["generator"])];
      lib_c = [];
      flags = [];
-     includes = [];
+     includes = [("", ["generator"])];
      }
   ;;
 
