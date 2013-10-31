@@ -1,9 +1,13 @@
 QCheck
 ======
 
-QuickCheck inspired property-based testing for OCaml.
+QuickCheck inspired property-based testing for OCaml, and combinators to
+generate random values to run tests on.
 
 The documentation can be found [here](http://cedeela.fr/~simon/software/qcheck).
+
+The documentation for `Generator` can be found
+[here](http://gasche.github.io/random-generator/doc/Generator.html).
 
 ## Use
 
@@ -13,7 +17,11 @@ how to use it and the design choices.
 
 ## Build
 
-There are no dependencies. Type:
+First you need to download the submodule `Generator`. Type in a shell:
+
+    $ make submodules
+
+Then:
 
     $ make
 
