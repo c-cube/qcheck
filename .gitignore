@@ -9,3 +9,4 @@ setup.data
 setup.log
 man
 qcheck.install
+*.tar.gz

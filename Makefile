@@ -40,6 +40,12 @@ setup.data:
 submodules:
 	git submodule update --init
 
+VERSION=$(shell grep Version: _oasis | awk '{ print $$2 }')
+
+release:
+	./mk-release.sh ${VERSION} || true
+	scp qcheck-${VERSION}.tar.gz cedeela.fr:~/simon/root/software/releases/
+
 push_doc: doc
 	scp -r qcheck.docdir/* cedeela.fr:~/simon/root/software/qcheck
 
@@ -64,4 +70,4 @@ install_file: doc man
 	done
 	@echo ']' >> qcheck.install
 
-.PHONY: man install_file tags submodules
+.PHONY: man install_file tags submodules release
