@@ -115,6 +115,11 @@ module Arbitrary = struct
         let i = Random.State.int st (Array.length a) in
         a.(i) st
 
+  let (||) a b st =
+    if Random.State.bool st
+      then a st
+      else b st
+
   let fix ?(max=15) ~base f =
     let rec ar = lazy
       (fun depth st ->
