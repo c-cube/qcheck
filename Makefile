@@ -38,7 +38,7 @@ setup.data:
 # OASIS_STOP
 
 submodules:
-	git submodules update --init
+	git submodule update --init
 
 push_doc: doc
 	scp -r qcheck.docdir/* cedeela.fr:~/simon/root/software/qcheck
