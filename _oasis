@@ -18,6 +18,7 @@ Library "qcheck"
   Path:             .
   Pack:             false
   Modules:          QCheck, generator/Generator
+  Install:          true
   BuildDepends:     unix
 
 Document qcheck
