@@ -174,10 +174,7 @@ module PP = struct
   let bool = string_of_bool
   let float = string_of_float
   let string s = s
-  let char c =
-    let s = "_" in
-    s.[0] <- c;
-    s
+  let char c = String.make 1 c
 
   let pair a b (x,y) = Printf.sprintf "(%s, %s)" (a x) (b y)
   let triple a b c (x,y,z) = Printf.sprintf "(%s, %s, %s)" (a x) (b y) (c z)
@@ -188,7 +185,7 @@ module PP = struct
     let b = Buffer.create 25 in
     Buffer.add_char b '[';
     List.iteri (fun i x ->
-      if i > 0 then Buffer.add_string b ", ";
+      if i > 0 then Buffer.add_string b "; ";
       Buffer.add_string b (pp x))
       l;
     Buffer.add_char b ']';
@@ -198,7 +195,7 @@ module PP = struct
     let b = Buffer.create 25 in
     Buffer.add_string b "[|";
     Array.iteri (fun i x ->
-      if i > 0 then Buffer.add_string b ", ";
+      if i > 0 then Buffer.add_string b "; ";
       Buffer.add_string b (pp x))
       a;
     Buffer.add_string b "|]";
