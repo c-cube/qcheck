@@ -1,8 +1,9 @@
 # OASIS_START
-# DO NOT EDIT (digest: 26fc1e2c4505af958bc151f502b76660)
-# Ignore VCS directories, you can use the same kind of rule outside 
-# OASIS_START/STOP if you want to exclude directories that contains 
+# DO NOT EDIT (digest: dd2468e09a64f83fe15d126815cf3cd0)
+# Ignore VCS directories, you can use the same kind of rule outside
+# OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
+true: annot, bin_annot
 <**/.svn>: -traverse
 <**/.svn>: not_hygienic
 ".bzr": -traverse
@@ -15,6 +16,5 @@
 "_darcs": not_hygienic
 # Library qcheck
 "qcheck.cmxs": use_qcheck
-<*.ml{,i}>: pkg_unix
-<generator/*.ml{,i}>: pkg_unix
+<*.ml{,i,y}>: pkg_unix
 # OASIS_STOP

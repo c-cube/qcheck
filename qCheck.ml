@@ -61,11 +61,11 @@ module Arbitrary = struct
   let string_len len st =
     let n = len st in
     assert (n>=0);
-    let s = String.create n in
-    for i = 0 to n-1 do
-      s.[i] <- alpha st
+    let b = Buffer.create n in
+    for _i = 0 to n-1 do
+      Buffer.add_char b (alpha st)
     done;
-    s
+    Buffer.contents b
 
   let string st = string_len (int 10) st
 
@@ -191,7 +191,7 @@ module PP = struct
     Buffer.add_char b ']';
     Buffer.contents b
 
-  let array pp a = 
+  let array pp a =
     let b = Buffer.create 25 in
     Buffer.add_string b "[|";
     Array.iteri (fun i x ->

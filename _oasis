@@ -10,14 +10,12 @@ BuildTools:  ocamlbuild
 
 Synopsis:    QuickCheck inspired property based testing
 Description:
-    QuickCheck inspired property-based testing for OCaml. Also contains
-    Gabriel Scherer's random value generator library,
-    https://github.com/gasche/random-generator
+    QuickCheck inspired property-based testing for OCaml
 
 Library "qcheck"
   Path:             .
   Pack:             false
-  Modules:          QCheck, generator/Generator
+  Modules:          QCheck
   Install:          true
   BuildDepends:     unix
 
