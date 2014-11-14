@@ -6,24 +6,22 @@ generate random values to run tests on.
 
 The documentation can be found [here](http://cedeela.fr/~simon/software/qcheck).
 
-The documentation for `Generator` can be found
-[here](http://gasche.github.io/random-generator/doc/Generator.html).
+Note that @gasche's [generator library](http://gasche.github.io/random-generator/doc/Generator.html)
+can be useful too, for generating random instances.
 
 ## Use
 
 See the documentation. I also wrote
 [a blog post](http://cedeela.fr/quickcheck-for-ocaml.html) that explains
-how to use it and the design choices.
+how to use it and some design choices.
 
 ## Build
 
-First you need to download the submodule `Generator`. Type in a shell:
-
-    $ make submodules
-
-Then:
-
     $ make
+
+You can use opam:
+
+    $ opam install qcheck
 
 ## License
 
