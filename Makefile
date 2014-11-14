@@ -40,9 +40,6 @@ configure:
 
 # OASIS_STOP
 
-submodules:
-	git submodule update --init
-
 VERSION=$(shell grep Version: _oasis | awk '{ print $$2 }')
 
 release:
@@ -60,7 +57,6 @@ man:
 	ocamlfind ocamldoc -I _build/ -man -d man/man3 qCheck.ml qCheck.mli
 
 install_file: doc man
-	
 	@rm qcheck.install || true
 	@echo 'doc: [' >> qcheck.install
 	@for m in $(wildcard qcheck.docdir/*.html) ; do \
@@ -73,4 +69,11 @@ install_file: doc man
 	done
 	@echo ']' >> qcheck.install
 
-.PHONY: man install_file tags submodules release
+VERSION=$(shell awk '/^Version:/ {print $$2}' _oasis)
+
+update_next_tag:
+	@echo "update version to $(VERSION)..."
+	sed -i "s/NEXT_VERSION/$(VERSION)/g" *.ml *.mli
+	sed -i "s/NEXT_RELEASE/$(VERSION)/g" *.ml *.mli
+
+.PHONY: man install_file tags release update_next_tag
