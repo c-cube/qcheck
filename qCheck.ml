@@ -145,6 +145,78 @@ module Arbitrary = struct
     let max = depth st in
     fix ~max ~base f st
 
+  (* split fuel into two parts *)
+  let split_fuel fuel st =
+    let i = Random.State.int st (fuel+1) in
+    i, fuel-i
+
+  type 'a recursive_case =
+    [ `Base of 'a t  (* base case, no fuel *)
+    | `Base_fuel of (int -> 'a t)  (* base case, using fuel for its own purpose *)
+    | `Rec of ((int -> 'a list t) -> 'a t)  (* recursive case. must call the function exactly once *)
+    ]
+
+  let split_fuel_n n fuel st =
+    if fuel<0 || n < 1 then invalid_arg "split_int_n";
+    let rec split_rec n fuel acc = match n with
+      | 0 -> assert false
+      | 1 -> fuel::acc
+      | _ ->
+          let left, right = split_fuel fuel st in
+          (* divide and conquer *)
+          let acc = split_rec (n/2) left acc in
+          let acc = split_rec (n - n/2) right acc in
+          acc
+    in
+    let l = split_rec n fuel [] in
+    assert (List.length l = n);
+    l
+
+  exception RecursiveCallFailed
+
+  let fix_fuel l =
+    assert (l<>[]);
+    let a = Array.of_list l in
+    (* fixpoint. Each element of [l] can ask for a given number of sub-cases
+      but only ONCE. *)
+    let rec fix fuel st =
+      shuffle a st;
+      first fuel 0 st
+    (* try each possibility. Each possibility must call exactly once
+      [fix] recursively on [n] cases ([n=0] for base cases) *)
+    and first fuel i st =
+      if i=Array.length a then raise RecursiveCallFailed
+      else
+        let fix' =
+          let is_first=ref true in
+          fun num st ->
+            if not !is_first
+              then failwith "fix_fuel: sub_case can be called only once";
+            is_first := false;
+
+            match fuel, num with
+            | 0, 0 -> []
+            | _, 0 -> raise RecursiveCallFailed (* didn't consume enough *)
+            | 0, _ -> raise RecursiveCallFailed (* not enough fuel *)
+            | _ ->
+                (* split fuel for subcases *)
+                assert (fuel>0);
+                let fuels = split_fuel_n num (fuel-1) st in
+                List.map (fun f -> fix f st) fuels
+        in
+        try
+          match a.(i) with
+          | `Base f when fuel=0 -> f st
+          | `Base _ -> raise RecursiveCallFailed (* didn't consume enough *)
+          | `Base_fuel f -> f fuel st (* yield *)
+          | `Rec f -> f fix' st
+        with RecursiveCallFailed ->
+          first fuel (i+1) st  (* try next *)
+    in
+    fun fuel st ->
+      try Some (fix fuel st)
+      with RecursiveCallFailed -> None
+
   let rec retry gen st = match gen st with
     | None -> retry gen st
     | Some x -> x

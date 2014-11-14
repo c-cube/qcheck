@@ -161,7 +161,7 @@ module Arbitrary : sig
   val among_array : 'a array -> 'a t
     (** Choose in the array *)
 
-  val shuffe : 'a array -> unit t
+  val shuffle : 'a array -> unit t
     (** Shuffle the array in place
         @since NEXT_RELEASE *)
 
@@ -177,6 +177,40 @@ module Arbitrary : sig
 
   val fix_depth : depth:int t -> base:'a t -> ('a t -> 'a t) -> 'a t
     (** Recursive values of at most given random depth *)
+
+  (** What is a recursive case for a fueled fixpoint? *)
+  type 'a recursive_case =
+    [ `Base of 'a t  (* base case, no fuel *)
+    | `Base_fuel of (int -> 'a t)  (* base case, using fuel for its own purpose *)
+    | `Rec of ((int -> 'a list t) -> 'a t)  (* recursive case. must call the function exactly once *)
+    ]
+
+  val fix_fuel : 'a recursive_case list -> int -> 'a option t
+    (** [fix_fuel l fuel] consumes [fuel] in recursive subcases. The idea
+        is that [l] contains one or more recursive builders, such that
+        every [f] in [l] is given a function [f' : int -> 'a list t],
+        to call with an integer [n] so as to obtain [n] recursive subcases. The
+        function [f'] {b MUST} be called exactly once per case [f] in [l]..
+
+        Example:
+        {[
+        type tree = Node of tree * tree | Leaf of int;;
+
+        let leaf_ x = Leaf x;;
+        let node_ x y = Node (x,y);;
+
+        let rand_tree =
+           fix_fuel [
+             `Base (small_int >|= leaf_);
+             `Rec (fun self ->
+                self 2 >>= function [x;y] ->
+                return (node_ x y))
+            ];;
+
+        generate (rand_tree 20);;  (* generate trees with 20 nodes *)
+        ]}
+
+        @since NEXT_RELEASE *)
 
   val lift : ('a -> 'b) -> 'a t -> 'b t
   val lift2 : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
