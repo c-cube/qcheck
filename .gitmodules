@@ -1,3 +1,0 @@
-[submodule "generator"]
-	path = generator
-	url = https://github.com/gasche/random-generator
