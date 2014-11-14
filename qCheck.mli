@@ -131,6 +131,9 @@ module Arbitrary : sig
   val map : 'a t -> ('a -> 'b) -> 'b t
     (** Transform an arbitrary into another *)
 
+  val map' : ('a -> 'b) -> 'a t -> 'b t
+    (** @since NEXT_RELEASE *)
+
   val list : ?len:int t -> 'a t -> 'a list t
     (** List of arbitrary length. Default [len] is between 0 and 10. *)
 
@@ -158,6 +161,10 @@ module Arbitrary : sig
   val among_array : 'a array -> 'a t
     (** Choose in the array *)
 
+  val shuffe : 'a array -> unit t
+    (** Shuffle the array in place
+        @since NEXT_RELEASE *)
+
   val choose : 'a t list -> 'a t
     (** Choice among a list generators *)
 
@@ -178,6 +185,15 @@ module Arbitrary : sig
 
   val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
     (** Monadic bind *)
+
+  val (>|=) : 'a t -> ('a -> 'b) -> 'b t
+    (** @since NEXT_RELEASE *)
+
+  val (<*>) : ('a -> 'b) t -> 'a t -> 'b t
+    (** @since NEXT_RELEASE *)
+
+  val pure : 'a -> 'a t
+    (** @since NEXT_RELEASE *)
 
   val retry : 'a option t -> 'a t
     (** Generate until a Some value is returned *)

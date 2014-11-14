@@ -71,6 +71,8 @@ module Arbitrary = struct
 
   let map ar f st = f (ar st)
 
+  let map' f ar st = f (ar st)
+
   let rec _make_list ar st acc n =
     if n = 0 then acc else
       let x = ar st in
@@ -101,6 +103,14 @@ module Arbitrary = struct
     let i = Random.State.int st (Array.length a) in
     a.(i)
 
+  let shuffle a st =
+    for i = Array.length a-1 downto 1 do
+      let j = Random.State.int st (i+1) in
+      let tmp = a.(i) in
+      a.(i) <- a.(j);
+      a.(j) <- tmp;
+    done
+
   let among l =
     if List.length l < 1
       then failwith "Arbitrary.among: cannot choose in empty list";
@@ -124,7 +134,7 @@ module Arbitrary = struct
     let rec ar = lazy
       (fun depth st ->
         if depth >= max || Random.State.int st max < depth
-          then base st (* base case. THe deeper, the more likely. *)
+          then base st (* base case. The deeper, the more likely. *)
         else  (* recurse *)
           let ar' = Lazy.force ar (depth+1) in
           f ar' st)
@@ -156,6 +166,12 @@ module Arbitrary = struct
   let (>>=) a f st =
     let x = a st in
     f x st
+
+  let (>|=) a f st = f (a st)
+
+  let (<*>) f x st = f st (x st)
+
+  let pure x _st = x
 
   let generate ?(n=100) ?(rand=Random.State.make_self_init()) gen =
     let l = ref [] in
@@ -208,7 +224,7 @@ module Prop = struct
   type 'a t = 'a -> bool
 
   exception PrecondFail
-  
+
   let assume p =
     if not p then raise PrecondFail
 
