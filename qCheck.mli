@@ -182,7 +182,9 @@ module Arbitrary : sig
   type 'a recursive_case =
     [ `Base of 'a t  (* base case, no fuel *)
     | `Base_fuel of (int -> 'a t)  (* base case, using fuel for its own purpose *)
-    | `Rec of ((int -> 'a list t) -> 'a t)  (* recursive case. must call the function exactly once *)
+    | `Rec of ((int -> 'a list t) -> 'a t)  (* general recursive case. must call the function exactly once *)
+    | `Rec1 of ('a t -> 'a t) (* recursive case with exactly one subcase. *)
+    | `Rec2 of ('a t -> 'a t -> 'a t) (* recursive case with exactly two subcases *)
     ]
 
   val fix_fuel : 'a recursive_case list -> int -> 'a option t
@@ -192,25 +194,42 @@ module Arbitrary : sig
         to call with an integer [n] so as to obtain [n] recursive subcases. The
         function [f'] {b MUST} be called exactly once per case [f] in [l]..
 
-        Example:
-        {[
-        type tree = Node of tree * tree | Leaf of int;;
-
-        let leaf_ x = Leaf x;;
-        let node_ x y = Node (x,y);;
-
-        let rand_tree =
-           fix_fuel [
-             `Base (small_int >|= leaf_);
-             `Rec (fun self ->
-                self 2 >>= function [x;y] ->
-                return (node_ x y))
-            ];;
-
-        generate (rand_tree 20);;  (* generate trees with 20 nodes *)
-        ]}
-
         @since 0.3 *)
+
+    (**Example:
+{[
+type tree = Node of tree * tree | Leaf of int;;
+
+let leaf_ x = Leaf x;;
+let node_ x y = Node (x,y);;
+
+let rand_tree =
+   fix_fuel [
+     `Base (small_int >|= leaf_);
+     `Rec (fun self ->
+        self 2 >>= function [x;y] ->
+        return (node_ x y))
+    ];;
+
+generate (rand_tree 20);;  (* generate trees with 20 nodes *)
+
+type tree' = Node2 of tree' * tree' | Node1 of tree' | Leaf' of int;;
+
+let leaf' x = Leaf' x ;;
+let node2 x y = Node2(x,y) ;;
+let node1 x = Node1 x;;
+
+(* alternative with [`Rec2] *)
+let rand_tree' =
+  fix_fuel [
+     `Base (small_int >|= leaf');
+     `Rec1 (fun self -> self >|= node1);
+     `Rec2 (fun self1 self2 -> pure node2 <*> self1 <*> self2)
+    ];;
+
+generate ~n:1 (rand_tree' 20);;
+]}
+*)
 
   val lift : ('a -> 'b) -> 'a t -> 'b t
   val lift2 : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t

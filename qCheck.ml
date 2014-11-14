@@ -154,6 +154,8 @@ module Arbitrary = struct
     [ `Base of 'a t  (* base case, no fuel *)
     | `Base_fuel of (int -> 'a t)  (* base case, using fuel for its own purpose *)
     | `Rec of ((int -> 'a list t) -> 'a t)  (* recursive case. must call the function exactly once *)
+    | `Rec1 of ('a t -> 'a t) (* recursive case with exactly one subcase. *)
+    | `Rec2 of ('a t -> 'a t -> 'a t) (* recursive case with exactly two subcases *)
     ]
 
   let split_fuel_n n fuel st =
@@ -210,6 +212,12 @@ module Arbitrary = struct
           | `Base _ -> raise RecursiveCallFailed (* didn't consume enough *)
           | `Base_fuel f -> f fuel st (* yield *)
           | `Rec f -> f fix' st
+          | `Rec1 _ when fuel=0 -> raise RecursiveCallFailed
+          | `Rec1 f -> f (fix (fuel-1)) st
+          | `Rec2 _ when fuel<2 -> raise RecursiveCallFailed
+          | `Rec2 f ->
+              let fuel1, fuel2 = split_fuel (fuel-1) st in
+              f (fix fuel1) (fix fuel2) st
         with RecursiveCallFailed ->
           first fuel (i+1) st  (* try next *)
     in
