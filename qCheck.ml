@@ -151,11 +151,12 @@ module Arbitrary = struct
     i, fuel-i
 
   type 'a recursive_case =
-    [ `Base of 'a t  (* base case, no fuel *)
-    | `Base_fuel of (int -> 'a t)  (* base case, using fuel for its own purpose *)
-    | `Rec of ((int -> 'a list t) -> 'a t)  (* recursive case. must call the function exactly once *)
-    | `Rec1 of ('a t -> 'a t) (* recursive case with exactly one subcase. *)
-    | `Rec2 of ('a t -> 'a t -> 'a t) (* recursive case with exactly two subcases *)
+    [ `Base of 'a t
+    | `Base_fuel of (int -> 'a t)
+    | `Rec of ((int -> 'a list t) -> 'a t)
+    | `Rec_fuel of ((int -> 'a list t) -> int -> 'a t)
+    | `Rec1 of ('a t -> 'a t)
+    | `Rec2 of ('a t -> 'a t -> 'a t)
     ]
 
   let split_fuel_n n fuel st =
@@ -205,6 +206,7 @@ module Arbitrary = struct
             | _ ->
                 (* split fuel for subcases *)
                 assert (fuel>0);
+                if num>=fuel then raise RecursiveCallFailed;
                 let fuels = split_fuel_n num (fuel-1) st in
                 List.map (fun f -> fix f st) fuels
         in
@@ -214,6 +216,7 @@ module Arbitrary = struct
           | `Base _ -> raise RecursiveCallFailed (* didn't consume enough *)
           | `Base_fuel f -> f fuel st (* yield *)
           | `Rec f -> f fix' st
+          | `Rec_fuel f -> f fix' (fuel-1) st
           | `Rec1 _ when fuel=0 -> raise RecursiveCallFailed
           | `Rec1 f -> f (fix (fuel-1)) st
           | `Rec2 _ when fuel<2 -> raise RecursiveCallFailed
@@ -228,11 +231,12 @@ module Arbitrary = struct
       with RecursiveCallFailed -> None
 
   type ('a, 'state) general_recursive_case =
-    [ `Base of ('state -> 'a t)  (* base case, no fuel. Can fail. *)
-    | `Base_fuel of (int -> 'state -> 'a t)  (* base case, using fuel for its own purpose *)
-    | `Rec of ((int -> ('state -> 'a) list t) -> 'state -> 'a t)  (* general recursive case. must call the function exactly once *)
-    | `Rec1 of (('state -> 'a t) -> 'state -> 'a t) (* recursive case with exactly one subcase. *)
-    | `Rec2 of (('state -> 'a t) -> ('state -> 'a t) -> 'state -> 'a t) (* recursive case with exactly two subcases *)
+    [ `Base of ('state -> 'a t)
+    | `Base_fuel of (int -> 'state -> 'a t)
+    | `Rec of ((int -> ('state -> 'a) list t) -> 'state -> 'a t)
+    | `Rec_fuel of ((int -> ('state -> 'a) list t) -> int -> 'state -> 'a t)
+    | `Rec1 of (('state -> 'a t) -> 'state -> 'a t)
+    | `Rec2 of (('state -> 'a t) -> ('state -> 'a t) -> 'state -> 'a t)
     ]
 
   let fix_fuel_gen (l:('a,'state) general_recursive_case list) =
@@ -262,6 +266,7 @@ module Arbitrary = struct
             | _ ->
                 (* split fuel for subcases *)
                 assert (fuel>0);
+                if num >= fuel then raise RecursiveCallFailed;
                 let fuels = split_fuel_n num (fuel-1) st in
                 List.map (fun f state -> fix f state st) fuels
         in
@@ -271,6 +276,7 @@ module Arbitrary = struct
           | `Base _ -> raise RecursiveCallFailed (* didn't consume enough *)
           | `Base_fuel f -> f fuel state st (* yield *)
           | `Rec f -> f fix' state st
+          | `Rec_fuel f -> f fix' fuel state st
           | `Rec1 _ when fuel=0 -> raise RecursiveCallFailed
           | `Rec1 f -> f (fix (fuel-1)) state st
           | `Rec2 _ when fuel<2 -> raise RecursiveCallFailed

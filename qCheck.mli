@@ -185,11 +185,24 @@ module Arbitrary : sig
 
   (** What is a recursive case for a fueled fixpoint? *)
   type 'a recursive_case =
-    [ `Base of 'a t  (* base case, no fuel *)
-    | `Base_fuel of (int -> 'a t)  (* base case, using fuel for its own purpose *)
-    | `Rec of ((int -> 'a list t) -> 'a t)  (* general recursive case. must call the function exactly once *)
-    | `Rec1 of ('a t -> 'a t) (* recursive case with exactly one subcase. *)
-    | `Rec2 of ('a t -> 'a t -> 'a t) (* recursive case with exactly two subcases *)
+    [ `Base of 'a t
+      (** base case, no fuel *)
+
+    | `Base_fuel of (int -> 'a t)
+      (** base case, using fuel for its own purpose *)
+
+    | `Rec of ((int -> 'a list t) -> 'a t)
+      (** recursive case. must call the function exactly once *)
+
+    | `Rec_fuel of ((int -> 'a list t) -> int -> 'a t)
+      (** the function is given [self] and [max] and shall call [self i] exactly
+          once for some [i <= max]. *)
+
+    | `Rec1 of ('a t -> 'a t)
+      (** recursive case with exactly one subcase *)
+
+    | `Rec2 of ('a t -> 'a t -> 'a t)
+      (** recursive case with exactly two subcases *)
     ]
 
   val fix_fuel : 'a recursive_case list -> int -> 'a option t
@@ -241,6 +254,7 @@ generate ~n:1 (rand_tree' 20);;
     [ `Base of ('state -> 'a t)  (* base case, no fuel. *)
     | `Base_fuel of (int -> 'state -> 'a t)  (* base case, using fuel for its own purpose *)
     | `Rec of ((int -> ('state -> 'a) list t) -> 'state -> 'a t)  (* general recursive case. must call the function exactly once *)
+    | `Rec_fuel of ((int -> ('state -> 'a) list t) -> int -> 'state -> 'a t)
     | `Rec1 of (('state -> 'a t) -> 'state -> 'a t) (* recursive case with exactly one subcase. *)
     | `Rec2 of (('state -> 'a t) -> ('state -> 'a t) -> 'state -> 'a t) (* recursive case with exactly two subcases *)
     ]
