@@ -176,6 +176,8 @@ module Arbitrary = struct
 
   exception RecursiveCallFailed
 
+  let fail_fix() = raise RecursiveCallFailed
+
   let fix_fuel l =
     assert (l<>[]);
     let a = Array.of_list l in

@@ -178,6 +178,11 @@ module Arbitrary : sig
   val fix_depth : depth:int t -> base:'a t -> ('a t -> 'a t) -> 'a t
     (** Recursive values of at most given random depth *)
 
+  val fail_fix : unit -> 'a
+    (** Function used to indicate that, in {!fix_fuel}, a sub-case is
+        impossible to fulfill.
+        @since NEXT_RELEASE *)
+
   (** What is a recursive case for a fueled fixpoint? *)
   type 'a recursive_case =
     [ `Base of 'a t  (* base case, no fuel *)
