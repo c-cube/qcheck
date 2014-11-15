@@ -227,6 +227,63 @@ module Arbitrary = struct
       try Some (fix fuel st)
       with RecursiveCallFailed -> None
 
+  type ('a, 'state) general_recursive_case =
+    [ `Base of ('state -> 'a t)  (* base case, no fuel. Can fail. *)
+    | `Base_fuel of (int -> 'state -> 'a t)  (* base case, using fuel for its own purpose *)
+    | `Rec of ((int -> ('state -> 'a) list t) -> 'state -> 'a t)  (* general recursive case. must call the function exactly once *)
+    | `Rec1 of (('state -> 'a t) -> 'state -> 'a t) (* recursive case with exactly one subcase. *)
+    | `Rec2 of (('state -> 'a t) -> ('state -> 'a t) -> 'state -> 'a t) (* recursive case with exactly two subcases *)
+    ]
+
+  let fix_fuel_gen (l:('a,'state) general_recursive_case list) =
+    assert (l<>[]);
+    let a = Array.of_list l in
+    (* fixpoint. Each element of [l] can ask for a given number of sub-cases
+      but only ONCE. *)
+    let rec fix fuel state st =
+      shuffle a st;
+      first fuel state 0 st
+    (* try each possibility. Each possibility must call exactly once
+      [fix] recursively on [n] cases ([n=0] for base cases) *)
+    and first fuel state i st =
+      if i=Array.length a then raise RecursiveCallFailed
+      else
+        let fix' =
+          let is_first=ref true in
+          fun num st ->
+            if not !is_first
+              then failwith "fix_fuel: sub_case can be called only once";
+            is_first := false;
+
+            match fuel, num with
+            | 0, 0 -> []
+            | _, 0 -> raise RecursiveCallFailed (* didn't consume enough *)
+            | 0, _ -> raise RecursiveCallFailed (* not enough fuel *)
+            | _ ->
+                (* split fuel for subcases *)
+                assert (fuel>0);
+                let fuels = split_fuel_n num (fuel-1) st in
+                List.map (fun f state -> fix f state st) fuels
+        in
+        try
+          match a.(i) with
+          | `Base f when fuel=0 -> f state st
+          | `Base _ -> raise RecursiveCallFailed (* didn't consume enough *)
+          | `Base_fuel f -> f fuel state st (* yield *)
+          | `Rec f -> f fix' state st
+          | `Rec1 _ when fuel=0 -> raise RecursiveCallFailed
+          | `Rec1 f -> f (fix (fuel-1)) state st
+          | `Rec2 _ when fuel<2 -> raise RecursiveCallFailed
+          | `Rec2 f ->
+              let fuel1, fuel2 = split_fuel (fuel-1) st in
+              f (fix fuel1) (fix fuel2) state st
+        with RecursiveCallFailed ->
+          first fuel state (i+1) st  (* try next *)
+    in
+    fun fuel state st ->
+      try Some (fix fuel state st)
+      with RecursiveCallFailed -> None
+
   let rec retry gen st = match gen st with
     | None -> retry gen st
     | Some x -> x

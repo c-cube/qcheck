@@ -236,6 +236,26 @@ generate ~n:1 (rand_tree' 20);;
 ]}
 *)
 
+  (** What is a recursive case for a general fueled fixpoint? *)
+  type ('a, 'state) general_recursive_case =
+    [ `Base of ('state -> 'a t)  (* base case, no fuel. *)
+    | `Base_fuel of (int -> 'state -> 'a t)  (* base case, using fuel for its own purpose *)
+    | `Rec of ((int -> ('state -> 'a) list t) -> 'state -> 'a t)  (* general recursive case. must call the function exactly once *)
+    | `Rec1 of (('state -> 'a t) -> 'state -> 'a t) (* recursive case with exactly one subcase. *)
+    | `Rec2 of (('state -> 'a t) -> ('state -> 'a t) -> 'state -> 'a t) (* recursive case with exactly two subcases *)
+    ]
+
+  val fix_fuel_gen : ('a,'state) general_recursive_case list -> int -> 'state -> 'a option t
+    (** [fix_fuel_gen l state fuel] consumes [fuel] in recursive subcases, similar
+        to what [fix_fuel l fuel] would do, but more general because a
+        "state" is passed bottom-up. In recursive subcases, 
+        is that [l] contains one or more recursive builders, such that
+        every [f] in [l] is given a function [f' : int -> ('state -> 'a) list t],
+        to call with an integer [n] so as to obtain [n] recursive subcases. The
+        function [f'] {b MUST} be called exactly once per case [f] in [l]..
+
+        @since NEXT_RELEASE *)
+
   val lift : ('a -> 'b) -> 'a t -> 'b t
   val lift2 : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
   val lift3 : ('a -> 'b -> 'c -> 'd) -> 'a t -> 'b t -> 'c t -> 'd t
