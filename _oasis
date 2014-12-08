@@ -19,6 +19,22 @@ Library "qcheck"
   Install:          true
   BuildDepends:     unix
 
+Library qcheck_ounit
+  Path:          .
+  Findlibname:   ounit
+  FindlibParent: qcheck
+  BuildDepends:  qcheck, oUnit
+  Modules:       QCheck_ounit
+  Build$:        flag(ounit)
+  Install$:      flag(ounit)
+
+Executable qcheck_ounit_example
+  Path: .
+  Install: false
+  Build$: flag(ounit)
+  BuildDepends: qcheck.ounit
+  MainIs: qCheck_ounit_test.ml
+
 Document qcheck
   Title:                QCheck docs
   Type:                 ocamlbuild (0.3)
@@ -26,6 +42,9 @@ Document qcheck
   Install:              true
   XOCamlbuildPath:      .
   XOCamlbuildLibraries: qcheck
+
+Flag ounit
+  Default: true
 
 SourceRepository head
   Type: git
