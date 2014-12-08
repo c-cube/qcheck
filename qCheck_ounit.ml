@@ -22,3 +22,5 @@ let to_ounit_test ?msg t =
 let to_ounit_suite = List.map to_ounit_test
 
 let (>:::) name tests = name >::: (to_ounit_suite tests)
+
+let (~::) = to_ounit_test ?msg:None
