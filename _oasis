@@ -1,11 +1,11 @@
-OASISFormat: 0.3
+OASISFormat: 0.4
 Name:        qcheck
 Version:     0.3
 Homepage:    https://github.com/c-cube/qcheck
 Authors:     Simon Cruanes
 License:     BSD3
 LicenseFile: LICENSE
-Plugins:     META (0.3), DevFiles (0.3)
+Plugins:     META (0.4), DevFiles (0.4)
 BuildTools:  ocamlbuild
 
 Synopsis:    QuickCheck inspired property based testing
@@ -19,6 +19,22 @@ Library "qcheck"
   Install:          true
   BuildDepends:     unix
 
+Library qcheck_ounit
+  Path:          .
+  Findlibname:   ounit
+  FindlibParent: qcheck
+  BuildDepends:  qcheck, oUnit
+  Modules:       QCheck_ounit
+  Build$:        flag(ounit)
+  Install$:      flag(ounit)
+
+Executable qcheck_ounit_example
+  Path: .
+  Install: false
+  Build$: flag(ounit)
+  BuildDepends: qcheck.ounit
+  MainIs: qCheck_ounit_test.ml
+
 Document qcheck
   Title:                QCheck docs
   Type:                 ocamlbuild (0.3)
@@ -26,6 +42,10 @@ Document qcheck
   Install:              true
   XOCamlbuildPath:      .
   XOCamlbuildLibraries: qcheck
+
+Flag ounit
+  Default: false
+  Description: OUnit and QCheck integration
 
 SourceRepository head
   Type: git
