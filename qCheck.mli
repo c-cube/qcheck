@@ -390,7 +390,8 @@ val mk_test : ?n:int -> ?pp:'a PP.t -> ?name:string ->
         Default is [10]. *)
 
 val run : ?out:out_channel -> ?rand:Random.State.t -> test -> bool
-  (** Run a test and print results *)
+  (** Run a test and print results {b iff} [out] is provided, otherwise
+      it's silent *)
 
 type suite = test list
   (** A test suite is a list of tests *)

@@ -450,16 +450,17 @@ let rec _list_take acc l n = match l, n with
   | x::l', _ -> _list_take (x::acc) l' (n-1)
 
 let run ?(out=stdout) ?(rand=Random.State.make __seed) (Test test) =
-  Printf.fprintf out "testing property %s...\n" test.name;
+  let print fmt = Printf.kfprintf (fun _ -> ()) out fmt in
+  print "testing property %s...\n" test.name;
   match check ~rand ~n:test.n test.gen test.prop with
   | Ok (n, prefail) ->
-    Printf.fprintf out "  [✔] passed %d tests (%d preconditions failed)\n" n prefail;
+    print "  [✔] passed %d tests (%d preconditions failed)\n" n prefail;
     true
   | Failed l ->
     begin match test.pp with
-    | None -> Printf.fprintf out "  [×] %d failures over %d\n" (List.length l) test.n
+    | None -> print "  [×] %d failures over %d\n" (List.length l) test.n
     | Some pp ->
-      Printf.fprintf out "  [×] %d failures over %d (print at most %d):\n"
+      print "  [×] %d failures over %d (print at most %d):\n"
         (List.length l) test.n test.limit;
       let to_print = match test.size with
       | None -> l
@@ -473,17 +474,17 @@ let run ?(out=stdout) ?(rand=Random.State.make __seed) (Test test) =
       let to_print = _list_take [] to_print test.limit in
       (* print the counter examples *)
       List.iter
-        (fun x -> Printf.fprintf out "  %s\n" (pp x))
+        (fun x -> print "  %s\n" (pp x))
         to_print
     end;
     false
   | Error (inst, e) ->
     begin match inst, test.pp with
     | _, None
-    | None, _ -> Printf.fprintf out "  [×] error: %s\n" (Printexc.to_string e);
+    | None, _ -> print "  [×] error: %s\n" (Printexc.to_string e);
     | Some x, Some pp ->
       (* print instance on which the error occurred *)
-      Printf.fprintf out "  [×] error on instance %s: %s\n"
+      print "  [×] error on instance %s: %s\n"
         (pp x) (Printexc.to_string e);
     end;
     false
