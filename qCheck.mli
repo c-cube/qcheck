@@ -374,6 +374,8 @@ val check : ?rand:Random.State.t -> ?n:int ->
 type test
   (** A single property test *)
 
+val name : test -> string option
+
 val mk_test : ?n:int -> ?pp:'a PP.t -> ?name:string ->
               ?size:('a -> int) -> ?limit:int ->
               'a Arbitrary.t -> 'a Prop.t -> test

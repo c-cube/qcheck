@@ -430,7 +430,7 @@ type 'a test_cell = {
   pp : 'a PP.t option;
   prop : 'a Prop.t;
   gen : 'a Arbitrary.t;
-  name : string;
+  name : string option;
   limit : int;
   size : ('a -> int) option;
 }
@@ -438,7 +438,14 @@ type test =
   | Test : 'a test_cell -> test
   (** GADT needed for the existential type *)
 
-let mk_test ?(n=100) ?pp ?(name="<anon prop>") ?size ?(limit=10) gen prop =
+let name (Test {name; _}) = name
+
+let display_name {name; _} =
+  match name with
+  | None -> "<anon prop>"
+  | Some n -> n
+
+let mk_test ?(n=100) ?pp ?name ?size ?(limit=10) gen prop =
   if limit < 0 then failwith "QCheck: limit needs be >= 0";
   if n <= 0 then failwith "QCheck: n needs be >= 0";
   Test { prop; gen; name; n; pp; size; limit; }
@@ -450,7 +457,7 @@ let rec _list_take acc l n = match l, n with
   | x::l', _ -> _list_take (x::acc) l' (n-1)
 
 let run ?(out=stdout) ?(rand=Random.State.make __seed) (Test test) =
-  Printf.fprintf out "testing property %s...\n" test.name;
+  Printf.fprintf out "testing property %s...\n" (display_name test);
   match check ~rand ~n:test.n test.gen test.prop with
   | Ok (n, prefail) ->
     Printf.fprintf out "  [✔] passed %d tests (%d preconditions failed)\n" n prefail;
