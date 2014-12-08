@@ -10,3 +10,4 @@ setup.log
 man
 qcheck.install
 *.tar.gz
+*.byte
