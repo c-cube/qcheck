@@ -1,11 +1,11 @@
-OASISFormat: 0.3
+OASISFormat: 0.4
 Name:        qcheck
 Version:     0.3
 Homepage:    https://github.com/c-cube/qcheck
 Authors:     Simon Cruanes
 License:     BSD3
 LicenseFile: LICENSE
-Plugins:     META (0.3), DevFiles (0.3)
+Plugins:     META (0.4), DevFiles (0.4)
 BuildTools:  ocamlbuild
 
 Synopsis:    QuickCheck inspired property based testing
