@@ -403,7 +403,7 @@ type 'a result =
 (* random seed, for repeatability of tests *)
 let __seed = [| 89809344; 994326685; 290180182 |]
 
-let check ?(rand=Random.State.make __seed) ?(n=100) gen prop =
+let check ?(call=fun _ _ -> ()) ?(rand=Random.State.make __seed) ?(n=100) gen prop =
   let precond_failed = ref 0 in
   let failures = ref [] in
   let inst = ref None in
@@ -411,6 +411,8 @@ let check ?(rand=Random.State.make __seed) ?(n=100) gen prop =
     for i = 0 to n - 1 do
       let x = gen rand in
       inst := Some x;
+      let res = prop x in
+      call x res;
       try
         if not (prop x)
           then failures := x :: !failures
@@ -456,9 +458,17 @@ let rec _list_take acc l n = match l, n with
   | [], _ -> List.rev acc
   | x::l', _ -> _list_take (x::acc) l' (n-1)
 
-let run ?(out=stdout) ?(rand=Random.State.make __seed) (Test test) =
+let run ?(verbose=false) ?(out=stdout) ?(rand=Random.State.make __seed) (Test test) =
   Printf.fprintf out "testing property %s...\n" (display_name test);
-  match check ~rand ~n:test.n test.gen test.prop with
+  (* called on each test case *)
+  let call x res =
+    match test.pp, verbose with
+    | Some pp, true ->
+      Printf.fprintf out "  test case (%s): %s\n"
+        (if res then "ok" else "failed") (pp x)
+    | _ -> ()
+  in
+  match check ~call ~rand ~n:test.n test.gen test.prop with
   | Ok (n, prefail) ->
     Printf.fprintf out "  [✔] passed %d tests (%d preconditions failed)\n" n prefail;
     true
@@ -506,7 +516,7 @@ let run_tests ?(verbose=false) ?(out=stdout) ?(rand=Random.State.make __seed) l 
   Printf.fprintf out "check %d properties...\n" (List.length l);
   List.iter
     (fun test ->
-      let res = run ~out ~rand test in
+      let res = run ~verbose ~out ~rand test in
       flush out;
       if not res then incr failed)
     l;
@@ -518,7 +528,7 @@ let run_tests ?(verbose=false) ?(out=stdout) ?(rand=Random.State.make __seed) l 
 
 let run_main ?(argv=Sys.argv) l =
   let verbose = ref false in
-  let seed = ref 42 in
+  let seed = ref (Random.self_init (); Random.int (1 lsl 29)) in
   let opts = Arg.align
       [ "-v", Arg.Set verbose, " verbose"
       ; "-seed", Arg.Set_int seed, " set random seed"
