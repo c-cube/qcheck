@@ -499,7 +499,7 @@ type suite = test list
 
 let flatten = List.flatten
 
-let run_tests ?(out=stdout) ?(rand=Random.State.make __seed) l =
+let run_tests ?(verbose=false) ?(out=stdout) ?(rand=Random.State.make __seed) l =
   let start = Unix.gettimeofday () in
   let n = List.length l in
   let failed = ref 0 in
@@ -515,3 +515,21 @@ let run_tests ?(out=stdout) ?(rand=Random.State.make __seed) l =
     then Printf.fprintf out "[✔] Success! (passed %d tests)\n" n
     else Printf.fprintf out "[×] Failure. (%d tests failed over %d)\n" !failed n;
   !failed = 0
+
+let run_main ?(argv=Sys.argv) l =
+  let verbose = ref false in
+  let seed = ref 42 in
+  let opts = Arg.align
+      [ "-v", Arg.Set verbose, " verbose"
+      ; "-seed", Arg.Set_int seed, " set random seed"
+      ]
+  in
+  try
+    Arg.parse_argv argv opts (fun _ -> invalid_arg "no arguments accepted") "usage: ./tests";
+    Printf.printf "use random seed %d\n" !seed;
+    let rand = Random.State.make [| !seed |] in
+    let ok = run_tests ~verbose:!verbose ~rand l in
+    if ok then ()
+    else exit 1
+  with Arg.Help msg ->
+    print_endline msg

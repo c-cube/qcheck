@@ -262,7 +262,7 @@ generate ~n:1 (rand_tree' 20);;
   val fix_fuel_gen : ('a,'state) general_recursive_case list -> int -> 'state -> 'a option t
     (** [fix_fuel_gen l state fuel] consumes [fuel] in recursive subcases, similar
         to what [fix_fuel l fuel] would do, but more general because a
-        "state" is passed bottom-up. In recursive subcases, 
+        "state" is passed bottom-up. In recursive subcases,
         is that [l] contains one or more recursive builders, such that
         every [f] in [l] is given a function [f' : int -> ('state -> 'a) list t],
         to call with an integer [n] so as to obtain [n] recursive subcases. The
@@ -399,5 +399,12 @@ type suite = test list
 
 val flatten : suite list -> suite
 
-val run_tests : ?out:out_channel -> ?rand:Random.State.t -> suite -> bool
-  (** Run a suite of tests, and print its results *)
+val run_tests : ?verbose:bool -> ?out:out_channel -> ?rand:Random.State.t ->
+                suite -> bool
+(** Run a suite of tests, and print its results
+    @param verbose if true, prints more information about test cases (@since NEXT_RELEASE) *)
+
+val run_main : ?argv:string array -> suite -> unit
+(** Can be used as the main function of a test file. Exits with a non-0 code
+    if the tests fail.
+    @since NEXT_RELEASE *)
