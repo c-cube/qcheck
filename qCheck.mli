@@ -181,7 +181,7 @@ module Arbitrary : sig
   val fail_fix : unit -> 'a
     (** Function used to indicate that, in {!fix_fuel}, a sub-case is
         impossible to fulfill.
-        @since NEXT_RELEASE *)
+        @since 0.4 *)
 
   (** What is a recursive case for a fueled fixpoint? *)
   type 'a recursive_case =
@@ -268,7 +268,7 @@ generate ~n:1 (rand_tree' 20);;
         to call with an integer [n] so as to obtain [n] recursive subcases. The
         function [f'] {b MUST} be called exactly once per case [f] in [l]..
 
-        @since NEXT_RELEASE *)
+        @since 0.4 *)
 
   val lift : ('a -> 'b) -> 'a t -> 'b t
   val lift2 : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
@@ -404,9 +404,9 @@ val flatten : suite list -> suite
 val run_tests : ?verbose:bool -> ?out:out_channel -> ?rand:Random.State.t ->
                 suite -> bool
 (** Run a suite of tests, and print its results
-    @param verbose if true, prints more information about test cases (@since NEXT_RELEASE) *)
+    @param verbose if true, prints more information about test cases (@since 0.4) *)
 
 val run_main : ?argv:string array -> suite -> unit
 (** Can be used as the main function of a test file. Exits with a non-0 code
     if the tests fail.
-    @since NEXT_RELEASE *)
+    @since 0.4 *)

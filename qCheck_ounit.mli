@@ -26,7 +26,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 (** {1 Integration with OUnit}
 
-@since NEXT_RELEASE *)
+@since 0.4 *)
 
 val to_ounit_test : ?msg:string -> QCheck.test -> OUnit2.test
 

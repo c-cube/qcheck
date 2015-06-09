@@ -15,7 +15,9 @@ build: [
 install: [
   [make "install"]
 ]
-remove: [["ocamlfind" "remove" "qcheck"]]
+remove: [
+    ["ocamlfind" "remove" "qcheck"]
+]
 depends: ["ocamlfind"]
 depopts: ["ounit" ]
 available: [ ocaml-version >= "4.00.0" ]

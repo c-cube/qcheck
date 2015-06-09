@@ -1,6 +1,6 @@
 # OASIS_START
-# DO NOT EDIT (digest: 048875a1e56f1a54da4ae1c53bb112ea)
-version = "0.3"
+# DO NOT EDIT (digest: 452f90dd0c4b3a9ad60e4ba737945791)
+version = "0.4"
 description = "QuickCheck inspired property based testing"
 requires = "unix"
 archive(byte) = "qcheck.cma"
@@ -9,7 +9,7 @@ archive(native) = "qcheck.cmxa"
 archive(native, plugin) = "qcheck.cmxs"
 exists_if = "qcheck.cma"
 package "ounit" (
- version = "0.3"
+ version = "0.4"
  description = "QuickCheck inspired property based testing"
  requires = "qcheck oUnit"
  archive(byte) = "qcheck_ounit.cma"
