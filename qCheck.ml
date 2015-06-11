@@ -206,7 +206,7 @@ module Arbitrary = struct
             | _ ->
                 (* split fuel for subcases *)
                 assert (fuel>0);
-                if num>=fuel then raise RecursiveCallFailed;
+                (* if num>=fuel then raise RecursiveCallFailed; *)
                 let fuels = split_fuel_n num (fuel-1) st in
                 List.map (fun f -> fix f st) fuels
         in
@@ -411,10 +411,10 @@ let check ?(call=fun _ _ -> ()) ?(rand=Random.State.make __seed) ?(n=100) gen pr
     for i = 0 to n - 1 do
       let x = gen rand in
       inst := Some x;
-      let res = prop x in
-      call x res;
       try
-        if not (prop x)
+        let res = prop x in
+        call x res;
+        if not res
           then failures := x :: !failures
       with Prop.PrecondFail ->
         incr precond_failed
