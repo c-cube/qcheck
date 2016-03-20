@@ -1,6 +1,10 @@
 QCheck
 ======
 
+**DEPRECATED** this library is superseeded
+  by [qtest](https://github.com/vincent-hugot/iTeML)
+  , do not use anymore.
+
 QuickCheck inspired property-based testing for OCaml, and combinators to
 generate random values to run tests on.
 
