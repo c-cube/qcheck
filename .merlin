@@ -1,4 +1,6 @@
-S .
-B _build
+S src
+S src/ounit/
+B _build/src
+B _build/src/ounit/
 PKG unix
 PKG oUnit
