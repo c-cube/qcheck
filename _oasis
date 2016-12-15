@@ -3,7 +3,7 @@ Name:        qcheck
 Version:     0.4
 Homepage:    https://github.com/c-cube/qcheck
 Authors:     Simon Cruanes
-License:     BSD3
+License:     BSD-3-clause
 LicenseFile: LICENSE
 Plugins:     META (0.4), DevFiles (0.4)
 BuildTools:  ocamlbuild
@@ -13,14 +13,14 @@ Description:
     QuickCheck inspired property-based testing for OCaml
 
 Library "qcheck"
-  Path:             .
+  Path:             src
   Pack:             false
   Modules:          QCheck
   Install:          true
   BuildDepends:     unix
 
 Library qcheck_ounit
-  Path:          .
+  Path:          src/ounit
   Findlibname:   ounit
   FindlibParent: qcheck
   BuildDepends:  qcheck, oUnit
