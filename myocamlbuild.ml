@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: f43d4e8b1de93c52008956c3086bc404) *)
+(* DO NOT EDIT (digest: 15d4931c801f56f3947aeb8afdafb9ec) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -886,7 +886,7 @@ let package_default =
        [("qcheck", ["src"], []); ("qcheck_ounit", ["src/ounit"], [])];
      lib_c = [];
      flags = [];
-     includes = [("src/ounit", ["src"]); ("", ["src/ounit"])]
+     includes = [("src/ounit", ["src"])]
   }
   ;;
 

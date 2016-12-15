@@ -5,7 +5,7 @@ let passing =
     (fun l -> List.rev (List.rev l) = l);;
 
 let failing =
-  QCheck.(mk_test ~n:10
+  QCheck.(mk_test ~n:10 ~name:"failing_sort_is_id"
             ~pp:PP.(list int)
             QCheck.Arbitrary.(list small_int)
             (fun l -> l = List.sort compare l));;

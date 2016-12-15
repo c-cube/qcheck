@@ -12,6 +12,10 @@ Synopsis:    QuickCheck inspired property based testing
 Description:
     QuickCheck inspired property-based testing for OCaml
 
+Flag ounit
+  Default: false
+  Description: OUnit and QCheck integration
+
 Library "qcheck"
   Path:             src
   Pack:             false
@@ -29,11 +33,11 @@ Library qcheck_ounit
   Install$:      flag(ounit)
 
 Executable qcheck_ounit_example
-  Path: .
-  Install: false
-  Build$: flag(ounit)
-  BuildDepends: qcheck.ounit
-  MainIs: qCheck_ounit_test.ml
+  Path:           src/ounit/
+  Install:        false
+  Build$:         flag(ounit)
+  BuildDepends:   qcheck.ounit, unix
+  MainIs:         QCheck_ounit_test.ml
 
 Document qcheck
   Title:                QCheck docs
@@ -42,10 +46,6 @@ Document qcheck
   Install:              true
   XOCamlbuildPath:      .
   XOCamlbuildLibraries: qcheck
-
-Flag ounit
-  Default: false
-  Description: OUnit and QCheck integration
 
 SourceRepository head
   Type: git
