@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 09de6a60ba011a858517ad4557d02e9f)
+# DO NOT EDIT (digest: 85eaad493c737ede38258b45ba8510a7)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -16,16 +16,16 @@ true: annot, bin_annot
 "_darcs": not_hygienic
 # Library qcheck
 "src/qcheck.cmxs": use_qcheck
+<src/*.ml{,i,y}>: pkg_bytes
+<src/*.ml{,i,y}>: pkg_oUnit
 <src/*.ml{,i,y}>: pkg_unix
-# Library qcheck_ounit
-"src/ounit/qcheck_ounit.cmxs": use_qcheck_ounit
 # Executable qcheck_ounit_example
-"src/ounit/QCheck_ounit_test.byte": pkg_oUnit
-"src/ounit/QCheck_ounit_test.byte": pkg_unix
-"src/ounit/QCheck_ounit_test.byte": use_qcheck
-"src/ounit/QCheck_ounit_test.byte": use_qcheck_ounit
-<src/ounit/*.ml{,i,y}>: pkg_oUnit
-<src/ounit/*.ml{,i,y}>: pkg_unix
-<src/ounit/*.ml{,i,y}>: use_qcheck
-<src/ounit/*.ml{,i,y}>: use_qcheck_ounit
+"example/QCheck_ounit_test.byte": pkg_bytes
+"example/QCheck_ounit_test.byte": pkg_oUnit
+"example/QCheck_ounit_test.byte": pkg_unix
+"example/QCheck_ounit_test.byte": use_qcheck
+<example/*.ml{,i,y}>: pkg_bytes
+<example/*.ml{,i,y}>: pkg_oUnit
+<example/*.ml{,i,y}>: pkg_unix
+<example/*.ml{,i,y}>: use_qcheck
 # OASIS_STOP

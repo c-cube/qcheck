@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 15d4931c801f56f3947aeb8afdafb9ec) *)
+(* DO NOT EDIT (digest: 583b5f931879e3abbee7a7c2c8d7df50) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -882,11 +882,10 @@ end
 open Ocamlbuild_plugin;;
 let package_default =
   {
-     MyOCamlbuildBase.lib_ocaml =
-       [("qcheck", ["src"], []); ("qcheck_ounit", ["src/ounit"], [])];
+     MyOCamlbuildBase.lib_ocaml = [("qcheck", ["src"], [])];
      lib_c = [];
      flags = [];
-     includes = [("src/ounit", ["src"])]
+     includes = [("example", ["src"])]
   }
   ;;
 
@@ -894,6 +893,6 @@ let conf = {MyOCamlbuildFindlib.no_automatic_syntax = false}
 
 let dispatch_default = MyOCamlbuildBase.dispatch_default conf package_default;;
 
-# 898 "myocamlbuild.ml"
+# 897 "myocamlbuild.ml"
 (* OASIS_STOP *)
 Ocamlbuild_plugin.dispatch dispatch_default;;
