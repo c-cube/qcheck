@@ -4,19 +4,22 @@
 <link rel="stylesheet" href="style.css" type="text/css">
 <meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
 <link rel="Start" href="index.html">
+<link rel="next" href="QCheck_runner.html">
 <link rel="Up" href="index.html">
 <link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
 <link title="Index of values" rel=Appendix href="index_values.html">
 <link title="Index of modules" rel=Appendix href="index_modules.html">
-<link title="QCheck" rel="Chapter" href="QCheck.html"><link title="Description of how to generate arbitrary values for some type" rel="Section" href="#2_Descriptionofhowtogeneratearbitraryvaluesforsometype">
-<link title="Pretty printing" rel="Section" href="#2_Prettyprinting">
-<link title="Testing" rel="Section" href="#2_Testing">
-<link title="Main" rel="Section" href="#2_Main">
+<link title="QCheck" rel="Chapter" href="QCheck.html">
+<link title="QCheck_runner" rel="Chapter" href="QCheck_runner.html"><link title="Pretty printing" rel="Section" href="#2_Prettyprinting">
+<link title="Arbitrary" rel="Section" href="#2_Arbitrary">
+<link title="Tests" rel="Section" href="#2_Tests">
 <title>QCheck</title>
 </head>
 <body>
 <div class="navbar">&nbsp;<a class="up" href="index.html" title="Index">Up</a>
-&nbsp;</div>
+&nbsp;<a class="post" href="QCheck_runner.html" title="QCheck_runner">Next</a>
+</div>
 <h1>Module <a href="type_QCheck.html">QCheck</a></h1>
 
 <pre><span class="keyword">module</span> QCheck: <code class="code">sig</code> <a href="QCheck.html">..</a> <code class="code">end</code></pre><div class="info module top">
@@ -34,19 +37,18 @@ so that the property is tried and checked on a number of random instances.
 This explains the organization of this module:
 <p>
 <ul>
-<li><a href="QCheck.Arbitrary.html"><code class="code">QCheck.Arbitrary</code></a> is used to describe how to generate random values. An
-  <code class="code">'a Arbitrary.t</code> is a random generator of values of type 'a.</li>
-<li><a href="QCheck.Prop.html"><code class="code">QCheck.Prop</code></a> is used to describe and combine properties. Especially interesting
-  is <code class="code">Prop.(==&gt;)</code>, that is such that <code class="code">a ==&gt; b</code> only checks the property <code class="code">b</code>
-  on a value <code class="code">x</code> if <code class="code">a x</code> holds (precondition).</li>
-<li><a href="QCheck.PP.html"><code class="code">QCheck.PP</code></a> describes a few combinators to print values. This is used when a
-  property fails on some instances, to print the failing instances.</li>
+<li><code class="code">'a arbitrary</code> is used to describe how to generate random values,
+  shrink them (make counter-examples as small as possible), print
+  them, etc. Auxiliary modules such as <a href="QCheck.Gen.html"><code class="code">QCheck.Gen</code></a>, <a href="QCheck.Print.html"><code class="code">QCheck.Print</code></a>, and <a href="QCheck.Shrink.html"><code class="code">QCheck.Shrink</code></a>
+  can be used along with <a href="QCheck.html#VALmake"><code class="code">QCheck.make</code></a> to build one's own arbitrary instances.</li>
 </ul>
-
-Then, a few functions are provided to test properties. Optional parameters
-allow to specify the random generator, the printer for failing cases, the
-number of instances to generate and test...
-<p>
+<ul>
+<li><a href="QCheck.Test.html"><code class="code">QCheck.Test</code></a> is used to describe a single test, that is, a property of
+  type <code class="code">'a -&gt; bool</code> combined with an <code class="code">'a arbitrary</code> that is used to generate
+  the test cases for this property. Optional parameters
+  allow to specify the random generator state, number of instances to generate
+  and test, etc.</li>
+</ul>
 
 Examples:
 <p>
@@ -54,135 +56,367 @@ Examples:
 <li>List.rev is involutive:</li>
 </ul>
 
-<pre class="codepre"><code class="code">let test = QCheck.mk_test ~n:1000 QCheck.Arbitrary.(list alpha)
-  (fun l -&gt; List.rev (List.rev l) = l);;
-QCheck.run test;;
-</code></pre><ul>
-<li>Not all lists are sorted (false property that will fail. The 15 smallest
-      counter-example lists will be printed):</li>
-</ul>
+<pre class="codepre"><code class="code">let test =
+  QCheck.(Test.make ~count:1000
+   (list int) (fun l -&gt; List.rev (List.rev l) = l));;
 
-<pre class="codepre"><code class="code">let test = QCheck.(
-  mk_test
-    ~n:10_000 ~size:List.length ~limit:15 ~pp:QCheck.PP.(list int)
-    QCheck.Arbitrary.(list small_int)
-    (fun l -&gt; l = List.sort compare l));;
-QCheck.run test;;
+QCheck.Test.run_exn test;;
 </code></pre>
 <p>
 <ul>
-<li>generate 20 random trees using <a href="QCheck.Arbitrary.html#VALfix"><code class="code">QCheck.Arbitrary.fix</code></a> :</li>
+<li>Not all lists are sorted (false property that will fail. The 15 smallest
+    counter-example lists will be printed):</li>
 </ul>
 
-<pre class="codepre"><code class="code">type tree = Int of int | Node of tree list;;
+<pre class="codepre"><code class="code">let test = QCheck.(
+  Test.make
+    ~count:10_000 ~max_fail:3
+    (list small_int)
+    (fun l -&gt; l = List.sort compare l));;
+QCheck.Test.check_exn test;;
+</code></pre>
+<p>
+<ul>
+<li>generate 20 random trees using <code class="code">Arbitrary.fix</code> :</li>
+</ul>
 
- let ar = QCheck.Arbitrary.(fix ~max:10
-  ~base:(map small_int (fun i -&gt; Int i))
-  (fun t st -&gt; Node (list t st)));;
+<pre class="codepre"><code class="code">type tree = Leaf of int | Node of tree * tree
 
- Arbitrary.generate ~n:20 ar;;
- </code></pre>
+let leaf x = Leaf x
+let node x y = Node (x,y)
+
+let g = QCheck.Gen.(sized @@ fix
+  (fun self n -&gt; match n with
+    | 0 -&gt; map leaf nat
+    | n -&gt;
+      frequency
+        [1, map leaf nat;
+         2, map2 node (self (n/2)) (self (n/2))]
+    ))
+
+Gen.generate ~n:20 g;;
+</code></pre>
 <p>
 
 More complex and powerful combinators can be found in Gabriel Scherer's
 <code class="code">Generator</code> module. Its documentation can be found
 <a href="http://gasche.github.io/random-generator/doc/Generator.html "> here</a>.<br>
-<br>
-<h2 id="2_Descriptionofhowtogeneratearbitraryvaluesforsometype">Description of how to generate arbitrary values for some type</h2><br>
 
-<pre><span class="keyword">module</span> <a href="QCheck.Arbitrary.html">Arbitrary</a>: <code class="code">sig</code> <a href="QCheck.Arbitrary.html">..</a> <code class="code">end</code></pre><br>
+<pre><span id="VAL(==>)"><span class="keyword">val</span> (==&gt;)</span> : <code class="type">bool -> bool -> bool</code></pre><div class="info ">
+<code class="code">b1 ==&gt; b2</code> is the logical implication <code class="code">b1 =&gt; b2</code>
+    ie <code class="code">not b1 || b2</code> (except that it is strict and will interact
+    better with <a href="QCheck.Test.html#VALcheck_exn"><code class="code">QCheck.Test.check_exn</code></a> and the likes, because they will know
+    the precondition was not satisfied.).<br>
+</div>
+
+<pre><span class="keyword">module</span> <a href="QCheck.Gen.html">Gen</a>: <code class="code">sig</code> <a href="QCheck.Gen.html">..</a> <code class="code">end</code></pre><div class="info">
+Generate Random Values
+</div>
+<br>
 <h2 id="2_Prettyprinting">Pretty printing</h2><br>
 
-<pre><span class="keyword">module</span> <a href="QCheck.PP.html">PP</a>: <code class="code">sig</code> <a href="QCheck.PP.html">..</a> <code class="code">end</code></pre><br>
-<h2 id="2_Testing">Testing</h2><br>
+<pre><span class="keyword">module</span> <a href="QCheck.Print.html">Print</a>: <code class="code">sig</code> <a href="QCheck.Print.html">..</a> <code class="code">end</code></pre><div class="info">
+Show Values
+</div>
+
+<pre><span class="keyword">module</span> <a href="QCheck.Iter.html">Iter</a>: <code class="code">sig</code> <a href="QCheck.Iter.html">..</a> <code class="code">end</code></pre><div class="info">
+Iterators
+</div>
+
+<pre><span class="keyword">module</span> <a href="QCheck.Shrink.html">Shrink</a>: <code class="code">sig</code> <a href="QCheck.Shrink.html">..</a> <code class="code">end</code></pre><div class="info">
+Shrink Values
+</div>
 <br>
-QCheck helps you test <b>invariants</b>, or <b>properties</b>. This submodule
-    helps dealing with such properties. A property of the <code class="code">'a</code> type
-    is a predicate <code class="code">'a -&gt; bool</code>.
+<h2 id="2_Arbitrary">Arbitrary</h2>
 <p>
 
-    If the property doesn't have to hold for all values of type <code class="code">'a</code>,
-    you can use <a href="QCheck.Prop.html#VALassume"><code class="code">QCheck.Prop.assume</code></a> or <a href="QCheck.Prop.html#VALassume_lazy"><code class="code">QCheck.Prop.assume_lazy</code></a> in the body
-    of the property. Doing so will "filter" irrelevant values
-    (the one which do not satisfy the assumption) out (in practice it raises
-    an exception).<br>
+    A value of type <code class="code">'a arbitrary</code> glues together a random generator,
+    and optional functions for shrinking, printing, computing the size,
+    etc. It is the "normal" way of describing how to generate
+    values of a given type, to be then used in tests (see <a href="QCheck.Test.html"><code class="code">QCheck.Test</code></a>)<br>
 
-<pre><span class="keyword">module</span> <a href="QCheck.Prop.html">Prop</a>: <code class="code">sig</code> <a href="QCheck.Prop.html">..</a> <code class="code">end</code></pre>
-<pre><code><span id="TYPEresult"><span class="keyword">type</span> <code class="type">'a</code> result</span> = </code></pre><table class="typetable">
+<pre><code><span id="TYPEarbitrary"><span class="keyword">type</span> <code class="type">'a</code> arbitrary</span> = {</code></pre><table class="typetable">
 <tr>
 <td align="left" valign="top" >
-<code><span class="keyword">|</span></code></td>
+<code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
-<code><span id="TYPEELTresult.Ok"><span class="constructor">Ok</span></span> <span class="keyword">of</span> <code class="type">int * int</code></code></td>
+<code><span id="TYPEELTarbitrary.gen">gen</span>&nbsp;: <code class="type">'a <a href="QCheck.Gen.html#TYPEt">Gen.t</a></code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTarbitrary.print">print</span>&nbsp;: <code class="type">('a -> string) option</code>;</code></td>
 <td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
-total number of tests / number of failed preconditions<br>
+print values<br>
 </div>
 </td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
-<code><span class="keyword">|</span></code></td>
+<code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
-<code><span id="TYPEELTresult.Failed"><span class="constructor">Failed</span></span> <span class="keyword">of</span> <code class="type">'a list</code></code></td>
+<code><span id="TYPEELTarbitrary.small">small</span>&nbsp;: <code class="type">('a -> int) option</code>;</code></td>
 <td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
-Failed instances<br>
+size of example<br>
 </div>
 </td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr>
 <tr>
 <td align="left" valign="top" >
-<code><span class="keyword">|</span></code></td>
+<code>&nbsp;&nbsp;</code></td>
 <td align="left" valign="top" >
-<code><span id="TYPEELTresult.Error"><span class="constructor">Error</span></span> <span class="keyword">of</span> <code class="type">'a option * exn</code></code></td>
+<code><span id="TYPEELTarbitrary.shrink">shrink</span>&nbsp;: <code class="type">'a <a href="QCheck.Shrink.html#TYPEt">Shrink.t</a> option</code>;</code></td>
 <td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
-Error, and possibly instance that triggered it<br>
+shrink to smaller examples<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTarbitrary.collect">collect</span>&nbsp;: <code class="type">('a -> string) option</code>;</code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+map value to tag, and group by tag<br>
 </div>
 </td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
 </tr></table>
+}
 
+<div class="info ">
+a value of type <code class="code">'a arbitrary</code> is an object with a method for generating random
+    values of type <code class="code">'a</code>, and additional methods to compute the size of values,
+    print them, and possibly shrink them into smaller counterexamples
+<p>
 
-
-<pre><span id="VALcheck"><span class="keyword">val</span> check</span> : <code class="type">?call:('a -> bool -> unit) -><br>       ?rand:Random.State.t -><br>       ?n:int -> 'a <a href="QCheck.Arbitrary.html#TYPEt">Arbitrary.t</a> -> 'a <a href="QCheck.Prop.html#TYPEt">Prop.t</a> -> 'a <a href="QCheck.html#TYPEresult">result</a></code></pre><div class="info ">
-Check that the property <code class="code">prop</code> holds on <code class="code">n</code> random instances of the type
-    'a, as generated by the arbitrary instance <code class="code">gen</code><br>
+    <b>NOTE</b> the collect field is unstable and might be removed, or
+    moved into <a href="QCheck.Test.html"><code class="code">QCheck.Test</code></a>.<br>
 </div>
-<div class="param_info"><code class="code">call</code> : function called on each test case, with the result</div>
+
+
+<pre><span id="VALmake"><span class="keyword">val</span> make</span> : <code class="type">?print:'a <a href="QCheck.Print.html#TYPEt">Print.t</a> -><br>       ?small:('a -> int) -><br>       ?shrink:'a <a href="QCheck.Shrink.html#TYPEt">Shrink.t</a> -><br>       ?collect:('a -> string) -> 'a <a href="QCheck.Gen.html#TYPEt">Gen.t</a> -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+Builder for arbitrary. Default is to only have a generator, but other
+    arguments can be added<br>
+</div>
+
+<pre><span id="VALset_print"><span class="keyword">val</span> set_print</span> : <code class="type">'a <a href="QCheck.Print.html#TYPEt">Print.t</a> -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre>
+<pre><span id="VALset_small"><span class="keyword">val</span> set_small</span> : <code class="type">('a -> int) -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre>
+<pre><span id="VALset_shrink"><span class="keyword">val</span> set_shrink</span> : <code class="type">'a <a href="QCheck.Shrink.html#TYPEt">Shrink.t</a> -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre>
+<pre><span id="VALset_collect"><span class="keyword">val</span> set_collect</span> : <code class="type">('a -> string) -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre>
+<pre><span id="VALchoose"><span class="keyword">val</span> choose</span> : <code class="type">'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> list -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+Choose among the given list of generators. The list must not
+  be empty; if it is Invalid_argument is raised.<br>
+</div>
+
+<pre><span id="VALunit"><span class="keyword">val</span> unit</span> : <code class="type">unit <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+always generates <code class="code">()</code>, obviously.<br>
+</div>
+
+<pre><span id="VALbool"><span class="keyword">val</span> bool</span> : <code class="type">bool <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+uniform boolean generator<br>
+</div>
+
+<pre><span id="VALfloat"><span class="keyword">val</span> float</span> : <code class="type">float <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><br>
+generates regular floats (no nan and no infinities)<br>
+
+<pre><span id="VALpos_float"><span class="keyword">val</span> pos_float</span> : <code class="type">float <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+positive float generator (no nan and no infinities)<br>
+</div>
+
+<pre><span id="VALneg_float"><span class="keyword">val</span> neg_float</span> : <code class="type">float <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+negative float generator (no nan and no infinities)<br>
+</div>
+
+<pre><span id="VALint"><span class="keyword">val</span> int</span> : <code class="type">int <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+int generator. Uniformly distributed<br>
+</div>
+
+<pre><span id="VALint_bound"><span class="keyword">val</span> int_bound</span> : <code class="type">int -> int <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+<code class="code">int_bound n</code> is uniform between <code class="code">0</code> and <code class="code">n</code> included<br>
+</div>
+
+<pre><span id="VALint_range"><span class="keyword">val</span> int_range</span> : <code class="type">int -> int -> int <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+<code class="code">int_range a b</code> is uniform between <code class="code">a</code> and <code class="code">b</code> included. <code class="code">b</code> must be
+    larger than <code class="code">a</code>.<br>
+</div>
+
+<pre><span id="VAL(--)"><span class="keyword">val</span> (--)</span> : <code class="type">int -> int -> int <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+Synonym to <a href="QCheck.html#VALint_range"><code class="code">QCheck.int_range</code></a><br>
+</div>
+
+<pre><span id="VALint32"><span class="keyword">val</span> int32</span> : <code class="type">int32 <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+int32 generator. Uniformly distributed<br>
+</div>
+
+<pre><span id="VALint64"><span class="keyword">val</span> int64</span> : <code class="type">int64 <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+int generator. Uniformly distributed<br>
+</div>
+
+<pre><span id="VALpos_int"><span class="keyword">val</span> pos_int</span> : <code class="type">int <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+positive int generator. Uniformly distributed<br>
+</div>
+
+<pre><span id="VALsmall_int"><span class="keyword">val</span> small_int</span> : <code class="type">int <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+positive int generator. The probability that a number is chosen
+    is roughly an exponentially decreasing function of the number.<br>
+</div>
+
+<pre><span id="VALsmall_int_corners"><span class="keyword">val</span> small_int_corners</span> : <code class="type">unit -> int <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+As <code class="code">small_int</code>, but each newly created generator starts with
+ a list of corner cases before falling back on random generation.<br>
+</div>
+
+<pre><span id="VALneg_int"><span class="keyword">val</span> neg_int</span> : <code class="type">int <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+negative int generator. The distribution is similar to that of
+    <code class="code">small_int</code>, not of <code class="code">pos_int</code>.<br>
+</div>
+
+<pre><span id="VALchar"><span class="keyword">val</span> char</span> : <code class="type">char <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+Uniformly distributed on all the chars (not just ascii or
+    valid latin-1)<br>
+</div>
+
+<pre><span id="VALprintable_char"><span class="keyword">val</span> printable_char</span> : <code class="type">char <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><br>
+uniformly distributed over a subset of chars<br>
+
+<pre><span id="VALnumeral_char"><span class="keyword">val</span> numeral_char</span> : <code class="type">char <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+uniformy distributed over <code class="code">'0'..'9'</code><br>
+</div>
+
+<pre><span id="VALstring_gen_of_size"><span class="keyword">val</span> string_gen_of_size</span> : <code class="type">int <a href="QCheck.Gen.html#TYPEt">Gen.t</a> -> char <a href="QCheck.Gen.html#TYPEt">Gen.t</a> -> string <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre>
+<pre><span id="VALstring_gen"><span class="keyword">val</span> string_gen</span> : <code class="type">char <a href="QCheck.Gen.html#TYPEt">Gen.t</a> -> string <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+generates strings with a distribution of length of <code class="code">small_int</code><br>
+</div>
+
+<pre><span id="VALstring"><span class="keyword">val</span> string</span> : <code class="type">string <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+generates strings with a distribution of length of <code class="code">small_int</code>
+    and distribution of characters of <code class="code">char</code><br>
+</div>
+
+<pre><span id="VALsmall_string"><span class="keyword">val</span> small_string</span> : <code class="type">string <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+Same as <a href="QCheck.html#VALstring"><code class="code">QCheck.string</code></a> but with a small length (that is, <code class="code">0--10</code>)<br>
+</div>
+
+<pre><span id="VALstring_of_size"><span class="keyword">val</span> string_of_size</span> : <code class="type">int <a href="QCheck.Gen.html#TYPEt">Gen.t</a> -> string <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+generates strings with distribution of characters if <code class="code">char</code><br>
+</div>
+
+<pre><span id="VALprintable_string"><span class="keyword">val</span> printable_string</span> : <code class="type">string <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+generates strings with a distribution of length of <code class="code">small_int</code>
+    and distribution of characters of <code class="code">printable_char</code><br>
+</div>
+
+<pre><span id="VALprintable_string_of_size"><span class="keyword">val</span> printable_string_of_size</span> : <code class="type">int <a href="QCheck.Gen.html#TYPEt">Gen.t</a> -> string <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+generates strings with distribution of characters of <code class="code">printable_char</code><br>
+</div>
+
+<pre><span id="VALsmall_printable_string"><span class="keyword">val</span> small_printable_string</span> : <code class="type">string <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre>
+<pre><span id="VALnumeral_string"><span class="keyword">val</span> numeral_string</span> : <code class="type">string <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+generates strings with a distribution of length of <code class="code">small_int</code>
+    and distribution of characters of <code class="code">numeral_char</code><br>
+</div>
+
+<pre><span id="VALnumeral_string_of_size"><span class="keyword">val</span> numeral_string_of_size</span> : <code class="type">int <a href="QCheck.Gen.html#TYPEt">Gen.t</a> -> string <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+generates strings with a distribution of characters of <code class="code">numeral_char</code><br>
+</div>
+
+<pre><span id="VALlist"><span class="keyword">val</span> list</span> : <code class="type">'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'a list <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+generates lists with length generated by <code class="code">small_int</code><br>
+</div>
+
+<pre><span id="VALlist_of_size"><span class="keyword">val</span> list_of_size</span> : <code class="type">int <a href="QCheck.Gen.html#TYPEt">Gen.t</a> -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'a list <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+generates lists with length from the given distribution<br>
+</div>
+
+<pre><span id="VALarray"><span class="keyword">val</span> array</span> : <code class="type">'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'a array <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+generates arrays with length generated by <code class="code">small_int</code><br>
+</div>
+
+<pre><span id="VALarray_of_size"><span class="keyword">val</span> array_of_size</span> : <code class="type">int <a href="QCheck.Gen.html#TYPEt">Gen.t</a> -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'a array <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+generates arrays with length from the given distribution<br>
+</div>
+
+<pre><span id="VALpair"><span class="keyword">val</span> pair</span> : <code class="type">'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'b <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> ('a * 'b) <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+combines two generators into a generator of pairs<br>
+</div>
+
+<pre><span id="VALtriple"><span class="keyword">val</span> triple</span> : <code class="type">'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -><br>       'b <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'c <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> ('a * 'b * 'c) <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+combines three generators into a generator of 3-uples<br>
+</div>
+
+<pre><span id="VALoption"><span class="keyword">val</span> option</span> : <code class="type">'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'a option <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+choose between returning Some random value, or None<br>
+</div>
+
+<pre><span id="VALfun1"><span class="keyword">val</span> fun1</span> : <code class="type">'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'b <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> ('a -> 'b) <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+generator of functions of arity 1.
+    The functions are always pure and total functions:<ul>
+<li>when given the same argument (as decided by Pervasives.(=)), it returns the same value</li>
+<li>it never does side effects, like printing or never raise exceptions etc.
+    The functions generated are really printable.</li>
+</ul>
 <br>
-<h2 id="2_Main">Main</h2><br>
-
-<pre><span id="TYPEtest"><span class="keyword">type</span> <code class="type"></code>test</span> </pre>
-<div class="info ">
-A single property test<br>
 </div>
 
-
-<pre><span id="VALname"><span class="keyword">val</span> name</span> : <code class="type"><a href="QCheck.html#TYPEtest">test</a> -> string option</code></pre>
-<pre><span id="VALmk_test"><span class="keyword">val</span> mk_test</span> : <code class="type">?n:int -><br>       ?pp:'a <a href="QCheck.PP.html#TYPEt">PP.t</a> -><br>       ?name:string -><br>       ?size:('a -> int) -><br>       ?limit:int -> 'a <a href="QCheck.Arbitrary.html#TYPEt">Arbitrary.t</a> -> 'a <a href="QCheck.Prop.html#TYPEt">Prop.t</a> -> <a href="QCheck.html#TYPEtest">test</a></code></pre><div class="info ">
-Construct a test. Optional parameters are the same as for <a href="QCheck.html#VALrun"><code class="code">QCheck.run</code></a>.<br>
-</div>
-<div class="param_info"><code class="code">pp</code> : is a pretty printer for failing instances</div>
-<div class="param_info"><code class="code">name</code> : is the name of the property that is checked</div>
-
-<pre><span id="VALrun"><span class="keyword">val</span> run</span> : <code class="type">?verbose:bool -><br>       ?out:Pervasives.out_channel -> ?rand:Random.State.t -> <a href="QCheck.html#TYPEtest">test</a> -> bool</code></pre><div class="info ">
-Run a test and print results<br>
+<pre><span id="VALfun2"><span class="keyword">val</span> fun2</span> : <code class="type">'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -><br>       'b <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -><br>       'c <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> ('a -> 'b -> 'c) <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+generator of functions of arity 2. The remark about <code class="code">fun1</code> also apply
+    here.<br>
 </div>
 
-<pre><span id="TYPEsuite"><span class="keyword">type</span> <code class="type"></code>suite</span> = <code class="type"><a href="QCheck.html#TYPEtest">test</a> list</code> </pre>
-<div class="info ">
-A test suite is a list of tests<br>
+<pre><span id="VALoneofl"><span class="keyword">val</span> oneofl</span> : <code class="type">?print:'a <a href="QCheck.Print.html#TYPEt">Print.t</a> -><br>       ?collect:('a -> string) -> 'a list -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+Pick an element randomly in the list<br>
 </div>
 
-
-<pre><span id="VALflatten"><span class="keyword">val</span> flatten</span> : <code class="type"><a href="QCheck.html#TYPEsuite">suite</a> list -> <a href="QCheck.html#TYPEsuite">suite</a></code></pre>
-<pre><span id="VALrun_tests"><span class="keyword">val</span> run_tests</span> : <code class="type">?verbose:bool -><br>       ?out:Pervasives.out_channel -> ?rand:Random.State.t -> <a href="QCheck.html#TYPEsuite">suite</a> -> bool</code></pre><div class="info ">
-Run a suite of tests, and print its results<br>
-<b>Since</b> 0.4)<br>
+<pre><span id="VALoneofa"><span class="keyword">val</span> oneofa</span> : <code class="type">?print:'a <a href="QCheck.Print.html#TYPEt">Print.t</a> -><br>       ?collect:('a -> string) -> 'a array -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+Pick an element randomly in the array<br>
 </div>
-<div class="param_info"><code class="code">verbose</code> : if true, prints more information about test cases (</div>
 
-<pre><span id="VALrun_main"><span class="keyword">val</span> run_main</span> : <code class="type">?argv:string array -> <a href="QCheck.html#TYPEsuite">suite</a> -> unit</code></pre><div class="info ">
-Can be used as the main function of a test file. Exits with a non-0 code
-    if the tests fail.<br>
-<b>Since</b> 0.4<br>
+<pre><span id="VALoneof"><span class="keyword">val</span> oneof</span> : <code class="type">'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> list -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+Pick a generator among the list, randomly<br>
 </div>
-</body></html>
+
+<pre><span id="VALalways"><span class="keyword">val</span> always</span> : <code class="type">?print:'a <a href="QCheck.Print.html#TYPEt">Print.t</a> -> 'a -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+Always return the same element<br>
+</div>
+
+<pre><span id="VALfrequency"><span class="keyword">val</span> frequency</span> : <code class="type">?print:'a <a href="QCheck.Print.html#TYPEt">Print.t</a> -><br>       ?small:('a -> int) -><br>       ?shrink:'a <a href="QCheck.Shrink.html#TYPEt">Shrink.t</a> -><br>       ?collect:('a -> string) -><br>       (int * 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a>) list -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+Similar to <a href="QCheck.html#VALoneof"><code class="code">QCheck.oneof</code></a> but with frequencies<br>
+</div>
+
+<pre><span id="VALfrequencyl"><span class="keyword">val</span> frequencyl</span> : <code class="type">?print:'a <a href="QCheck.Print.html#TYPEt">Print.t</a> -><br>       ?small:('a -> int) -> (int * 'a) list -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+Same as <a href="QCheck.html#VALoneofl"><code class="code">QCheck.oneofl</code></a>, but each element is paired with its frequency in
+    the probability distribution (the higher, the more likely)<br>
+</div>
+
+<pre><span id="VALfrequencya"><span class="keyword">val</span> frequencya</span> : <code class="type">?print:'a <a href="QCheck.Print.html#TYPEt">Print.t</a> -><br>       ?small:('a -> int) -> (int * 'a) array -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+Same as <a href="QCheck.html#VALfrequencyl"><code class="code">QCheck.frequencyl</code></a>, but with an array<br>
+</div>
+
+<pre><span id="VALmap"><span class="keyword">val</span> map</span> : <code class="type">?rev:('b -> 'a) -> ('a -> 'b) -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'b <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+<code class="code">map f a</code> returns a new arbitrary instance that generates values using
+    <code class="code">a#gen</code> and then transforms them through <code class="code">f</code>.<br>
+</div>
+<div class="param_info"><code class="code">rev</code> : if provided, maps values back to type <code class="code">'a</code> so that the printer,
+      shrinker, etc. of <code class="code">a</code> can be used. We assume <code class="code">f</code> is monotonic in
+      this case (that is, smaller inputs are transformed into smaller outputs).</div>
+
+<pre><span id="VALmap_same_type"><span class="keyword">val</span> map_same_type</span> : <code class="type">('a -> 'a) -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+Specialization of <code class="code">map</code> when the transformation preserves the type, which
+   makes shrinker, printer, etc. still relevant<br>
+</div>
+
+<pre><span id="VALmap_keep_input"><span class="keyword">val</span> map_keep_input</span> : <code class="type">?print:'b <a href="QCheck.Print.html#TYPEt">Print.t</a> -><br>       ?small:('b -> int) -><br>       ('a -> 'b) -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> ('a * 'b) <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+<code class="code">map_keep_input f a</code> generates random values from <code class="code">a</code>, and maps them into
+    values of type <code class="code">'b</code> using the function <code class="code">f</code>, but it also keeps  the
+    original value.
+    For shrinking, it is assumed that <code class="code">f</code> is monotonic and that smaller input
+      values will map into smaller values<br>
+</div>
+<div class="param_info"><code class="code">print</code> : optional printer for the <code class="code">f</code>'s output</div>
+<br>
+<h2 id="2_Tests">Tests</h2><br>
+
+<pre><span class="keyword">module</span> <a href="QCheck.TestResult.html">TestResult</a>: <code class="code">sig</code> <a href="QCheck.TestResult.html">..</a> <code class="code">end</code></pre>
+<pre><span class="keyword">module</span> <a href="QCheck.Test.html">Test</a>: <code class="code">sig</code> <a href="QCheck.Test.html">..</a> <code class="code">end</code></pre></body></html>

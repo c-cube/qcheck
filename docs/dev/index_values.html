@@ -4,9 +4,11 @@
 <meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
 <link rel="Start" href="index.html">
 <link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of exceptions" rel=Appendix href="index_exceptions.html">
 <link title="Index of values" rel=Appendix href="index_values.html">
 <link title="Index of modules" rel=Appendix href="index_modules.html">
-<link title="QCheck" rel="Chapter" href="QCheck.html"><title>Index of values</title>
+<link title="QCheck" rel="Chapter" href="QCheck.html">
+<link title="QCheck_runner" rel="Chapter" href="QCheck_runner.html"><title>Index of values</title>
 </head>
 <body>
 <div class="navbar">&nbsp;<a class="up" href="index.html" title="Index">Up</a>
@@ -14,293 +16,630 @@
 <h1>Index of values</h1>
 <table>
 <tr><td align="left"><br></td></tr>
-<tr><td><a href="QCheck.Prop.html#VAL(!!!)">(!!!)</a> [<a href="QCheck.Prop.html">QCheck.Prop</a>]</td>
+<tr><td><a href="QCheck.Gen.html#VAL(--)">(--)</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
 <td><div class="info">
-Logical 'not' on tests
+Synonym to <a href="QCheck.Gen.html#VALint_range"><code class="code">QCheck.Gen.int_range</code></a>
 </div>
 </td></tr>
-<tr><td><a href="QCheck.Prop.html#VAL(&&&)">(&amp;&amp;&amp;)</a> [<a href="QCheck.Prop.html">QCheck.Prop</a>]</td>
+<tr><td><a href="QCheck.html#VAL(--)">(--)</a> [<a href="QCheck.html">QCheck</a>]</td>
 <td><div class="info">
-Logical 'and' on tests
+Synonym to <a href="QCheck.html#VALint_range"><code class="code">QCheck.int_range</code></a>
 </div>
 </td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VAL(--)">(--)</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.Iter.html#VAL(<*>)">(&lt;*&gt;)</a> [<a href="QCheck.Iter.html">QCheck.Iter</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VAL(<*>)">(&lt;*&gt;)</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Iter.html#VAL(<+>)">(&lt;+&gt;)</a> [<a href="QCheck.Iter.html">QCheck.Iter</a>]</td>
 <td><div class="info">
-Infix synonym for <a href="QCheck.Arbitrary.html#VALint_range"><code class="code">QCheck.Arbitrary.int_range</code></a>
+Synonym to <a href="QCheck.Iter.html#VALappend"><code class="code">QCheck.Iter.append</code></a>
 </div>
 </td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VAL(<*>)">(&lt;*&gt;)</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.html#VAL(==>)">(==&gt;)</a> [<a href="QCheck.html">QCheck</a>]</td>
 <td><div class="info">
+<code class="code">b1 ==&gt; b2</code> is the logical implication <code class="code">b1 =&gt; b2</code>
+    ie <code class="code">not b1 || b2</code> (except that it is strict and will interact
+    better with <a href="QCheck.Test.html#VALcheck_exn"><code class="code">QCheck.Test.check_exn</code></a> and the likes, because they will know
+    the precondition was not satisfied.).
 </div>
 </td></tr>
-<tr><td><a href="QCheck.Prop.html#VAL(==>)">(==&gt;)</a> [<a href="QCheck.Prop.html">QCheck.Prop</a>]</td>
+<tr><td><a href="QCheck_runner.html#VAL(>:::)">(&gt;:::)</a> [<a href="QCheck_runner.html">QCheck_runner</a>]</td>
 <td><div class="info">
-Precondition for a test
+Same as <code class="code">OUnit.&gt;:::</code> but with a list of QCheck tests
 </div>
 </td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VAL(>>=)">(&gt;&gt;=)</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
-<td><div class="info">
-Monadic bind
-</div>
-</td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VAL(>|=)">(&gt;|=)</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
-<td><div class="info">
-</div>
-</td></tr>
-<tr><td><a href="QCheck.Prop.html#VAL(|||)">(|||)</a> [<a href="QCheck.Prop.html">QCheck.Prop</a>]</td>
-<td><div class="info">
-Logical 'or' on tests
-</div>
-</td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VAL(|||)">(|||)</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
-<td><div class="info">
-Choice among two generators.
-</div>
-</td></tr>
+<tr><td><a href="QCheck.Iter.html#VAL(>>=)">(&gt;&gt;=)</a> [<a href="QCheck.Iter.html">QCheck.Iter</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VAL(>>=)">(&gt;&gt;=)</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Iter.html#VAL(>|=)">(&gt;|=)</a> [<a href="QCheck.Iter.html">QCheck.Iter</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VAL(>|=)">(&gt;|=)</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
 <tr><td align="left"><br>A</td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALalpha">alpha</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.html#VALalways">always</a> [<a href="QCheck.html">QCheck</a>]</td>
 <td><div class="info">
-Alphabetic char
+Always return the same element
 </div>
 </td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALamong">among</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
-<td><div class="info">
-Choose an element among those of the list
-</div>
-</td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALamong_array">among_array</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
-<td><div class="info">
-Choose in the array
-</div>
-</td></tr>
-<tr><td><a href="QCheck.PP.html#VALarray">array</a> [<a href="QCheck.PP.html">QCheck.PP</a>]</td>
+<tr><td><a href="QCheck.Iter.html#VALappend">append</a> [<a href="QCheck.Iter.html">QCheck.Iter</a>]</td>
 <td></td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALarray">array</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.Shrink.html#VALarray">array</a> [<a href="QCheck.Shrink.html">QCheck.Shrink</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Print.html#VALarray">array</a> [<a href="QCheck.Print.html">QCheck.Print</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VALarray">array</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALarray">array</a> [<a href="QCheck.html">QCheck</a>]</td>
 <td><div class="info">
-Random array of random length
+generates arrays with length generated by <code class="code">small_int</code>
 </div>
 </td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALarray_repeat">array_repeat</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.html#VALarray_of_size">array_of_size</a> [<a href="QCheck.html">QCheck</a>]</td>
 <td><div class="info">
-Random array of given length
+generates arrays with length from the given distribution
 </div>
 </td></tr>
-<tr><td><a href="QCheck.Prop.html#VALassume">assume</a> [<a href="QCheck.Prop.html">QCheck.Prop</a>]</td>
-<td><div class="info">
-Assume the given precondition holds.
-</div>
-</td></tr>
-<tr><td><a href="QCheck.Prop.html#VALassume_lazy">assume_lazy</a> [<a href="QCheck.Prop.html">QCheck.Prop</a>]</td>
-<td><div class="info">
-Assume the given (lazy) precondition holds.
-</div>
-</td></tr>
+<tr><td><a href="QCheck.Gen.html#VALarray_repeat">array_repeat</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VALarray_size">array_size</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
 <tr><td align="left"><br>B</td></tr>
-<tr><td><a href="QCheck.PP.html#VALbool">bool</a> [<a href="QCheck.PP.html">QCheck.PP</a>]</td>
+<tr><td><a href="QCheck.Print.html#VALbool">bool</a> [<a href="QCheck.Print.html">QCheck.Print</a>]</td>
 <td></td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALbool">bool</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.Gen.html#VALbool">bool</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALbool">bool</a> [<a href="QCheck.html">QCheck</a>]</td>
 <td><div class="info">
-Arbitrary boolean
+uniform boolean generator
 </div>
 </td></tr>
 <tr><td align="left"><br>C</td></tr>
-<tr><td><a href="QCheck.PP.html#VALchar">char</a> [<a href="QCheck.PP.html">QCheck.PP</a>]</td>
+<tr><td><a href="QCheck.Print.html#VALchar">char</a> [<a href="QCheck.Print.html">QCheck.Print</a>]</td>
 <td></td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALchar">char</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.Gen.html#VALchar">char</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALchar">char</a> [<a href="QCheck.html">QCheck</a>]</td>
 <td><div class="info">
-A (printable) char
+Uniformly distributed on all the chars (not just ascii or
+    valid latin-1)
 </div>
 </td></tr>
-<tr><td><a href="QCheck.html#VALcheck">check</a> [<a href="QCheck.html">QCheck</a>]</td>
+<tr><td><a href="QCheck.Test.html#VALcheck_cell">check_cell</a> [<a href="QCheck.Test.html">QCheck.Test</a>]</td>
 <td><div class="info">
-Check that the property <code class="code">prop</code> holds on <code class="code">n</code> random instances of the type
-    'a, as generated by the arbitrary instance <code class="code">gen</code>
+<code class="code">check ~rand test</code> generates up to <code class="code">count</code> random
+      values of type <code class="code">'a</code> using <code class="code">arbitrary</code> and the random state <code class="code">st</code>.
 </div>
 </td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALchoose">choose</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.Test.html#VALcheck_cell_exn">check_cell_exn</a> [<a href="QCheck.Test.html">QCheck.Test</a>]</td>
 <td><div class="info">
-Choice among a list generators
+Same as <a href="QCheck.Test.html#VALcheck_cell"><code class="code">QCheck.Test.check_cell</code></a> but calls  <a href="QCheck.Test.html#VALcheck_result"><code class="code">QCheck.Test.check_result</code></a> on the result.
 </div>
 </td></tr>
+<tr><td><a href="QCheck.Test.html#VALcheck_exn">check_exn</a> [<a href="QCheck.Test.html">QCheck.Test</a>]</td>
+<td><div class="info">
+Same as <a href="QCheck.Test.html#VALcheck_cell"><code class="code">QCheck.Test.check_cell</code></a> but calls  <a href="QCheck.Test.html#VALcheck_result"><code class="code">QCheck.Test.check_result</code></a> on the result.
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Test.html#VALcheck_result">check_result</a> [<a href="QCheck.Test.html">QCheck.Test</a>]</td>
+<td><div class="info">
+<code class="code">check_result cell res</code> checks that <code class="code">res</code> is <code class="code">Ok _</code>, and returns unit.
+</div>
+</td></tr>
+<tr><td><a href="QCheck.html#VALchoose">choose</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+Choose among the given list of generators.
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Print.html#VALcomap">comap</a> [<a href="QCheck.Print.html">QCheck.Print</a>]</td>
+<td></td></tr>
+<tr><td align="left"><br>E</td></tr>
+<tr><td><a href="QCheck.Iter.html#VALempty">empty</a> [<a href="QCheck.Iter.html">QCheck.Iter</a>]</td>
+<td></td></tr>
 <tr><td align="left"><br>F</td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALfail_fix">fail_fix</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
-<td><div class="info">
-Function used to indicate that, in <a href="QCheck.Arbitrary.html#VALfix_fuel"><code class="code">QCheck.Arbitrary.fix_fuel</code></a>, a sub-case is
-        impossible to fulfill.
-</div>
-</td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALfix">fix</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
-<td><div class="info">
-Recursive arbitrary values.
-</div>
-</td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALfix_depth">fix_depth</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
-<td><div class="info">
-Recursive values of at most given random depth
-</div>
-</td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALfix_fuel">fix_fuel</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
-<td><div class="info">
-<code class="code">fix_fuel l fuel</code> consumes <code class="code">fuel</code> in recursive subcases.
-</div>
-</td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALfix_fuel_gen">fix_fuel_gen</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
-<td><div class="info">
-<code class="code">fix_fuel_gen l state fuel</code> consumes <code class="code">fuel</code> in recursive subcases, similar
-        to what <code class="code">fix_fuel l fuel</code> would do, but more general because a
-        "state" is passed bottom-up.
-</div>
-</td></tr>
-<tr><td><a href="QCheck.html#VALflatten">flatten</a> [<a href="QCheck.html">QCheck</a>]</td>
+<tr><td><a href="QCheck.Iter.html#VALfind">find</a> [<a href="QCheck.Iter.html">QCheck.Iter</a>]</td>
 <td></td></tr>
-<tr><td><a href="QCheck.PP.html#VALfloat">float</a> [<a href="QCheck.PP.html">QCheck.PP</a>]</td>
-<td></td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALfloat">float</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.Gen.html#VALfix">fix</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
 <td><div class="info">
-Random float
+Fixpoint; size decreases
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Print.html#VALfloat">float</a> [<a href="QCheck.Print.html">QCheck.Print</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VALfloat">float</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALfloat">float</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VALfrequency">frequency</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALfrequency">frequency</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+Similar to <a href="QCheck.html#VALoneof"><code class="code">QCheck.oneof</code></a> but with frequencies
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Gen.html#VALfrequencya">frequencya</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALfrequencya">frequencya</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+Same as <a href="QCheck.html#VALfrequencyl"><code class="code">QCheck.frequencyl</code></a>, but with an array
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Gen.html#VALfrequencyl">frequencyl</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALfrequencyl">frequencyl</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+Same as <a href="QCheck.html#VALoneofl"><code class="code">QCheck.oneofl</code></a>, but each element is paired with its frequency in
+    the probability distribution (the higher, the more likely)
+</div>
+</td></tr>
+<tr><td><a href="QCheck.html#VALfun1">fun1</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+generator of functions of arity 1.
+</div>
+</td></tr>
+<tr><td><a href="QCheck.html#VALfun2">fun2</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+generator of functions of arity 2.
 </div>
 </td></tr>
 <tr><td align="left"><br>G</td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALgenerate">generate</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.Gen.html#VALgenerate">generate</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
 <td><div class="info">
-Generate <code class="code">n</code> random values of the given type
+<code class="code">generate ~n g</code> generates <code class="code">n</code> instances of <code class="code">g</code>
 </div>
 </td></tr>
+<tr><td><a href="QCheck.Gen.html#VALgenerate1">generate1</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td><div class="info">
+<code class="code">generate1 g</code> generates one instance of <code class="code">g</code>
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Test.html#VALget_arbitrary">get_arbitrary</a> [<a href="QCheck.Test.html">QCheck.Test</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Test.html#VALget_law">get_law</a> [<a href="QCheck.Test.html">QCheck.Test</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Test.html#VALget_name">get_name</a> [<a href="QCheck.Test.html">QCheck.Test</a>]</td>
+<td></td></tr>
 <tr><td align="left"><br>I</td></tr>
-<tr><td><a href="QCheck.PP.html#VALint">int</a> [<a href="QCheck.PP.html">QCheck.PP</a>]</td>
+<tr><td><a href="QCheck.Shrink.html#VALint">int</a> [<a href="QCheck.Shrink.html">QCheck.Shrink</a>]</td>
 <td></td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALint">int</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.Print.html#VALint">int</a> [<a href="QCheck.Print.html">QCheck.Print</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VALint">int</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
 <td><div class="info">
-Any integer between 0 (inclusive) and the given higher bound (exclusive)
+uniform int
 </div>
 </td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALint_range">int_range</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
-<td></td></tr>
+<tr><td><a href="QCheck.html#VALint">int</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+int generator.
+</div>
+</td></tr>
+<tr><td><a href="QCheck.html#VALint32">int32</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+int32 generator.
+</div>
+</td></tr>
+<tr><td><a href="QCheck.html#VALint64">int64</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+int generator.
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Gen.html#VALint_bound">int_bound</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td><div class="info">
+Uniform within <code class="code">0... bound</code>
+</div>
+</td></tr>
+<tr><td><a href="QCheck.html#VALint_bound">int_bound</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+<code class="code">int_bound n</code> is uniform between <code class="code">0</code> and <code class="code">n</code> included
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Gen.html#VALint_range">int_range</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td><div class="info">
+Uniform within <code class="code">low,high</code>
+</div>
+</td></tr>
+<tr><td><a href="QCheck.html#VALint_range">int_range</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+<code class="code">int_range a b</code> is uniform between <code class="code">a</code> and <code class="code">b</code> included.
+</div>
+</td></tr>
+<tr><td align="left"><br>J</td></tr>
+<tr><td><a href="QCheck.Gen.html#VALjoin">join</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td><div class="info">
+</div>
+</td></tr>
 <tr><td align="left"><br>L</td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALlift">lift</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.Shrink.html#VALlist">list</a> [<a href="QCheck.Shrink.html">QCheck.Shrink</a>]</td>
 <td></td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALlift2">lift2</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.Print.html#VALlist">list</a> [<a href="QCheck.Print.html">QCheck.Print</a>]</td>
 <td></td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALlift3">lift3</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.Gen.html#VALlist">list</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
 <td></td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALlift4">lift4</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
-<td></td></tr>
-<tr><td><a href="QCheck.PP.html#VALlist">list</a> [<a href="QCheck.PP.html">QCheck.PP</a>]</td>
-<td></td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALlist">list</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.html#VALlist">list</a> [<a href="QCheck.html">QCheck</a>]</td>
 <td><div class="info">
-List of arbitrary length.
+generates lists with length generated by <code class="code">small_int</code>
 </div>
 </td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALlist_repeat">list_repeat</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.html#VALlist_of_size">list_of_size</a> [<a href="QCheck.html">QCheck</a>]</td>
 <td><div class="info">
-Lists of given length exactly
+generates lists with length from the given distribution
 </div>
 </td></tr>
+<tr><td><a href="QCheck.Gen.html#VALlist_repeat">list_repeat</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VALlist_size">list_size</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
 <tr><td align="left"><br>M</td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALmap">map</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.Test.html#VALmake">make</a> [<a href="QCheck.Test.html">QCheck.Test</a>]</td>
 <td><div class="info">
-Transform an arbitrary into another
+<code class="code">make arb prop</code> builds a test that checks property <code class="code">prop</code> on instances
+      of the generator <code class="code">arb</code>.
 </div>
 </td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALmap'">map'</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.html#VALmake">make</a> [<a href="QCheck.html">QCheck</a>]</td>
 <td><div class="info">
+Builder for arbitrary.
 </div>
 </td></tr>
-<tr><td><a href="QCheck.html#VALmk_test">mk_test</a> [<a href="QCheck.html">QCheck</a>]</td>
+<tr><td><a href="QCheck.Test.html#VALmake_cell">make_cell</a> [<a href="QCheck.Test.html">QCheck.Test</a>]</td>
 <td><div class="info">
-Construct a test.
+<code class="code">make arb prop</code> builds a test that checks property <code class="code">prop</code> on instances
+      of the generator <code class="code">arb</code>.
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Iter.html#VALmap">map</a> [<a href="QCheck.Iter.html">QCheck.Iter</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VALmap">map</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALmap">map</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+<code class="code">map f a</code> returns a new arbitrary instance that generates values using
+    <code class="code">a#gen</code> and then transforms them through <code class="code">f</code>.
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Iter.html#VALmap2">map2</a> [<a href="QCheck.Iter.html">QCheck.Iter</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VALmap2">map2</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VALmap3">map3</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VALmap_keep_input">map_keep_input</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALmap_keep_input">map_keep_input</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+<code class="code">map_keep_input f a</code> generates random values from <code class="code">a</code>, and maps them into
+    values of type <code class="code">'b</code> using the function <code class="code">f</code>, but it also keeps  the
+    original value.
+</div>
+</td></tr>
+<tr><td><a href="QCheck.html#VALmap_same_type">map_same_type</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+Specialization of <code class="code">map</code> when the transformation preserves the type, which
+   makes shrinker, printer, etc.
 </div>
 </td></tr>
 <tr><td align="left"><br>N</td></tr>
-<tr><td><a href="QCheck.html#VALname">name</a> [<a href="QCheck.html">QCheck</a>]</td>
-<td></td></tr>
-<tr><td align="left"><br>O</td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALopt">opt</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.Gen.html#VALnat">nat</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
 <td><div class="info">
-May return a value, or None
+small nat
+</div>
+</td></tr>
+<tr><td><a href="QCheck.html#VALneg_float">neg_float</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+negative float generator (no nan and no infinities)
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Gen.html#VALneg_int">neg_int</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td><div class="info">
+negative int
+</div>
+</td></tr>
+<tr><td><a href="QCheck.html#VALneg_int">neg_int</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+negative int generator.
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Gen.html#VALnfloat">nfloat</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td><div class="info">
+negative float
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Shrink.html#VALnil">nil</a> [<a href="QCheck.Shrink.html">QCheck.Shrink</a>]</td>
+<td><div class="info">
+No shrink
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Gen.html#VALnumeral">numeral</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALnumeral_char">numeral_char</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+uniformy distributed over <code class="code">'0'..'9'</code>
+</div>
+</td></tr>
+<tr><td><a href="QCheck.html#VALnumeral_string">numeral_string</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+generates strings with a distribution of length of <code class="code">small_int</code>
+    and distribution of characters of <code class="code">numeral_char</code>
+</div>
+</td></tr>
+<tr><td><a href="QCheck.html#VALnumeral_string_of_size">numeral_string_of_size</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+generates strings with a distribution of characters of <code class="code">numeral_char</code>
+</div>
+</td></tr>
+<tr><td align="left"><br>O</td></tr>
+<tr><td><a href="QCheck.Iter.html#VALof_array">of_array</a> [<a href="QCheck.Iter.html">QCheck.Iter</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Iter.html#VALof_list">of_list</a> [<a href="QCheck.Iter.html">QCheck.Iter</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VALoneof">oneof</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALoneof">oneof</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+Pick a generator among the list, randomly
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Gen.html#VALoneofa">oneofa</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALoneofa">oneofa</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+Pick an element randomly in the array
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Gen.html#VALoneofl">oneofl</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALoneofl">oneofl</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+Pick an element randomly in the list
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Gen.html#VALopt">opt</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Shrink.html#VALoption">option</a> [<a href="QCheck.Shrink.html">QCheck.Shrink</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Print.html#VALoption">option</a> [<a href="QCheck.Print.html">QCheck.Print</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALoption">option</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+choose between returning Some random value, or None
 </div>
 </td></tr>
 <tr><td align="left"><br>P</td></tr>
-<tr><td><a href="QCheck.PP.html#VALpair">pair</a> [<a href="QCheck.PP.html">QCheck.PP</a>]</td>
+<tr><td><a href="QCheck.Shrink.html#VALpair">pair</a> [<a href="QCheck.Shrink.html">QCheck.Shrink</a>]</td>
 <td></td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALpair">pair</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.Iter.html#VALpair">pair</a> [<a href="QCheck.Iter.html">QCheck.Iter</a>]</td>
 <td></td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALpure">pure</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.Print.html#VALpair">pair</a> [<a href="QCheck.Print.html">QCheck.Print</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VALpair">pair</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALpair">pair</a> [<a href="QCheck.html">QCheck</a>]</td>
 <td><div class="info">
+combines two generators into a generator of pairs
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Gen.html#VALpfloat">pfloat</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td><div class="info">
+positive float
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Gen.html#VALpint">pint</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td><div class="info">
+positive uniform int
+</div>
+</td></tr>
+<tr><td><a href="QCheck.html#VALpos_float">pos_float</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+positive float generator (no nan and no infinities)
+</div>
+</td></tr>
+<tr><td><a href="QCheck.html#VALpos_int">pos_int</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+positive int generator.
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Test.html#VALprint_c_ex">print_c_ex</a> [<a href="QCheck.Test.html">QCheck.Test</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Test.html#VALprint_error">print_error</a> [<a href="QCheck.Test.html">QCheck.Test</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Test.html#VALprint_fail">print_fail</a> [<a href="QCheck.Test.html">QCheck.Test</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Test.html#VALprint_instance">print_instance</a> [<a href="QCheck.Test.html">QCheck.Test</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Test.html#VALprint_test_error">print_test_error</a> [<a href="QCheck.Test.html">QCheck.Test</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Test.html#VALprint_test_fail">print_test_fail</a> [<a href="QCheck.Test.html">QCheck.Test</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VALprintable">printable</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALprintable_char">printable_char</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALprintable_string">printable_string</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+generates strings with a distribution of length of <code class="code">small_int</code>
+    and distribution of characters of <code class="code">printable_char</code>
+</div>
+</td></tr>
+<tr><td><a href="QCheck.html#VALprintable_string_of_size">printable_string_of_size</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+generates strings with distribution of characters of <code class="code">printable_char</code>
 </div>
 </td></tr>
 <tr><td align="left"><br>Q</td></tr>
-<tr><td><a href="QCheck.PP.html#VALquad">quad</a> [<a href="QCheck.PP.html">QCheck.PP</a>]</td>
+<tr><td><a href="QCheck.Print.html#VALquad">quad</a> [<a href="QCheck.Print.html">QCheck.Print</a>]</td>
 <td></td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALquad">quad</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.Gen.html#VALquad">quad</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
 <td></td></tr>
 <tr><td align="left"><br>R</td></tr>
-<tr><td><a href="QCheck.Prop.html#VALraises">raises</a> [<a href="QCheck.Prop.html">QCheck.Prop</a>]</td>
+<tr><td><a href="QCheck_runner.html#VALrandom_state">random_state</a> [<a href="QCheck_runner.html">QCheck_runner</a>]</td>
 <td><div class="info">
-<code class="code">raise ~e ~f ~x</code> is true if and only if calling
-        <code class="code">f x</code> raises the exception <code class="code">exn</code>.
+Access the current random state
 </div>
 </td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALretry">retry</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.Iter.html#VALreturn">return</a> [<a href="QCheck.Iter.html">QCheck.Iter</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VALreturn">return</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck_runner.html#VALrun">run</a> [<a href="QCheck_runner.html">QCheck_runner</a>]</td>
 <td><div class="info">
-Generate until a Some value is returned
+<code class="code">run test</code> runs the test, and returns an error code  that is <code class="code">0</code>
+    if all tests passed, <code class="code">1</code> otherwise.
 </div>
 </td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALreturn">return</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck_runner.html#VALrun_tap">run_tap</a> [<a href="QCheck_runner.html">QCheck_runner</a>]</td>
 <td><div class="info">
-Return always the same value (e.g.
+TAP-compatible test runner, in case we want to use a test harness.
 </div>
 </td></tr>
-<tr><td><a href="QCheck.html#VALrun">run</a> [<a href="QCheck.html">QCheck</a>]</td>
+<tr><td><a href="QCheck_runner.html#VALrun_tests">run_tests</a> [<a href="QCheck_runner.html">QCheck_runner</a>]</td>
 <td><div class="info">
-Run a test and print results
+Run a suite of tests, and print its results.
 </div>
 </td></tr>
-<tr><td><a href="QCheck.html#VALrun_main">run_main</a> [<a href="QCheck.html">QCheck</a>]</td>
+<tr><td><a href="QCheck_runner.html#VALrun_tests_main">run_tests_main</a> [<a href="QCheck_runner.html">QCheck_runner</a>]</td>
 <td><div class="info">
 Can be used as the main function of a test file.
 </div>
 </td></tr>
-<tr><td><a href="QCheck.html#VALrun_tests">run_tests</a> [<a href="QCheck.html">QCheck</a>]</td>
+<tr><td align="left"><br>S</td></tr>
+<tr><td><a href="QCheck.html#VALset_collect">set_collect</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Test.html#VALset_name">set_name</a> [<a href="QCheck.Test.html">QCheck.Test</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALset_print">set_print</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck_runner.html#VALset_seed">set_seed</a> [<a href="QCheck_runner.html">QCheck_runner</a>]</td>
 <td><div class="info">
-Run a suite of tests, and print its results
+Change the <a href="QCheck_runner.html#VALrandom_state"><code class="code">QCheck_runner.random_state</code></a> by creating a new one, initialized with
+    the given seed.
 </div>
 </td></tr>
-<tr><td align="left"><br>S</td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALshuffle">shuffle</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.html#VALset_shrink">set_shrink</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALset_small">set_small</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck_runner.html#VALset_verbose">set_verbose</a> [<a href="QCheck_runner.html">QCheck_runner</a>]</td>
+<td><div class="info">
+Change the value of <code class="code">verbose ()</code>
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Gen.html#VALshuffle_a">shuffle_a</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
 <td><div class="info">
 Shuffle the array in place
 </div>
 </td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALsmall_int">small_int</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
-<td><div class="info">
-Ints lower than 100
-</div>
-</td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALsplit_int">split_int</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
-<td><div class="info">
-<code class="code">split_int gen</code> generates a number <code class="code">n</code> from <code class="code">gen</code>, and
-        returns <code class="code">i, j</code> where <code class="code">i + j = n</code>
-</div>
-</td></tr>
-<tr><td><a href="QCheck.PP.html#VALstring">string</a> [<a href="QCheck.PP.html">QCheck.PP</a>]</td>
+<tr><td><a href="QCheck.Gen.html#VALshuffle_l">shuffle_l</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
 <td></td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALstring">string</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.Gen.html#VALsized">sized</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VALsized_size">sized_size</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
 <td><div class="info">
-Random strings of small length
 </div>
 </td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALstring_len">string_len</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.Gen.html#VALsmall_int">small_int</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
 <td><div class="info">
-String of random length
+Synonym to <a href="QCheck.Gen.html#VALnat"><code class="code">QCheck.Gen.nat</code></a>
 </div>
 </td></tr>
+<tr><td><a href="QCheck.html#VALsmall_int">small_int</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+positive int generator.
+</div>
+</td></tr>
+<tr><td><a href="QCheck.html#VALsmall_int_corners">small_int_corners</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+As <code class="code">small_int</code>, but each newly created generator starts with
+ a list of corner cases before falling back on random generation.
+</div>
+</td></tr>
+<tr><td><a href="QCheck.html#VALsmall_printable_string">small_printable_string</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VALsmall_string">small_string</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALsmall_string">small_string</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+Same as <a href="QCheck.html#VALstring"><code class="code">QCheck.string</code></a> but with a small length (that is, <code class="code">0--10</code>)
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Shrink.html#VALstring">string</a> [<a href="QCheck.Shrink.html">QCheck.Shrink</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Print.html#VALstring">string</a> [<a href="QCheck.Print.html">QCheck.Print</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VALstring">string</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALstring">string</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+generates strings with a distribution of length of <code class="code">small_int</code>
+    and distribution of characters of <code class="code">char</code>
+</div>
+</td></tr>
+<tr><td><a href="QCheck.html#VALstring_gen">string_gen</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+generates strings with a distribution of length of <code class="code">small_int</code>
+</div>
+</td></tr>
+<tr><td><a href="QCheck.html#VALstring_gen_of_size">string_gen_of_size</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALstring_of_size">string_of_size</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+generates strings with distribution of characters if <code class="code">char</code>
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Gen.html#VALstring_size">string_size</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
 <tr><td align="left"><br>T</td></tr>
-<tr><td><a href="QCheck.PP.html#VALtriple">triple</a> [<a href="QCheck.PP.html">QCheck.PP</a>]</td>
+<tr><td><a href="QCheck_runner.html#VALto_ounit2_test">to_ounit2_test</a> [<a href="QCheck_runner.html">QCheck_runner</a>]</td>
+<td><div class="info">
+<code class="code">to_ounit2_test ?rand t</code> wraps <code class="code">t</code> into a OUnit2 test
+</div>
+</td></tr>
+<tr><td><a href="QCheck_runner.html#VALto_ounit2_test_list">to_ounit2_test_list</a> [<a href="QCheck_runner.html">QCheck_runner</a>]</td>
+<td><div class="info">
+<code class="code">to_ounit2_test_list ?rand t</code> like <code class="code">to_ounit2_test</code> but for a list of tests
+</div>
+</td></tr>
+<tr><td><a href="QCheck_runner.html#VALto_ounit_test">to_ounit_test</a> [<a href="QCheck_runner.html">QCheck_runner</a>]</td>
+<td><div class="info">
+<code class="code">to_ounit_test ~rand t</code> wraps <code class="code">t</code> into a OUnit test
+</div>
+</td></tr>
+<tr><td><a href="QCheck_runner.html#VALto_ounit_test_cell">to_ounit_test_cell</a> [<a href="QCheck_runner.html">QCheck_runner</a>]</td>
+<td><div class="info">
+Same as <a href="QCheck_runner.html#VALto_ounit_test"><code class="code">QCheck_runner.to_ounit_test</code></a> but with a polymorphic test cell
+</div>
+</td></tr>
+<tr><td><a href="QCheck.Shrink.html#VALtriple">triple</a> [<a href="QCheck.Shrink.html">QCheck.Shrink</a>]</td>
 <td></td></tr>
-<tr><td><a href="QCheck.Arbitrary.html#VALtriple">triple</a> [<a href="QCheck.Arbitrary.html">QCheck.Arbitrary</a>]</td>
+<tr><td><a href="QCheck.Iter.html#VALtriple">triple</a> [<a href="QCheck.Iter.html">QCheck.Iter</a>]</td>
 <td></td></tr>
+<tr><td><a href="QCheck.Print.html#VALtriple">triple</a> [<a href="QCheck.Print.html">QCheck.Print</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VALtriple">triple</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALtriple">triple</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+combines three generators into a generator of 3-uples
+</div>
+</td></tr>
+<tr><td align="left"><br>U</td></tr>
+<tr><td><a href="QCheck.Gen.html#VALui32">ui32</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VALui64">ui64</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.Gen.html#VALunit">unit</a> [<a href="QCheck.Gen.html">QCheck.Gen</a>]</td>
+<td></td></tr>
+<tr><td><a href="QCheck.html#VALunit">unit</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+always generates <code class="code">()</code>, obviously.
+</div>
+</td></tr>
+<tr><td align="left"><br>V</td></tr>
+<tr><td><a href="QCheck_runner.html#VALverbose">verbose</a> [<a href="QCheck_runner.html">QCheck_runner</a>]</td>
+<td><div class="info">
+Is the default mode verbose or quiet?
+</div>
+</td></tr>
 </table>
 </body>
 </html>
