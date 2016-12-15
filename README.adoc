@@ -1,4 +1,7 @@
 = QCheck
+:toc: macro
+:toclevels: 4
+:source-highlighter: pygments
 
 QuickCheck inspired property-based testing for OCaml, and combinators to
 generate random values to run tests on.
@@ -9,14 +12,18 @@ standalone again!
 
 The documentation can be found https://c-cube.github.io/qcheck/[here].
 
-Note that @gasche's [generator library](http://gasche.github.io/random-generator/doc/Generator.html)
-can be useful too, for generating random instances.
+Note that @gasche's
+http://gasche.github.io/random-generator/doc/Generator.html[generator library]
+can be useful too, for generating random values.
 
 == Use
 
 See the documentation. I also wrote
-[a blog post](http://cedeela.fr/quickcheck-for-ocaml.html) that explains
-how to use it and some design choices.
+(http://cedeela.fr/quickcheck-for-ocaml.html[a blog post] that explains
+how to use it and some design choices; however, be warned that the API
+changed in lots of small ways (in the right direction, I hope) so the code
+will not work any more.
+<<Below:examples>> is an updated version of most of the blog post's examples.
 
 == Build
 
@@ -29,3 +36,87 @@ You can use opam:
 == License
 
 The code is now released under the LGPL license.
+
+[[examples]]
+== Examples
+
+=== A List
+
+We write a random test for checking that `List.rev (List.rev l) = l` for
+any list `l`:
+
+[source,OCaml]
+----
+let test =
+  QCheck.Test.make ~count:1000
+    ~name:"list_rev_is_involutive"
+   (list int)
+   (fun l -> List.rev (List.rev l) = l);;
+
+QCheck_r.Test.check_exn test;;
+----
+
+Now, let's run the test (the exact output will change at each run, because of
+the random seed):
+
+----
+# QCheck_runner.run_tests [test];;
+random seed: 415927808
+success (ran 1 tests)
+- : int = 0  
+----
+
+
+=== A Tree
+
+In the first example, we applied the combinator `list` to
+the random generator `small_int` (ints between 0 and 100), and
+that generates lists of random integers.
+
+`QCheck` provides many useful combinators to write
+generators, especially for recursive types, algebraic types,
+tuples.
+
+Let's see how to generate random trees:
+
+[source,OCaml]
+----
+type tree = Leaf of int | Node of tree * tree
+
+let leaf x = Leaf x
+let node x y = Node (x,y)
+
+let tree_gen = QCheck.Gen.(sized @@ fix
+  (fun self n -> match n with
+    | 0 -> map leaf nat
+    | n ->
+      frequency
+        [1, map leaf nat;
+         2, map2 node (self (n/2)) (self (n/2))]
+    ));;
+
+(* generate a few trees, just to check what they look like: *)
+QCheck.Gen.generate ~n:20 tree_gen;;
+
+let ar =
+  let open QCheck.Iter in
+  let rec shrink_tree = function
+    | Leaf i -> QCheck.Shrink.int i >|= leaf
+    | Node (a,b) ->
+      (shrink_tree a >|= fun a' -> node a' b)
+      <+>
+      (shrink_tree b >|= fun b' -> node a b')
+  in
+  QCheck.make tree_gen ~shrink:shrink_tree ;;
+
+----
+
+Here we write a random generator, `tree_gen`, using
+the `fix` combinator. `fix` is *sized* (it's a function from `int` to
+a random generator; in particular for size 0 it returns only leaves).
+The `sized` combinator first generates a size, and applies its argument
+to this size.
+
+Other combinators include monadic abstraction, lifting functions,
+generation of lists, arrays, and a choice function.
+
