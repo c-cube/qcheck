@@ -1,0 +1,188 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="QCheck" rel="Chapter" href="QCheck.html"><link title="Description of how to generate arbitrary values for some type" rel="Section" href="#2_Descriptionofhowtogeneratearbitraryvaluesforsometype">
+<link title="Pretty printing" rel="Section" href="#2_Prettyprinting">
+<link title="Testing" rel="Section" href="#2_Testing">
+<link title="Main" rel="Section" href="#2_Main">
+<title>QCheck</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_QCheck.html">QCheck</a></h1>
+
+<pre><span class="keyword">module</span> QCheck: <code class="code">sig</code> <a href="QCheck.html">..</a> <code class="code">end</code></pre><div class="info module top">
+<h1 id="1_Quickcheckinspiredpropertybasedtesting">Quickcheck inspired property-based testing</h1><br>
+</div>
+<hr width="100%">
+<br>
+The library takes inspiration from Haskell's QuickCheck library. The
+rough idea is that the programer describes invariants that values of
+a certain type need to satisfy ("properties"), as functions from this type
+to bool. She also needs to desribe how to generate random values of the type,
+so that the property is tried and checked on a number of random instances.
+<p>
+
+This explains the organization of this module:
+<p>
+<ul>
+<li><a href="QCheck.Arbitrary.html"><code class="code">QCheck.Arbitrary</code></a> is used to describe how to generate random values. An
+  <code class="code">'a Arbitrary.t</code> is a random generator of values of type 'a.</li>
+<li><a href="QCheck.Prop.html"><code class="code">QCheck.Prop</code></a> is used to describe and combine properties. Especially interesting
+  is <code class="code">Prop.(==&gt;)</code>, that is such that <code class="code">a ==&gt; b</code> only checks the property <code class="code">b</code>
+  on a value <code class="code">x</code> if <code class="code">a x</code> holds (precondition).</li>
+<li><a href="QCheck.PP.html"><code class="code">QCheck.PP</code></a> describes a few combinators to print values. This is used when a
+  property fails on some instances, to print the failing instances.</li>
+</ul>
+
+Then, a few functions are provided to test properties. Optional parameters
+allow to specify the random generator, the printer for failing cases, the
+number of instances to generate and test...
+<p>
+
+Examples:
+<p>
+<ul>
+<li>List.rev is involutive:</li>
+</ul>
+
+<pre class="codepre"><code class="code">let test = QCheck.mk_test ~n:1000 QCheck.Arbitrary.(list alpha)
+  (fun l -&gt; List.rev (List.rev l) = l);;
+QCheck.run test;;
+</code></pre><ul>
+<li>Not all lists are sorted (false property that will fail. The 15 smallest
+      counter-example lists will be printed):</li>
+</ul>
+
+<pre class="codepre"><code class="code">let test = QCheck.(
+  mk_test
+    ~n:10_000 ~size:List.length ~limit:15 ~pp:QCheck.PP.(list int)
+    QCheck.Arbitrary.(list small_int)
+    (fun l -&gt; l = List.sort compare l));;
+QCheck.run test;;
+</code></pre>
+<p>
+<ul>
+<li>generate 20 random trees using <a href="QCheck.Arbitrary.html#VALfix"><code class="code">QCheck.Arbitrary.fix</code></a> :</li>
+</ul>
+
+<pre class="codepre"><code class="code">type tree = Int of int | Node of tree list;;
+
+ let ar = QCheck.Arbitrary.(fix ~max:10
+  ~base:(map small_int (fun i -&gt; Int i))
+  (fun t st -&gt; Node (list t st)));;
+
+ Arbitrary.generate ~n:20 ar;;
+ </code></pre>
+<p>
+
+More complex and powerful combinators can be found in Gabriel Scherer's
+<code class="code">Generator</code> module. Its documentation can be found
+<a href="http://gasche.github.io/random-generator/doc/Generator.html "> here</a>.<br>
+<br>
+<h2 id="2_Descriptionofhowtogeneratearbitraryvaluesforsometype">Description of how to generate arbitrary values for some type</h2><br>
+
+<pre><span class="keyword">module</span> <a href="QCheck.Arbitrary.html">Arbitrary</a>: <code class="code">sig</code> <a href="QCheck.Arbitrary.html">..</a> <code class="code">end</code></pre><br>
+<h2 id="2_Prettyprinting">Pretty printing</h2><br>
+
+<pre><span class="keyword">module</span> <a href="QCheck.PP.html">PP</a>: <code class="code">sig</code> <a href="QCheck.PP.html">..</a> <code class="code">end</code></pre><br>
+<h2 id="2_Testing">Testing</h2><br>
+<br>
+QCheck helps you test <b>invariants</b>, or <b>properties</b>. This submodule
+    helps dealing with such properties. A property of the <code class="code">'a</code> type
+    is a predicate <code class="code">'a -&gt; bool</code>.
+<p>
+
+    If the property doesn't have to hold for all values of type <code class="code">'a</code>,
+    you can use <a href="QCheck.Prop.html#VALassume"><code class="code">QCheck.Prop.assume</code></a> or <a href="QCheck.Prop.html#VALassume_lazy"><code class="code">QCheck.Prop.assume_lazy</code></a> in the body
+    of the property. Doing so will "filter" irrelevant values
+    (the one which do not satisfy the assumption) out (in practice it raises
+    an exception).<br>
+
+<pre><span class="keyword">module</span> <a href="QCheck.Prop.html">Prop</a>: <code class="code">sig</code> <a href="QCheck.Prop.html">..</a> <code class="code">end</code></pre>
+<pre><code><span id="TYPEresult"><span class="keyword">type</span> <code class="type">'a</code> result</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTresult.Ok"><span class="constructor">Ok</span></span> <span class="keyword">of</span> <code class="type">int * int</code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+total number of tests / number of failed preconditions<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTresult.Failed"><span class="constructor">Failed</span></span> <span class="keyword">of</span> <code class="type">'a list</code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Failed instances<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTresult.Error"><span class="constructor">Error</span></span> <span class="keyword">of</span> <code class="type">'a option * exn</code></code></td>
+<td class="typefieldcomment" align="left" valign="top" ><code>(*</code></td><td class="typefieldcomment" align="left" valign="top" ><div class="info ">
+Error, and possibly instance that triggered it<br>
+</div>
+</td><td class="typefieldcomment" align="left" valign="bottom" ><code>*)</code></td>
+</tr></table>
+
+
+
+<pre><span id="VALcheck"><span class="keyword">val</span> check</span> : <code class="type">?call:('a -> bool -> unit) -><br>       ?rand:Random.State.t -><br>       ?n:int -> 'a <a href="QCheck.Arbitrary.html#TYPEt">Arbitrary.t</a> -> 'a <a href="QCheck.Prop.html#TYPEt">Prop.t</a> -> 'a <a href="QCheck.html#TYPEresult">result</a></code></pre><div class="info ">
+Check that the property <code class="code">prop</code> holds on <code class="code">n</code> random instances of the type
+    'a, as generated by the arbitrary instance <code class="code">gen</code><br>
+</div>
+<div class="param_info"><code class="code">call</code> : function called on each test case, with the result</div>
+<br>
+<h2 id="2_Main">Main</h2><br>
+
+<pre><span id="TYPEtest"><span class="keyword">type</span> <code class="type"></code>test</span> </pre>
+<div class="info ">
+A single property test<br>
+</div>
+
+
+<pre><span id="VALname"><span class="keyword">val</span> name</span> : <code class="type"><a href="QCheck.html#TYPEtest">test</a> -> string option</code></pre>
+<pre><span id="VALmk_test"><span class="keyword">val</span> mk_test</span> : <code class="type">?n:int -><br>       ?pp:'a <a href="QCheck.PP.html#TYPEt">PP.t</a> -><br>       ?name:string -><br>       ?size:('a -> int) -><br>       ?limit:int -> 'a <a href="QCheck.Arbitrary.html#TYPEt">Arbitrary.t</a> -> 'a <a href="QCheck.Prop.html#TYPEt">Prop.t</a> -> <a href="QCheck.html#TYPEtest">test</a></code></pre><div class="info ">
+Construct a test. Optional parameters are the same as for <a href="QCheck.html#VALrun"><code class="code">QCheck.run</code></a>.<br>
+</div>
+<div class="param_info"><code class="code">pp</code> : is a pretty printer for failing instances</div>
+<div class="param_info"><code class="code">name</code> : is the name of the property that is checked</div>
+
+<pre><span id="VALrun"><span class="keyword">val</span> run</span> : <code class="type">?verbose:bool -><br>       ?out:Pervasives.out_channel -> ?rand:Random.State.t -> <a href="QCheck.html#TYPEtest">test</a> -> bool</code></pre><div class="info ">
+Run a test and print results<br>
+</div>
+
+<pre><span id="TYPEsuite"><span class="keyword">type</span> <code class="type"></code>suite</span> = <code class="type"><a href="QCheck.html#TYPEtest">test</a> list</code> </pre>
+<div class="info ">
+A test suite is a list of tests<br>
+</div>
+
+
+<pre><span id="VALflatten"><span class="keyword">val</span> flatten</span> : <code class="type"><a href="QCheck.html#TYPEsuite">suite</a> list -> <a href="QCheck.html#TYPEsuite">suite</a></code></pre>
+<pre><span id="VALrun_tests"><span class="keyword">val</span> run_tests</span> : <code class="type">?verbose:bool -><br>       ?out:Pervasives.out_channel -> ?rand:Random.State.t -> <a href="QCheck.html#TYPEsuite">suite</a> -> bool</code></pre><div class="info ">
+Run a suite of tests, and print its results<br>
+<b>Since</b> 0.4)<br>
+</div>
+<div class="param_info"><code class="code">verbose</code> : if true, prints more information about test cases (</div>
+
+<pre><span id="VALrun_main"><span class="keyword">val</span> run_main</span> : <code class="type">?argv:string array -> <a href="QCheck.html#TYPEsuite">suite</a> -> unit</code></pre><div class="info ">
+Can be used as the main function of a test file. Exits with a non-0 code
+    if the tests fail.<br>
+<b>Since</b> 0.4<br>
+</div>
+</body></html>
