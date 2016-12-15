@@ -1,25 +1,24 @@
-QCheck
-======
-
-**DEPRECATED** this library is superseeded
-  by [qtest](https://github.com/vincent-hugot/iTeML)
-  , do not use anymore.
+= QCheck
 
 QuickCheck inspired property-based testing for OCaml, and combinators to
 generate random values to run tests on.
 
-The documentation can be found [here](http://cedeela.fr/~simon/software/qcheck).
+This library spent some time in
+https://github.com/vincent-hugot/iTeML[qtest], but is now
+standalone again!
+
+The documentation can be found https://c-cube.github.io/qcheck/[here].
 
 Note that @gasche's [generator library](http://gasche.github.io/random-generator/doc/Generator.html)
 can be useful too, for generating random instances.
 
-## Use
+== Use
 
 See the documentation. I also wrote
 [a blog post](http://cedeela.fr/quickcheck-for-ocaml.html) that explains
 how to use it and some design choices.
 
-## Build
+== Build
 
     $ make
 
@@ -27,6 +26,6 @@ You can use opam:
 
     $ opam install qcheck
 
-## License
+== License
 
-The code is released under the BSD license (see the `LICENSE` file).
+The code is now released under the LGPL license.
