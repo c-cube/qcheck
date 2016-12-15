@@ -63,7 +63,7 @@ the random seed):
 # QCheck_runner.run_tests [test];;
 random seed: 415927808
 success (ran 1 tests)
-- : int = 0  
+- : int = 0
 ----
 
 
@@ -98,7 +98,7 @@ let tree_gen = QCheck.Gen.(sized @@ fix
 (* generate a few trees, just to check what they look like: *)
 QCheck.Gen.generate ~n:20 tree_gen;;
 
-let ar =
+let arbitrary_tree =
   let open QCheck.Iter in
   let rec shrink_tree = function
     | Leaf i -> QCheck.Shrink.int i >|= leaf
@@ -120,3 +120,29 @@ to this size.
 Other combinators include monadic abstraction, lifting functions,
 generation of lists, arrays, and a choice function.
 
+Now let's write a test using this generator:
+
+[source,OCaml]
+----
+
+let rec mirror_tree (t:tree) : tree = match t with
+  | Leaf _ -> t
+  | Node (a,b) -> node (mirror_tree b) (mirror_tree a);;
+
+let tree_infix (t:tree): int list =
+  let rec aux acc t = match t with
+    | Leaf i -> i :: acc
+    | Node (a,b) ->
+      aux (aux acc b) a
+  in
+  aux [] t  ;;
+
+let test_mirror =
+  QCheck.Test.make ~name:"mirror_tree" ~count:200
+    arbitrary_tree
+    (fun (t:tree) ->
+       List.rev (tree_infix t) = tree_infix (mirror_tree t))  ;;
+
+QCheck_runner.run_tests [test_mirror];;
+
+----
