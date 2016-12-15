@@ -1,4 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 58f5a93deb355a3010c16d09f05e02d8)
+# DO NOT EDIT (digest: a8b4c4c6fea86b7ce07b9dc4b63d7d7e)
 src/QCheck
+src/QCheck_runner
 # OASIS_STOP

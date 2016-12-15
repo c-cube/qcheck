@@ -1,6 +1,6 @@
-S src
-S src/ounit/
+S src/
 B _build/src
-B _build/src/ounit/
 PKG unix
 PKG oUnit
+PKG bytes
+FLG -w +a-4-44
