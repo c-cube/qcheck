@@ -120,6 +120,16 @@ to this size.
 Other combinators include monadic abstraction, lifting functions,
 generation of lists, arrays, and a choice function.
 
+Then, we define `arbitrary_tree`, a `tree QCheck.arbitrary` value, which
+contains everything needed for testing on trees:
+
+- a random generator (mandatory)
+- a printer (optional, not provided here, but it would be easy to add)
+- a *shrinker* (optional, very useful), for trying to reduce big
+  counter-examples to small counter-examples  that are usually
+  more easy to understand. There are some combinators in `QCheck.Shrink`
+  and `QCheck.Iter` to build those shrinking functions.
+
 Now let's write a test using this generator:
 
 [source,OCaml]

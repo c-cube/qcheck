@@ -268,8 +268,16 @@ module Shrink : sig
   val int : int t
   val option : 'a t -> 'a option t
   val string : string t
-  val array : ?shrink:'a t -> 'a array t
+
   val list : ?shrink:'a t -> 'a list t
+  (** Try to shrink lists by removing elements one by one.
+      @param shrink if provided, will be used to also try to reduce
+      the elements of the list themselves (e.g. in an [int list]
+      one can try to decrease the integers) *)
+
+  val array : ?shrink:'a t -> 'a array t
+  (** Shrink an array.
+      @param shrink see {!list} *)
 
   val pair : 'a t -> 'b t -> ('a * 'b) t
   val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
