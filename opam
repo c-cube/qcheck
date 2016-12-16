@@ -21,7 +21,7 @@ remove: [
 depends: [
   "ocamlfind"
   "base-bytes"
-  "unix"
+  "base-unix"
   "ounit"
 ]
 available: [ ocaml-version >= "4.00.0" ]
