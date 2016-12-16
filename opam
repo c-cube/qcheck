@@ -9,8 +9,8 @@ tags: [
   "quickcheck"
 ]
 build: [
-  ["ocaml" "setup.ml" "-configure" "--prefix" prefix "--%{ounit:enable}%-ounit"]
-  [make "all" "install_file"]
+  ["ocaml" "setup.ml" "-configure" "--prefix" prefix]
+  [make "build"]
 ]
 install: [
   [make "install"]
@@ -18,9 +18,15 @@ install: [
 remove: [
     ["ocamlfind" "remove" "qcheck"]
 ]
-depends: ["ocamlfind"]
-depopts: ["ounit" ]
+depends: [
+  "ocamlfind"
+  "base-bytes"
+  "base-unix"
+  "ounit"
+]
 available: [ ocaml-version >= "4.00.0" ]
 dev-repo: "https://github.com/c-cube/qcheck.git"
 bug-reports: "https://github.com/c-cube/qcheck/issues"
-conflicts: [ "ounit" { < "2.0" } ]
+conflicts: [
+  "ounit" { < "2.0" }
+]
