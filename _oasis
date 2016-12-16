@@ -12,10 +12,6 @@ Synopsis:    QuickCheck inspired property based testing
 Description:
     QuickCheck inspired property-based testing for OCaml. Used in QTest.
 
-Flag ounit
-  Default: false
-  Description: OUnit and QCheck integration
-
 Library "qcheck"
   Path:             src
   Pack:             false
