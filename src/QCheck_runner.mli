@@ -85,4 +85,10 @@ val run_tests : ?verbose:bool -> ?out:out_channel -> ?rand:Random.State.t ->
 val run_tests_main : ?argv:string array -> QCheck.Test.t list -> 'a
 (** Can be used as the main function of a test file. Exits with a non-0 code
     if the tests fail. It refers to {!run_tests} for actually running tests
-    after CLI options have been parsed. *)
+    after CLI options have been parsed.
+
+    The available options are:
+
+    - "--verbose" for activating verbose tests
+    - "--seed <n>" for repeating a previous run by setting the random seed
+*)

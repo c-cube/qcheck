@@ -38,9 +38,11 @@ You can use opam:
 The code is now released under the LGPL license.
 
 [[examples]]
-== Examples
+== An Introduction to the Library
 
-=== A List
+First, let's see a few tests.
+
+=== List Reverse is Involutive
 
 We write a random test for checking that `List.rev (List.rev l) = l` for
 any list `l`:
@@ -67,7 +69,7 @@ success (ran 1 tests)
 ----
 
 
-=== A Tree
+=== Mirrors and Trees
 
 In the first example, we applied the combinator `list` to
 the random generator `small_int` (ints between 0 and 100), and
@@ -156,3 +158,12 @@ let test_mirror =
 QCheck_runner.run_tests [test_mirror];;
 
 ----
+
+=== Runners
+
+The module `QCheck_runner` defines several functions to run tests, including
+compatibility with `OUnit`.
+The easiest one is probably `run_tests`, but if you write your tests in
+a separate executable you can also use `run_tests_main` which parses
+command line arguments and exits with `0` in case of success,
+or an error number otherwise.
