@@ -170,8 +170,8 @@ module Gen : sig
   val join : 'a t t -> 'a t
   (** @since NEXT_RELEASE *)
 
-  val sized : 'a sized -> 'a t
-
+  val sized : 'a sized -> 'a t (** Create a generator from a size-bounded generator *)
+    
   val sized_size : int t -> 'a sized -> 'a t
   (** @since NEXT_RELEASE *)
 
@@ -332,8 +332,8 @@ val bool : bool arbitrary
 (** uniform boolean generator *)
 
 val float : float arbitrary
-(* FIXME: does not generate nan nor infinity I think *)
 (** generates regular floats (no nan and no infinities) *)
+(* FIXME: does not generate nan nor infinity I think *)
 
 val pos_float : float arbitrary
 (** positive float generator (no nan and no infinities) *)
@@ -382,8 +382,8 @@ val char : char arbitrary
     valid latin-1) *)
 
 val printable_char : char arbitrary
-(* FIXME: describe which subset *)
 (** uniformly distributed over a subset of chars *)
+(* FIXME: describe which subset *)
 
 val numeral_char : char arbitrary
 (** uniformy distributed over ['0'..'9'] *)
