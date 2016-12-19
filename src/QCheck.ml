@@ -48,6 +48,10 @@ let _opt_map_3 ~f a b c = match a, b, c with
   | Some x, Some y, Some z -> Some (f x y z)
   | _ -> None
 
+let _opt_map_4 ~f a b c d = match a, b, c, d with
+  | Some x, Some y, Some z, Some w -> Some (f x y z w)
+  | _ -> None
+
 let _opt_sum a b = match a, b with
   | Some _, _ -> a
   | None, _ -> b
@@ -286,6 +290,8 @@ module Iter = struct
   let of_array a yield = Array.iter yield a
   let pair a b yield = a (fun x -> b(fun y -> yield (x,y)))
   let triple a b c yield = a (fun x -> b (fun y -> c (fun z -> yield (x,y,z))))
+  let quad a b c d yield =
+    a (fun x -> b (fun y -> c (fun z -> d (fun w -> yield (x,y,z,w)))))
 
   exception IterExit
   let find p iter =
@@ -365,6 +371,12 @@ module Shrink = struct
     a x (fun x' -> yield (x',y,z));
     b y (fun y' -> yield (x,y',z));
     c z (fun z' -> yield (x,y,z'))
+
+  let quad a b c d (x,y,z,w) yield =
+    a x (fun x' -> yield (x',y,z,w));
+    b y (fun y' -> yield (x,y',z,w));
+    c z (fun z' -> yield (x,y,z',w));
+    d w (fun w' -> yield (x,y,z,w'))
 end
 
 type 'a arbitrary = {
@@ -502,6 +514,17 @@ let triple a b c =
     ~shrink:(Shrink.triple (_opt_or a.shrink Shrink.nil)
       (_opt_or b.shrink Shrink.nil) (_opt_or c.shrink Shrink.nil))
     (Gen.triple a.gen b.gen c.gen)
+
+let quad a b c d =
+  make
+    ?small:(_opt_map_4 ~f:(fun f g h i (x,y,z,w) ->
+                             f x+g y+h z+i w) a.small b.small c.small d.small)
+    ?print:(_opt_map_4 ~f:Print.quad a.print b.print c.print d.print)
+    ~shrink:(Shrink.quad (_opt_or a.shrink Shrink.nil)
+	                 (_opt_or b.shrink Shrink.nil)
+			 (_opt_or c.shrink Shrink.nil)
+			 (_opt_or d.shrink Shrink.nil))
+    (Gen.quad a.gen b.gen c.gen d.gen)
 
 let option a =
   let g = Gen.opt a.gen

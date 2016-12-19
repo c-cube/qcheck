@@ -248,6 +248,7 @@ module Iter : sig
   val of_array : 'a array -> 'a t
   val pair : 'a t -> 'b t -> ('a * 'b) t
   val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
+  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
   val find : ('a -> bool) -> 'a t -> 'a option
 end
 
@@ -281,6 +282,7 @@ module Shrink : sig
 
   val pair : 'a t -> 'b t -> ('a * 'b) t
   val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
+  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
 end
 
 (** {2 Arbitrary}
@@ -433,7 +435,10 @@ val pair : 'a arbitrary -> 'b arbitrary -> ('a * 'b) arbitrary
 (** combines two generators into a generator of pairs *)
 
 val triple : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> ('a * 'b * 'c) arbitrary
-(** combines three generators into a generator of 3-uples *)
+(** combines three generators into a generator of 3-tuples *)
+
+val quad : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> 'd arbitrary -> ('a * 'b * 'c * 'd) arbitrary
+(** combines four generators into a generator of 4-tuples *)
 
 val option : 'a arbitrary -> 'a option arbitrary
 (** choose between returning Some random value, or None *)
