@@ -89,6 +89,6 @@ val run_tests_main : ?argv:string array -> QCheck.Test.t list -> 'a
 
     The available options are:
 
-    - "--verbose" for activating verbose tests
-    - "--seed <n>" for repeating a previous run by setting the random seed
+    - "--verbose" (or "-v") for activating verbose tests
+    - "--seed <n>" (or "-s <n>") for repeating a previous run by setting the random seed
 *)
