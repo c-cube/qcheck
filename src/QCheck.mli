@@ -128,19 +128,19 @@ module Gen : sig
   (** An infix synonym for {!map} *)
     
   val oneof : 'a t list -> 'a t
-  (** Constructs a generator than selects among a given list of generators *)
+  (** Constructs a generator that selects among a given list of generators *)
   val oneofl : 'a list -> 'a t
-  (** Constructs a generator than selects among a given list of values *)
+  (** Constructs a generator that selects among a given list of values *)
   val oneofa : 'a array -> 'a t
-  (** Constructs a generator than selects among a given array of values *)
+  (** Constructs a generator that selects among a given array of values *)
   val frequency : (int * 'a t) list -> 'a t
-  (** Constructs a generator than selects among a given list of generators.
+  (** Constructs a generator that selects among a given list of generators.
       Each of the given generators are chosen based on a positive integer weight. *)
   val frequencyl : (int * 'a) list -> 'a t
-  (** Constructs a generator than selects among a given list of values.
+  (** Constructs a generator that selects among a given list of values.
       Each of the given values are chosen based on a positive integer weight. *)
   val frequencya : (int * 'a) array -> 'a t
-  (** Constructs a generator than selects among a given array of values.
+  (** Constructs a generator that selects among a given array of values.
       Each of the array entries are chosen based on a positive integer weight. *)
 
   val shuffle_a : 'a array -> unit t
