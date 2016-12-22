@@ -167,3 +167,32 @@ The easiest one is probably `run_tests`, but if you write your tests in
 a separate executable you can also use `run_tests_main` which parses
 command line arguments and exits with `0` in case of success,
 or an error number otherwise.
+
+=== Integration within OUnit
+
+http://ounit.forge.ocamlcore.org/[OUnit] is a popular unit-testing framework
+for OCaml.
+QCheck provides some helpers, in `QCheck_runner`, to convert its random tests
+into OUnit tests that can be part of a wider test-suite.
+
+[source,OCaml]
+----
+let passing =
+  QCheck.Test.make ~count:1000
+    ~name:"list_rev_is_involutive"
+    QCheck.(list small_int)
+    (fun l -> List.rev (List.rev l) = l);;
+
+let failing =
+  QCheck.Test.make ~count:10
+    ~name:"fail_sort_id"
+    QCheck.(list small_int)
+    (fun l -> l = List.sort compare l);;
+
+let _ =
+  let open OUnit in
+  run_test_tt_main
+    ("tests" >:::
+       List.map QCheck_runner.to_ounit_test [passing; failing])
+
+----
