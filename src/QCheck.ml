@@ -521,9 +521,9 @@ let quad a b c d =
                              f x+g y+h z+i w) a.small b.small c.small d.small)
     ?print:(_opt_map_4 ~f:Print.quad a.print b.print c.print d.print)
     ~shrink:(Shrink.quad (_opt_or a.shrink Shrink.nil)
-	                 (_opt_or b.shrink Shrink.nil)
-			 (_opt_or c.shrink Shrink.nil)
-			 (_opt_or d.shrink Shrink.nil))
+                   (_opt_or b.shrink Shrink.nil)
+       (_opt_or c.shrink Shrink.nil)
+       (_opt_or d.shrink Shrink.nil))
     (Gen.quad a.gen b.gen c.gen d.gen)
 
 let option a =
