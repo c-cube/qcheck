@@ -6,15 +6,16 @@
 QuickCheck inspired property-based testing for OCaml, and combinators to
 generate random values to run tests on.
 
+
+The documentation can be found https://c-cube.github.io/qcheck/[here].
 This library spent some time in
 https://github.com/vincent-hugot/iTeML[qtest], but is now
 standalone again!
-
-The documentation can be found https://c-cube.github.io/qcheck/[here].
-
 Note that @gasche's
 http://gasche.github.io/random-generator/doc/Generator.html[generator library]
 can be useful too, for generating random values.
+
+toc::[]
 
 == Use
 
