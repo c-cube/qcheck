@@ -30,7 +30,7 @@ Document qcheck
   Type:                 ocamlbuild (0.3)
   BuildTools+:          ocamldoc
   Install:              true
-  XOCamlbuildPath:      .
+  XOCamlbuildPath:      src
   XOCamlbuildLibraries: qcheck
 
 SourceRepository head
