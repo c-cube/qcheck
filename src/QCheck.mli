@@ -95,7 +95,31 @@ val (==>) : bool -> bool -> bool
     ie [not b1 || b2] (except that it is strict and will interact
     better with {!Test.check_exn} and the likes, because they will know
     the precondition was not satisfied.).
+
+    {b WARNING}: this function should only be used in a property
+    (see {!Test.make}), because it raises a special exception in case of
+    failure of the first argument, to distinguish between failed test
+    and failed precondition. Because of OCaml's evaluation order,
+    both [b1] and [b2] are always evaluated; if [b2] should only be
+    evaluated when [b1] holds, see {!assume}.
 *)
+
+val assume : bool -> unit
+(** [assume cond] checks the precondition [cond], and does nothing
+    if [cond=true]. If [cond=false], it interrupts the current test.
+
+    {b WARNING} This function, like {!(==>)}, should only be used in
+    a test. not outside.
+    Example:
+    {[
+      Test.make (list int) (fun l ->
+        assume (l <> []);
+        List.hd l :: List.tl l = l)
+    ]}
+
+    @since NEXT_RELEASE
+*)
+
 
 (** {2 Generate Random Values} *)
 module Gen : sig

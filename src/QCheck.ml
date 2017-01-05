@@ -61,6 +61,8 @@ let sum_int = List.fold_left (+) 0
 exception FailedPrecondition
 (* raised if precondition is false *)
 
+let assume b = if not b then raise FailedPrecondition
+
 let (==>) b1 b2 = if b1 then b2 else raise FailedPrecondition
 
 module Gen = struct

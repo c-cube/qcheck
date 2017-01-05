@@ -160,6 +160,26 @@ QCheck_runner.run_tests [test_mirror];;
 
 ----
 
+=== Preconditions
+
+The functions `QCheck.assume` and `QCheck.(==>)` can be used for
+tests with preconditions.
+For instance, `List.hd l :: List.tl l = l` only holds for non-empty lists.
+Without the precondition, the property is false and will even raise
+an exception in some cases.
+
+[source,OCaml]
+----
+let test_hd_tl =
+  QCheck.(Test.make
+    (list int) (fun l ->
+      assume (l <> []);
+      l = List.hd l :: List.tl l));;
+
+QCheck_runner.run_tests [test_hd_tl];;
+----
+
+
 === Runners
 
 The module `QCheck_runner` defines several functions to run tests, including
