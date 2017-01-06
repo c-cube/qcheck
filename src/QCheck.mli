@@ -403,6 +403,138 @@ val set_small : ('a -> int) -> 'a arbitrary -> 'a arbitrary
 val set_shrink : 'a Shrink.t -> 'a arbitrary -> 'a arbitrary
 val set_collect : ('a -> string) -> 'a arbitrary -> 'a arbitrary
 
+(** {2 Tests}
+
+    A test is a universal property of type [foo -> bool] for some type [foo],
+    with an object of type [foo arbitrary] used to generate, print, etc. values
+    of type [foo].
+
+    See {!Test.make} to build a test, and {!Test.check_exn} to
+    run one test simply.
+    For more serious testing, it is better to create a testsuite
+    and use {!QCheck_runner}.
+*)
+
+(** Result of running a test *)
+module TestResult : sig
+  type 'a counter_ex = {
+    instance: 'a; (** The counter-example(s) *)
+    shrink_steps: int; (** How many shrinking steps for this counterex *)
+  }
+
+  type 'a failed_state = 'a counter_ex list
+
+  type 'a state =
+    | Success
+    | Failed of 'a failed_state (** Failed instances *)
+    | Error of 'a counter_ex * exn  (** Error, and instance that triggered it *)
+
+  (* result returned by running a test *)
+  type 'a t = {
+    mutable state : 'a state;
+    mutable count: int;  (* number of tests *)
+    mutable count_gen: int; (* number of generated cases *)
+    collect_tbl: (string, int) Hashtbl.t lazy_t;
+  }
+end
+
+module Test : sig
+  type 'a cell
+  (** A single property test *)
+
+  val make_cell :
+    ?count:int -> ?max_gen:int -> ?max_fail:int -> ?small:('a -> int) ->
+    ?name:string -> 'a arbitrary -> ('a -> bool) -> 'a cell
+  (** [make arb prop] builds a test that checks property [prop] on instances
+      of the generator [arb].
+     @param name the name of the test
+      @param count number of test cases to run, counting only
+      the test cases which satisfy preconditions.
+      @param max_gen maximum number of times the generation function
+        is called in total to replace inputs that do not satisfy
+        preconditions (should be >= count)
+     @param max_fail maximum number of failures before we stop generating
+      inputs. This is useful if shrinking takes too much time.
+     @param small kept for compatibility reasons; if provided, replaces
+       the field [arbitrary.small].
+       If there is no shrinking function but there is a [small]
+      function, only the smallest failures will be printed.
+  *)
+
+  val get_arbitrary : 'a cell -> 'a arbitrary
+  val get_law : 'a cell -> ('a -> bool)
+  val get_name : _ cell -> string option
+  val set_name : _ cell -> string -> unit
+
+  type t = Test : 'a cell -> t
+  (** Same as ['a cell], but masking the type parameter. This allows to
+      put tests on different types in the same list of tests. *)
+
+  val make :
+    ?count:int -> ?max_gen:int -> ?max_fail:int -> ?small:('a -> int) ->
+    ?name:string -> 'a arbitrary -> ('a -> bool) -> t
+  (** [make arb prop] builds a test that checks property [prop] on instances
+      of the generator [arb].
+      See {!make_cell} for a description of the parameters.
+  *)
+
+  (** {6 Running the test} *)
+
+  exception Test_fail of string * string list
+  (** Exception raised when a test failed, with the list of counter-examples.
+      [Test_fail (name, l)] means test [name] failed on elements of [l] *)
+
+  exception Test_error of string * string * exn * string
+  (** Exception raised when a test raised an exception [e], with
+      the sample that triggered the exception.
+      [Test_error (name, i, e, st)]
+      means [name] failed on [i] with exception [e], and [st] is the
+      stacktrace (if enabled) or an empty string *)
+
+  val print_instance : 'a arbitrary -> 'a -> string
+  val print_c_ex : 'a arbitrary -> 'a TestResult.counter_ex -> string
+  val print_fail : 'a arbitrary -> string -> 'a TestResult.counter_ex list -> string
+  val print_error : ?st:string -> 'a arbitrary -> string -> 'a TestResult.counter_ex * exn -> string
+  val print_test_fail : string -> string list -> string
+  val print_test_error : string -> string -> exn -> string -> string
+
+  val check_result : 'a cell -> 'a TestResult.t -> unit
+  (** [check_result cell res] checks that [res] is [Ok _], and returns unit.
+      Otherwise, it raises some exception
+      @raise Test_error if [res = Error _]
+      @raise Test_error if [res = Failed _] *)
+
+  type 'a callback = string -> 'a cell -> 'a TestResult.t -> unit
+  (** Callback executed after each test has been run.
+      [f name cell res] means test [cell], named [name], gave [res] *)
+
+  val check_cell :
+    ?call:'a callback ->
+    ?rand:Random.State.t -> 'a cell -> 'a TestResult.t
+  (** [check ~rand test] generates up to [count] random
+      values of type ['a] using [arbitrary] and the random state [st]. The
+      predicate [law] is called on them and if it returns [false] or raises an
+      exception then we have a counter example for the [law].
+
+      @param call function called on each test case, with the result
+      @return the result of the test
+  *)
+
+  val check_cell_exn :
+    ?call:'a callback ->
+    ?rand:Random.State.t -> 'a cell -> unit
+  (** Same as {!check_cell} but calls  {!check_result} on the result.
+      @raise Test_error if [res = Error _]
+      @raise Test_error if [res = Failed _] *)
+
+  val check_exn : ?rand:Random.State.t -> t -> unit
+  (** Same as {!check_cell} but calls  {!check_result} on the result.
+      @raise Test_error if [res = Error _]
+      @raise Test_error if [res = Failed _] *)
+end
+
+(** {2 Combinators for {!arbitrary}} *)
+
 val choose : 'a arbitrary list -> 'a arbitrary
 (** Choose among the given list of generators. The list must not
   be empty; if it is Invalid_argument is raised. *)
@@ -588,122 +720,3 @@ val map_keep_input :
       values will map into smaller values
     @param print optional printer for the [f]'s output
 *)
-
-(** {2 Tests} *)
-
-module TestResult : sig
-  type 'a counter_ex = {
-    instance: 'a; (** The counter-example(s) *)
-    shrink_steps: int; (** How many shrinking steps for this counterex *)
-  }
-
-  type 'a failed_state = 'a counter_ex list
-
-  type 'a state =
-    | Success
-    | Failed of 'a failed_state (** Failed instances *)
-    | Error of 'a counter_ex * exn  (** Error, and instance that triggered it *)
-
-  (* result returned by running a test *)
-  type 'a t = {
-    mutable state : 'a state;
-    mutable count: int;  (* number of tests *)
-    mutable count_gen: int; (* number of generated cases *)
-    collect_tbl: (string, int) Hashtbl.t lazy_t;
-  }
-end
-
-module Test : sig
-  type 'a cell
-  (** A single property test *)
-
-  val make_cell :
-    ?count:int -> ?max_gen:int -> ?max_fail:int -> ?small:('a -> int) ->
-    ?name:string -> 'a arbitrary -> ('a -> bool) -> 'a cell
-  (** [make arb prop] builds a test that checks property [prop] on instances
-      of the generator [arb].
-     @param name the name of the test
-      @param count number of test cases to run, counting only
-      the test cases which satisfy preconditions.
-      @param max_gen maximum number of times the generation function
-        is called in total to replace inputs that do not satisfy
-        preconditions (should be >= count)
-     @param max_fail maximum number of failures before we stop generating
-      inputs. This is useful if shrinking takes too much time.
-     @param small kept for compatibility reasons; if provided, replaces
-       the field [arbitrary.small].
-       If there is no shrinking function but there is a [small]
-      function, only the smallest failures will be printed.
-  *)
-
-  val get_arbitrary : 'a cell -> 'a arbitrary
-  val get_law : 'a cell -> ('a -> bool)
-  val get_name : _ cell -> string option
-  val set_name : _ cell -> string -> unit
-
-  type t = Test : 'a cell -> t
-  (** Same as ['a cell], but masking the type parameter. This allows to
-      put tests on different types in the same list of tests. *)
-
-  val make :
-    ?count:int -> ?max_gen:int -> ?max_fail:int -> ?small:('a -> int) ->
-    ?name:string -> 'a arbitrary -> ('a -> bool) -> t
-  (** [make arb prop] builds a test that checks property [prop] on instances
-      of the generator [arb].
-      See {!make_cell} for a description of the parameters.
-  *)
-
-  (** {6 Running the test} *)
-
-  exception Test_fail of string * string list
-  (** Exception raised when a test failed, with the list of counter-examples.
-      [Test_fail (name, l)] means test [name] failed on elements of [l] *)
-
-  exception Test_error of string * string * exn * string
-  (** Exception raised when a test raised an exception [e], with
-      the sample that triggered the exception.
-      [Test_error (name, i, e, st)]
-      means [name] failed on [i] with exception [e], and [st] is the
-      stacktrace (if enabled) or an empty string *)
-
-  val print_instance : 'a arbitrary -> 'a -> string
-  val print_c_ex : 'a arbitrary -> 'a TestResult.counter_ex -> string
-  val print_fail : 'a arbitrary -> string -> 'a TestResult.counter_ex list -> string
-  val print_error : ?st:string -> 'a arbitrary -> string -> 'a TestResult.counter_ex * exn -> string
-  val print_test_fail : string -> string list -> string
-  val print_test_error : string -> string -> exn -> string -> string
-
-  val check_result : 'a cell -> 'a TestResult.t -> unit
-  (** [check_result cell res] checks that [res] is [Ok _], and returns unit.
-      Otherwise, it raises some exception
-      @raise Test_error if [res = Error _]
-      @raise Test_error if [res = Failed _] *)
-
-  type 'a callback = string -> 'a cell -> 'a TestResult.t -> unit
-  (** Callback executed after each test has been run.
-      [f name cell res] means test [cell], named [name], gave [res] *)
-
-  val check_cell :
-    ?call:'a callback ->
-    ?rand:Random.State.t -> 'a cell -> 'a TestResult.t
-  (** [check ~rand test] generates up to [count] random
-      values of type ['a] using [arbitrary] and the random state [st]. The
-      predicate [law] is called on them and if it returns [false] or raises an
-      exception then we have a counter example for the [law].
-
-      @param call function called on each test case, with the result
-      @return the result of the test
-  *)
-
-  val check_cell_exn :
-    ?call:'a callback ->
-    ?rand:Random.State.t -> 'a cell -> unit
-  (** Same as {!check_cell} but calls  {!check_result} on the result.
-      @raise Test_error if [res = Error _]
-      @raise Test_error if [res = Failed _] *)
-
-  val check_exn : ?rand:Random.State.t -> t -> unit
-  (** Same as {!check_cell} but calls  {!check_result} on the result.
-      @raise Test_error if [res = Error _]
-      @raise Test_error if [res = Failed _] *)
-end
