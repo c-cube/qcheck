@@ -63,6 +63,8 @@ exception FailedPrecondition
 
 let assume b = if not b then raise FailedPrecondition
 
+let assume_fail () = raise FailedPrecondition
+
 let (==>) b1 b2 = if b1 then b2 else raise FailedPrecondition
 
 module Gen = struct

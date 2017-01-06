@@ -120,6 +120,20 @@ val assume : bool -> unit
     @since NEXT_RELEASE
 *)
 
+val assume_fail : unit -> 'a
+(** [assume_fail ()] is like [assume false], but can take any type
+    since we know it always fails (like [assert false]).
+    This is useful to ignore some branches in [if] or [match].
+
+    Example:
+    {[
+      Test.make (list int) (function
+        | [] -> assume_fail ()
+        | _::_ as l -> List.hd l :: List.tl l = l)
+    ]}
+
+    @since NEXT_RELEASE
+*)
 
 (** {2 Generate Random Values} *)
 module Gen : sig
