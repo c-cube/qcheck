@@ -15,6 +15,7 @@
 <link title="QCheck_runner" rel="Chapter" href="QCheck_runner.html"><link title="Pretty printing" rel="Section" href="#2_Prettyprinting">
 <link title="Arbitrary" rel="Section" href="#2_Arbitrary">
 <link title="Tests" rel="Section" href="#2_Tests">
+<link title="Combinators for QCheck.arbitrary" rel="Section" href="#2_CombinatorsforQCheckarbitrary">
 <title>QCheck</title>
 </head>
 <body>
@@ -107,7 +108,44 @@ More complex and powerful combinators can be found in Gabriel Scherer's
 <code class="code">b1 ==&gt; b2</code> is the logical implication <code class="code">b1 =&gt; b2</code>
     ie <code class="code">not b1 || b2</code> (except that it is strict and will interact
     better with <a href="QCheck.Test.html#VALcheck_exn"><code class="code">QCheck.Test.check_exn</code></a> and the likes, because they will know
-    the precondition was not satisfied.).<br>
+    the precondition was not satisfied.).
+<p>
+
+    <b>WARNING</b>: this function should only be used in a property
+    (see <a href="QCheck.Test.html#VALmake"><code class="code">QCheck.Test.make</code></a>), because it raises a special exception in case of
+    failure of the first argument, to distinguish between failed test
+    and failed precondition. Because of OCaml's evaluation order,
+    both <code class="code">b1</code> and <code class="code">b2</code> are always evaluated; if <code class="code">b2</code> should only be
+    evaluated when <code class="code">b1</code> holds, see <a href="QCheck.html#VALassume"><code class="code">QCheck.assume</code></a>.<br>
+</div>
+
+<pre><span id="VALassume"><span class="keyword">val</span> assume</span> : <code class="type">bool -> unit</code></pre><div class="info ">
+<code class="code">assume cond</code> checks the precondition <code class="code">cond</code>, and does nothing
+    if <code class="code">cond=true</code>. If <code class="code">cond=false</code>, it interrupts the current test.
+<p>
+
+    <b>WARNING</b> This function, like <a href="QCheck.html#VAL(==>)"><code class="code">QCheck.(==&gt;)</code></a>, should only be used in
+    a test. not outside.
+    Example:
+    <pre class="codepre"><code class="code">      Test.make (list int) (fun l -&gt;
+        assume (l &lt;&gt; []);
+        List.hd l :: List.tl l = l)
+    </code></pre><br>
+<b>Since</b> NEXT_RELEASE<br>
+</div>
+
+<pre><span id="VALassume_fail"><span class="keyword">val</span> assume_fail</span> : <code class="type">unit -> 'a</code></pre><div class="info ">
+<code class="code">assume_fail ()</code> is like <code class="code">assume false</code>, but can take any type
+    since we know it always fails (like <code class="code">assert false</code>).
+    This is useful to ignore some branches in <code class="code">if</code> or <code class="code">match</code>.
+<p>
+
+    Example:
+    <pre class="codepre"><code class="code">      Test.make (list int) (function
+        | [] -&gt; assume_fail ()
+        | _::_ as l -&gt; List.hd l :: List.tl l = l)
+    </code></pre><br>
+<b>Since</b> NEXT_RELEASE<br>
 </div>
 
 <pre><span class="keyword">module</span> <a href="QCheck.Gen.html">Gen</a>: <code class="code">sig</code> <a href="QCheck.Gen.html">..</a> <code class="code">end</code></pre><div class="info">
@@ -205,7 +243,27 @@ Builder for arbitrary. Default is to only have a generator, but other
 <pre><span id="VALset_print"><span class="keyword">val</span> set_print</span> : <code class="type">'a <a href="QCheck.Print.html#TYPEt">Print.t</a> -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre>
 <pre><span id="VALset_small"><span class="keyword">val</span> set_small</span> : <code class="type">('a -> int) -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre>
 <pre><span id="VALset_shrink"><span class="keyword">val</span> set_shrink</span> : <code class="type">'a <a href="QCheck.Shrink.html#TYPEt">Shrink.t</a> -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre>
-<pre><span id="VALset_collect"><span class="keyword">val</span> set_collect</span> : <code class="type">('a -> string) -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre>
+<pre><span id="VALset_collect"><span class="keyword">val</span> set_collect</span> : <code class="type">('a -> string) -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><br>
+<h2 id="2_Tests">Tests</h2>
+<p>
+
+    A test is a universal property of type <code class="code">foo -&gt; bool</code> for some type <code class="code">foo</code>,
+    with an object of type <code class="code">foo arbitrary</code> used to generate, print, etc. values
+    of type <code class="code">foo</code>.
+<p>
+
+    See <a href="QCheck.Test.html#VALmake"><code class="code">QCheck.Test.make</code></a> to build a test, and <a href="QCheck.Test.html#VALcheck_exn"><code class="code">QCheck.Test.check_exn</code></a> to
+    run one test simply.
+    For more serious testing, it is better to create a testsuite
+    and use <a href="QCheck_runner.html"><code class="code">QCheck_runner</code></a>.<br>
+
+<pre><span class="keyword">module</span> <a href="QCheck.TestResult.html">TestResult</a>: <code class="code">sig</code> <a href="QCheck.TestResult.html">..</a> <code class="code">end</code></pre><div class="info">
+Result of running a test
+</div>
+
+<pre><span class="keyword">module</span> <a href="QCheck.Test.html">Test</a>: <code class="code">sig</code> <a href="QCheck.Test.html">..</a> <code class="code">end</code></pre><br>
+<h2 id="2_CombinatorsforQCheckarbitrary">Combinators for <a href="QCheck.html#TYPEarbitrary"><code class="code">QCheck.arbitrary</code></a></h2><br>
+
 <pre><span id="VALchoose"><span class="keyword">val</span> choose</span> : <code class="type">'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> list -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
 Choose among the given list of generators. The list must not
   be empty; if it is Invalid_argument is raised.<br>
@@ -422,8 +480,4 @@ Specialization of <code class="code">map</code> when the transformation preserve
       values will map into smaller values<br>
 </div>
 <div class="param_info"><code class="code">print</code> : optional printer for the <code class="code">f</code>'s output</div>
-<br>
-<h2 id="2_Tests">Tests</h2><br>
-
-<pre><span class="keyword">module</span> <a href="QCheck.TestResult.html">TestResult</a>: <code class="code">sig</code> <a href="QCheck.TestResult.html">..</a> <code class="code">end</code></pre>
-<pre><span class="keyword">module</span> <a href="QCheck.Test.html">Test</a>: <code class="code">sig</code> <a href="QCheck.Test.html">..</a> <code class="code">end</code></pre></body></html>
+</body></html>

@@ -107,6 +107,18 @@ generates arrays with length from the given distribution
 Builds an array generator from a (non-negative) size generator and an element generator
 </div>
 </td></tr>
+<tr><td><a href="QCheck.html#VALassume">assume</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+<code class="code">assume cond</code> checks the precondition <code class="code">cond</code>, and does nothing
+    if <code class="code">cond=true</code>.
+</div>
+</td></tr>
+<tr><td><a href="QCheck.html#VALassume_fail">assume_fail</a> [<a href="QCheck.html">QCheck</a>]</td>
+<td><div class="info">
+<code class="code">assume_fail ()</code> is like <code class="code">assume false</code>, but can take any type
+    since we know it always fails (like <code class="code">assert false</code>).
+</div>
+</td></tr>
 <tr><td align="left"><br>B</td></tr>
 <tr><td><a href="QCheck.Print.html#VALbool">bool</a> [<a href="QCheck.Print.html">QCheck.Print</a>]</td>
 <td></td></tr>
