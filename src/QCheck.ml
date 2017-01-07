@@ -108,7 +108,7 @@ module Gen = struct
     else if p < 0.95 then RS.int st 1_000
     else RS.int st 10_000
 
-  let small_int = nat
+  let small_nat = nat
 
   let unit _st = ()
 
@@ -146,6 +146,11 @@ module Gen = struct
     assert (b >= a);
     fun st -> a + (Random.State.int st (b-a+1))
   let (--) = int_range
+
+  let small_int st =
+    if bool st
+    then small_nat st
+    else - (small_nat st)
 
   let random_binary_string st length =
     (* 0b011101... *)
@@ -436,7 +441,8 @@ let int_bound n = make_int (Gen.int_bound n)
 let int_range a b = make_int (Gen.int_range a b)
 let (--) = int_range
 let pos_int = make_int Gen.pint
-let small_int = make_int Gen.nat
+let small_int = make_int Gen.small_int
+let small_nat = make_int Gen.small_nat
 let small_int_corners () = make_int (Gen.nng_corners ())
 let neg_int = make_int Gen.neg_int
 

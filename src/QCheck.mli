@@ -198,7 +198,8 @@ module Gen : sig
   val neg_int : int t (** Generates negative integers *)
   val pint : int t (** Generates positive integers uniformly *)
   val int : int t (** Generates integers uniformly *)
-  val small_int : int t (** Synonym to {!nat} *)
+  val small_nat : int t (** Synonym to {!nat} @since NEXT_RELEASE *)
+  val small_int : int t (** Small signed integers (not just {!nat}) *)
   val int_bound : int -> int t
   (** Uniform integer generator producing integers within [0... bound] *)
   val int_range : int -> int -> int t
@@ -565,6 +566,13 @@ val int_range : int -> int -> int arbitrary
 (** [int_range a b] is uniform between [a] and [b] included. [b] must be
     larger than [a]. *)
 
+val small_nat : int arbitrary
+(** Small unsigned integers
+    @since NEXT_RELEASE *)
+
+val small_int : int arbitrary
+(** Small signed integers. See {!Gen.small_int}. *)
+
 val (--) : int -> int -> int arbitrary
 (** Synonym to {!int_range} *)
 
@@ -576,11 +584,6 @@ val int64 : int64 arbitrary
 
 val pos_int : int arbitrary
 (** positive int generator. Uniformly distributed *)
-
-val small_int : int arbitrary
-(** positive int generator. The probability that a number is chosen
-    is roughly an exponentially decreasing function of the number.
-*)
 
 val small_int_corners : unit -> int arbitrary
 (** As [small_int], but each newly created generator starts with
