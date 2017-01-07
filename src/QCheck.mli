@@ -201,9 +201,11 @@ module Gen : sig
   val small_nat : int t (** Synonym to {!nat} @since NEXT_RELEASE *)
   val small_int : int t (** Small signed integers (not just {!nat}) *)
   val int_bound : int -> int t
-  (** Uniform integer generator producing integers within [0... bound] *)
+  (** Uniform integer generator producing integers within [0... bound].
+      @raise Invalid_argument if the bound is too high (typically 2^30) *)
   val int_range : int -> int -> int t
-  (** Uniform integer generator producing integers within [low,high] *)
+  (** Uniform integer generator producing integers within [low,high]
+      @raise Invalid_argument if the range is too large (typically 2^30) *)
   val (--) : int -> int -> int t (** Synonym to {!int_range} *)
 
   val ui32 : int32 t (** Generates (unsigned) [int32] values *)
