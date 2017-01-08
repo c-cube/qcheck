@@ -65,7 +65,7 @@ QCheck.Test.check_exn test;;
 ]}
 
 
-  - generate 20 random trees using {! Arbitrary.fix} :
+  - generate 20 random trees using {! Gen.fix} :
 
 {[
 type tree = Leaf of int | Node of tree * tree
