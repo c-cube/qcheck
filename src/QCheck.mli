@@ -117,7 +117,7 @@ val assume : bool -> unit
         List.hd l :: List.tl l = l)
     ]}
 
-    @since NEXT_RELEASE
+    @since 0.5.1
 *)
 
 val assume_fail : unit -> 'a
@@ -132,7 +132,7 @@ val assume_fail : unit -> 'a
         | _::_ as l -> List.hd l :: List.tl l = l)
     ]}
 
-    @since NEXT_RELEASE
+    @since 0.5.1
 *)
 
 (** {2 Generate Random Values} *)
@@ -198,7 +198,7 @@ module Gen : sig
   val neg_int : int t (** Generates negative integers *)
   val pint : int t (** Generates positive integers uniformly *)
   val int : int t (** Generates integers uniformly *)
-  val small_nat : int t (** Synonym to {!nat} @since NEXT_RELEASE *)
+  val small_nat : int t (** Synonym to {!nat} @since 0.5.1 *)
   val small_int : int t (** Small signed integers (not just {!nat}) *)
   val int_bound : int -> int t
   (** Uniform integer generator producing integers within [0... bound].
@@ -228,7 +228,7 @@ module Gen : sig
   val opt : 'a t -> 'a option t (** An option generator *)
   val pair : 'a t -> 'b t -> ('a * 'b) t (** Generates pairs *)
   val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t (** Generates triples *)
-  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t (** Generates quadruples @since NEXT_RELEASE *)
+  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t (** Generates quadruples @since 0.5.1 *)
 
   val char : char t (** Generates characters upto character code 255 *)
   val printable : char t (** Generates printable characters *)
@@ -570,7 +570,7 @@ val int_range : int -> int -> int arbitrary
 
 val small_nat : int arbitrary
 (** Small unsigned integers
-    @since NEXT_RELEASE *)
+    @since 0.5.1 *)
 
 val small_int : int arbitrary
 (** Small signed integers. See {!Gen.small_int}. *)
