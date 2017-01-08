@@ -246,7 +246,7 @@ module Gen : sig
 
   val join : 'a t t -> 'a t
   (** Collapses a generator of generators to simply a generator.
-      @since NEXT_RELEASE *)
+      @since 0.5 *)
 
   val sized : 'a sized -> 'a t
   (** Create a generator from a size-bounded generator by first
@@ -256,7 +256,7 @@ module Gen : sig
   (** Create a generator from a size-bounded generator by first
       generating a size using the integer generator and passing the result
       to the size-bounded generator
-      @since NEXT_RELEASE *)
+      @since 0.5 *)
 
   val fix : ('a sized -> 'a sized) -> 'a sized
   (** Fixpoint combinator for generating recursive, size-bounded data types.
