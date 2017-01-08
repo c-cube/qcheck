@@ -228,7 +228,7 @@ module Gen : sig
   val opt : 'a t -> 'a option t (** An option generator *)
   val pair : 'a t -> 'b t -> ('a * 'b) t (** Generates pairs *)
   val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t (** Generates triples *)
-  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t (** Generates quadruples *)
+  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t (** Generates quadruples @since NEXT_RELEASE *)
 
   val char : char t (** Generates characters upto character code 255 *)
   val printable : char t (** Generates printable characters *)
