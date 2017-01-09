@@ -729,9 +729,21 @@ module Test = struct
 
   module R = TestResult
 
+  (* Result of an instance run *)
+  type res =
+    | Success
+    | Failure
+    | Error of exn
+
+  (* Step function, called after each instance test *)
+  type 'a step = string -> 'a cell -> 'a -> res -> unit
+
+  let step_nil_ _ _ _ _ = ()
+
   (* state required by {!check} to execute *)
   type 'a state = {
     test: 'a cell;
+    step: 'a step;
     rand: Random.State.t;
     mutable res: 'a TestResult.t;
     mutable cur_count: int;  (** number of iterations to do *)
@@ -783,11 +795,17 @@ module Test = struct
     | CR_continue
     | CR_yield of 'a TestResult.t
 
+  (* Get the name of a test *)
+  let name_ cell = match cell.name with
+    | None -> "<test>"
+    | Some n -> n
+
   (* test raised [e] on [input]; try to shrink then fail *)
   let handle_exn state input e : _ check_result =
     (* first, shrink
        TODO: shall we shrink differently (i.e. expected only an error)? *)
     let input, steps = shrink state input in
+    state.step (name_ state.test) state.test input (Error e);
     R.error state.res ~steps input e;
     CR_yield state.res
 
@@ -798,6 +816,7 @@ module Test = struct
     let input, steps = shrink state input in
     (* fail *)
     decr_count state;
+    state.step (name_ state.test) state.test input Failure;
     state.cur_max_fail <- state.cur_max_fail - 1;
     R.fail ~small:state.test.arb.small state.res ~steps input;
     if _is_some state.test.arb.small && state.cur_max_fail > 0
@@ -820,6 +839,7 @@ module Test = struct
           then (
             (* one test ok *)
             decr_count state;
+            state.step (name_ state.test) state.test input Success;
             CR_continue
           ) else handle_fail state input
         with
@@ -835,16 +855,13 @@ module Test = struct
 
   let callback_nil_ _ _ _ = ()
 
-  let name_ cell = match cell.name with
-    | None -> "<test>"
-    | Some n -> n
-
   (* main checking function *)
-  let check_cell ?(long=false) ?(call=callback_nil_) ?(rand=Random.State.make [| 0 |]) cell =
+  let check_cell ?(long=false) ?(call=callback_nil_) ?(step=step_nil_)
+      ?(rand=Random.State.make [| 0 |]) cell =
     let factor = if long then cell.long_factor else 1 in
     let state = {
       test=cell;
-      rand;
+      rand; step;
       cur_count=factor*cell.count;
       cur_max_gen=factor*cell.max_gen;
       cur_max_fail=factor*cell.max_fail;
@@ -912,8 +929,8 @@ module Test = struct
         let l = List.map (print_c_ex cell.arb) l in
         raise (Test_fail (name_ cell, l))
 
-  let check_cell_exn ?long ?call ?rand cell =
-    let res = check_cell ?long ?call ?rand cell in
+  let check_cell_exn ?long ?call ?step ?rand cell =
+    let res = check_cell ?long ?call ?step ?rand cell in
     check_result cell res
 
   let check_exn ?long ?rand (Test cell) = check_cell_exn ?long ?rand cell
