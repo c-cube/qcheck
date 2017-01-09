@@ -73,7 +73,7 @@ success (ran 1 tests)
 === Mirrors and Trees
 
 In the first example, we applied the combinator `list` to
-the random generator `small_int` (ints between 0 and 100), and
+the random generator `small_nat` (ints between 0 and 100), and
 that generates lists of random integers.
 
 `QCheck` provides many useful combinators to write
@@ -209,13 +209,13 @@ into OUnit tests that can be part of a wider test-suite.
 let passing =
   QCheck.Test.make ~count:1000
     ~name:"list_rev_is_involutive"
-    QCheck.(list small_int)
+    QCheck.(list small_nat)
     (fun l -> List.rev (List.rev l) = l);;
 
 let failing =
   QCheck.Test.make ~count:10
     ~name:"fail_sort_id"
-    QCheck.(list small_int)
+    QCheck.(list small_nat)
     (fun l -> l = List.sort compare l);;
 
 let _ =

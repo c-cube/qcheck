@@ -147,7 +147,11 @@ module Gen = struct
     fun st -> a + (Random.State.int st (b-a+1))
   let (--) = int_range
 
-  let small_int st =
+  (* NOTE: we keep this alias to not break code that uses [small_int]
+     for sizes of strings, arrays, etc. *)
+  let small_int = small_nat
+
+  let small_signed_int st =
     if bool st
     then small_nat st
     else - (small_nat st)
@@ -214,7 +218,7 @@ module Gen = struct
       Bytes.set s i (gen st)
     done;
     Bytes.unsafe_to_string s
-  let string ?gen st = string_size ?gen small_int st
+  let string ?gen st = string_size ?gen small_nat st
   let small_string ?gen st = string_size ?gen (0--10) st
 
   let join g st = (g st) st
@@ -443,6 +447,7 @@ let (--) = int_range
 let pos_int = make_int Gen.pint
 let small_int = make_int Gen.small_int
 let small_nat = make_int Gen.small_nat
+let small_signed_int = make_int Gen.small_signed_int
 let small_int_corners () = make_int (Gen.nng_corners ())
 let neg_int = make_int Gen.neg_int
 
