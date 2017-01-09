@@ -179,6 +179,14 @@ let test_hd_tl =
 QCheck_runner.run_tests [test_hd_tl];;
 ----
 
+=== Long tests
+
+It is often useful to have two version of a testsuite: a short one that runs
+reasonably fast (so that it is effectively run each time a projet is built),
+and a long one that might be more exhaustive (but whose running time makes it
+impossible to run at each build). To that end, each test has a 'long' version.
+In the long version of a test, the number of tests to run is multiplied by
+the `~long_factor` argument of `QCheck.Test.make`.
 
 === Runners
 

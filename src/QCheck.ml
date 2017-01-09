@@ -689,6 +689,7 @@ end
 module Test = struct
   type 'a cell = {
     count : int; (* number of tests to do *)
+    long_factor : int; (* multiplicative factor for long test count *)
     max_gen : int; (* max number of instances to generate (>= count) *)
     max_fail : int; (* max number of failures *)
     law : 'a -> bool; (* the law to check *)
@@ -705,7 +706,7 @@ module Test = struct
 
   let default_count = 100
 
-  let make_cell ?(count=default_count) ?max_gen
+  let make_cell ?(count=default_count) ?(long_factor=1) ?max_gen
   ?(max_fail=1) ?small ?name arb law
   =
     let max_gen = match max_gen with None -> count + 200 | Some x->x in
@@ -717,10 +718,11 @@ module Test = struct
       max_fail;
       name;
       count;
+      long_factor;
     }
 
-  let make ?count ?max_gen ?max_fail ?small ?name arb law =
-    Test (make_cell ?count ?max_gen ?max_fail ?small ?name arb law)
+  let make ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law =
+    Test (make_cell ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law)
 
 
   (** {6 Running the test} *)
@@ -838,13 +840,14 @@ module Test = struct
     | Some n -> n
 
   (* main checking function *)
-  let check_cell ?(call=callback_nil_) ?(rand=Random.State.make [| 0 |]) cell =
+  let check_cell ?(long=false) ?(call=callback_nil_) ?(rand=Random.State.make [| 0 |]) cell =
+    let factor = if long then cell.long_factor else 1 in
     let state = {
       test=cell;
       rand;
-      cur_count=cell.count;
-      cur_max_gen=cell.max_gen;
-      cur_max_fail=cell.max_fail;
+      cur_count=factor*cell.count;
+      cur_max_gen=factor*cell.max_gen;
+      cur_max_fail=factor*cell.max_fail;
       res = {R.
         state=R.Success; count=0; count_gen=0;
         collect_tbl=lazy (Hashtbl.create 10);
@@ -909,9 +912,9 @@ module Test = struct
         let l = List.map (print_c_ex cell.arb) l in
         raise (Test_fail (name_ cell, l))
 
-  let check_cell_exn ?call ?rand cell =
-    let res = check_cell ?call ?rand cell in
+  let check_cell_exn ?long ?call ?rand cell =
+    let res = check_cell ?long ?call ?rand cell in
     check_result cell res
 
-  let check_exn ?rand (Test cell) = check_cell_exn ?rand cell
+  let check_exn ?long ?rand (Test cell) = check_cell_exn ?long ?rand cell
 end

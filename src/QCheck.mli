@@ -446,22 +446,25 @@ module Test : sig
   (** A single property test *)
 
   val make_cell :
-    ?count:int -> ?max_gen:int -> ?max_fail:int -> ?small:('a -> int) ->
-    ?name:string -> 'a arbitrary -> ('a -> bool) -> 'a cell
+    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
+    ?small:('a -> int) -> ?name:string -> 'a arbitrary -> ('a -> bool) ->
+    'a cell
   (** [make arb prop] builds a test that checks property [prop] on instances
       of the generator [arb].
-     @param name the name of the test
+      @param name the name of the test
       @param count number of test cases to run, counting only
-      the test cases which satisfy preconditions.
+        the test cases which satisfy preconditions.
+      @param long_factor the factor by which to multiply count, max_gen and
+        max_fail when running a long test (default: 1)
       @param max_gen maximum number of times the generation function
         is called in total to replace inputs that do not satisfy
         preconditions (should be >= count)
-     @param max_fail maximum number of failures before we stop generating
-      inputs. This is useful if shrinking takes too much time.
-     @param small kept for compatibility reasons; if provided, replaces
-       the field [arbitrary.small].
-       If there is no shrinking function but there is a [small]
-      function, only the smallest failures will be printed.
+      @param max_fail maximum number of failures before we stop generating
+        inputs. This is useful if shrinking takes too much time.
+      @param small kept for compatibility reasons; if provided, replaces
+        the field [arbitrary.small].
+        If there is no shrinking function but there is a [small]
+        function, only the smallest failures will be printed.
   *)
 
   val get_arbitrary : 'a cell -> 'a arbitrary
@@ -474,8 +477,8 @@ module Test : sig
       put tests on different types in the same list of tests. *)
 
   val make :
-    ?count:int -> ?max_gen:int -> ?max_fail:int -> ?small:('a -> int) ->
-    ?name:string -> 'a arbitrary -> ('a -> bool) -> t
+    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
+    ?small:('a -> int) -> ?name:string -> 'a arbitrary -> ('a -> bool) -> t
   (** [make arb prop] builds a test that checks property [prop] on instances
       of the generator [arb].
       See {!make_cell} for a description of the parameters.
@@ -512,25 +515,27 @@ module Test : sig
       [f name cell res] means test [cell], named [name], gave [res] *)
 
   val check_cell :
-    ?call:'a callback ->
+    ?long:bool -> ?call:'a callback ->
     ?rand:Random.State.t -> 'a cell -> 'a TestResult.t
-  (** [check ~rand test] generates up to [count] random
+  (** [check ~long ~rand test] generates up to [count] random
       values of type ['a] using [arbitrary] and the random state [st]. The
       predicate [law] is called on them and if it returns [false] or raises an
       exception then we have a counter example for the [law].
 
+      @param long if [true] then multiply the number of instances to generate
+        by the cell's long_factor
       @param call function called on each test case, with the result
       @return the result of the test
   *)
 
   val check_cell_exn :
-    ?call:'a callback ->
+    ?long:bool -> ?call:'a callback ->
     ?rand:Random.State.t -> 'a cell -> unit
   (** Same as {!check_cell} but calls  {!check_result} on the result.
       @raise Test_error if [res = Error _]
       @raise Test_error if [res = Failed _] *)
 
-  val check_exn : ?rand:Random.State.t -> t -> unit
+  val check_exn : ?long:bool -> ?rand:Random.State.t -> t -> unit
   (** Same as {!check_cell} but calls  {!check_result} on the result.
       @raise Test_error if [res = Error _]
       @raise Test_error if [res = Failed _] *)
