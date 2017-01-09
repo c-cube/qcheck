@@ -841,7 +841,7 @@ module Test = struct
 
   (* main checking function *)
   let check_cell ?(long=false) ?(call=callback_nil_) ?(rand=Random.State.make [| 0 |]) cell =
-    let factor = if long then 1 else cell.long_factor in
+    let factor = if long then cell.long_factor else 1 in
     let state = {
       test=cell;
       rand;
