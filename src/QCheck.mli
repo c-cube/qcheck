@@ -49,7 +49,7 @@ let test =
   QCheck.(Test.make ~count:1000
    (list int) (fun l -> List.rev (List.rev l) = l));;
 
-QCheck.Test.run_exn test;;
+QCheck.Test.check_exn test;;
 ]}
 
   - Not all lists are sorted (false property that will fail. The 15 smallest
