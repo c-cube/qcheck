@@ -29,3 +29,5 @@ true: annot, bin_annot
 <example/*.ml{,i,y}>: pkg_unix
 <example/*.ml{,i,y}>: use_qcheck
 # OASIS_STOP
+
+true: color(always), safe_string, warn(+a-4-44)

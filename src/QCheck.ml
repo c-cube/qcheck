@@ -210,7 +210,7 @@ module Gen = struct
 
   let string_size ?(gen = char) size st =
     let s = Bytes.create (size st) in
-    for i = 0 to String.length s - 1 do
+    for i = 0 to Bytes.length s - 1 do
       Bytes.set s i (gen st)
     done;
     Bytes.unsafe_to_string s
