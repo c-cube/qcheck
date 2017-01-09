@@ -26,12 +26,18 @@ val random_state : unit -> Random.State.t
 val verbose : unit -> bool
 (** Is the default mode verbose or quiet? *)
 
+val long_tests : unit -> bool
+(** Is the default mode to run long tests or nor? *)
+
 val set_seed : int -> unit
 (** Change the {!random_state} by creating a new one, initialized with
     the given seed. *)
 
 val set_verbose : bool -> unit
 (** Change the value of [verbose ()] *)
+
+val set_long_tests : bool -> unit
+(** Change the value of [long_tests ()] *)
 
 (** {2 Conversion of tests to OUnit Tests} *)
 

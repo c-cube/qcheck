@@ -86,6 +86,10 @@ let verbose, set_verbose =
   let r = ref false in
   (fun () -> !r), (fun b -> r := b)
 
+let long_tests, set_long_tests =
+  let r = ref false in
+  (fun () -> !r), (fun b -> r := b)
+
 (* Function which runs the given function and returns the running time
    of the function, and the original result in a tuple *)
 let time_fun f x y =
@@ -95,6 +99,7 @@ let time_fun f x y =
 
 type cli_args = {
   cli_verbose : bool;
+  cli_long_tests : bool;
   cli_print_list : bool;
   cli_rand : Random.State.t;
   cli_slow_test : int; (* how many slow tests to display? *)
@@ -103,6 +108,7 @@ type cli_args = {
 let parse_cli ~full_options argv =
   let print_list = ref false in
   let set_verbose () = set_verbose true in
+  let set_long_tests () = set_long_tests true in
   let set_list () = print_list := true in
   let slow = ref 0 in
   let options = Arg.align (
@@ -117,11 +123,12 @@ let parse_cli ~full_options argv =
     ) @
     [ "-s", Arg.Set_int seed, " "
     ; "--seed", Arg.Set_int seed, " set random seed (to repeat tests)"
+    ; "--long", Arg.Unit set_long_tests, " run long tests"
     ]
   ) in
   Arg.parse_argv argv options (fun _ ->()) "run qtest suite";
   let cli_rand = setup_random_state_ () in
-  { cli_verbose=verbose(); cli_rand;
+  { cli_verbose=verbose(); cli_long_tests=long_tests(); cli_rand;
     cli_print_list= !print_list; cli_slow_test= !slow; }
 
 let run ?(argv=Sys.argv) test =
@@ -273,13 +280,14 @@ let print_std = { info = Printf.printf; fail = Printf.printf; err = Printf.print
 
 (* to convert a test to a [OUnit.test], we register a callback that will
    possibly print errors and counter-examples *)
-let to_ounit_test_cell ?(verbose=verbose()) ?(rand=random_state()) cell =
+let to_ounit_test_cell ?(verbose=verbose()) ?(long=long_tests())
+    ?(rand=random_state()) cell =
   let module T = QCheck.Test in
   let name = name_of_cell cell in
   let run () =
     try
-      T.check_cell_exn cell
-        ~rand ~call:(callback ~verbose ~print_res:verbose ~print:print_std);
+      T.check_cell_exn cell ~long ~rand
+        ~call:(callback ~verbose ~print_res:verbose ~print:print_std);
       true
     with T.Test_fail _ ->
       false
@@ -325,7 +333,8 @@ let to_ounit2_test ?(rand = default_rand()) (QCheck.Test.Test cell) =
 let to_ounit2_test_list ?rand lst =
   List.rev (List.rev_map (to_ounit2_test ?rand) lst)
 
-let run_tests ?(verbose=verbose()) ?(out=stdout) ?(rand=random_state()) l =
+let run_tests ?(verbose=verbose()) ?(long=long_tests())
+    ?(out=stdout) ?(rand=random_state()) l =
   let module T = QCheck.Test in
   let module R = QCheck.TestResult in
   let n_fail = ref 0 in
@@ -334,7 +343,8 @@ let run_tests ?(verbose=verbose()) ?(out=stdout) ?(rand=random_state()) l =
     (fun (T.Test cell) ->
       incr n;
       let res =
-        T.check_cell cell ~call:(callback ~print:print_std ~print_res:true ~verbose) ~rand
+        T.check_cell cell ~long ~rand
+          ~call:(callback ~print:print_std ~print_res:true ~verbose)
       in
       match res.R.state with
       | R.Success -> ()
@@ -353,7 +363,7 @@ let run_tests_main ?(argv=Sys.argv) l =
     let cli_args = parse_cli ~full_options:false argv in
     exit
       (run_tests l ~verbose:cli_args.cli_verbose
-         ~out:stdout ~rand:cli_args.cli_rand)
+         ~long:cli_args.cli_long_tests ~out:stdout ~rand:cli_args.cli_rand)
   with
     | Arg.Bad msg -> print_endline msg; exit 1
     | Arg.Help msg -> print_endline msg; exit 0
