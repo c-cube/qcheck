@@ -304,7 +304,7 @@ let to_ounit2_test ?(rand = default_rand()) (QCheck.Test.Test cell) =
   let module T = QCheck.Test in
   let name = name_of_cell cell in
   let open OUnit2 in
-  name >:: (fun ctxt ->
+  name >: test_case ~length:OUnitTest.Long (fun ctxt ->
       let rand = match conf_seed ctxt with
         | -1 ->
           Random.State.copy rand
