@@ -41,12 +41,16 @@ val set_long_tests : bool -> unit
 
 (** {2 Conversion of tests to OUnit Tests} *)
 
-val to_ounit_test : ?verbose:bool -> ?rand:Random.State.t -> QCheck.Test.t -> OUnit.test
+val to_ounit_test :
+  ?verbose:bool -> ?long:bool -> ?rand:Random.State.t ->
+  QCheck.Test.t -> OUnit.test
 (** [to_ounit_test ~rand t] wraps [t] into a OUnit test
     @param verbose used to print information on stdout (default: [verbose()])
     @param rand the random generator to use (default: [random_state ()]) *)
 
-val to_ounit_test_cell : ?verbose:bool -> ?rand:Random.State.t -> _ QCheck.Test.cell -> OUnit.test
+val to_ounit_test_cell :
+  ?verbose:bool -> ?long:bool -> ?rand:Random.State.t ->
+  _ QCheck.Test.cell -> OUnit.test
 (** Same as {!to_ounit_test} but with a polymorphic test cell *)
 
 val (>:::) : string -> QCheck.Test.t list -> OUnit.test
@@ -81,8 +85,9 @@ val run_tap : OUnit.test -> OUnit.test_results
 
 (** {2 Run a Suite of Tests and Get Results} *)
 
-val run_tests : ?verbose:bool -> ?out:out_channel -> ?rand:Random.State.t ->
-                QCheck.Test.t list -> int
+val run_tests :
+  ?verbose:bool -> ?long:bool -> ?out:out_channel -> ?rand:Random.State.t ->
+  QCheck.Test.t list -> int
 (** Run a suite of tests, and print its results. This is an heritage from
     the "qcheck" library.
     @return an error code, [0] if all tests passed, [1] otherwise.

@@ -294,8 +294,8 @@ let to_ounit_test_cell ?(verbose=verbose()) ?(long=long_tests())
   in
   name >:: (fun () -> assert_bool name (run ()))
 
-let to_ounit_test ?verbose ?rand (QCheck.Test.Test c) =
-  to_ounit_test_cell ?verbose ?rand c
+let to_ounit_test ?verbose ?long ?rand (QCheck.Test.Test c) =
+  to_ounit_test_cell ?verbose ?long ?rand c
 
 let (>:::) name l =
   name >::: (List.map (fun t -> to_ounit_test t) l)
