@@ -472,7 +472,8 @@ module TestResult : sig
   type 'a state =
     | Success
     | Failed of 'a failed_state (** Failed instances *)
-    | Error of 'a counter_ex * exn  (** Error, and instance that triggered it *)
+    | Error of 'a counter_ex * exn * string (** Error, backtrace, and instance
+                                                that triggered it *)
 
   (* result returned by running a test *)
   type 'a t = {

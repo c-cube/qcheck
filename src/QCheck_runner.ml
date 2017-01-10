@@ -256,8 +256,8 @@ let callback ~verbose ~print_res ~print name cell result =
       | R.Success -> ()
       | R.Failed l ->
         print.fail "\r  %s\n" (T.print_fail arb name l);
-      | R.Error (i,e) ->
-        print.err "\r  %s\n" (T.print_error arb name (i,e));
+      | R.Error (i,e,st) ->
+        print.err "\r  %s\n" (T.print_error ~st arb name (i,e));
   )
 
 let name_of_cell cell =
