@@ -557,7 +557,7 @@ module Test : sig
     | Success
     | Failure
     | FalseAssumption
-    | Error of exn
+    | Error of exn * string
 
   type 'a step = string -> 'a cell -> 'a -> res -> unit
   (** Callback executed after each instance of a test has been run.

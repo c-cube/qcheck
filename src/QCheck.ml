@@ -744,7 +744,7 @@ module Test = struct
     | Success
     | Failure
     | FalseAssumption
-    | Error of exn
+    | Error of exn * string
 
   (* Step function, called after each instance test *)
   type 'a step = string -> 'a cell -> 'a -> res -> unit
@@ -811,7 +811,7 @@ module Test = struct
     (* first, shrink
        TODO: shall we shrink differently (i.e. expected only an error)? *)
     let input, steps = shrink state input in
-    state.step state.test.name state.test input (Error e);
+    state.step state.test.name state.test input (Error (e, bt));
     R.error state.res ~steps input e bt;
     CR_yield state.res
 
