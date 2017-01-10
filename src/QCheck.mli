@@ -469,7 +469,7 @@ module Test : sig
 
   val get_arbitrary : 'a cell -> 'a arbitrary
   val get_law : 'a cell -> ('a -> bool)
-  val get_name : _ cell -> string option
+  val get_name : _ cell -> string
   val set_name : _ cell -> string -> unit
 
   type t = Test : 'a cell -> t

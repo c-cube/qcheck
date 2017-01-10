@@ -694,20 +694,24 @@ module Test = struct
     max_fail : int; (* max number of failures *)
     law : 'a -> bool; (* the law to check *)
     arb : 'a arbitrary; (* how to generate/print/shrink instances *)
-    mutable name : string option; (* name of the law *)
+    mutable name : string; (* name of the law *)
   }
 
   type t = | Test : 'a cell -> t
 
   let get_name {name; _} = name
-  let set_name c name = c.name <- Some name
+  let set_name c name = c.name <- name
   let get_law {law; _} = law
   let get_arbitrary {arb; _} = arb
 
   let default_count = 100
 
+  let fresh_name =
+    let r = ref 0 in
+    (fun () -> incr r; Printf.sprintf "anon_test_%d" !r)
+
   let make_cell ?(count=default_count) ?(long_factor=1) ?max_gen
-  ?(max_fail=1) ?small ?name arb law
+  ?(max_fail=1) ?small ?(name=fresh_name()) arb law
   =
     let max_gen = match max_gen with None -> count + 200 | Some x->x in
     let arb = match small with None -> arb | Some f -> set_small f arb in
@@ -795,17 +799,12 @@ module Test = struct
     | CR_continue
     | CR_yield of 'a TestResult.t
 
-  (* Get the name of a test *)
-  let name_ cell = match cell.name with
-    | None -> "<test>"
-    | Some n -> n
-
   (* test raised [e] on [input]; try to shrink then fail *)
   let handle_exn state input e : _ check_result =
     (* first, shrink
        TODO: shall we shrink differently (i.e. expected only an error)? *)
     let input, steps = shrink state input in
-    state.step (name_ state.test) state.test input (Error e);
+    state.step state.test.name state.test input (Error e);
     R.error state.res ~steps input e;
     CR_yield state.res
 
@@ -816,7 +815,7 @@ module Test = struct
     let input, steps = shrink state input in
     (* fail *)
     decr_count state;
-    state.step (name_ state.test) state.test input Failure;
+    state.step state.test.name state.test input Failure;
     state.cur_max_fail <- state.cur_max_fail - 1;
     R.fail ~small:state.test.arb.small state.res ~steps input;
     if _is_some state.test.arb.small && state.cur_max_fail > 0
@@ -839,7 +838,7 @@ module Test = struct
           then (
             (* one test ok *)
             decr_count state;
-            state.step (name_ state.test) state.test input Success;
+            state.step state.test.name state.test input Success;
             CR_continue
           ) else handle_fail state input
         with
@@ -871,7 +870,7 @@ module Test = struct
       };
     } in
     let res = check_state state in
-    call (name_ cell) cell res;
+    call cell.name cell res;
     res
 
   exception Test_fail of string * string list
@@ -924,10 +923,10 @@ module Test = struct
     | R.Success -> ()
     | R.Error (i,e) ->
       let st = Printexc.get_backtrace () in
-      raise (Test_error (name_ cell, print_c_ex cell.arb i, e, st))
+      raise (Test_error (cell.name, print_c_ex cell.arb i, e, st))
     | R.Failed l ->
         let l = List.map (print_c_ex cell.arb) l in
-        raise (Test_fail (name_ cell, l))
+        raise (Test_fail (cell.name, l))
 
   let check_cell_exn ?long ?call ?step ?rand cell =
     let res = check_cell ?long ?call ?step ?rand cell in
