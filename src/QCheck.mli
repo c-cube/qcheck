@@ -513,6 +513,7 @@ module Test : sig
   type res =
     | Success
     | Failure
+    | FalseAssumption
     | Error of exn
 
   type 'a step = string -> 'a cell -> 'a -> res -> unit

@@ -737,6 +737,7 @@ module Test = struct
   type res =
     | Success
     | Failure
+    | FalseAssumption
     | Error of exn
 
   (* Step function, called after each instance test *)
@@ -842,8 +843,10 @@ module Test = struct
             CR_continue
           ) else handle_fail state input
         with
-          | FailedPrecondition -> CR_continue
-          | e -> handle_exn state input e
+        | FailedPrecondition ->
+          state.step state.test.name state.test input FalseAssumption;
+          CR_continue
+        | e -> handle_exn state input e
       in
       match res with
         | CR_continue -> check_state state
