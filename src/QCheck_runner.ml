@@ -226,13 +226,6 @@ let run_tap test =
   pf "TAP version 13\n1..%d\n" total_tests;
   perform_test handle_event test
 
-let next_name_ =
-  let i = ref 0 in
-  fun () ->
-    let name = "<anon prop> " ^ (string_of_int !i) in
-    incr i;
-    name
-
 type ('b,'c) printer = {
   info: 'a. ('a,'b,'c,unit) format4 -> 'a;
   fail: 'a. ('a,'b,'c,unit) format4 -> 'a;
@@ -268,13 +261,7 @@ let callback ~verbose ~print_res ~print name cell result =
   )
 
 let name_of_cell cell =
-  let module T = QCheck.Test in
-  match T.get_name cell with
-  | None ->
-    let n = next_name_ () in
-    T.set_name cell n;
-    n
-  | Some m -> m
+  QCheck.Test.get_name cell
 
 let print_std = { info = Printf.printf; fail = Printf.printf; err = Printf.printf }
 

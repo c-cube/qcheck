@@ -699,20 +699,24 @@ module Test = struct
     max_fail : int; (* max number of failures *)
     law : 'a -> bool; (* the law to check *)
     arb : 'a arbitrary; (* how to generate/print/shrink instances *)
-    mutable name : string option; (* name of the law *)
+    mutable name : string; (* name of the law *)
   }
 
   type t = | Test : 'a cell -> t
 
   let get_name {name; _} = name
-  let set_name c name = c.name <- Some name
+  let set_name c name = c.name <- name
   let get_law {law; _} = law
   let get_arbitrary {arb; _} = arb
 
   let default_count = 100
 
+  let fresh_name =
+    let r = ref 0 in
+    (fun () -> incr r; Printf.sprintf "anon_test_%d" !r)
+
   let make_cell ?(count=default_count) ?(long_factor=1) ?max_gen
-  ?(max_fail=1) ?small ?name arb law
+  ?(max_fail=1) ?small ?(name=fresh_name()) arb law
   =
     let max_gen = match max_gen with None -> count + 200 | Some x->x in
     let arb = match small with None -> arb | Some f -> set_small f arb in
@@ -734,9 +738,22 @@ module Test = struct
 
   module R = TestResult
 
+  (* Result of an instance run *)
+  type res =
+    | Success
+    | Failure
+    | FalseAssumption
+    | Error of exn
+
+  (* Step function, called after each instance test *)
+  type 'a step = string -> 'a cell -> 'a -> res -> unit
+
+  let step_nil_ _ _ _ _ = ()
+
   (* state required by {!check} to execute *)
   type 'a state = {
     test: 'a cell;
+    step: 'a step;
     rand: Random.State.t;
     mutable res: 'a TestResult.t;
     mutable cur_count: int;  (** number of iterations to do *)
@@ -793,6 +810,7 @@ module Test = struct
     (* first, shrink
        TODO: shall we shrink differently (i.e. expected only an error)? *)
     let input, steps = shrink state input in
+    state.step state.test.name state.test input (Error e);
     R.error state.res ~steps input e;
     CR_yield state.res
 
@@ -803,6 +821,7 @@ module Test = struct
     let input, steps = shrink state input in
     (* fail *)
     decr_count state;
+    state.step state.test.name state.test input Failure;
     state.cur_max_fail <- state.cur_max_fail - 1;
     R.fail ~small:state.test.arb.small state.res ~steps input;
     if _is_some state.test.arb.small && state.cur_max_fail > 0
@@ -825,11 +844,14 @@ module Test = struct
           then (
             (* one test ok *)
             decr_count state;
+            state.step state.test.name state.test input Success;
             CR_continue
           ) else handle_fail state input
         with
-          | FailedPrecondition -> CR_continue
-          | e -> handle_exn state input e
+        | FailedPrecondition ->
+          state.step state.test.name state.test input FalseAssumption;
+          CR_continue
+        | e -> handle_exn state input e
       in
       match res with
         | CR_continue -> check_state state
@@ -840,16 +862,13 @@ module Test = struct
 
   let callback_nil_ _ _ _ = ()
 
-  let name_ cell = match cell.name with
-    | None -> "<test>"
-    | Some n -> n
-
   (* main checking function *)
-  let check_cell ?(long=false) ?(call=callback_nil_) ?(rand=Random.State.make [| 0 |]) cell =
+  let check_cell ?(long=false) ?(call=callback_nil_) ?(step=step_nil_)
+      ?(rand=Random.State.make [| 0 |]) cell =
     let factor = if long then cell.long_factor else 1 in
     let state = {
       test=cell;
-      rand;
+      rand; step;
       cur_count=factor*cell.count;
       cur_max_gen=factor*cell.max_gen;
       cur_max_fail=factor*cell.max_fail;
@@ -859,7 +878,7 @@ module Test = struct
       };
     } in
     let res = check_state state in
-    call (name_ cell) cell res;
+    call cell.name cell res;
     res
 
   exception Test_fail of string * string list
@@ -912,13 +931,13 @@ module Test = struct
     | R.Success -> ()
     | R.Error (i,e) ->
       let st = Printexc.get_backtrace () in
-      raise (Test_error (name_ cell, print_c_ex cell.arb i, e, st))
+      raise (Test_error (cell.name, print_c_ex cell.arb i, e, st))
     | R.Failed l ->
         let l = List.map (print_c_ex cell.arb) l in
-        raise (Test_fail (name_ cell, l))
+        raise (Test_fail (cell.name, l))
 
-  let check_cell_exn ?long ?call ?rand cell =
-    let res = check_cell ?long ?call ?rand cell in
+  let check_cell_exn ?long ?call ?step ?rand cell =
+    let res = check_cell ?long ?call ?step ?rand cell in
     check_result cell res
 
   let check_exn ?long ?rand (Test cell) = check_cell_exn ?long ?rand cell

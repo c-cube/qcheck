@@ -511,7 +511,7 @@ module Test : sig
 
   val get_arbitrary : 'a cell -> 'a arbitrary
   val get_law : 'a cell -> ('a -> bool)
-  val get_name : _ cell -> string option
+  val get_name : _ cell -> string
   val set_name : _ cell -> string -> unit
 
   type t = Test : 'a cell -> t
@@ -552,12 +552,23 @@ module Test : sig
       @raise Test_error if [res = Error _]
       @raise Test_error if [res = Failed _] *)
 
+  type res =
+    | Success
+    | Failure
+    | FalseAssumption
+    | Error of exn
+
+  type 'a step = string -> 'a cell -> 'a -> res -> unit
+  (** Callback executed after each instance of a test has been run.
+      The callback is given the instance tested, and the current results
+      of the test. *)
+
   type 'a callback = string -> 'a cell -> 'a TestResult.t -> unit
   (** Callback executed after each test has been run.
       [f name cell res] means test [cell], named [name], gave [res] *)
 
   val check_cell :
-    ?long:bool -> ?call:'a callback ->
+    ?long:bool -> ?call:'a callback -> ?step:'a step ->
     ?rand:Random.State.t -> 'a cell -> 'a TestResult.t
   (** [check ~long ~rand test] generates up to [count] random
       values of type ['a] using [arbitrary] and the random state [st]. The
@@ -567,11 +578,12 @@ module Test : sig
       @param long if [true] then multiply the number of instances to generate
         by the cell's long_factor
       @param call function called on each test case, with the result
+      @param step function called on each instance of the test case, with the result
       @return the result of the test
   *)
 
   val check_cell_exn :
-    ?long:bool -> ?call:'a callback ->
+    ?long:bool -> ?call:'a callback -> ?step:'a step ->
     ?rand:Random.State.t -> 'a cell -> unit
   (** Same as {!check_cell} but calls  {!check_result} on the result.
       @raise Test_error if [res = Error _]
