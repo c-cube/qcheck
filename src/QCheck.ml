@@ -653,7 +653,8 @@ module TestResult = struct
   type 'a state =
     | Success
     | Failed of 'a failed_state (** Failed instances *)
-    | Error of 'a counter_ex * exn  (** Error, and instance that triggered it *)
+    | Error of 'a counter_ex * exn * string (** Error, backtrace, and instance
+                                                that triggered it *)
 
   (* result returned by running a test *)
   type 'a t = {
@@ -668,8 +669,8 @@ module TestResult = struct
     let c_ex = {instance; shrink_steps; } in
     match res.state with
     | Success -> res.state <- Failed [ c_ex ]
-    | Error (x, e) ->
-        res.state <- Error (x,e); (* same *)
+    | Error (x, e, bt) ->
+        res.state <- Error (x,e,bt); (* same *)
     | Failed [] -> assert false
     | Failed (c_ex' :: _ as l) ->
         match small with
@@ -687,8 +688,8 @@ module TestResult = struct
             res.state <-
               Failed (c_ex :: l)
 
-  let error ~steps res instance e =
-    res.state <- Error ({instance; shrink_steps=steps}, e)
+  let error ~steps res instance e bt =
+    res.state <- Error ({instance; shrink_steps=steps}, e, bt)
 end
 
 module Test = struct
@@ -743,7 +744,7 @@ module Test = struct
     | Success
     | Failure
     | FalseAssumption
-    | Error of exn
+    | Error of exn * string
 
   (* Step function, called after each instance test *)
   type 'a step = string -> 'a cell -> 'a -> res -> unit
@@ -806,12 +807,12 @@ module Test = struct
     | CR_yield of 'a TestResult.t
 
   (* test raised [e] on [input]; try to shrink then fail *)
-  let handle_exn state input e : _ check_result =
+  let handle_exn state input e bt : _ check_result =
     (* first, shrink
        TODO: shall we shrink differently (i.e. expected only an error)? *)
     let input, steps = shrink state input in
-    state.step state.test.name state.test input (Error e);
-    R.error state.res ~steps input e;
+    state.step state.test.name state.test input (Error (e, bt));
+    R.error state.res ~steps input e bt;
     CR_yield state.res
 
   (* test failed on [input], which means the law is wrong. Continue if
@@ -851,7 +852,9 @@ module Test = struct
         | FailedPrecondition ->
           state.step state.test.name state.test input FalseAssumption;
           CR_continue
-        | e -> handle_exn state input e
+        | e ->
+          let bt = Printexc.get_backtrace () in
+          handle_exn state input e bt
       in
       match res with
         | CR_continue -> check_state state
@@ -929,9 +932,8 @@ module Test = struct
 
   let check_result cell res = match res.R.state with
     | R.Success -> ()
-    | R.Error (i,e) ->
-      let st = Printexc.get_backtrace () in
-      raise (Test_error (cell.name, print_c_ex cell.arb i, e, st))
+    | R.Error (i,e, bt) ->
+      raise (Test_error (cell.name, print_c_ex cell.arb i, e, bt))
     | R.Failed l ->
         let l = List.map (print_c_ex cell.arb) l in
         raise (Test_fail (cell.name, l))

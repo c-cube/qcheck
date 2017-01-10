@@ -472,7 +472,8 @@ module TestResult : sig
   type 'a state =
     | Success
     | Failed of 'a failed_state (** Failed instances *)
-    | Error of 'a counter_ex * exn  (** Error, and instance that triggered it *)
+    | Error of 'a counter_ex * exn * string (** Error, backtrace, and instance
+                                                that triggered it *)
 
   (* result returned by running a test *)
   type 'a t = {
@@ -556,7 +557,7 @@ module Test : sig
     | Success
     | Failure
     | FalseAssumption
-    | Error of exn
+    | Error of exn * string
 
   type 'a step = string -> 'a cell -> 'a -> res -> unit
   (** Callback executed after each instance of a test has been run.
