@@ -109,6 +109,7 @@ let parse_cli ~full_options argv =
   let print_list = ref false in
   let set_verbose () = set_verbose true in
   let set_long_tests () = set_long_tests true in
+  let set_backtraces () = Printexc.record_backtrace true in
   let set_list () = print_list := true in
   let slow = ref 0 in
   let options = Arg.align (
@@ -124,6 +125,7 @@ let parse_cli ~full_options argv =
     [ "-s", Arg.Set_int seed, " "
     ; "--seed", Arg.Set_int seed, " set random seed (to repeat tests)"
     ; "--long", Arg.Unit set_long_tests, " run long tests"
+    ; "-bt", Arg.Unit set_backtraces, " enable backtraces"
     ]
   ) in
   Arg.parse_argv argv options (fun _ ->()) "run qtest suite";
