@@ -102,4 +102,33 @@ val run_tests_main : ?argv:string array -> QCheck.Test.t list -> 'a
 
     - "--verbose" (or "-v") for activating verbose tests
     - "--seed <n>" (or "-s <n>") for repeating a previous run by setting the random seed
+    - "--long" for running the long versions of the tests
+
+    Below is an example of the output of the [run_tests] and [run_tests_main]
+    function: {v
+random seed: 174620056
+generated  error;  fail; pass / total       time -- test name
+[✓] (1000)    0 ;    0 ; 1000 / 1000 --     0.5s -- list_rev_is_involutive
+[✗] (   1)    1 ;    0 ;    0 /   10 --     0.0s -- fail_sort_id
+[✗] (   1)    0 ;    1 ;    0 /   10 --     0.0s -- error_raise_exn
+
+--- Failure --------------------------------------------------------------------
+
+Test fail_sort_id failed (112 shrink steps):
+
+[1; 0]
+
+=== Error ======================================================================
+
+Test error_raise_exn errored on (56 shrink steps):
+
+0
+
+exception QCheck_test.Error
+Raised at file "example/QCheck_test.ml", line 19, characters 20-25
+Called from file "src/QCheck.ml", line 846, characters 13-33
+
+================================================================================
+failure (1 tests failed, 1 tests errored, ran 3 tests)
+v}
 *)
