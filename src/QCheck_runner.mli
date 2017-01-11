@@ -77,7 +77,29 @@ val run : ?argv:string array -> OUnit.test -> int
     @raise Arg.Help in case [argv] contains "--help"
 
     This test runner displays execution in a compact way, making it good
-    for suites that have lots of tests. *)
+    for suites that have lots of tests.
+
+    Output example: {v
+random seed: 101121210
+random seed: 101121210
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+Error: tests>error_raise_exn
+
+test `error_raise_exn` raised exception `QCheck_ounit_test.Error`
+on `0 (after 62 shrink steps)`
+Raised at file "example/QCheck_ounit_test.ml", line 19, characters 20-25
+Called from file "src/QCheck.ml", line 846, characters 13-33
+
+///////////////////////////////////////////////////////////////////////////////
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+Failure: tests>fail_sort_id
+
+fail_sort_id
+///////////////////////////////////////////////////////////////////////////////
+Ran: 3 tests in: 0.74 seconds.                                        
+WARNING! SOME TESTS ARE NEITHER SUCCESSES NOR FAILURES!
+v}
+*)
 
 val run_tap : OUnit.test -> OUnit.test_results
 (** TAP-compatible test runner, in case we want to use a test harness.
