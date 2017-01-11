@@ -1,6 +1,6 @@
 OASISFormat: 0.4
 Name:        qcheck
-Version:     0.5.1
+Version:     0.5.2
 Homepage:    https://github.com/c-cube/qcheck
 Authors:     Simon Cruanes, Vincent Hugot
 License:     LGPL

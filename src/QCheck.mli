@@ -225,7 +225,7 @@ module Gen : sig
 
   val small_signed_int : int t
   (** small SIGNED integers
-      @since NEXT_RELEASE *)
+      @since 0.5.2 *)
 
   val int_bound : int -> int t
   (** Uniform integer generator producing integers within [0... bound].
@@ -638,7 +638,7 @@ val small_int : int arbitrary
 
 val small_signed_int : int arbitrary
 (** Small signed integers
-    @since NEXT_RELEASE *)
+    @since 0.5.2 *)
 
 val (--) : int -> int -> int arbitrary
 (** Synonym to {!int_range} *)
