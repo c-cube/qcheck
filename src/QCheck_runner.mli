@@ -154,8 +154,8 @@ val run_tests_main : ?argv:string array -> QCheck.Test.t list -> 'a
 random seed: 174620056
 generated  error;  fail; pass / total       time -- test name
 [✓] (1000)    0 ;    0 ; 1000 / 1000 --     0.5s -- list_rev_is_involutive
-[✗] (   1)    1 ;    0 ;    0 /   10 --     0.0s -- fail_sort_id
-[✗] (   1)    0 ;    1 ;    0 /   10 --     0.0s -- error_raise_exn
+[✗] (   1)    0 ;    1 ;    0 /   10 --     0.0s -- fail_sort_id
+[✗] (   1)    1 ;    0 ;    0 /   10 --     0.0s -- error_raise_exn
 
 --- Failure --------------------------------------------------------------------
 

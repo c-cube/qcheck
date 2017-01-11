@@ -338,7 +338,7 @@ type res =
 let pp_counter out c =
   let t = Unix.gettimeofday () -. c.start in
   Printf.fprintf out "(%4d) %4d ; %4d ; %4d / %4d -- %7.1fs"
-    c.gen c.failed c.errored c.passed c.expected t
+    c.gen c.errored c.failed c.passed c.expected t
 
 let step ~out ~verbose c name _ _ r =
   let aux = function
