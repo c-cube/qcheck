@@ -710,7 +710,8 @@ module Test = struct
   let get_law {law; _} = law
   let get_arbitrary {arb; _} = arb
 
-  let get_count {count; _ } = count
+  let get_count ?(long=false) {count; long_factor; _ } =
+    if long then long_factor * count else count
 
   let default_count = 100
 
