@@ -29,26 +29,28 @@ A single property test<br>
 </div>
 
 
-<pre><span id="VALmake_cell"><span class="keyword">val</span> make_cell</span> : <code class="type">?count:int -><br>       ?max_gen:int -><br>       ?max_fail:int -><br>       ?small:('a -> int) -><br>       ?name:string -> 'a <a href="QCheck.html#TYPEarbitrary">QCheck.arbitrary</a> -> ('a -> bool) -> 'a <a href="QCheck.Test.html#TYPEcell">cell</a></code></pre><div class="info ">
+<pre><span id="VALmake_cell"><span class="keyword">val</span> make_cell</span> : <code class="type">?count:int -><br>       ?long_factor:int -><br>       ?max_gen:int -><br>       ?max_fail:int -><br>       ?small:('a -> int) -><br>       ?name:string -> 'a <a href="QCheck.html#TYPEarbitrary">QCheck.arbitrary</a> -> ('a -> bool) -> 'a <a href="QCheck.Test.html#TYPEcell">cell</a></code></pre><div class="info ">
 <code class="code">make arb prop</code> builds a test that checks property <code class="code">prop</code> on instances
       of the generator <code class="code">arb</code>.<br>
 </div>
 <div class="param_info"><code class="code">count</code> : number of test cases to run, counting only
-      the test cases which satisfy preconditions.</div>
+        the test cases which satisfy preconditions.</div>
+<div class="param_info"><code class="code">long_factor</code> : the factor by which to multiply count, max_gen and
+        max_fail when running a long test (default: 1)</div>
 <div class="param_info"><code class="code">max_gen</code> : maximum number of times the generation function
         is called in total to replace inputs that do not satisfy
         preconditions (should be &gt;= count)</div>
 <div class="param_info"><code class="code">max_fail</code> : maximum number of failures before we stop generating
-      inputs. This is useful if shrinking takes too much time.</div>
+        inputs. This is useful if shrinking takes too much time.</div>
 <div class="param_info"><code class="code">small</code> : kept for compatibility reasons; if provided, replaces
-       the field <code class="code">arbitrary.small</code>.
-       If there is no shrinking function but there is a <code class="code">small</code>
-      function, only the smallest failures will be printed.</div>
+        the field <code class="code">arbitrary.small</code>.
+        If there is no shrinking function but there is a <code class="code">small</code>
+        function, only the smallest failures will be printed.</div>
 <div class="param_info"><code class="code">name</code> : the name of the test</div>
 
 <pre><span id="VALget_arbitrary"><span class="keyword">val</span> get_arbitrary</span> : <code class="type">'a <a href="QCheck.Test.html#TYPEcell">cell</a> -> 'a <a href="QCheck.html#TYPEarbitrary">QCheck.arbitrary</a></code></pre>
 <pre><span id="VALget_law"><span class="keyword">val</span> get_law</span> : <code class="type">'a <a href="QCheck.Test.html#TYPEcell">cell</a> -> 'a -> bool</code></pre>
-<pre><span id="VALget_name"><span class="keyword">val</span> get_name</span> : <code class="type">'a <a href="QCheck.Test.html#TYPEcell">cell</a> -> string option</code></pre>
+<pre><span id="VALget_name"><span class="keyword">val</span> get_name</span> : <code class="type">'a <a href="QCheck.Test.html#TYPEcell">cell</a> -> string</code></pre>
 <pre><span id="VALset_name"><span class="keyword">val</span> set_name</span> : <code class="type">'a <a href="QCheck.Test.html#TYPEcell">cell</a> -> string -> unit</code></pre>
 <pre><code><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> = </code></pre><table class="typetable">
 <tr>
@@ -65,7 +67,7 @@ Same as <code class="code">'a cell</code>, but masking the type parameter. This 
 
 
 
-<pre><span id="VALmake"><span class="keyword">val</span> make</span> : <code class="type">?count:int -><br>       ?max_gen:int -><br>       ?max_fail:int -><br>       ?small:('a -> int) -><br>       ?name:string -> 'a <a href="QCheck.html#TYPEarbitrary">QCheck.arbitrary</a> -> ('a -> bool) -> <a href="QCheck.Test.html#TYPEt">t</a></code></pre><div class="info ">
+<pre><span id="VALmake"><span class="keyword">val</span> make</span> : <code class="type">?count:int -><br>       ?long_factor:int -><br>       ?max_gen:int -><br>       ?max_fail:int -><br>       ?small:('a -> int) -><br>       ?name:string -> 'a <a href="QCheck.html#TYPEarbitrary">QCheck.arbitrary</a> -> ('a -> bool) -> <a href="QCheck.Test.html#TYPEt">t</a></code></pre><div class="info ">
 <code class="code">make arb prop</code> builds a test that checks property <code class="code">prop</code> on instances
       of the generator <code class="code">arb</code>.
       See <a href="QCheck.Test.html#VALmake_cell"><code class="code">QCheck.Test.make_cell</code></a> for a description of the parameters.<br>
@@ -102,6 +104,46 @@ Exception raised when a test raised an exception <code class="code">e</code>, wi
 </ul>
 </div>
 
+<pre><code><span id="TYPEres"><span class="keyword">type</span> <code class="type"></code>res</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTres.Success"><span class="constructor">Success</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTres.Failure"><span class="constructor">Failure</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTres.FalseAssumption"><span class="constructor">FalseAssumption</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTres.Error"><span class="constructor">Error</span></span> <span class="keyword">of</span> <code class="type">exn * string</code></code></td>
+
+</tr></table>
+
+
+
+<pre><span id="TYPEstep"><span class="keyword">type</span> <code class="type">'a</code> step</span> = <code class="type">string -> 'a <a href="QCheck.Test.html#TYPEcell">cell</a> -> 'a -> <a href="QCheck.Test.html#TYPEres">res</a> -> unit</code> </pre>
+<div class="info ">
+Callback executed after each instance of a test has been run.
+      The callback is given the instance tested, and the current results
+      of the test.<br>
+</div>
+
+
 <pre><span id="TYPEcallback"><span class="keyword">type</span> <code class="type">'a</code> callback</span> = <code class="type">string -> 'a <a href="QCheck.Test.html#TYPEcell">cell</a> -> 'a <a href="QCheck.TestResult.html#TYPEt">QCheck.TestResult.t</a> -> unit</code> </pre>
 <div class="info ">
 Callback executed after each test has been run.
@@ -109,23 +151,26 @@ Callback executed after each test has been run.
 </div>
 
 
-<pre><span id="VALcheck_cell"><span class="keyword">val</span> check_cell</span> : <code class="type">?call:'a <a href="QCheck.Test.html#TYPEcallback">callback</a> -><br>       ?rand:Random.State.t -> 'a <a href="QCheck.Test.html#TYPEcell">cell</a> -> 'a <a href="QCheck.TestResult.html#TYPEt">QCheck.TestResult.t</a></code></pre><div class="info ">
-<code class="code">check ~rand test</code> generates up to <code class="code">count</code> random
+<pre><span id="VALcheck_cell"><span class="keyword">val</span> check_cell</span> : <code class="type">?long:bool -><br>       ?call:'a <a href="QCheck.Test.html#TYPEcallback">callback</a> -><br>       ?step:'a <a href="QCheck.Test.html#TYPEstep">step</a> -><br>       ?rand:Random.State.t -> 'a <a href="QCheck.Test.html#TYPEcell">cell</a> -> 'a <a href="QCheck.TestResult.html#TYPEt">QCheck.TestResult.t</a></code></pre><div class="info ">
+<code class="code">check ~long ~rand test</code> generates up to <code class="code">count</code> random
       values of type <code class="code">'a</code> using <code class="code">arbitrary</code> and the random state <code class="code">st</code>. The
       predicate <code class="code">law</code> is called on them and if it returns <code class="code">false</code> or raises an
       exception then we have a counter example for the <code class="code">law</code>.<br>
 <b>Returns</b> the result of the test<br>
 </div>
+<div class="param_info"><code class="code">long</code> : if <code class="code">true</code> then multiply the number of instances to generate
+        by the cell's long_factor</div>
 <div class="param_info"><code class="code">call</code> : function called on each test case, with the result</div>
+<div class="param_info"><code class="code">step</code> : function called on each instance of the test case, with the result</div>
 
-<pre><span id="VALcheck_cell_exn"><span class="keyword">val</span> check_cell_exn</span> : <code class="type">?call:'a <a href="QCheck.Test.html#TYPEcallback">callback</a> -><br>       ?rand:Random.State.t -> 'a <a href="QCheck.Test.html#TYPEcell">cell</a> -> unit</code></pre><div class="info ">
+<pre><span id="VALcheck_cell_exn"><span class="keyword">val</span> check_cell_exn</span> : <code class="type">?long:bool -><br>       ?call:'a <a href="QCheck.Test.html#TYPEcallback">callback</a> -><br>       ?step:'a <a href="QCheck.Test.html#TYPEstep">step</a> -><br>       ?rand:Random.State.t -> 'a <a href="QCheck.Test.html#TYPEcell">cell</a> -> unit</code></pre><div class="info ">
 Same as <a href="QCheck.Test.html#VALcheck_cell"><code class="code">QCheck.Test.check_cell</code></a> but calls  <a href="QCheck.Test.html#VALcheck_result"><code class="code">QCheck.Test.check_result</code></a> on the result.<br>
 <b>Raises</b><ul><li><code>Test_error</code> if <code class="code">res = Error _</code></li>
 <li><code>Test_error</code> if <code class="code">res = Failed _</code></li>
 </ul>
 </div>
 
-<pre><span id="VALcheck_exn"><span class="keyword">val</span> check_exn</span> : <code class="type">?rand:Random.State.t -> <a href="QCheck.Test.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<pre><span id="VALcheck_exn"><span class="keyword">val</span> check_exn</span> : <code class="type">?long:bool -> ?rand:Random.State.t -> <a href="QCheck.Test.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
 Same as <a href="QCheck.Test.html#VALcheck_cell"><code class="code">QCheck.Test.check_cell</code></a> but calls  <a href="QCheck.Test.html#VALcheck_result"><code class="code">QCheck.Test.check_result</code></a> on the result.<br>
 <b>Raises</b><ul><li><code>Test_error</code> if <code class="code">res = Error _</code></li>
 <li><code>Test_error</code> if <code class="code">res = Failed _</code></li>

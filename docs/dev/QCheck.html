@@ -62,7 +62,7 @@ Examples:
   QCheck.(Test.make ~count:1000
    (list int) (fun l -&gt; List.rev (List.rev l) = l));;
 
-QCheck.Test.run_exn test;;
+QCheck.Test.check_exn test;;
 </code></pre>
 <p>
 <ul>
@@ -73,13 +73,13 @@ QCheck.Test.run_exn test;;
 <pre class="codepre"><code class="code">let test = QCheck.(
   Test.make
     ~count:10_000 ~max_fail:3
-    (list small_int)
+    (list small_nat)
     (fun l -&gt; l = List.sort compare l));;
 QCheck.Test.check_exn test;;
 </code></pre>
 <p>
 <ul>
-<li>generate 20 random trees using <code class="code">Arbitrary.fix</code> :</li>
+<li>generate 20 random trees using <a href="QCheck.Gen.html#VALfix"><code class="code">QCheck.Gen.fix</code></a> :</li>
 </ul>
 
 <pre class="codepre"><code class="code">type tree = Leaf of int | Node of tree * tree
@@ -131,7 +131,7 @@ More complex and powerful combinators can be found in Gabriel Scherer's
         assume (l &lt;&gt; []);
         List.hd l :: List.tl l = l)
     </code></pre><br>
-<b>Since</b> NEXT_RELEASE<br>
+<b>Since</b> 0.5.1<br>
 </div>
 
 <pre><span id="VALassume_fail"><span class="keyword">val</span> assume_fail</span> : <code class="type">unit -> 'a</code></pre><div class="info ">
@@ -145,7 +145,7 @@ More complex and powerful combinators can be found in Gabriel Scherer's
         | [] -&gt; assume_fail ()
         | _::_ as l -&gt; List.hd l :: List.tl l = l)
     </code></pre><br>
-<b>Since</b> NEXT_RELEASE<br>
+<b>Since</b> 0.5.1<br>
 </div>
 
 <pre><span class="keyword">module</span> <a href="QCheck.Gen.html">Gen</a>: <code class="code">sig</code> <a href="QCheck.Gen.html">..</a> <code class="code">end</code></pre><div class="info">
@@ -302,6 +302,21 @@ int generator. Uniformly distributed<br>
     larger than <code class="code">a</code>.<br>
 </div>
 
+<pre><span id="VALsmall_nat"><span class="keyword">val</span> small_nat</span> : <code class="type">int <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+Small unsigned integers<br>
+<b>Since</b> 0.5.1<br>
+</div>
+
+<pre><span id="VALsmall_int"><span class="keyword">val</span> small_int</span> : <code class="type">int <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+<span class="warning">Deprecated.</span>use <a href="QCheck.html#VALsmall_signed_int"><code class="code">QCheck.small_signed_int</code></a><br>
+Small unsigned integers. See <a href="QCheck.Gen.html#VALsmall_int"><code class="code">QCheck.Gen.small_int</code></a>.<br>
+</div>
+
+<pre><span id="VALsmall_signed_int"><span class="keyword">val</span> small_signed_int</span> : <code class="type">int <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
+Small signed integers<br>
+<b>Since</b> 0.5.2<br>
+</div>
+
 <pre><span id="VAL(--)"><span class="keyword">val</span> (--)</span> : <code class="type">int -> int -> int <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
 Synonym to <a href="QCheck.html#VALint_range"><code class="code">QCheck.int_range</code></a><br>
 </div>
@@ -316,11 +331,6 @@ int generator. Uniformly distributed<br>
 
 <pre><span id="VALpos_int"><span class="keyword">val</span> pos_int</span> : <code class="type">int <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
 positive int generator. Uniformly distributed<br>
-</div>
-
-<pre><span id="VALsmall_int"><span class="keyword">val</span> small_int</span> : <code class="type">int <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
-positive int generator. The probability that a number is chosen
-    is roughly an exponentially decreasing function of the number.<br>
 </div>
 
 <pre><span id="VALsmall_int_corners"><span class="keyword">val</span> small_int_corners</span> : <code class="type">unit -> int <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
@@ -348,11 +358,11 @@ uniformy distributed over <code class="code">'0'..'9'</code><br>
 
 <pre><span id="VALstring_gen_of_size"><span class="keyword">val</span> string_gen_of_size</span> : <code class="type">int <a href="QCheck.Gen.html#TYPEt">Gen.t</a> -> char <a href="QCheck.Gen.html#TYPEt">Gen.t</a> -> string <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre>
 <pre><span id="VALstring_gen"><span class="keyword">val</span> string_gen</span> : <code class="type">char <a href="QCheck.Gen.html#TYPEt">Gen.t</a> -> string <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
-generates strings with a distribution of length of <code class="code">small_int</code><br>
+generates strings with a distribution of length of <code class="code">small_nat</code><br>
 </div>
 
 <pre><span id="VALstring"><span class="keyword">val</span> string</span> : <code class="type">string <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
-generates strings with a distribution of length of <code class="code">small_int</code>
+generates strings with a distribution of length of <code class="code">small_nat</code>
     and distribution of characters of <code class="code">char</code><br>
 </div>
 
@@ -365,7 +375,7 @@ generates strings with distribution of characters if <code class="code">char</co
 </div>
 
 <pre><span id="VALprintable_string"><span class="keyword">val</span> printable_string</span> : <code class="type">string <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
-generates strings with a distribution of length of <code class="code">small_int</code>
+generates strings with a distribution of length of <code class="code">small_nat</code>
     and distribution of characters of <code class="code">printable_char</code><br>
 </div>
 
@@ -375,7 +385,7 @@ generates strings with distribution of characters of <code class="code">printabl
 
 <pre><span id="VALsmall_printable_string"><span class="keyword">val</span> small_printable_string</span> : <code class="type">string <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre>
 <pre><span id="VALnumeral_string"><span class="keyword">val</span> numeral_string</span> : <code class="type">string <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
-generates strings with a distribution of length of <code class="code">small_int</code>
+generates strings with a distribution of length of <code class="code">small_nat</code>
     and distribution of characters of <code class="code">numeral_char</code><br>
 </div>
 
@@ -384,7 +394,7 @@ generates strings with a distribution of characters of <code class="code">numera
 </div>
 
 <pre><span id="VALlist"><span class="keyword">val</span> list</span> : <code class="type">'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'a list <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
-generates lists with length generated by <code class="code">small_int</code><br>
+generates lists with length generated by <code class="code">small_nat</code><br>
 </div>
 
 <pre><span id="VALlist_of_size"><span class="keyword">val</span> list_of_size</span> : <code class="type">int <a href="QCheck.Gen.html#TYPEt">Gen.t</a> -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'a list <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
@@ -392,7 +402,7 @@ generates lists with length from the given distribution<br>
 </div>
 
 <pre><span id="VALarray"><span class="keyword">val</span> array</span> : <code class="type">'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'a array <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">
-generates arrays with length generated by <code class="code">small_int</code><br>
+generates arrays with length generated by <code class="code">small_nat</code><br>
 </div>
 
 <pre><span id="VALarray_of_size"><span class="keyword">val</span> array_of_size</span> : <code class="type">int <a href="QCheck.Gen.html#TYPEt">Gen.t</a> -> 'a <a href="QCheck.html#TYPEarbitrary">arbitrary</a> -> 'a array <a href="QCheck.html#TYPEarbitrary">arbitrary</a></code></pre><div class="info ">

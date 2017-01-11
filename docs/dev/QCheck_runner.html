@@ -39,6 +39,10 @@ Access the current random state<br>
 Is the default mode verbose or quiet?<br>
 </div>
 
+<pre><span id="VALlong_tests"><span class="keyword">val</span> long_tests</span> : <code class="type">unit -> bool</code></pre><div class="info ">
+Is the default mode to run long tests or nor?<br>
+</div>
+
 <pre><span id="VALset_seed"><span class="keyword">val</span> set_seed</span> : <code class="type">int -> unit</code></pre><div class="info ">
 Change the <a href="QCheck_runner.html#VALrandom_state"><code class="code">QCheck_runner.random_state</code></a> by creating a new one, initialized with
     the given seed.<br>
@@ -47,16 +51,20 @@ Change the <a href="QCheck_runner.html#VALrandom_state"><code class="code">QChec
 <pre><span id="VALset_verbose"><span class="keyword">val</span> set_verbose</span> : <code class="type">bool -> unit</code></pre><div class="info ">
 Change the value of <code class="code">verbose ()</code><br>
 </div>
+
+<pre><span id="VALset_long_tests"><span class="keyword">val</span> set_long_tests</span> : <code class="type">bool -> unit</code></pre><div class="info ">
+Change the value of <code class="code">long_tests ()</code><br>
+</div>
 <br>
 <h2 id="2_ConversionofteststoOUnitTests">Conversion of tests to OUnit Tests</h2><br>
 
-<pre><span id="VALto_ounit_test"><span class="keyword">val</span> to_ounit_test</span> : <code class="type">?verbose:bool -> ?rand:Random.State.t -> <a href="QCheck.Test.html#TYPEt">QCheck.Test.t</a> -> OUnit.test</code></pre><div class="info ">
+<pre><span id="VALto_ounit_test"><span class="keyword">val</span> to_ounit_test</span> : <code class="type">?verbose:bool -><br>       ?long:bool -> ?rand:Random.State.t -> <a href="QCheck.Test.html#TYPEt">QCheck.Test.t</a> -> OUnit.test</code></pre><div class="info ">
 <code class="code">to_ounit_test ~rand t</code> wraps <code class="code">t</code> into a OUnit test<br>
 </div>
 <div class="param_info"><code class="code">verbose</code> : used to print information on stdout (default: <code class="code">verbose()</code>)</div>
 <div class="param_info"><code class="code">rand</code> : the random generator to use (default: <code class="code">random_state ()</code>)</div>
 
-<pre><span id="VALto_ounit_test_cell"><span class="keyword">val</span> to_ounit_test_cell</span> : <code class="type">?verbose:bool -> ?rand:Random.State.t -> 'a <a href="QCheck.Test.html#TYPEcell">QCheck.Test.cell</a> -> OUnit.test</code></pre><div class="info ">
+<pre><span id="VALto_ounit_test_cell"><span class="keyword">val</span> to_ounit_test_cell</span> : <code class="type">?verbose:bool -><br>       ?long:bool -> ?rand:Random.State.t -> 'a <a href="QCheck.Test.html#TYPEcell">QCheck.Test.cell</a> -> OUnit.test</code></pre><div class="info ">
 Same as <a href="QCheck_runner.html#VALto_ounit_test"><code class="code">QCheck_runner.to_ounit_test</code></a> but with a polymorphic test cell<br>
 </div>
 
@@ -97,7 +105,7 @@ TAP-compatible test runner, in case we want to use a test harness.
 <br>
 <h2 id="2_RunaSuiteofTestsandGetResults">Run a Suite of Tests and Get Results</h2><br>
 
-<pre><span id="VALrun_tests"><span class="keyword">val</span> run_tests</span> : <code class="type">?verbose:bool -><br>       ?out:Pervasives.out_channel -><br>       ?rand:Random.State.t -> <a href="QCheck.Test.html#TYPEt">QCheck.Test.t</a> list -> int</code></pre><div class="info ">
+<pre><span id="VALrun_tests"><span class="keyword">val</span> run_tests</span> : <code class="type">?verbose:bool -><br>       ?long:bool -><br>       ?out:Pervasives.out_channel -><br>       ?rand:Random.State.t -> <a href="QCheck.Test.html#TYPEt">QCheck.Test.t</a> list -> int</code></pre><div class="info ">
 Run a suite of tests, and print its results. This is an heritage from
     the "qcheck" library.<br>
 <b>Returns</b> an error code, <code class="code">0</code> if all tests passed, <code class="code">1</code> otherwise.<br>

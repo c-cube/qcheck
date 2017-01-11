@@ -145,16 +145,29 @@ Generates positive integers uniformly<br>
 Generates integers uniformly<br>
 </div>
 
-<pre><span id="VALsmall_int"><span class="keyword">val</span> small_int</span> : <code class="type">int <a href="QCheck.Gen.html#TYPEt">t</a></code></pre><div class="info ">
+<pre><span id="VALsmall_nat"><span class="keyword">val</span> small_nat</span> : <code class="type">int <a href="QCheck.Gen.html#TYPEt">t</a></code></pre><div class="info ">
 Synonym to <a href="QCheck.Gen.html#VALnat"><code class="code">QCheck.Gen.nat</code></a><br>
+<b>Since</b> 0.5.1<br>
+</div>
+
+<pre><span id="VALsmall_int"><span class="keyword">val</span> small_int</span> : <code class="type">int <a href="QCheck.Gen.html#TYPEt">t</a></code></pre><div class="info ">
+<span class="warning">Deprecated.</span>use <a href="QCheck.Gen.html#VALsmall_nat"><code class="code">QCheck.Gen.small_nat</code></a><br>
+Small UNSIGNED integers, for retrocompatibility<br>
+</div>
+
+<pre><span id="VALsmall_signed_int"><span class="keyword">val</span> small_signed_int</span> : <code class="type">int <a href="QCheck.Gen.html#TYPEt">t</a></code></pre><div class="info ">
+small SIGNED integers<br>
+<b>Since</b> 0.5.2<br>
 </div>
 
 <pre><span id="VALint_bound"><span class="keyword">val</span> int_bound</span> : <code class="type">int -> int <a href="QCheck.Gen.html#TYPEt">t</a></code></pre><div class="info ">
-Uniform integer generator producing integers within <code class="code">0... bound</code><br>
+Uniform integer generator producing integers within <code class="code">0... bound</code>.<br>
+<b>Raises</b> <code>Invalid_argument</code> if the bound is too high (typically 2^30)<br>
 </div>
 
 <pre><span id="VALint_range"><span class="keyword">val</span> int_range</span> : <code class="type">int -> int -> int <a href="QCheck.Gen.html#TYPEt">t</a></code></pre><div class="info ">
 Uniform integer generator producing integers within <code class="code">low,high</code><br>
+<b>Raises</b> <code>Invalid_argument</code> if the range is too large (typically 2^30)<br>
 </div>
 
 <pre><span id="VAL(--)"><span class="keyword">val</span> (--)</span> : <code class="type">int -> int -> int <a href="QCheck.Gen.html#TYPEt">t</a></code></pre><div class="info ">
@@ -207,6 +220,7 @@ Generates triples<br>
 
 <pre><span id="VALquad"><span class="keyword">val</span> quad</span> : <code class="type">'a <a href="QCheck.Gen.html#TYPEt">t</a> -><br>       'b <a href="QCheck.Gen.html#TYPEt">t</a> -><br>       'c <a href="QCheck.Gen.html#TYPEt">t</a> -> 'd <a href="QCheck.Gen.html#TYPEt">t</a> -> ('a * 'b * 'c * 'd) <a href="QCheck.Gen.html#TYPEt">t</a></code></pre><div class="info ">
 Generates quadruples<br>
+<b>Since</b> 0.5.1<br>
 </div>
 
 <pre><span id="VALchar"><span class="keyword">val</span> char</span> : <code class="type">char <a href="QCheck.Gen.html#TYPEt">t</a></code></pre><div class="info ">
@@ -238,7 +252,7 @@ Builds a string generator. String size is in the range <code class="code">0-10</
 
 <pre><span id="VALjoin"><span class="keyword">val</span> join</span> : <code class="type">'a <a href="QCheck.Gen.html#TYPEt">t</a> <a href="QCheck.Gen.html#TYPEt">t</a> -> 'a <a href="QCheck.Gen.html#TYPEt">t</a></code></pre><div class="info ">
 Collapses a generator of generators to simply a generator.<br>
-<b>Since</b> NEXT_RELEASE<br>
+<b>Since</b> 0.5<br>
 </div>
 
 <pre><span id="VALsized"><span class="keyword">val</span> sized</span> : <code class="type">'a <a href="QCheck.Gen.html#TYPEsized">sized</a> -> 'a <a href="QCheck.Gen.html#TYPEt">t</a></code></pre><div class="info ">
@@ -250,7 +264,7 @@ Create a generator from a size-bounded generator by first
 Create a generator from a size-bounded generator by first
       generating a size using the integer generator and passing the result
       to the size-bounded generator<br>
-<b>Since</b> NEXT_RELEASE<br>
+<b>Since</b> 0.5<br>
 </div>
 
 <pre><span id="VALfix"><span class="keyword">val</span> fix</span> : <code class="type">('a <a href="QCheck.Gen.html#TYPEsized">sized</a> -> 'a <a href="QCheck.Gen.html#TYPEsized">sized</a>) -> 'a <a href="QCheck.Gen.html#TYPEsized">sized</a></code></pre><div class="info ">

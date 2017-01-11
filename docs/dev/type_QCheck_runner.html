@@ -14,13 +14,16 @@
 <code class="code"><span class="keyword">sig</span><br>
 &nbsp;&nbsp;<span class="keyword">val</span>&nbsp;random_state&nbsp;:&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Random</span>.<span class="constructor">State</span>.t<br>
 &nbsp;&nbsp;<span class="keyword">val</span>&nbsp;verbose&nbsp;:&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bool<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;long_tests&nbsp;:&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bool<br>
 &nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_seed&nbsp;:&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
 &nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_verbose&nbsp;:&nbsp;bool&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;set_long_tests&nbsp;:&nbsp;bool&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
 &nbsp;&nbsp;<span class="keyword">val</span>&nbsp;to_ounit_test&nbsp;:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;?verbose:bool&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;?rand:<span class="constructor">Random</span>.<span class="constructor">State</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">QCheck</span>.<span class="constructor">Test</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">OUnit</span>.test<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?verbose:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?long:bool&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;?rand:<span class="constructor">Random</span>.<span class="constructor">State</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">QCheck</span>.<span class="constructor">Test</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">OUnit</span>.test<br>
 &nbsp;&nbsp;<span class="keyword">val</span>&nbsp;to_ounit_test_cell&nbsp;:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;?verbose:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;?rand:<span class="constructor">Random</span>.<span class="constructor">State</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;<span class="constructor">QCheck</span>.<span class="constructor">Test</span>.cell&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">OUnit</span>.test<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?long:bool&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;?rand:<span class="constructor">Random</span>.<span class="constructor">State</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;<span class="constructor">QCheck</span>.<span class="constructor">Test</span>.cell&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">OUnit</span>.test<br>
 &nbsp;&nbsp;<span class="keyword">val</span>&nbsp;(&nbsp;&gt;:::&nbsp;)&nbsp;:&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">QCheck</span>.<span class="constructor">Test</span>.t&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">OUnit</span>.test<br>
 &nbsp;&nbsp;<span class="keyword">val</span>&nbsp;to_ounit2_test&nbsp;:&nbsp;?rand:<span class="constructor">Random</span>.<span class="constructor">State</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">QCheck</span>.<span class="constructor">Test</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">OUnit2</span>.test<br>
 &nbsp;&nbsp;<span class="keyword">val</span>&nbsp;to_ounit2_test_list&nbsp;:<br>
@@ -29,6 +32,7 @@
 &nbsp;&nbsp;<span class="keyword">val</span>&nbsp;run_tap&nbsp;:&nbsp;<span class="constructor">OUnit</span>.test&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">OUnit</span>.test_results<br>
 &nbsp;&nbsp;<span class="keyword">val</span>&nbsp;run_tests&nbsp;:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;?verbose:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?long:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
 &nbsp;&nbsp;&nbsp;&nbsp;?out:<span class="constructor">Pervasives</span>.out_channel&nbsp;<span class="keywordsign">-&gt;</span><br>
 &nbsp;&nbsp;&nbsp;&nbsp;?rand:<span class="constructor">Random</span>.<span class="constructor">State</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">QCheck</span>.<span class="constructor">Test</span>.t&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;int<br>
 &nbsp;&nbsp;<span class="keyword">val</span>&nbsp;run_tests_main&nbsp;:&nbsp;?argv:string&nbsp;array&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">QCheck</span>.<span class="constructor">Test</span>.t&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>a<br>
