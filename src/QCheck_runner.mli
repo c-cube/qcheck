@@ -16,7 +16,30 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *)
 
-(** {1 Runners for Tests} *)
+(** {1 Runners for Tests}
+
+    Once you built some tests using {!QCheck.Test.make}, you need to
+    run the tests. This module contains several {b runners},
+    which are designed to run every test and report the result.
+
+    By default, you can use {!run_tests} in a test program as follows:
+    {[
+      let testsuite = [
+        Test.make ...;
+        Test.make ...;
+      ]
+
+      let () =
+        let errcode = QCheck_runners.run_tests ~verbose:true testsuite in
+        exit errcode
+    ]}
+    which will run the tests, and exit the program. The error code
+    will be 0 if all tests pass, 1 otherwise.
+
+    {!run_tests_main} can be used as a shortcut for that, also
+    featuring command-line parsing (using {!Arg}) to activate
+    verbose mode and others.
+*)
 
 (** {2 State} *)
 
@@ -96,7 +119,7 @@ Failure: tests>fail_sort_id
 
 fail_sort_id
 ///////////////////////////////////////////////////////////////////////////////
-Ran: 3 tests in: 0.74 seconds.                                        
+Ran: 3 tests in: 0.74 seconds.
 WARNING! SOME TESTS ARE NEITHER SUCCESSES NOR FAILURES!
 v}
 *)
