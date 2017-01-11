@@ -710,6 +710,8 @@ module Test = struct
   let get_law {law; _} = law
   let get_arbitrary {arb; _} = arb
 
+  let get_count {count; _ } = count
+
   let default_count = 100
 
   let fresh_name =
