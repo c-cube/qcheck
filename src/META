@@ -1,6 +1,6 @@
 # OASIS_START
-# DO NOT EDIT (digest: 575ebc1f480a40fa92360dec7fcf5888)
-version = "0.5.1"
+# DO NOT EDIT (digest: d58f83315faefc54e55d53b9cc5ced45)
+version = "0.5.2"
 description = "QuickCheck inspired property based testing"
 requires = "unix bytes oUnit"
 archive(byte) = "qcheck.cma"

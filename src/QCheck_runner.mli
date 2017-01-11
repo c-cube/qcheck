@@ -77,7 +77,29 @@ val run : ?argv:string array -> OUnit.test -> int
     @raise Arg.Help in case [argv] contains "--help"
 
     This test runner displays execution in a compact way, making it good
-    for suites that have lots of tests. *)
+    for suites that have lots of tests.
+
+    Output example: {v
+random seed: 101121210
+random seed: 101121210
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+Error: tests>error_raise_exn
+
+test `error_raise_exn` raised exception `QCheck_ounit_test.Error`
+on `0 (after 62 shrink steps)`
+Raised at file "example/QCheck_ounit_test.ml", line 19, characters 20-25
+Called from file "src/QCheck.ml", line 846, characters 13-33
+
+///////////////////////////////////////////////////////////////////////////////
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+Failure: tests>fail_sort_id
+
+fail_sort_id
+///////////////////////////////////////////////////////////////////////////////
+Ran: 3 tests in: 0.74 seconds.                                        
+WARNING! SOME TESTS ARE NEITHER SUCCESSES NOR FAILURES!
+v}
+*)
 
 val run_tap : OUnit.test -> OUnit.test_results
 (** TAP-compatible test runner, in case we want to use a test harness.
@@ -102,4 +124,33 @@ val run_tests_main : ?argv:string array -> QCheck.Test.t list -> 'a
 
     - "--verbose" (or "-v") for activating verbose tests
     - "--seed <n>" (or "-s <n>") for repeating a previous run by setting the random seed
+    - "--long" for running the long versions of the tests
+
+    Below is an example of the output of the [run_tests] and [run_tests_main]
+    function: {v
+random seed: 174620056
+generated  error;  fail; pass / total       time -- test name
+[✓] (1000)    0 ;    0 ; 1000 / 1000 --     0.5s -- list_rev_is_involutive
+[✗] (   1)    1 ;    0 ;    0 /   10 --     0.0s -- fail_sort_id
+[✗] (   1)    0 ;    1 ;    0 /   10 --     0.0s -- error_raise_exn
+
+--- Failure --------------------------------------------------------------------
+
+Test fail_sort_id failed (112 shrink steps):
+
+[1; 0]
+
+=== Error ======================================================================
+
+Test error_raise_exn errored on (56 shrink steps):
+
+0
+
+exception QCheck_test.Error
+Raised at file "example/QCheck_test.ml", line 19, characters 20-25
+Called from file "src/QCheck.ml", line 846, characters 13-33
+
+================================================================================
+failure (1 tests failed, 1 tests errored, ran 3 tests)
+v}
 *)

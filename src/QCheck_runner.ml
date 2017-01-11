@@ -322,28 +322,103 @@ let to_ounit2_test ?(rand = default_rand()) (QCheck.Test.Test cell) =
 let to_ounit2_test_list ?rand lst =
   List.rev (List.rev_map (to_ounit2_test ?rand) lst)
 
-let run_tests ?(verbose=verbose()) ?(long=long_tests())
-    ?(out=stdout) ?(rand=random_state()) l =
+(* Counter for a test's instances *)
+type counter = {
+  start : float;
+  expected : int;
+  mutable gen : int;
+  mutable passed : int;
+  mutable failed : int;
+  mutable errored : int;
+}
+
+type res =
+  | Res : 'a QCheck.Test.cell * 'a QCheck.TestResult.t -> res
+
+let pp_counter out c =
+  let t = Unix.gettimeofday () -. c.start in
+  Printf.fprintf out "(%4d) %4d ; %4d ; %4d / %4d -- %7.1fs"
+    c.gen c.failed c.errored c.passed c.expected t
+
+let step ~out ~verbose c name _ _ r =
+  let aux = function
+    | QCheck.Test.Success -> c.passed <- c.passed + 1
+    | QCheck.Test.Failure -> c.failed <- c.failed + 1
+    | QCheck.Test.FalseAssumption -> ()
+    | QCheck.Test.Error _ -> c.errored <- c.errored + 1
+  in
+  c.gen <- c.gen + 1;
+  aux r;
+  if verbose then
+    Printf.fprintf out "\r[ ] %a -- %s%!" pp_counter c name
+
+let callback ~out ~verbose c name _ _ =
+  let pass = c.failed = 0 && c.errored = 0 in
+  if verbose then
+    Printf.fprintf out "\r[%s] %a -- %s\n%!"
+      (if pass then "✓" else "✗")
+      pp_counter c name
+
+let print_inst arb x =
+  match arb.QCheck.print with
+  | Some f -> f x
+  | None -> "<no printer>"
+
+let print_fail out cell c_ex =
+  Printf.fprintf out "\n--- Failure %s\n\n" (String.make 68 '-');
+  Printf.fprintf out "Test %s failed (%d shrink steps):\n\n%s\n%!"
+    (QCheck.Test.get_name cell) c_ex.QCheck.TestResult.shrink_steps
+    (print_inst (QCheck.Test.get_arbitrary cell) c_ex.QCheck.TestResult.instance)
+
+let print_error out cell c_ex exn bt =
+  Printf.fprintf out "\n=== Error %s\n\n" (String.make 70 '=');
+  Printf.fprintf out "Test %s errored on (%d shrink steps):\n\n%s\n\nexception %s\n%s\n%!"
+    (QCheck.Test.get_name cell)
+    c_ex.QCheck.TestResult.shrink_steps
+    (print_inst (QCheck.Test.get_arbitrary cell) c_ex.QCheck.TestResult.instance)
+    (Printexc.to_string exn)
+    bt
+
+let run_tests
+    ?(verbose=verbose()) ?(long=long_tests()) ?(out=stdout) ?(rand=random_state()) l =
   let module T = QCheck.Test in
   let module R = QCheck.TestResult in
-  let n_fail = ref 0 in
-  let n = ref 0 in
-  List.iter
-    (fun (T.Test cell) ->
-      incr n;
-      let res =
-        T.check_cell cell ~long ~rand
-          ~call:(callback ~print:print_std ~print_res:true ~verbose)
-      in
-      match res.R.state with
-      | R.Success -> ()
-      | R.Failed _ | R.Error _ -> incr n_fail)
-    l;
-  if !n_fail = 0 then (
-    Printf.fprintf out "success (ran %d tests)\n%!" !n;
+  if verbose then
+    Printf.fprintf out
+      "generated  error;  fail; pass / total       time -- test name\n%!";
+  let aux_map (T.Test cell) =
+    let c = {
+      start = Unix.gettimeofday ();
+      expected = T.get_count cell;
+      gen = 0; passed = 0; failed = 0; errored = 0;
+    } in
+    let r = QCheck.Test.check_cell ~long ~rand
+        ~step:(step ~out ~verbose c)
+        ~call:(callback ~out ~verbose c)
+        cell
+    in
+    Res (cell, r)
+  in
+  let res = List.map aux_map l in
+  let aux_fold (total, fail, error) (Res (cell, r)) =
+    match r.R.state with
+    | R.Success -> (total + 1, fail, error)
+    | R.Failed l ->
+      List.iter (print_fail out cell) l;
+      (total + 1, fail + 1, error)
+    | R.Error (c_ex, exn, bt) ->
+      print_error out cell c_ex exn bt;
+      (total + 1, fail, error + 1)
+  in
+  let total, fail, error = List.fold_left aux_fold (0, 0, 0) res in
+  Printf.fprintf out "%s\n" (String.make 80 '=');
+  if fail = 0 && error = 0 then (
+    Printf.fprintf out "success (ran %d tests)\n%!" total;
     0
   ) else (
-    Printf.fprintf out "failure (%d tests failed, ran %d tests)\n%!" !n_fail !n;
+    Printf.fprintf out
+      "failure (%d tests failed, %d tests errored, ran %d tests)\n%!"
+      fail error total;
     1
   )
 

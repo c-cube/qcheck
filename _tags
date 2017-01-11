@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 85eaad493c737ede38258b45ba8510a7)
+# DO NOT EDIT (digest: 9f74dc1db55d2762c06be6eb28225718)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -24,6 +24,11 @@ true: annot, bin_annot
 "example/QCheck_ounit_test.byte": pkg_oUnit
 "example/QCheck_ounit_test.byte": pkg_unix
 "example/QCheck_ounit_test.byte": use_qcheck
+# Executable qcheck_example
+"example/QCheck_test.byte": pkg_bytes
+"example/QCheck_test.byte": pkg_oUnit
+"example/QCheck_test.byte": pkg_unix
+"example/QCheck_test.byte": use_qcheck
 <example/*.ml{,i,y}>: pkg_bytes
 <example/*.ml{,i,y}>: pkg_oUnit
 <example/*.ml{,i,y}>: pkg_unix
