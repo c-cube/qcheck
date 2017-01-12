@@ -515,6 +515,7 @@ module Test : sig
   val get_name : _ cell -> string
   val set_name : _ cell -> string -> unit
   val get_count : _ cell -> int
+  val get_long_factor : _ cell -> int
 
   type t = Test : 'a cell -> t
   (** Same as ['a cell], but masking the type parameter. This allows to
