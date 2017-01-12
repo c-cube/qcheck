@@ -220,6 +220,7 @@ module Gen = struct
     Bytes.unsafe_to_string s
   let string ?gen st = string_size ?gen small_nat st
   let small_string ?gen st = string_size ?gen (0--10) st
+  let small_list gen = list_size (0--10) gen
 
   let join g st = (g st) st
 
@@ -478,24 +479,15 @@ let numeral_string_of_size size = string_gen_of_size size Gen.numeral
 
 let list_sum_ f l = List.fold_left (fun acc x-> f x+acc) 0 l
 
-let list a =
+let mk_list a gen =
   (* small sums sub-sizes if present, otherwise just length *)
   let small = _opt_map_or a.small ~f:list_sum_ ~d:List.length in
   let print = _opt_map a.print ~f:Print.list in
-  make
-    ~small
-    ~shrink:(Shrink.list ?shrink:a.shrink)
-    ?print
-    (Gen.list a.gen)
+  make ~small ~shrink:(Shrink.list ?shrink:a.shrink) ?print gen
 
-let list_of_size size a =
-  let small = _opt_map_or a.small ~f:list_sum_ ~d:List.length in
-  let print = _opt_map a.print ~f:Print.list in
-  make
-    ~small
-    ~shrink:(Shrink.list ?shrink:a.shrink)
-    ?print
-    (Gen.list_size size a.gen)
+let list a = mk_list a (Gen.list a.gen)
+let list_of_size size a = mk_list a (Gen.list_size size a.gen)
+let small_list a = mk_list a (Gen.small_list a.gen)
 
 let array_sum_ f a = Array.fold_left (fun acc x -> f x+acc) 0 a
 
