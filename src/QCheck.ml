@@ -711,6 +711,7 @@ module Test = struct
   let get_arbitrary {arb; _} = arb
 
   let get_count {count; _ } = count
+  let get_long_factor {long_factor; _} = long_factor
 
   let default_count = 100
 

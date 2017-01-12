@@ -387,10 +387,14 @@ let run_tests
     Printf.fprintf out
       "generated  error;  fail; pass / total       time -- test name\n%!";
   let aux_map (T.Test cell) =
+    let expected =
+      let count = T.get_count cell in
+      if long then T.get_long_factor cell * count else count
+    in
+    let start = Unix.gettimeofday () in
     let c = {
-      start = Unix.gettimeofday ();
-      expected = T.get_count cell;
-      gen = 0; passed = 0; failed = 0; errored = 0;
+      start; expected; gen = 0;
+      passed = 0; failed = 0; errored = 0;
     } in
     let r = QCheck.Test.check_cell ~long ~rand
         ~step:(step ~out ~verbose c)

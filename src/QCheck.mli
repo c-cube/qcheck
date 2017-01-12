@@ -514,7 +514,14 @@ module Test : sig
   val get_law : 'a cell -> ('a -> bool)
   val get_name : _ cell -> string
   val set_name : _ cell -> string -> unit
+
   val get_count : _ cell -> int
+  (** Get the count of a cell
+      @since NEXT_RELEASE *)
+
+  val get_long_factor : _ cell -> int
+  (** Get the long factor of a cell
+      @since NEXT_RELEASE *)
 
   type t = Test : 'a cell -> t
   (** Same as ['a cell], but masking the type parameter. This allows to
