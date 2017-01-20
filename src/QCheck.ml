@@ -198,7 +198,7 @@ module Gen = struct
 
   let quad g1 g2 g3 g4 st = (g1 st, g2 st, g3 st, g4 st)
 
-  let char st = char_of_int (RS.int st 255)
+  let char st = char_of_int (RS.int st 256)
 
   let printable_chars =
     let l = 126-32+1 in
