@@ -1,5 +1,15 @@
 # Changes
 
+## 0.5.3
+
+- missing char in `Gen.char` (close #23)
+- add `test` and `doc` to opam
+- add `small_list` generator
+- add `~long_factor` to tests and runner, for long tests
+- add more examples in readme, better doc for runners
+- improved reporting when running qcheck tests
+- add `Test.get_count` on test cells
+
 ## 0.5.2
 
 - Add cli option for backtraces in `QCheck_runner`
