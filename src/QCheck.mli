@@ -253,22 +253,30 @@ end
 (** {2 Show Values} *)
 module Print : sig
   type 'a t = 'a -> string
-
-  val int : int t
-  val bool : bool t
-  val float : float t
-  val char : char t
-  val string : string t
-  val option : 'a t -> 'a option t
+  (** Printer for values of type ['a] *)
+      
+  val int : int t (** Integer printer *)
+  val bool : bool t (** Boolean printer *)
+  val float : float t (** Floating point number printer *)
+  val char : char t (** Character printer *)
+  val string : string t (** String printer *)
+  val option : 'a t -> 'a option t (** Option printer *)
 
   val pair : 'a t -> 'b t -> ('a*'b) t
+  (** Pair printer. Expects printers for each component *)
   val triple : 'a t -> 'b t -> 'c t -> ('a*'b*'c) t
+  (** Triple (3-tuple) printer. Expects printers for each component *)
   val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a*'b*'c*'d) t
+  (** Quadruple (4-tuple) printer. Expects printers for each component *)
 
   val list : 'a t -> 'a list t
+  (** List printer. Expects a printer for the list element type *)
   val array : 'a t -> 'a array t
+  (** Array printer. Expects a printer for the array entry type *)
 
   val comap : ('a -> 'b) -> 'b t -> 'a t
+  (** [comap f p] maps [p], a printer of type ['b], to a printer of type ['a] by
+      first converting a printed value using [f : 'a -> 'b]. *)
 end
 
 (** {2 Iterators}
