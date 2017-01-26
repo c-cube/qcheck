@@ -364,6 +364,20 @@ let print_inst arb x =
   | Some f -> f x
   | None -> "<no printer>"
 
+let print_success out cell t =
+  let arb = QCheck.Test.get_arbitrary cell in
+  match arb.QCheck.collect with
+  | None -> ()
+  | Some _ ->
+    let aux out =
+      Hashtbl.iter (fun case num ->
+          Printf.fprintf out "%s: %d cases\n" case num)
+    in
+    let (lazy tbl) = t in
+    Printf.fprintf out
+      "\n+++ Collect %s\n\nCollect results for test %s:\n\n%a\n%!"
+      (String.make 68 '+') (QCheck.Test.get_name cell) aux tbl
+
 let print_fail out cell c_ex =
   Printf.fprintf out "\n--- Failure %s\n\n" (String.make 68 '-');
   Printf.fprintf out "Test %s failed (%d shrink steps):\n\n%s\n%!"
@@ -406,7 +420,9 @@ let run_tests
   let res = List.map aux_map l in
   let aux_fold (total, fail, error) (Res (cell, r)) =
     match r.R.state with
-    | R.Success -> (total + 1, fail, error)
+    | R.Success ->
+      print_success out cell r.QCheck.TestResult.collect_tbl;
+      (total + 1, fail, error)
     | R.Failed l ->
       List.iter (print_fail out cell) l;
       (total + 1, fail + 1, error)

@@ -119,7 +119,7 @@ Failure: tests>fail_sort_id
 
 fail_sort_id
 ///////////////////////////////////////////////////////////////////////////////
-Ran: 3 tests in: 0.74 seconds.
+Ran: 4 tests in: 0.74 seconds.
 WARNING! SOME TESTS ARE NEITHER SUCCESSES NOR FAILURES!
 v}
 *)
@@ -151,29 +151,41 @@ val run_tests_main : ?argv:string array -> QCheck.Test.t list -> 'a
 
     Below is an example of the output of the [run_tests] and [run_tests_main]
     function: {v
-random seed: 174620056
+random seed: 438308050
 generated  error;  fail; pass / total       time -- test name
 [✓] (1000)    0 ;    0 ; 1000 / 1000 --     0.5s -- list_rev_is_involutive
-[✗] (   1)    0 ;    1 ;    0 /   10 --     0.0s -- fail_sort_id
-[✗] (   1)    1 ;    0 ;    0 /   10 --     0.0s -- error_raise_exn
+[✗] (   1)    0 ;    1 ;    0 /   10 --     0.0s -- should_fail_sort_id
+[✗] (   1)    1 ;    0 ;    0 /   10 --     0.0s -- should_error_raise_exn
+[✓] (1000)    0 ;    0 ; 1000 / 1000 --     0.0s -- collect_results
 
 --- Failure --------------------------------------------------------------------
 
-Test fail_sort_id failed (112 shrink steps):
+Test should_fail_sort_id failed (11 shrink steps):
 
 [1; 0]
 
 === Error ======================================================================
 
-Test error_raise_exn errored on (56 shrink steps):
+Test should_error_raise_exn errored on (62 shrink steps):
 
 0
 
-exception QCheck_test.Error
-Raised at file "example/QCheck_test.ml", line 19, characters 20-25
-Called from file "src/QCheck.ml", line 846, characters 13-33
+exception QCheck_runner_test.Error
+Raised at file "example/QCheck_runner_test.ml", line 20, characters 20-25
+Called from file "src/QCheck.ml", line 839, characters 13-33
+
+
++++ Collect ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Collect results for test collect_results:
+
+4: 207 cases
+3: 190 cases
+2: 219 cases
+1: 196 cases
+0: 188 cases
 
 ================================================================================
-failure (1 tests failed, 1 tests errored, ran 3 tests)
+failure (1 tests failed, 1 tests errored, ran 4 tests)
 v}
 *)
