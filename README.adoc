@@ -6,15 +6,16 @@
 QuickCheck inspired property-based testing for OCaml, and combinators to
 generate random values to run tests on.
 
+
+The documentation can be found https://c-cube.github.io/qcheck/[here].
 This library spent some time in
 https://github.com/vincent-hugot/iTeML[qtest], but is now
 standalone again!
-
-The documentation can be found https://c-cube.github.io/qcheck/[here].
-
 Note that @gasche's
 http://gasche.github.io/random-generator/doc/Generator.html[generator library]
 can be useful too, for generating random values.
+
+toc::[]
 
 == Use
 
@@ -72,7 +73,7 @@ success (ran 1 tests)
 === Mirrors and Trees
 
 In the first example, we applied the combinator `list` to
-the random generator `small_int` (ints between 0 and 100), and
+the random generator `small_nat` (ints between 0 and 100), and
 that generates lists of random integers.
 
 `QCheck` provides many useful combinators to write
@@ -159,6 +160,34 @@ QCheck_runner.run_tests [test_mirror];;
 
 ----
 
+=== Preconditions
+
+The functions `QCheck.assume` and `QCheck.(==>)` can be used for
+tests with preconditions.
+For instance, `List.hd l :: List.tl l = l` only holds for non-empty lists.
+Without the precondition, the property is false and will even raise
+an exception in some cases.
+
+[source,OCaml]
+----
+let test_hd_tl =
+  QCheck.(Test.make
+    (list int) (fun l ->
+      assume (l <> []);
+      l = List.hd l :: List.tl l));;
+
+QCheck_runner.run_tests [test_hd_tl];;
+----
+
+=== Long tests
+
+It is often useful to have two version of a testsuite: a short one that runs
+reasonably fast (so that it is effectively run each time a projet is built),
+and a long one that might be more exhaustive (but whose running time makes it
+impossible to run at each build). To that end, each test has a 'long' version.
+In the long version of a test, the number of tests to run is multiplied by
+the `~long_factor` argument of `QCheck.Test.make`.
+
 === Runners
 
 The module `QCheck_runner` defines several functions to run tests, including
@@ -167,3 +196,32 @@ The easiest one is probably `run_tests`, but if you write your tests in
 a separate executable you can also use `run_tests_main` which parses
 command line arguments and exits with `0` in case of success,
 or an error number otherwise.
+
+=== Integration within OUnit
+
+http://ounit.forge.ocamlcore.org/[OUnit] is a popular unit-testing framework
+for OCaml.
+QCheck provides some helpers, in `QCheck_runner`, to convert its random tests
+into OUnit tests that can be part of a wider test-suite.
+
+[source,OCaml]
+----
+let passing =
+  QCheck.Test.make ~count:1000
+    ~name:"list_rev_is_involutive"
+    QCheck.(list small_nat)
+    (fun l -> List.rev (List.rev l) = l);;
+
+let failing =
+  QCheck.Test.make ~count:10
+    ~name:"fail_sort_id"
+    QCheck.(list small_nat)
+    (fun l -> l = List.sort compare l);;
+
+let _ =
+  let open OUnit in
+  run_test_tt_main
+    ("tests" >:::
+       List.map QCheck_runner.to_ounit_test [passing; failing])
+
+----

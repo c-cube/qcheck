@@ -16,7 +16,30 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *)
 
-(** {1 Runners for Tests} *)
+(** {1 Runners for Tests}
+
+    Once you built some tests using {!QCheck.Test.make}, you need to
+    run the tests. This module contains several {b runners},
+    which are designed to run every test and report the result.
+
+    By default, you can use {!run_tests} in a test program as follows:
+    {[
+      let testsuite = [
+        Test.make ...;
+        Test.make ...;
+      ]
+
+      let () =
+        let errcode = QCheck_runners.run_tests ~verbose:true testsuite in
+        exit errcode
+    ]}
+    which will run the tests, and exit the program. The error code
+    will be 0 if all tests pass, 1 otherwise.
+
+    {!run_tests_main} can be used as a shortcut for that, also
+    featuring command-line parsing (using {!Arg}) to activate
+    verbose mode and others.
+*)
 
 (** {2 State} *)
 
@@ -26,6 +49,9 @@ val random_state : unit -> Random.State.t
 val verbose : unit -> bool
 (** Is the default mode verbose or quiet? *)
 
+val long_tests : unit -> bool
+(** Is the default mode to run long tests or nor? *)
+
 val set_seed : int -> unit
 (** Change the {!random_state} by creating a new one, initialized with
     the given seed. *)
@@ -33,14 +59,21 @@ val set_seed : int -> unit
 val set_verbose : bool -> unit
 (** Change the value of [verbose ()] *)
 
+val set_long_tests : bool -> unit
+(** Change the value of [long_tests ()] *)
+
 (** {2 Conversion of tests to OUnit Tests} *)
 
-val to_ounit_test : ?verbose:bool -> ?rand:Random.State.t -> QCheck.Test.t -> OUnit.test
+val to_ounit_test :
+  ?verbose:bool -> ?long:bool -> ?rand:Random.State.t ->
+  QCheck.Test.t -> OUnit.test
 (** [to_ounit_test ~rand t] wraps [t] into a OUnit test
     @param verbose used to print information on stdout (default: [verbose()])
     @param rand the random generator to use (default: [random_state ()]) *)
 
-val to_ounit_test_cell : ?verbose:bool -> ?rand:Random.State.t -> _ QCheck.Test.cell -> OUnit.test
+val to_ounit_test_cell :
+  ?verbose:bool -> ?long:bool -> ?rand:Random.State.t ->
+  _ QCheck.Test.cell -> OUnit.test
 (** Same as {!to_ounit_test} but with a polymorphic test cell *)
 
 val (>:::) : string -> QCheck.Test.t list -> OUnit.test
@@ -67,7 +100,29 @@ val run : ?argv:string array -> OUnit.test -> int
     @raise Arg.Help in case [argv] contains "--help"
 
     This test runner displays execution in a compact way, making it good
-    for suites that have lots of tests. *)
+    for suites that have lots of tests.
+
+    Output example: {v
+random seed: 101121210
+random seed: 101121210
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+Error: tests>error_raise_exn
+
+test `error_raise_exn` raised exception `QCheck_ounit_test.Error`
+on `0 (after 62 shrink steps)`
+Raised at file "example/QCheck_ounit_test.ml", line 19, characters 20-25
+Called from file "src/QCheck.ml", line 846, characters 13-33
+
+///////////////////////////////////////////////////////////////////////////////
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+Failure: tests>fail_sort_id
+
+fail_sort_id
+///////////////////////////////////////////////////////////////////////////////
+Ran: 3 tests in: 0.74 seconds.
+WARNING! SOME TESTS ARE NEITHER SUCCESSES NOR FAILURES!
+v}
+*)
 
 val run_tap : OUnit.test -> OUnit.test_results
 (** TAP-compatible test runner, in case we want to use a test harness.
@@ -75,8 +130,9 @@ val run_tap : OUnit.test -> OUnit.test_results
 
 (** {2 Run a Suite of Tests and Get Results} *)
 
-val run_tests : ?verbose:bool -> ?out:out_channel -> ?rand:Random.State.t ->
-                QCheck.Test.t list -> int
+val run_tests :
+  ?verbose:bool -> ?long:bool -> ?out:out_channel -> ?rand:Random.State.t ->
+  QCheck.Test.t list -> int
 (** Run a suite of tests, and print its results. This is an heritage from
     the "qcheck" library.
     @return an error code, [0] if all tests passed, [1] otherwise.
@@ -91,4 +147,33 @@ val run_tests_main : ?argv:string array -> QCheck.Test.t list -> 'a
 
     - "--verbose" (or "-v") for activating verbose tests
     - "--seed <n>" (or "-s <n>") for repeating a previous run by setting the random seed
+    - "--long" for running the long versions of the tests
+
+    Below is an example of the output of the [run_tests] and [run_tests_main]
+    function: {v
+random seed: 174620056
+generated  error;  fail; pass / total       time -- test name
+[✓] (1000)    0 ;    0 ; 1000 / 1000 --     0.5s -- list_rev_is_involutive
+[✗] (   1)    0 ;    1 ;    0 /   10 --     0.0s -- fail_sort_id
+[✗] (   1)    1 ;    0 ;    0 /   10 --     0.0s -- error_raise_exn
+
+--- Failure --------------------------------------------------------------------
+
+Test fail_sort_id failed (112 shrink steps):
+
+[1; 0]
+
+=== Error ======================================================================
+
+Test error_raise_exn errored on (56 shrink steps):
+
+0
+
+exception QCheck_test.Error
+Raised at file "example/QCheck_test.ml", line 19, characters 20-25
+Called from file "src/QCheck.ml", line 846, characters 13-33
+
+================================================================================
+failure (1 tests failed, 1 tests errored, ran 3 tests)
+v}
 *)

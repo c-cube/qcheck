@@ -73,7 +73,7 @@ VERSION=$(shell awk '/^Version:/ {print $$2}' _oasis)
 
 update_next_tag:
 	@echo "update version to $(VERSION)..."
-	sed -i "s/NEXT_VERSION/$(VERSION)/g" *.ml *.mli
-	sed -i "s/NEXT_RELEASE/$(VERSION)/g" *.ml *.mli
+	sed -i "s/NEXT_VERSION/$(VERSION)/g" src/*.ml src/*.mli
+	sed -i "s/NEXT_RELEASE/$(VERSION)/g" src/*.ml src/*.mli
 
 .PHONY: man install_file tags release update_next_tag

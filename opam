@@ -12,6 +12,14 @@ build: [
   ["ocaml" "setup.ml" "-configure" "--prefix" prefix]
   [make "build"]
 ]
+build-doc: [
+  ["./configure" "--enable-docs" "--docdir" "%{doc}%"]
+  [make "doc"]
+]
+build-test: [
+  ["./configure" "--enable-tests"]
+  [make "test"]
+]
 install: [
   [make "install"]
 ]

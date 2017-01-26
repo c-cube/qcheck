@@ -49,7 +49,7 @@ let test =
   QCheck.(Test.make ~count:1000
    (list int) (fun l -> List.rev (List.rev l) = l));;
 
-QCheck.Test.run_exn test;;
+QCheck.Test.check_exn test;;
 ]}
 
   - Not all lists are sorted (false property that will fail. The 15 smallest
@@ -59,13 +59,13 @@ QCheck.Test.run_exn test;;
 let test = QCheck.(
   Test.make
     ~count:10_000 ~max_fail:3
-    (list small_int)
+    (list small_nat)
     (fun l -> l = List.sort compare l));;
 QCheck.Test.check_exn test;;
 ]}
 
 
-  - generate 20 random trees using {! Arbitrary.fix} :
+  - generate 20 random trees using {! Gen.fix} :
 
 {[
 type tree = Leaf of int | Node of tree * tree
@@ -95,6 +95,44 @@ val (==>) : bool -> bool -> bool
     ie [not b1 || b2] (except that it is strict and will interact
     better with {!Test.check_exn} and the likes, because they will know
     the precondition was not satisfied.).
+
+    {b WARNING}: this function should only be used in a property
+    (see {!Test.make}), because it raises a special exception in case of
+    failure of the first argument, to distinguish between failed test
+    and failed precondition. Because of OCaml's evaluation order,
+    both [b1] and [b2] are always evaluated; if [b2] should only be
+    evaluated when [b1] holds, see {!assume}.
+*)
+
+val assume : bool -> unit
+(** [assume cond] checks the precondition [cond], and does nothing
+    if [cond=true]. If [cond=false], it interrupts the current test.
+
+    {b WARNING} This function, like {!(==>)}, should only be used in
+    a test. not outside.
+    Example:
+    {[
+      Test.make (list int) (fun l ->
+        assume (l <> []);
+        List.hd l :: List.tl l = l)
+    ]}
+
+    @since 0.5.1
+*)
+
+val assume_fail : unit -> 'a
+(** [assume_fail ()] is like [assume false], but can take any type
+    since we know it always fails (like [assert false]).
+    This is useful to ignore some branches in [if] or [match].
+
+    Example:
+    {[
+      Test.make (list int) (function
+        | [] -> assume_fail ()
+        | _::_ as l -> List.hd l :: List.tl l = l)
+    ]}
+
+    @since 0.5.1
 *)
 
 (** {2 Generate Random Values} *)
@@ -107,40 +145,52 @@ module Gen : sig
 
   val return : 'a -> 'a t
   (** Create a constant generator  *)
+
   val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
   (** Monadic bind for writing dependent generators. First generates an ['a] and then
       passes it to the given function, to generate a ['b]. *)
+
   val (<*>) : ('a -> 'b) t -> 'a t -> 'b t
   (** Infix operator for composing a function generator and an argument generator
       into a result generator *)
+
   val map : ('a -> 'b) -> 'a t -> 'b t
   (** [map f g] transforms a generator [g] by applying [f] to each generated element *)
+
   val map2 : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
   (** [map f g1 g2] transforms two generators [g1] and [g2] by applying [f] to each
       pair of generated elements *)
+
   val map3 : ('a -> 'b -> 'c -> 'd) -> 'a t -> 'b t -> 'c t -> 'd t
   (** [map f g1 g2 g3] transforms two generators [g1], [g2], and [g3] by applying [f]
       to each triple of generated elements *)
+
   val map_keep_input : ('a -> 'b) -> 'a t -> ('a * 'b) t
   (** [map f g] transforms a generator [g] by applying [f] to each generated element.
       Returns both the generated elememt from [g] and the output from [f]. *)
+
   val (>|=) : 'a t -> ('a -> 'b) -> 'b t
   (** An infix synonym for {!map} *)
-    
+
   val oneof : 'a t list -> 'a t
-  (** Constructs a generator than selects among a given list of generators *)
+  (** Constructs a generator that selects among a given list of generators *)
+
   val oneofl : 'a list -> 'a t
-  (** Constructs a generator than selects among a given list of values *)
+  (** Constructs a generator that selects among a given list of values *)
+
   val oneofa : 'a array -> 'a t
-  (** Constructs a generator than selects among a given array of values *)
+  (** Constructs a generator that selects among a given array of values *)
+
   val frequency : (int * 'a t) list -> 'a t
-  (** Constructs a generator than selects among a given list of generators.
+  (** Constructs a generator that selects among a given list of generators.
       Each of the given generators are chosen based on a positive integer weight. *)
+
   val frequencyl : (int * 'a) list -> 'a t
-  (** Constructs a generator than selects among a given list of values.
+  (** Constructs a generator that selects among a given list of values.
       Each of the given values are chosen based on a positive integer weight. *)
+
   val frequencya : (int * 'a) array -> 'a t
-  (** Constructs a generator than selects among a given array of values.
+  (** Constructs a generator that selects among a given array of values.
       Each of the array entries are chosen based on a positive integer weight. *)
 
   val shuffle_a : 'a array -> unit t
@@ -150,62 +200,98 @@ module Gen : sig
   (** Creates a generator of shuffled lists *)
 
   val unit: unit t (** The unit generator *)
+
   val bool: bool t (** The Boolean generator *)
 
   val float: float t   (** Generates floating point numbers *)
+
   val pfloat : float t (** Generates positive floating point numbers *)
+
   val nfloat : float t (** Generates negative floating point numbers *)
 
   val nat : int t (** Generates small natural numbers *)
+
   val neg_int : int t (** Generates negative integers *)
+
   val pint : int t (** Generates positive integers uniformly *)
+
   val int : int t (** Generates integers uniformly *)
-  val small_int : int t (** Synonym to {!nat} *)
+
+  val small_nat : int t (** Synonym to {!nat} @since 0.5.1 *)
+
+  val small_int : int t
+  (** Small UNSIGNED integers, for retrocompatibility
+      @deprecated use {!small_nat} *)
+
+  val small_signed_int : int t
+  (** small SIGNED integers
+      @since 0.5.2 *)
+
   val int_bound : int -> int t
-  (** Uniform integer generator producing integers within [0... bound] *)
+  (** Uniform integer generator producing integers within [0... bound].
+      @raise Invalid_argument if the bound is too high (typically 2^30) *)
+
   val int_range : int -> int -> int t
-  (** Uniform integer generator producing integers within [low,high] *)
+  (** Uniform integer generator producing integers within [low,high]
+      @raise Invalid_argument if the range is too large (typically 2^30) *)
+
   val (--) : int -> int -> int t (** Synonym to {!int_range} *)
 
   val ui32 : int32 t (** Generates (unsigned) [int32] values *)
+
   val ui64 : int64 t (** Generates (unsigned) [int64] values *)
 
   val list : 'a t -> 'a list t
   (** Builds a list generator from an element generator. List size is generated by {!nat} *)
+
   val list_size : int t -> 'a t -> 'a list t
   (** Builds a list generator from a (non-negative) size generator and an element generator *)
+
   val list_repeat : int -> 'a t -> 'a list t
   (** [list_repeat i g] builds a list generator from exactly [i] elements generated by [g] *)
 
   val array : 'a t -> 'a array t
   (** Builds an array generator from an element generator. Array size is generated by {!nat} *)
+
   val array_size : int t -> 'a t -> 'a array t
   (** Builds an array generator from a (non-negative) size generator and an element generator *)
+
   val array_repeat : int -> 'a t -> 'a array t
   (** [array_repeat i g] builds an array generator from exactly [i] elements generated by [g] *)
 
   val opt : 'a t -> 'a option t (** An option generator *)
+
   val pair : 'a t -> 'b t -> ('a * 'b) t (** Generates pairs *)
+
   val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t (** Generates triples *)
-  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t (** Generates quadruples *)
+
+  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t (** Generates quadruples @since 0.5.1 *)
 
   val char : char t (** Generates characters upto character code 255 *)
+
   val printable : char t (** Generates printable characters *)
+
   val numeral : char t (** Generates numeral characters *)
 
   val string_size : ?gen:char t -> int t -> string t
-  (** Builds a string generator from a (non-negative) size generator. 
+  (** Builds a string generator from a (non-negative) size generator.
       Accepts an optional character generator (the default is {!char}) *)
+
   val string : ?gen:char t -> string t
   (** Builds a string generator. String size is generated by {!nat}.
       Accepts an optional character generator (the default is {!char}) *)
+
   val small_string : ?gen:char t -> string t
-  (** Builds a string generator. String size is in the range [0-10].
+  (** Builds a string generator. String size is in the range [0--10].
       Accepts an optional character generator (the default is {!char}) *)
+
+  val small_list : 'a t -> 'a list t
+  (** Generates lists of small size (range [0 -- 10]).
+      @since NEXT_RELEASE *)
 
   val join : 'a t t -> 'a t
   (** Collapses a generator of generators to simply a generator.
-      @since NEXT_RELEASE *)
+      @since 0.5 *)
 
   val sized : 'a sized -> 'a t
   (** Create a generator from a size-bounded generator by first
@@ -215,7 +301,7 @@ module Gen : sig
   (** Create a generator from a size-bounded generator by first
       generating a size using the integer generator and passing the result
       to the size-bounded generator
-      @since NEXT_RELEASE *)
+      @since 0.5 *)
 
   val fix : ('a sized -> 'a sized) -> 'a sized
   (** Fixpoint combinator for generating recursive, size-bounded data types.
@@ -296,6 +382,7 @@ module Iter : sig
   val (>|=) : 'a t -> ('a -> 'b) -> 'b t
   val append : 'a t -> 'a t -> 'a t
   val (<+>) : 'a t -> 'a t -> 'a t (** Synonym to {!append} *)
+
   val of_list : 'a list -> 'a t
   val of_array : 'a array -> 'a t
   val pair : 'a t -> 'b t -> ('a * 'b) t
@@ -373,6 +460,164 @@ val set_small : ('a -> int) -> 'a arbitrary -> 'a arbitrary
 val set_shrink : 'a Shrink.t -> 'a arbitrary -> 'a arbitrary
 val set_collect : ('a -> string) -> 'a arbitrary -> 'a arbitrary
 
+(** {2 Tests}
+
+    A test is a universal property of type [foo -> bool] for some type [foo],
+    with an object of type [foo arbitrary] used to generate, print, etc. values
+    of type [foo].
+
+    See {!Test.make} to build a test, and {!Test.check_exn} to
+    run one test simply.
+    For more serious testing, it is better to create a testsuite
+    and use {!QCheck_runner}.
+*)
+
+(** Result of running a test *)
+module TestResult : sig
+  type 'a counter_ex = {
+    instance: 'a; (** The counter-example(s) *)
+    shrink_steps: int; (** How many shrinking steps for this counterex *)
+  }
+
+  type 'a failed_state = 'a counter_ex list
+
+  type 'a state =
+    | Success
+    | Failed of 'a failed_state (** Failed instances *)
+    | Error of 'a counter_ex * exn * string (** Error, backtrace, and instance
+                                                that triggered it *)
+
+  (* result returned by running a test *)
+  type 'a t = {
+    mutable state : 'a state;
+    mutable count: int;  (* number of tests *)
+    mutable count_gen: int; (* number of generated cases *)
+    collect_tbl: (string, int) Hashtbl.t lazy_t;
+  }
+end
+
+module Test : sig
+  type 'a cell
+  (** A single property test *)
+
+  val make_cell :
+    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
+    ?small:('a -> int) -> ?name:string -> 'a arbitrary -> ('a -> bool) ->
+    'a cell
+  (** [make arb prop] builds a test that checks property [prop] on instances
+      of the generator [arb].
+      @param name the name of the test
+      @param count number of test cases to run, counting only
+        the test cases which satisfy preconditions.
+      @param long_factor the factor by which to multiply count, max_gen and
+        max_fail when running a long test (default: 1)
+      @param max_gen maximum number of times the generation function
+        is called in total to replace inputs that do not satisfy
+        preconditions (should be >= count)
+      @param max_fail maximum number of failures before we stop generating
+        inputs. This is useful if shrinking takes too much time.
+      @param small kept for compatibility reasons; if provided, replaces
+        the field [arbitrary.small].
+        If there is no shrinking function but there is a [small]
+        function, only the smallest failures will be printed.
+  *)
+
+  val get_arbitrary : 'a cell -> 'a arbitrary
+  val get_law : 'a cell -> ('a -> bool)
+  val get_name : _ cell -> string
+  val set_name : _ cell -> string -> unit
+
+  val get_count : _ cell -> int
+  (** Get the count of a cell
+      @since NEXT_RELEASE *)
+
+  val get_long_factor : _ cell -> int
+  (** Get the long factor of a cell
+      @since NEXT_RELEASE *)
+
+  type t = Test : 'a cell -> t
+  (** Same as ['a cell], but masking the type parameter. This allows to
+      put tests on different types in the same list of tests. *)
+
+  val make :
+    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
+    ?small:('a -> int) -> ?name:string -> 'a arbitrary -> ('a -> bool) -> t
+  (** [make arb prop] builds a test that checks property [prop] on instances
+      of the generator [arb].
+      See {!make_cell} for a description of the parameters.
+  *)
+
+  (** {6 Running the test} *)
+
+  exception Test_fail of string * string list
+  (** Exception raised when a test failed, with the list of counter-examples.
+      [Test_fail (name, l)] means test [name] failed on elements of [l] *)
+
+  exception Test_error of string * string * exn * string
+  (** Exception raised when a test raised an exception [e], with
+      the sample that triggered the exception.
+      [Test_error (name, i, e, st)]
+      means [name] failed on [i] with exception [e], and [st] is the
+      stacktrace (if enabled) or an empty string *)
+
+  val print_instance : 'a arbitrary -> 'a -> string
+  val print_c_ex : 'a arbitrary -> 'a TestResult.counter_ex -> string
+  val print_fail : 'a arbitrary -> string -> 'a TestResult.counter_ex list -> string
+  val print_error : ?st:string -> 'a arbitrary -> string -> 'a TestResult.counter_ex * exn -> string
+  val print_test_fail : string -> string list -> string
+  val print_test_error : string -> string -> exn -> string -> string
+
+  val check_result : 'a cell -> 'a TestResult.t -> unit
+  (** [check_result cell res] checks that [res] is [Ok _], and returns unit.
+      Otherwise, it raises some exception
+      @raise Test_error if [res = Error _]
+      @raise Test_error if [res = Failed _] *)
+
+  type res =
+    | Success
+    | Failure
+    | FalseAssumption
+    | Error of exn * string
+
+  type 'a step = string -> 'a cell -> 'a -> res -> unit
+  (** Callback executed after each instance of a test has been run.
+      The callback is given the instance tested, and the current results
+      of the test. *)
+
+  type 'a callback = string -> 'a cell -> 'a TestResult.t -> unit
+  (** Callback executed after each test has been run.
+      [f name cell res] means test [cell], named [name], gave [res] *)
+
+  val check_cell :
+    ?long:bool -> ?call:'a callback -> ?step:'a step ->
+    ?rand:Random.State.t -> 'a cell -> 'a TestResult.t
+  (** [check ~long ~rand test] generates up to [count] random
+      values of type ['a] using [arbitrary] and the random state [st]. The
+      predicate [law] is called on them and if it returns [false] or raises an
+      exception then we have a counter example for the [law].
+
+      @param long if [true] then multiply the number of instances to generate
+        by the cell's long_factor
+      @param call function called on each test case, with the result
+      @param step function called on each instance of the test case, with the result
+      @return the result of the test
+  *)
+
+  val check_cell_exn :
+    ?long:bool -> ?call:'a callback -> ?step:'a step ->
+    ?rand:Random.State.t -> 'a cell -> unit
+  (** Same as {!check_cell} but calls  {!check_result} on the result.
+      @raise Test_error if [res = Error _]
+      @raise Test_error if [res = Failed _] *)
+
+  val check_exn : ?long:bool -> ?rand:Random.State.t -> t -> unit
+  (** Same as {!check_cell} but calls  {!check_result} on the result.
+      @raise Test_error if [res = Error _]
+      @raise Test_error if [res = Failed _] *)
+end
+
+(** {2 Combinators for {!arbitrary}} *)
+
 val choose : 'a arbitrary list -> 'a arbitrary
 (** Choose among the given list of generators. The list must not
   be empty; if it is Invalid_argument is raised. *)
@@ -403,6 +648,18 @@ val int_range : int -> int -> int arbitrary
 (** [int_range a b] is uniform between [a] and [b] included. [b] must be
     larger than [a]. *)
 
+val small_nat : int arbitrary
+(** Small unsigned integers
+    @since 0.5.1 *)
+
+val small_int : int arbitrary
+(** Small unsigned integers. See {!Gen.small_int}.
+    @deprecated use {!small_signed_int} *)
+
+val small_signed_int : int arbitrary
+(** Small signed integers
+    @since 0.5.2 *)
+
 val (--) : int -> int -> int arbitrary
 (** Synonym to {!int_range} *)
 
@@ -414,11 +671,6 @@ val int64 : int64 arbitrary
 
 val pos_int : int arbitrary
 (** positive int generator. Uniformly distributed *)
-
-val small_int : int arbitrary
-(** positive int generator. The probability that a number is chosen
-    is roughly an exponentially decreasing function of the number.
-*)
 
 val small_int_corners : unit -> int arbitrary
 (** As [small_int], but each newly created generator starts with
@@ -443,20 +695,24 @@ val numeral_char : char arbitrary
 val string_gen_of_size : int Gen.t -> char Gen.t -> string arbitrary
 
 val string_gen : char Gen.t -> string arbitrary
-(** generates strings with a distribution of length of [small_int] *)
+(** generates strings with a distribution of length of [small_nat] *)
 
 val string : string arbitrary
-(** generates strings with a distribution of length of [small_int]
+(** generates strings with a distribution of length of [small_nat]
     and distribution of characters of [char] *)
 
 val small_string : string arbitrary
 (** Same as {!string} but with a small length (that is, [0--10]) *)
 
+val small_list : 'a arbitrary -> 'a list arbitrary
+(** Generates lists of small size (range [0 -- 10]).
+    @since NEXT_RELEASE *)
+
 val string_of_size : int Gen.t -> string arbitrary
 (** generates strings with distribution of characters if [char] *)
 
 val printable_string : string arbitrary
-(** generates strings with a distribution of length of [small_int]
+(** generates strings with a distribution of length of [small_nat]
     and distribution of characters of [printable_char] *)
 
 val printable_string_of_size : int Gen.t -> string arbitrary
@@ -465,20 +721,20 @@ val printable_string_of_size : int Gen.t -> string arbitrary
 val small_printable_string : string arbitrary
 
 val numeral_string : string arbitrary
-(** generates strings with a distribution of length of [small_int]
+(** generates strings with a distribution of length of [small_nat]
     and distribution of characters of [numeral_char] *)
 
 val numeral_string_of_size : int Gen.t -> string arbitrary
 (** generates strings with a distribution of characters of [numeral_char] *)
 
 val list : 'a arbitrary -> 'a list arbitrary
-(** generates lists with length generated by [small_int] *)
+(** generates lists with length generated by [small_nat] *)
 
 val list_of_size : int Gen.t -> 'a arbitrary -> 'a list arbitrary
 (** generates lists with length from the given distribution *)
 
 val array : 'a arbitrary -> 'a array arbitrary
-(** generates arrays with length generated by [small_int] *)
+(** generates arrays with length generated by [small_nat] *)
 
 val array_of_size : int Gen.t -> 'a arbitrary -> 'a array arbitrary
 (** generates arrays with length from the given distribution *)
@@ -558,122 +814,3 @@ val map_keep_input :
       values will map into smaller values
     @param print optional printer for the [f]'s output
 *)
-
-(** {2 Tests} *)
-
-module TestResult : sig
-  type 'a counter_ex = {
-    instance: 'a; (** The counter-example(s) *)
-    shrink_steps: int; (** How many shrinking steps for this counterex *)
-  }
-
-  type 'a failed_state = 'a counter_ex list
-
-  type 'a state =
-    | Success
-    | Failed of 'a failed_state (** Failed instances *)
-    | Error of 'a counter_ex * exn  (** Error, and instance that triggered it *)
-
-  (* result returned by running a test *)
-  type 'a t = {
-    mutable state : 'a state;
-    mutable count: int;  (* number of tests *)
-    mutable count_gen: int; (* number of generated cases *)
-    collect_tbl: (string, int) Hashtbl.t lazy_t;
-  }
-end
-
-module Test : sig
-  type 'a cell
-  (** A single property test *)
-
-  val make_cell :
-    ?count:int -> ?max_gen:int -> ?max_fail:int -> ?small:('a -> int) ->
-    ?name:string -> 'a arbitrary -> ('a -> bool) -> 'a cell
-  (** [make arb prop] builds a test that checks property [prop] on instances
-      of the generator [arb].
-     @param name the name of the test
-      @param count number of test cases to run, counting only
-      the test cases which satisfy preconditions.
-      @param max_gen maximum number of times the generation function
-        is called in total to replace inputs that do not satisfy
-        preconditions (should be >= count)
-     @param max_fail maximum number of failures before we stop generating
-      inputs. This is useful if shrinking takes too much time.
-     @param small kept for compatibility reasons; if provided, replaces
-       the field [arbitrary.small].
-       If there is no shrinking function but there is a [small]
-      function, only the smallest failures will be printed.
-  *)
-
-  val get_arbitrary : 'a cell -> 'a arbitrary
-  val get_law : 'a cell -> ('a -> bool)
-  val get_name : _ cell -> string option
-  val set_name : _ cell -> string -> unit
-
-  type t = Test : 'a cell -> t
-  (** Same as ['a cell], but masking the type parameter. This allows to
-      put tests on different types in the same list of tests. *)
-
-  val make :
-    ?count:int -> ?max_gen:int -> ?max_fail:int -> ?small:('a -> int) ->
-    ?name:string -> 'a arbitrary -> ('a -> bool) -> t
-  (** [make arb prop] builds a test that checks property [prop] on instances
-      of the generator [arb].
-      See {!make_cell} for a description of the parameters.
-  *)
-
-  (** {6 Running the test} *)
-
-  exception Test_fail of string * string list
-  (** Exception raised when a test failed, with the list of counter-examples.
-      [Test_fail (name, l)] means test [name] failed on elements of [l] *)
-
-  exception Test_error of string * string * exn * string
-  (** Exception raised when a test raised an exception [e], with
-      the sample that triggered the exception.
-      [Test_error (name, i, e, st)]
-      means [name] failed on [i] with exception [e], and [st] is the
-      stacktrace (if enabled) or an empty string *)
-
-  val print_instance : 'a arbitrary -> 'a -> string
-  val print_c_ex : 'a arbitrary -> 'a TestResult.counter_ex -> string
-  val print_fail : 'a arbitrary -> string -> 'a TestResult.counter_ex list -> string
-  val print_error : ?st:string -> 'a arbitrary -> string -> 'a TestResult.counter_ex * exn -> string
-  val print_test_fail : string -> string list -> string
-  val print_test_error : string -> string -> exn -> string -> string
-
-  val check_result : 'a cell -> 'a TestResult.t -> unit
-  (** [check_result cell res] checks that [res] is [Ok _], and returns unit.
-      Otherwise, it raises some exception
-      @raise Test_error if [res = Error _]
-      @raise Test_error if [res = Failed _] *)
-
-  type 'a callback = string -> 'a cell -> 'a TestResult.t -> unit
-  (** Callback executed after each test has been run.
-      [f name cell res] means test [cell], named [name], gave [res] *)
-
-  val check_cell :
-    ?call:'a callback ->
-    ?rand:Random.State.t -> 'a cell -> 'a TestResult.t
-  (** [check ~rand test] generates up to [count] random
-      values of type ['a] using [arbitrary] and the random state [st]. The
-      predicate [law] is called on them and if it returns [false] or raises an
-      exception then we have a counter example for the [law].
-
-      @param call function called on each test case, with the result
-      @return the result of the test
-  *)
-
-  val check_cell_exn :
-    ?call:'a callback ->
-    ?rand:Random.State.t -> 'a cell -> unit
-  (** Same as {!check_cell} but calls  {!check_result} on the result.
-      @raise Test_error if [res = Error _]
-      @raise Test_error if [res = Failed _] *)
-
-  val check_exn : ?rand:Random.State.t -> t -> unit
-  (** Same as {!check_cell} but calls  {!check_result} on the result.
-      @raise Test_error if [res = Error _]
-      @raise Test_error if [res = Failed _] *)
-end

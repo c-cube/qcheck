@@ -1,6 +1,6 @@
 OASISFormat: 0.4
 Name:        qcheck
-Version:     0.5
+Version:     0.5.3
 Homepage:    https://github.com/c-cube/qcheck
 Authors:     Simon Cruanes, Vincent Hugot
 License:     LGPL
@@ -25,12 +25,18 @@ Executable qcheck_ounit_example
   BuildDepends:   qcheck, oUnit
   MainIs:         QCheck_ounit_test.ml
 
+Executable qcheck_example
+  Path:           example
+  Install:        false
+  BuildDepends:   qcheck, oUnit
+  MainIs:         QCheck_test.ml
+
 Document qcheck
   Title:                QCheck docs
   Type:                 ocamlbuild (0.3)
   BuildTools+:          ocamldoc
   Install:              true
-  XOCamlbuildPath:      .
+  XOCamlbuildPath:      src
   XOCamlbuildLibraries: qcheck
 
 SourceRepository head

@@ -61,6 +61,10 @@ let sum_int = List.fold_left (+) 0
 exception FailedPrecondition
 (* raised if precondition is false *)
 
+let assume b = if not b then raise FailedPrecondition
+
+let assume_fail () = raise FailedPrecondition
+
 let (==>) b1 b2 = if b1 then b2 else raise FailedPrecondition
 
 module Gen = struct
@@ -104,7 +108,7 @@ module Gen = struct
     else if p < 0.95 then RS.int st 1_000
     else RS.int st 10_000
 
-  let small_int = nat
+  let small_nat = nat
 
   let unit _st = ()
 
@@ -142,6 +146,15 @@ module Gen = struct
     assert (b >= a);
     fun st -> a + (Random.State.int st (b-a+1))
   let (--) = int_range
+
+  (* NOTE: we keep this alias to not break code that uses [small_int]
+     for sizes of strings, arrays, etc. *)
+  let small_int = small_nat
+
+  let small_signed_int st =
+    if bool st
+    then small_nat st
+    else - (small_nat st)
 
   let random_binary_string st length =
     (* 0b011101... *)
@@ -185,7 +198,7 @@ module Gen = struct
 
   let quad g1 g2 g3 g4 st = (g1 st, g2 st, g3 st, g4 st)
 
-  let char st = char_of_int (RS.int st 255)
+  let char st = char_of_int (RS.int st 256)
 
   let printable_chars =
     let l = 126-32+1 in
@@ -201,12 +214,13 @@ module Gen = struct
 
   let string_size ?(gen = char) size st =
     let s = Bytes.create (size st) in
-    for i = 0 to String.length s - 1 do
+    for i = 0 to Bytes.length s - 1 do
       Bytes.set s i (gen st)
     done;
     Bytes.unsafe_to_string s
-  let string ?gen st = string_size ?gen small_int st
+  let string ?gen st = string_size ?gen small_nat st
   let small_string ?gen st = string_size ?gen (0--10) st
+  let small_list gen = list_size (0--10) gen
 
   let join g st = (g st) st
 
@@ -432,7 +446,9 @@ let int_bound n = make_int (Gen.int_bound n)
 let int_range a b = make_int (Gen.int_range a b)
 let (--) = int_range
 let pos_int = make_int Gen.pint
-let small_int = make_int Gen.nat
+let small_int = make_int Gen.small_int
+let small_nat = make_int Gen.small_nat
+let small_signed_int = make_int Gen.small_signed_int
 let small_int_corners () = make_int (Gen.nng_corners ())
 let neg_int = make_int Gen.neg_int
 
@@ -463,24 +479,15 @@ let numeral_string_of_size size = string_gen_of_size size Gen.numeral
 
 let list_sum_ f l = List.fold_left (fun acc x-> f x+acc) 0 l
 
-let list a =
+let mk_list a gen =
   (* small sums sub-sizes if present, otherwise just length *)
   let small = _opt_map_or a.small ~f:list_sum_ ~d:List.length in
   let print = _opt_map a.print ~f:Print.list in
-  make
-    ~small
-    ~shrink:(Shrink.list ?shrink:a.shrink)
-    ?print
-    (Gen.list a.gen)
+  make ~small ~shrink:(Shrink.list ?shrink:a.shrink) ?print gen
 
-let list_of_size size a =
-  let small = _opt_map_or a.small ~f:list_sum_ ~d:List.length in
-  let print = _opt_map a.print ~f:Print.list in
-  make
-    ~small
-    ~shrink:(Shrink.list ?shrink:a.shrink)
-    ?print
-    (Gen.list_size size a.gen)
+let list a = mk_list a (Gen.list a.gen)
+let list_of_size size a = mk_list a (Gen.list_size size a.gen)
+let small_list a = mk_list a (Gen.small_list a.gen)
 
 let array_sum_ f a = Array.fold_left (fun acc x -> f x+acc) 0 a
 
@@ -521,9 +528,9 @@ let quad a b c d =
                              f x+g y+h z+i w) a.small b.small c.small d.small)
     ?print:(_opt_map_4 ~f:Print.quad a.print b.print c.print d.print)
     ~shrink:(Shrink.quad (_opt_or a.shrink Shrink.nil)
-	                 (_opt_or b.shrink Shrink.nil)
-			 (_opt_or c.shrink Shrink.nil)
-			 (_opt_or d.shrink Shrink.nil))
+                   (_opt_or b.shrink Shrink.nil)
+       (_opt_or c.shrink Shrink.nil)
+       (_opt_or d.shrink Shrink.nil))
     (Gen.quad a.gen b.gen c.gen d.gen)
 
 let option a =
@@ -638,7 +645,8 @@ module TestResult = struct
   type 'a state =
     | Success
     | Failed of 'a failed_state (** Failed instances *)
-    | Error of 'a counter_ex * exn  (** Error, and instance that triggered it *)
+    | Error of 'a counter_ex * exn * string (** Error, backtrace, and instance
+                                                that triggered it *)
 
   (* result returned by running a test *)
   type 'a t = {
@@ -653,8 +661,8 @@ module TestResult = struct
     let c_ex = {instance; shrink_steps; } in
     match res.state with
     | Success -> res.state <- Failed [ c_ex ]
-    | Error (x, e) ->
-        res.state <- Error (x,e); (* same *)
+    | Error (x, e, bt) ->
+        res.state <- Error (x,e,bt); (* same *)
     | Failed [] -> assert false
     | Failed (c_ex' :: _ as l) ->
         match small with
@@ -672,31 +680,39 @@ module TestResult = struct
             res.state <-
               Failed (c_ex :: l)
 
-  let error ~steps res instance e =
-    res.state <- Error ({instance; shrink_steps=steps}, e)
+  let error ~steps res instance e bt =
+    res.state <- Error ({instance; shrink_steps=steps}, e, bt)
 end
 
 module Test = struct
   type 'a cell = {
     count : int; (* number of tests to do *)
+    long_factor : int; (* multiplicative factor for long test count *)
     max_gen : int; (* max number of instances to generate (>= count) *)
     max_fail : int; (* max number of failures *)
     law : 'a -> bool; (* the law to check *)
     arb : 'a arbitrary; (* how to generate/print/shrink instances *)
-    mutable name : string option; (* name of the law *)
+    mutable name : string; (* name of the law *)
   }
 
   type t = | Test : 'a cell -> t
 
   let get_name {name; _} = name
-  let set_name c name = c.name <- Some name
+  let set_name c name = c.name <- name
   let get_law {law; _} = law
   let get_arbitrary {arb; _} = arb
 
+  let get_count {count; _ } = count
+  let get_long_factor {long_factor; _} = long_factor
+
   let default_count = 100
 
-  let make_cell ?(count=default_count) ?max_gen
-  ?(max_fail=1) ?small ?name arb law
+  let fresh_name =
+    let r = ref 0 in
+    (fun () -> incr r; Printf.sprintf "anon_test_%d" !r)
+
+  let make_cell ?(count=default_count) ?(long_factor=1) ?max_gen
+  ?(max_fail=1) ?small ?(name=fresh_name()) arb law
   =
     let max_gen = match max_gen with None -> count + 200 | Some x->x in
     let arb = match small with None -> arb | Some f -> set_small f arb in
@@ -707,19 +723,33 @@ module Test = struct
       max_fail;
       name;
       count;
+      long_factor;
     }
 
-  let make ?count ?max_gen ?max_fail ?small ?name arb law =
-    Test (make_cell ?count ?max_gen ?max_fail ?small ?name arb law)
+  let make ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law =
+    Test (make_cell ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law)
 
 
   (** {6 Running the test} *)
 
   module R = TestResult
 
+  (* Result of an instance run *)
+  type res =
+    | Success
+    | Failure
+    | FalseAssumption
+    | Error of exn * string
+
+  (* Step function, called after each instance test *)
+  type 'a step = string -> 'a cell -> 'a -> res -> unit
+
+  let step_nil_ _ _ _ _ = ()
+
   (* state required by {!check} to execute *)
   type 'a state = {
     test: 'a cell;
+    step: 'a step;
     rand: Random.State.t;
     mutable res: 'a TestResult.t;
     mutable cur_count: int;  (** number of iterations to do *)
@@ -772,11 +802,12 @@ module Test = struct
     | CR_yield of 'a TestResult.t
 
   (* test raised [e] on [input]; try to shrink then fail *)
-  let handle_exn state input e : _ check_result =
+  let handle_exn state input e bt : _ check_result =
     (* first, shrink
        TODO: shall we shrink differently (i.e. expected only an error)? *)
     let input, steps = shrink state input in
-    R.error state.res ~steps input e;
+    state.step state.test.name state.test input (Error (e, bt));
+    R.error state.res ~steps input e bt;
     CR_yield state.res
 
   (* test failed on [input], which means the law is wrong. Continue if
@@ -786,6 +817,7 @@ module Test = struct
     let input, steps = shrink state input in
     (* fail *)
     decr_count state;
+    state.step state.test.name state.test input Failure;
     state.cur_max_fail <- state.cur_max_fail - 1;
     R.fail ~small:state.test.arb.small state.res ~steps input;
     if _is_some state.test.arb.small && state.cur_max_fail > 0
@@ -808,11 +840,16 @@ module Test = struct
           then (
             (* one test ok *)
             decr_count state;
+            state.step state.test.name state.test input Success;
             CR_continue
           ) else handle_fail state input
         with
-          | FailedPrecondition -> CR_continue
-          | e -> handle_exn state input e
+        | FailedPrecondition ->
+          state.step state.test.name state.test input FalseAssumption;
+          CR_continue
+        | e ->
+          let bt = Printexc.get_backtrace () in
+          handle_exn state input e bt
       in
       match res with
         | CR_continue -> check_state state
@@ -823,25 +860,23 @@ module Test = struct
 
   let callback_nil_ _ _ _ = ()
 
-  let name_ cell = match cell.name with
-    | None -> "<test>"
-    | Some n -> n
-
   (* main checking function *)
-  let check_cell ?(call=callback_nil_) ?(rand=Random.State.make [| 0 |]) cell =
+  let check_cell ?(long=false) ?(call=callback_nil_) ?(step=step_nil_)
+      ?(rand=Random.State.make [| 0 |]) cell =
+    let factor = if long then cell.long_factor else 1 in
     let state = {
       test=cell;
-      rand;
-      cur_count=cell.count;
-      cur_max_gen=cell.max_gen;
-      cur_max_fail=cell.max_fail;
+      rand; step;
+      cur_count=factor*cell.count;
+      cur_max_gen=factor*cell.max_gen;
+      cur_max_fail=factor*cell.max_fail;
       res = {R.
         state=R.Success; count=0; count_gen=0;
         collect_tbl=lazy (Hashtbl.create 10);
       };
     } in
     let res = check_state state in
-    call (name_ cell) cell res;
+    call cell.name cell res;
     res
 
   exception Test_fail of string * string list
@@ -892,16 +927,15 @@ module Test = struct
 
   let check_result cell res = match res.R.state with
     | R.Success -> ()
-    | R.Error (i,e) ->
-      let st = Printexc.get_backtrace () in
-      raise (Test_error (name_ cell, print_c_ex cell.arb i, e, st))
+    | R.Error (i,e, bt) ->
+      raise (Test_error (cell.name, print_c_ex cell.arb i, e, bt))
     | R.Failed l ->
         let l = List.map (print_c_ex cell.arb) l in
-        raise (Test_fail (name_ cell, l))
+        raise (Test_fail (cell.name, l))
 
-  let check_cell_exn ?call ?rand cell =
-    let res = check_cell ?call ?rand cell in
+  let check_cell_exn ?long ?call ?step ?rand cell =
+    let res = check_cell ?long ?call ?step ?rand cell in
     check_result cell res
 
-  let check_exn ?rand (Test cell) = check_cell_exn ?rand cell
+  let check_exn ?long ?rand (Test cell) = check_cell_exn ?long ?rand cell
 end
