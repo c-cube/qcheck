@@ -287,7 +287,7 @@ module Gen : sig
 
   val small_list : 'a t -> 'a list t
   (** Generates lists of small size (range [0 -- 10]).
-      @since NEXT_RELEASE *)
+      @since 0.5.3 *)
 
   val join : 'a t t -> 'a t
   (** Collapses a generator of generators to simply a generator.
@@ -529,11 +529,11 @@ module Test : sig
 
   val get_count : _ cell -> int
   (** Get the count of a cell
-      @since NEXT_RELEASE *)
+      @since 0.5.3 *)
 
   val get_long_factor : _ cell -> int
   (** Get the long factor of a cell
-      @since NEXT_RELEASE *)
+      @since 0.5.3 *)
 
   type t = Test : 'a cell -> t
   (** Same as ['a cell], but masking the type parameter. This allows to
@@ -706,7 +706,7 @@ val small_string : string arbitrary
 
 val small_list : 'a arbitrary -> 'a list arbitrary
 (** Generates lists of small size (range [0 -- 10]).
-    @since NEXT_RELEASE *)
+    @since 0.5.3 *)
 
 val string_of_size : int Gen.t -> string arbitrary
 (** generates strings with distribution of characters if [char] *)
