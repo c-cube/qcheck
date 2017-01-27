@@ -340,7 +340,7 @@ end
 module Print : sig
   type 'a t = 'a -> string
   (** Printer for values of type ['a] *)
-      
+
   val int : int t (** Integer printer *)
   val bool : bool t (** Boolean printer *)
   val float : float t (** Floating point number printer *)
