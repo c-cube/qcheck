@@ -1,5 +1,10 @@
 # Changes
 
+## 0.5.3.1
+
+- fix regression in runner output (print results of `collect`)
+- update the `@since` tags
+
 ## 0.5.3
 
 - missing char in `Gen.char` (close #23)
