@@ -229,11 +229,11 @@ module Gen : sig
 
   val int_bound : int -> int t
   (** Uniform integer generator producing integers within [0... bound].
-      @raise Invalid_argument if the bound is too high (typically 2^30) *)
+      @raise Invalid_argument if the argument is negative *)
 
   val int_range : int -> int -> int t
-  (** Uniform integer generator producing integers within [low,high]
-      @raise Invalid_argument if the range is too large (typically 2^30) *)
+  (** Uniform integer generator producing integers within [low,high].
+      @raise Invalid_argument if [low > high] or if the range is larger than [max_int] *)
 
   val (--) : int -> int -> int t (** Synonym to {!int_range} *)
 
