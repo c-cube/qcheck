@@ -335,12 +335,13 @@ type counter = {
 type res =
   | Res : 'a QCheck.Test.cell * 'a QCheck.TestResult.t -> res
 
-let pp_counter out c =
+let pp_counter ~size out c =
   let t = Unix.gettimeofday () -. c.start in
-  Printf.fprintf out "(%4d) %4d ; %4d ; %4d / %4d -- %7.1fs"
-    c.gen c.errored c.failed c.passed c.expected t
+  Printf.fprintf out "(%*d) %*d ; %*d ; %*d / %*d -- %7.1fs"
+    size c.gen size c.errored size c.failed
+    size c.passed size c.expected t
 
-let step ~out ~verbose c name _ _ r =
+let step ~size ~out ~verbose c name _ _ r =
   let aux = function
     | QCheck.Test.Success -> c.passed <- c.passed + 1
     | QCheck.Test.Failure -> c.failed <- c.failed + 1
@@ -350,19 +351,26 @@ let step ~out ~verbose c name _ _ r =
   c.gen <- c.gen + 1;
   aux r;
   if verbose then
-    Printf.fprintf out "\r[ ] %a -- %s%!" pp_counter c name
+    Printf.fprintf out "\r[ ] %a -- %s%!" (pp_counter ~size) c name
 
-let callback ~out ~verbose c name _ _ =
+let callback ~size ~out ~verbose c name _ _ =
   let pass = c.failed = 0 && c.errored = 0 in
   if verbose then
     Printf.fprintf out "\r[%s] %a -- %s\n%!"
-      (if pass then "✓" else "✗")
-      pp_counter c name
+      (if pass then "✓" else "✗") (pp_counter ~size) c name
 
 let print_inst arb x =
   match arb.QCheck.print with
   | Some f -> f x
   | None -> "<no printer>"
+
+let expect long cell =
+  let count = QCheck.Test.get_count cell in
+  if long then QCheck.Test.get_long_factor cell * count else count
+
+let expect_size long cell =
+  let rec aux n = if n < 10 then 1 else 1 + (aux (n / 10)) in
+  aux (expect long cell)
 
 let print_success out cell t =
   let arb = QCheck.Test.get_arbitrary cell in
@@ -397,22 +405,23 @@ let run_tests
     ?(verbose=verbose()) ?(long=long_tests()) ?(out=stdout) ?(rand=random_state()) l =
   let module T = QCheck.Test in
   let module R = QCheck.TestResult in
+  let size = List.fold_left (fun acc (T.Test cell) ->
+      max acc (expect_size long cell)) 4 l in
   if verbose then
     Printf.fprintf out
-      "generated  error;  fail; pass / total       time -- test name\n%!";
+      "%*s; %*s; %*s; %*s / %*s -     time -- test name\n%!"
+      (size + 5) "generated" (size + 1) "error"
+      (size + 1) "fail" size "pass" (size + 1) "total";
   let aux_map (T.Test cell) =
-    let expected =
-      let count = T.get_count cell in
-      if long then T.get_long_factor cell * count else count
-    in
+    let expected = expect long cell in
     let start = Unix.gettimeofday () in
     let c = {
       start; expected; gen = 0;
       passed = 0; failed = 0; errored = 0;
     } in
     let r = QCheck.Test.check_cell ~long ~rand
-        ~step:(step ~out ~verbose c)
-        ~call:(callback ~out ~verbose c)
+        ~step:(step ~size ~out ~verbose c)
+        ~call:(callback ~size ~out ~verbose c)
         cell
     in
     Res (cell, r)
