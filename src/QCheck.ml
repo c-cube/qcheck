@@ -141,10 +141,12 @@ module Gen = struct
   let int st = if RS.bool st then - (pint st) - 1 else pint st
   let int_bound n =
     assert (n >= 0);
-    fun st -> Random.State.int st (n+1)
+    fun st ->
+      let r = pint st in
+      r mod (n+1)
   let int_range a b =
     assert (b >= a);
-    fun st -> a + (Random.State.int st (b-a+1))
+    fun st -> a + (int_bound (b-a) st)
   let (--) = int_range
 
   (* NOTE: we keep this alias to not break code that uses [small_int]
