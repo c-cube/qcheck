@@ -1,6 +1,6 @@
 
 let passing =
-  QCheck.Test.make ~count:1000 ~long_factor:2
+  QCheck.Test.make ~count:100 ~long_factor:100
     ~name:"list_rev_is_involutive"
     QCheck.(list small_int)
     (fun l -> List.rev (List.rev l) = l);;
@@ -20,7 +20,7 @@ let error =
     (fun _ -> raise Error)
 
 let collect =
-  QCheck.Test.make ~count:1000
+  QCheck.Test.make ~count:100 ~long_factor:100
     ~name:"collect_results"
     QCheck.(make ~collect:string_of_int (Gen.int_bound 4))
     (fun _ -> true)
