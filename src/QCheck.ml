@@ -140,12 +140,12 @@ module Gen = struct
 
   let int st = if RS.bool st then - (pint st) - 1 else pint st
   let int_bound n =
-    assert (n >= 0);
+    if n < 0 then invalid_arg "Gen.int_bound";
     fun st ->
       let r = pint st in
       r mod (n+1)
   let int_range a b =
-    assert (b >= a);
+    if b < a then invalid_arg "Gen.int_range";
     fun st -> a + (int_bound (b-a) st)
   let (--) = int_range
 
