@@ -41,7 +41,13 @@ The code is now released under the LGPL license.
 [[examples]]
 == An Introduction to the Library
 
-First, let's see a few tests.
+First, let's see a few tests. Let's open a toplevel (e.g. utop)
+and type the following to load QCheck:
+
+[source,OCaml]
+----
+#require "qcheck";;
+----
 
 === List Reverse is Involutive
 
@@ -53,13 +59,16 @@ any list `l`:
 let test =
   QCheck.Test.make ~count:1000
     ~name:"list_rev_is_involutive"
-   (list int)
+   QCheck.(list int)
    (fun l -> List.rev (List.rev l) = l);;
 
-QCheck_r.Test.check_exn test;;
+(* we can check right now the property... *)
+QCheck.Test.check_exn test;;
 ----
 
-Now, let's run the test (the exact output will change at each run, because of
+Now, let's run the test with a decent runner that
+will print the results nicely
+(the exact output will change at each run, because of
 the random seed):
 
 ----
