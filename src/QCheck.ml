@@ -302,6 +302,7 @@ module Iter = struct
   let (>|=) a f = map f a
   let append a b yield = a yield; b yield
   let (<+>) = append
+  let flatten s = s >>= fun x->x
   let of_list l yield = List.iter yield l
   let of_array a yield = Array.iter yield a
   let pair a b yield = a (fun x -> b(fun y -> yield (x,y)))
@@ -393,6 +394,181 @@ module Shrink = struct
     b y (fun y' -> yield (x,y',z,w));
     c z (fun z' -> yield (x,y,z',w));
     d w (fun w' -> yield (x,y,z,w'))
+end
+
+(** {2 Observe Values} *)
+
+module Observable = struct
+  (** A random predicate on ['a] *)
+  module Predicate = struct
+    type -'a t =
+      | Check of ('a -> bool) * string lazy_t
+      | Ite of 'a t * 'a t * 'a t
+      | Map : ('a -> 'b) * 'b t * string lazy_t -> 'a t
+
+    let make ?(descr=lazy "<pred>") p = Check (p, descr)
+    let ite a b c = Ite (a,b,c)
+    let true_ () = make ~descr:(lazy "true") (fun _ -> true)
+    let false_ () = make ~descr:(lazy "false") (fun _ -> false)
+    let bool = make ~descr:(lazy "?") (fun b->b)
+    let rec size : type a. a t -> int = function
+      | Check _ -> 1
+      | Ite (a,b,c) -> 1 + size a + size b + size c
+      | Map (_, g,_) -> size g
+
+    let map ?(descr=lazy "<fun>") f p = Map (f, p, descr)
+
+    let rec eval
+      : type a. a t -> a -> bool
+      = fun p x -> match p with
+        | Check (p, _) -> p x
+        | Ite (a,b,c) ->
+          if eval a x then eval b x else eval c x
+        | Map (f,p,_) -> eval p (f x)
+
+    let pp p =
+      let buf = Buffer.create 32 in
+      let rec aux
+        : type a. Buffer.t -> a t -> unit
+        = fun buf -> function
+          | Check (_, descr) -> Buffer.add_string buf (Lazy.force descr)
+          | Ite (a,b,c) -> Printf.bprintf buf "(ite %a %a %a)" aux a aux b aux c
+          | Map (_,b,descr) -> Printf.bprintf buf "(map %s %a)" (Lazy.force descr) aux b
+      in
+      aux buf p;
+      Buffer.contents buf
+
+    let rec shrink : type a. a t Shrink.t = function
+      | Check _ -> Iter.empty
+      | Ite (a,b,c) ->
+        let open Iter in
+        of_list [
+          return a;
+          return b;
+          return c;
+          (shrink a >|= fun a -> ite a b c);
+          (shrink b >|= fun a -> ite a b c);
+          (shrink c >|= fun a -> ite a b c);
+        ] |> flatten
+      | Map (f,b,descr) ->
+        let open Iter in
+        shrink b >|= fun b -> Map (f, b, descr)
+  end
+
+  (** An observable is a (random) predicate on ['a] *)
+  type -'a t = 'a Predicate.t Gen.t
+
+  type -'a sized = 'a Predicate.t Gen.sized
+
+  let return_pred p _ = p
+
+  let return ?descr f = return_pred (Predicate.make ?descr f)
+
+  (* compare input values to some random input *)
+  let mk_comp ?pp pp_op op (gen:_ Gen.t) st =
+    let pivot = gen st in
+    let descr = match pp with
+      | None -> None
+      | Some pp -> Some (lazy (Printf.sprintf "(? %s %s)" pp_op (pp pivot)))
+    in
+    Predicate.make ?descr (fun x -> op pivot x)
+
+  let check_eq ?pp ?(eq=(=)) gen : _ t =
+    mk_comp ?pp "=" eq gen
+
+  let check_leq ?pp ?(leq=(<=)) gen : _ t =
+    mk_comp ?pp "<=" leq gen
+
+  let check_less ?pp ?(less=(<)) gen : _ t =
+    mk_comp ?pp "<" less gen
+
+  let ite a b c st = Predicate.ite (a st) (b st) (c st)
+
+  let decision_tree_sized gen depth st =
+    let rec aux depth = match depth with
+      | 0 -> gen st
+      | _ ->
+        if Gen.bool st
+        then gen st (* stop recursion *)
+        else Predicate.ite (aux (depth-1)) (aux (depth-1)) (aux (depth-1))
+    in
+    aux depth
+
+  let decision_tree gen = Gen.(0--3 >>= decision_tree_sized gen)
+
+  let true_ () = return_pred (Predicate.true_ ())
+  let false_ () = return_pred (Predicate.false_())
+
+  let oneof l = Gen.oneof l
+
+  let map ?descr f gen st =
+    let p = gen st in
+    Predicate.map ?descr f p
+
+  let mapstr str f g = map ~descr:(lazy str) f g
+
+  let and_ a b = ite a b (false_ ())
+  let or_ a b = ite a (true_()) b
+  let not a = ite a (false_()) (true_ ())
+
+  module Infix = struct
+    let (&&) = and_
+    let (||) = or_
+  end
+  include Infix
+
+  let unit : unit t = Gen.oneofl [Predicate.true_(); Predicate.false_()]
+  let bool : bool t = return_pred Predicate.bool
+
+  let int_range a b =
+    if a + 1 >= b then Gen.oneofl [Predicate.true_(); Predicate.false_()]
+    else check_leq ~pp:Print.int Gen.(a -- b)
+
+  let int = int_range (- (1 lsl 30)) (1 lsl 30)
+  let nat = int_range 0 (1 lsl 30)
+  let int_tree = decision_tree int
+
+  let float = check_leq ~pp:Print.float Gen.float
+  let float_tree = decision_tree float
+
+  let string =
+    oneof
+      [ mapstr "String.length" String.length int_tree;
+        check_less ~pp:Print.string Gen.(string_size ~gen:printable (0 -- 5));
+      ]
+
+  let option gen st =
+    let p_none = Gen.oneofl [Predicate.true_(); Predicate.false_()] st in
+    let p_some = gen st in
+    Predicate.make
+      ~descr:(lazy (Printf.sprintf "(option %s)" (Predicate.pp p_some)))
+      (function
+        | None -> Predicate.eval p_none ()
+        | Some x -> Predicate.eval p_some x)
+
+  let array gen =
+    let by_len =
+      let p = decision_tree (int_range 0 100) in
+      mapstr "Array.length" Array.length p
+    and pick_elt st =
+      let i = Gen.(0 -- 100) st in
+      Predicate.map
+        ~descr:(lazy (Printf.sprintf "(Array.nth %d)" i))
+        (fun a ->
+           if Array.length a > i
+           then Some a.(i)
+           else None)
+        ((option gen) st)
+    in
+    oneof [by_len; pick_elt]
+
+  let list gen = mapstr "Array.of_list" Array.of_list (array gen)
+
+  let pair a b = ite (mapstr "fst" fst a) (mapstr "snd" snd b) (false_ ())
+  let triple a b c =
+    map (fun (x,y,z) -> x,(y,z)) (pair a (pair b c))
+  let quad a b c d =
+    map (fun (x,y,z,u) -> x,(y,z,u)) (pair a (triple b c d))
 end
 
 type 'a arbitrary = {
@@ -549,7 +725,7 @@ let option a =
     g
 
 (* TODO: explain black magic in this!! *)
-let fun1 : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary =
+let fun1_unsafe : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary =
   fun a1 a2 ->
     let magic_object = Obj.magic (object end) in
     let gen : ('a -> 'b) Gen.t = fun st ->
@@ -573,7 +749,88 @@ let fun1 : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary =
       ?print:pp
       gen
 
-let fun2 gp1 gp2 gp3 = fun1 gp1 (fun1 gp2 gp3)
+let fun2_unsafe gp1 gp2 gp3 = fun1_unsafe gp1 (fun1_unsafe gp2 gp3)
+
+(** Reifying functions *)
+module Fn = struct
+  type ('a, 'ret) t =
+    | Ret : 'ret * 'ret arbitrary -> ('ret, 'ret) t
+    | Fun : 'a Observable.Predicate.t * ('f, 'ret) t * ('f, 'ret) t -> ('a -> 'f, 'ret) t
+
+  (** Generator for reified functions *)
+  type ('a, 'ret) gen =
+    | G_ret : 'ret arbitrary -> ('ret, 'ret) gen
+    | G_fun : 'a Observable.t * ('f, 'ret) gen -> ('a -> 'f, 'ret) gen
+
+  let rec apply : type a ret. (a, ret) t -> a = function
+    | Ret (x,_) -> x
+    | Fun (pred, k1, k2) ->
+      fun x ->
+        if Observable.Predicate.eval pred x then apply k1 else apply k2
+
+  let rec gen
+    : type a ret. (a, ret) gen -> (a, ret) t Gen.t
+    = fun g st -> match g with
+      | G_ret arb -> Ret (arb.gen st, arb)
+      | G_fun (o, k) ->
+        Fun (o st, gen k st, gen k st)
+
+  let rec shrink
+    : type a ret. (a,ret) t Shrink.t
+    = function
+      | Ret (x,arb) ->
+        let open Iter in
+        begin match arb.shrink with
+          | None -> Iter.empty
+          | Some f -> (f x >|= fun x -> Ret (x, arb))
+        end
+      | Fun (o, k1, k2) ->
+        let open Iter in
+        of_list
+          [ (Observable.Predicate.shrink o >|= fun o -> Fun(o,k1,k2));
+            (shrink k1 >|= fun k1 -> Fun (o,k1,k2));
+            (shrink k2 >|= fun k2 -> Fun (o,k1,k2));
+          ] |> flatten
+
+  let rec size : type a ret. (a, ret) t -> int = function
+    | Ret (x,arb) ->
+      begin match arb.small with
+        | None ->  1
+        | Some f -> f x
+      end
+    | Fun (o, k1, k2) -> Observable.Predicate.size o + size k1 + size k2
+
+  let pp f =
+    let buf = Buffer.create 32 in
+    let rec aux : type a ret. Buffer.t -> (a,ret) t -> unit
+      = fun buf f -> match f with
+        | Ret (x,arb) ->
+          begin match arb.print with
+            | None -> Buffer.add_string buf "?"
+            | Some pp -> Buffer.add_string buf (pp x)
+          end
+        | Fun (o, k1, k2) ->
+          Printf.bprintf buf "(if %s %a %a)"
+            (Observable.Predicate.pp o) aux k1 aux k2
+    in
+    aux buf f;
+    Buffer.contents buf
+end
+
+let (@->) o gen = Fn.G_fun (o,gen)
+let returning gen = Fn.G_ret gen
+
+let fun_ (f:(_, _) Fn.gen): (_,_) Fn.t arbitrary =
+  let gen st = Fn.gen f st in
+  make
+    ~small:Fn.size
+    ~shrink:Fn.shrink
+    ~print:Fn.pp
+    gen
+
+let fun1 o1 ret = fun_ (o1 @-> returning ret)
+let fun2 o1 o2 ret = fun_ (o1 @-> o2 @-> returning ret)
+let fun3 o1 o2 o3 ret = fun_ (o1 @-> o2 @-> o3 @-> returning ret)
 
 (* Generator combinators *)
 

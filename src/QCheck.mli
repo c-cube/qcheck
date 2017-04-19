@@ -424,6 +424,126 @@ module Shrink : sig
   val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
 end
 
+(** {2 Observe Values} *)
+
+(** Observables are usable as arguments for random functions.
+    The random function will observe its arguments in a way
+    that is determined from the observable instance, and from a random
+    generator.
+
+    Inspired from https://blogs.janestreet.com/quickcheck-for-core/ .
+
+    @since NEXT_RELEASE
+*)
+
+module Observable : sig
+  (** A random predicate on ['a] *)
+  module Predicate : sig
+    type -'a t =
+      | Check of ('a -> bool) * string lazy_t
+      | Ite of 'a t * 'a t * 'a t
+      | Map : ('a -> 'b) * 'b t * string lazy_t -> 'a t
+
+    val make : ?descr:string lazy_t -> ('a -> bool) -> 'a t
+    (** Make a predicate *)
+
+    val true_ : unit -> _ t
+    val false_ : unit -> _ t
+    val bool : bool t
+
+    val ite : 'a t -> 'a t -> 'a t -> 'a t
+
+    val map : ?descr:string lazy_t -> ('a -> 'b) -> 'b t -> 'a t
+
+    val eval : 'a t -> 'a -> bool
+    (** Evaluate the predicate *)
+
+    val pp : 'a t Print.t
+    val size : _ t -> int
+    val shrink : 'a t Shrink.t
+  end
+
+  (** An observable is a (random) predicate on ['a] *)
+  type -'a t = 'a Predicate.t Gen.t
+
+  type -'a sized = 'a Predicate.t Gen.sized
+
+  val return : ?descr:string lazy_t -> ('a -> bool) -> 'a t
+  (** Constant predicate *)
+
+  val return_pred : 'a Predicate.t -> 'a t
+
+  val check_eq : ?pp:'a Print.t -> ?eq:('a -> 'a -> bool) -> 'a Gen.t -> 'a t
+  (** The predicate that checks if its input is equal to some value *)
+
+  val check_leq : ?pp:'a Print.t -> ?leq:('a -> 'a -> bool) -> 'a Gen.t -> 'a t
+  (** The predicate that checks if its input is [<=] to some value *)
+
+  val check_less : ?pp:'a Print.t -> ?less:('a -> 'a -> bool) -> 'a Gen.t -> 'a t
+  (** The predicate that checks if its input is [<] to some value *)
+
+  val ite : 'a t -> 'a t -> 'a t -> 'a t
+  (** [ite a b c] applies [a] to its input. If [a] holds then it calls [b],
+      otherwise it calls [c] *)
+
+  val map : ?descr:string lazy_t -> ('a -> 'b) -> 'b t -> 'a t
+
+  val oneof : 'a t list -> 'a t
+
+  val decision_tree_sized : 'a t -> 'a sized
+
+  val decision_tree : 'a t -> 'a t
+
+  val and_ : 'a t -> 'a t -> 'a t
+
+  val or_ : 'a t -> 'a t -> 'a t
+
+  val not : 'a t -> 'a t
+
+  module Infix : sig
+    val (&&) : 'a t -> 'a t -> 'a t
+    val (||) : 'a t -> 'a t -> 'a t
+  end
+
+  include module type of Infix
+
+  val true_ : unit -> _ t
+  (** always true *)
+
+  val false_ : unit -> _ t
+  (** always false *)
+
+  val bool : bool t
+  val unit : unit t
+
+  val int_range : int -> int -> int t
+  (** [int_range a b] observes integers that are assumed to live in
+      the interval [[a,b]]. *)
+
+  val int : int t
+
+  val nat : int t
+  (** Alias to [int_range 0 max_int] *)
+
+  val int_tree : int t
+  (** Yields a predicate that compares its input to some random threshold,
+      and possibly recurses back *)
+
+  val string : string t
+
+  val float : float t
+
+  val float_tree : float t
+
+  val option : 'a t -> 'a option t
+  val list : 'a t -> 'a list t
+  val array : 'a t -> 'a array t
+
+  val pair : 'a t -> 'b t -> ('a * 'b) t
+  val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
+  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
+end
+
 (** {2 Arbitrary}
 
     A value of type ['a arbitrary] glues together a random generator,
@@ -751,18 +871,71 @@ val quad : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> 'd arbitrary -> ('a *
 val option : 'a arbitrary -> 'a option arbitrary
 (** choose between returning Some random value, or None *)
 
-val fun1 : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary
+val fun1_unsafe : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary
 (** generator of functions of arity 1.
     The functions are always pure and total functions:
     - when given the same argument (as decided by Pervasives.(=)), it returns the same value
     - it never does side effects, like printing or never raise exceptions etc.
     The functions generated are really printable.
+    renamed from {!fun1} since NEXT_RELEASE
+    @deprecated use {!fun_} instead since NEXT_RELEASE
 *)
 
-val fun2 : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> ('a -> 'b -> 'c) arbitrary
+val fun2_unsafe : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> ('a -> 'b -> 'c) arbitrary
 (** generator of functions of arity 2. The remark about [fun1] also apply
     here.
+    renamed from {!fun2} since NEXT_RELEASE
+    @deprecated use {!fun_} instead since NEXT_RELEASE
 *)
+
+(** Reifying functions *)
+module Fn : sig
+  type ('a, 'ret) t =
+    | Ret : 'ret * 'ret arbitrary -> ('ret, 'ret) t
+    | Fun : 'a Observable.Predicate.t * ('f, 'ret) t * ('f, 'ret) t -> ('a -> 'f, 'ret) t
+
+  (** Generator for reified functions *)
+  type ('a, 'ret) gen =
+    | G_ret : 'ret arbitrary -> ('ret, 'ret) gen
+    | G_fun : 'a Observable.t * ('f, 'ret) gen -> ('a -> 'f, 'ret) gen
+
+  val apply : ('a, 'ret) t -> 'a
+  (** Apply to arguments *)
+
+  val shrink : ('a, 'ret) t Shrink.t
+
+  val pp : ('a, 'ret) t Print.t
+end
+
+val (@->) : 'a Observable.t -> ('b,'ret) Fn.gen -> ('a -> 'b, 'ret) Fn.gen
+
+val returning : 'a arbitrary -> ('a, 'a) Fn.gen
+
+val fun_ : ('a, 'ret) Fn.gen -> ('a, 'ret) Fn.t arbitrary
+(** Random function, that observes its input of type ['a].
+    Use {!Fn.apply} to actually apply the function.
+    @since NEXT_RELEASE *)
+
+val fun1 :
+  'a Observable.t ->
+  'b arbitrary ->
+  ('a -> 'b, 'b) Fn.t arbitrary
+(** @since NEXT_RELEASE *)
+
+val fun2 :
+  'a Observable.t ->
+  'b Observable.t ->
+  'c arbitrary ->
+  ('a -> 'b -> 'c, 'c) Fn.t arbitrary
+(** @since NEXT_RELEASE *)
+
+val fun3 :
+  'a Observable.t ->
+  'b Observable.t ->
+  'c Observable.t ->
+  'd arbitrary ->
+  ('a -> 'b -> 'c -> 'd, 'd) Fn.t arbitrary
+(** @since NEXT_RELEASE *)
 
 val oneofl : ?print:'a Print.t -> ?collect:('a -> string) ->
              'a list -> 'a arbitrary
