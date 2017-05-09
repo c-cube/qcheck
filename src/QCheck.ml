@@ -253,6 +253,7 @@ end
 module Print = struct
   type 'a t = 'a -> string
 
+  let unit _ = "()"
   let int = string_of_int
   let bool = string_of_bool
   let float = string_of_float
@@ -302,7 +303,6 @@ module Iter = struct
   let (>|=) a f = map f a
   let append a b yield = a yield; b yield
   let (<+>) = append
-  let flatten s = s >>= fun x->x
   let of_list l yield = List.iter yield l
   let of_array a yield = Array.iter yield a
   let pair a b yield = a (fun x -> b(fun y -> yield (x,y)))
@@ -323,12 +323,16 @@ module Shrink = struct
   type 'a t = 'a -> 'a Iter.t
 
   let nil _ = Iter.empty
+  let unit = nil
 
   (* get closer to 0 *)
   let int x yield =
     if x < -2 || x>2 then yield (x/2); (* faster this way *)
     if x>0 then yield (x-1);
     if x<0 then yield (x+1)
+
+  let char c yield =
+    if Char.code c > 0 then yield (Char.chr (Char.code c-1))
 
   let option s x = match x with
     | None -> Iter.empty
@@ -399,172 +403,86 @@ end
 (** {2 Observe Values} *)
 
 module Observable = struct
-  (** A random predicate on ['a] *)
-  module Predicate = struct
-    type -'a t =
-      | Check of ('a -> bool) * string lazy_t
-      | Ite of 'a t * 'a t * 'a t
-      | Map : ('a -> 'b) * 'b t * string lazy_t -> 'a t
-
-    let make ?(descr=lazy "<pred>") p = Check (p, descr)
-    let ite a b c = Ite (a,b,c)
-    let true_ () = make ~descr:(lazy "true") (fun _ -> true)
-    let false_ () = make ~descr:(lazy "false") (fun _ -> false)
-    let bool = make ~descr:(lazy "?") (fun b->b)
-    let rec size : type a. a t -> int = function
-      | Check _ -> 1
-      | Ite (a,b,c) -> 1 + size a + size b + size c
-      | Map (_, g,_) -> size g
-
-    let map ?(descr=lazy "<fun>") f p = Map (f, p, descr)
-
-    let rec eval
-      : type a. a t -> a -> bool
-      = fun p x -> match p with
-        | Check (p, _) -> p x
-        | Ite (a,b,c) ->
-          if eval a x then eval b x else eval c x
-        | Map (f,p,_) -> eval p (f x)
-
-    let pp p =
-      let buf = Buffer.create 32 in
-      let rec aux
-        : type a. Buffer.t -> a t -> unit
-        = fun buf -> function
-          | Check (_, descr) -> Buffer.add_string buf (Lazy.force descr)
-          | Ite (a,b,c) -> Printf.bprintf buf "(ite %a %a %a)" aux a aux b aux c
-          | Map (_,b,descr) -> Printf.bprintf buf "(map %s %a)" (Lazy.force descr) aux b
-      in
-      aux buf p;
-      Buffer.contents buf
-
-    let rec shrink : type a. a t Shrink.t = function
-      | Check _ -> Iter.empty
-      | Ite (a,b,c) ->
-        let open Iter in
-        of_list [
-          return a;
-          return b;
-          return c;
-          (shrink a >|= fun a -> ite a b c);
-          (shrink b >|= fun a -> ite a b c);
-          (shrink c >|= fun a -> ite a b c);
-        ] |> flatten
-      | Map (f,b,descr) ->
-        let open Iter in
-        shrink b >|= fun b -> Map (f, b, descr)
-  end
-
   (** An observable is a (random) predicate on ['a] *)
-  type -'a t = 'a Predicate.t Gen.t
+  type -'a t = {
+    print: 'a Print.t;
+    eq: ('a -> 'a -> bool);
+    hash: ('a -> int);
+  }
 
-  type -'a sized = 'a Predicate.t Gen.sized
+  let make ?(eq=(=)) ?(hash=Hashtbl.hash) print =
+    {print; eq; hash; }
 
-  let return_pred p _ = p
-
-  let return ?descr f = return_pred (Predicate.make ?descr f)
-
-  (* compare input values to some random input *)
-  let mk_comp ?pp pp_op op (gen:_ Gen.t) st =
-    let pivot = gen st in
-    let descr = match pp with
-      | None -> None
-      | Some pp -> Some (lazy (Printf.sprintf "(? %s %s)" pp_op (pp pivot)))
-    in
-    Predicate.make ?descr (fun x -> op pivot x)
-
-  let check_eq ?pp ?(eq=(=)) gen : _ t =
-    mk_comp ?pp "=" eq gen
-
-  let check_leq ?pp ?(leq=(<=)) gen : _ t =
-    mk_comp ?pp "<=" leq gen
-
-  let check_less ?pp ?(less=(<)) gen : _ t =
-    mk_comp ?pp "<" less gen
-
-  let ite a b c st = Predicate.ite (a st) (b st) (c st)
-
-  let decision_tree_sized gen depth st =
-    let rec aux depth = match depth with
-      | 0 -> gen st
-      | _ ->
-        if Gen.bool st
-        then gen st (* stop recursion *)
-        else Predicate.ite (aux (depth-1)) (aux (depth-1)) (aux (depth-1))
-    in
-    aux depth
-
-  let decision_tree gen = Gen.(0--3 >>= decision_tree_sized gen)
-
-  let true_ () = return_pred (Predicate.true_ ())
-  let false_ () = return_pred (Predicate.false_())
-
-  let oneof l = Gen.oneof l
-
-  let map ?descr f gen st =
-    let p = gen st in
-    Predicate.map ?descr f p
-
-  let mapstr str f g = map ~descr:(lazy str) f g
-
-  let and_ a b = ite a b (false_ ())
-  let or_ a b = ite a (true_()) b
-  let not a = ite a (false_()) (true_ ())
-
-  module Infix = struct
-    let (&&) = and_
-    let (||) = or_
+  module H = struct
+    let combine a b = Hashtbl.seeded_hash a b
+    let combine_f f s x = Hashtbl.seeded_hash s (f x)
+    let int i = i land max_int
+    let bool b = if b then 1 else 2
+    let char x = Char.code x
+    let string (x:string) = Hashtbl.hash x
+    let opt f = function
+      | None -> 42
+      | Some x -> combine 43 (f x)
+    let list f l = List.fold_left (combine_f f) 0x42 l
+    let array f l = Array.fold_left (combine_f f) 0x42 l
+    let pair f g (x,y) = combine (f x) (g y)
   end
-  include Infix
 
-  let unit : unit t = Gen.oneofl [Predicate.true_(); Predicate.false_()]
-  let bool : bool t = return_pred Predicate.bool
+  module Eq = struct
+    type 'a t = 'a -> 'a -> bool
 
-  let int_range a b =
-    if a + 1 >= b then Gen.oneofl [Predicate.true_(); Predicate.false_()]
-    else check_leq ~pp:Print.int Gen.(a -- b)
+    let int : int t = (=)
+    let string : string t = (=)
+    let bool : bool t = (=)
+    let float : float t = (=)
+    let unit () () = true
+    let char : char t = (=)
 
-  let int = int_range (- (1 lsl 30)) (1 lsl 30)
-  let nat = int_range 0 (1 lsl 30)
-  let int_tree = decision_tree int
+    let rec list f l1 l2 = match l1, l2 with
+      | [], [] -> true
+      | [], _ | _, [] -> false
+      | x1::l1', x2::l2' -> f x1 x2 && list f l1' l2'
 
-  let float = check_leq ~pp:Print.float Gen.float
-  let float_tree = decision_tree float
+    let array eq a b =
+      let rec aux i =
+        if i = Array.length a then true
+        else eq a.(i) b.(i) && aux (i+1)
+      in
+      Array.length a = Array.length b
+      &&
+      aux 0
 
-  let string =
-    oneof
-      [ mapstr "String.length" String.length int_tree;
-        check_less ~pp:Print.string Gen.(string_size ~gen:printable (0 -- 5));
-      ]
+    let option f o1 o2 = match o1, o2 with
+      | None, None -> true
+      | Some _, None
+      | None, Some _ -> false
+      | Some x, Some y -> f x y
 
-  let option gen st =
-    let p_none = Gen.oneofl [Predicate.true_(); Predicate.false_()] st in
-    let p_some = gen st in
-    Predicate.make
-      ~descr:(lazy (Printf.sprintf "(option %s)" (Predicate.pp p_some)))
-      (function
-        | None -> Predicate.eval p_none ()
-        | Some x -> Predicate.eval p_some x)
+    let pair f g (x1,y1)(x2,y2) = f x1 x2 && g y1 y2
+  end
 
-  let array gen =
-    let by_len =
-      let p = decision_tree (int_range 0 100) in
-      mapstr "Array.length" Array.length p
-    and pick_elt st =
-      let i = Gen.(0 -- 100) st in
-      Predicate.map
-        ~descr:(lazy (Printf.sprintf "(Array.nth %d)" i))
-        (fun a ->
-           if Array.length a > i
-           then Some a.(i)
-           else None)
-        ((option gen) st)
-    in
-    oneof [by_len; pick_elt]
+  let unit : unit t = make ~hash:(fun _ -> 1) ~eq:Eq.unit Print.unit
+  let bool : bool t = make ~hash:H.bool ~eq:Eq.bool Print.bool
+  let int : int t = make ~hash:H.int ~eq:Eq.int Print.int
+  let float : float t = make ~eq:Eq.float Print.float
+  let string = make ~hash:H.string ~eq:Eq.string Print.string
+  let char = make ~hash:H.char ~eq:Eq.char Print.char
 
-  let list gen = mapstr "Array.of_list" Array.of_list (array gen)
+  let option p =
+    make ~hash:(H.opt p.hash) ~eq:(Eq.option p.eq)
+      (Print.option p.print)
 
-  let pair a b = ite (mapstr "fst" fst a) (mapstr "snd" snd b) (false_ ())
+  let array p =
+    make ~hash:(H.array p.hash) ~eq:(Eq.array p.eq) (Print.array p.print)
+  let list p =
+    make ~hash:(H.list p.hash) ~eq:(Eq.list p.eq) (Print.list p.print)
+
+  let map f p =
+    make ~hash:(fun x -> p.hash (f x)) ~eq:(fun x y -> p.eq (f x)(f y))
+      (fun x -> p.print (f x))
+
+  let pair a b =
+    make ~hash:(H.pair a.hash b.hash) ~eq:(Eq.pair a.eq b.eq) (Print.pair a.print b.print)
   let triple a b c =
     map (fun (x,y,z) -> x,(y,z)) (pair a (pair b c))
   let quad a b c d =
@@ -730,6 +648,15 @@ let option a =
     ?print:(_opt_map ~f:Print.option a.print)
     g
 
+let map ?rev f a =
+  make
+    ?print:(_opt_map_2 rev a.print ~f:(fun r p x -> p (r x)))
+    ?small:(_opt_map_2 rev a.small ~f:(fun r s x -> s (r x)))
+    ?shrink:(_opt_map_2 rev a.shrink ~f:(fun r g x -> Iter.(g (r x) >|= f)))
+    ?collect:(_opt_map_2 rev a.collect ~f:(fun r f x -> f (r x)))
+    (fun st -> f (a.gen st))
+
+
 (* TODO: explain black magic in this!! *)
 let fun1_unsafe : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary =
   fun a1 a2 ->
@@ -757,86 +684,205 @@ let fun1_unsafe : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary =
 
 let fun2_unsafe gp1 gp2 gp3 = fun1_unsafe gp1 (fun1_unsafe gp2 gp3)
 
+module Poly_tbl : sig
+  type ('a, 'b) t
+
+  val create: 'a Observable.t -> 'b arbitrary -> int -> ('a, 'b) t Gen.t
+  val get : ('a, 'b) t -> 'a -> 'b option
+  val size : ('b -> int) -> (_, 'b) t -> int
+  val shrink : 'b Shrink.t -> ('a, 'b) t Shrink.t
+  val print : (_,_) t Print.t
+end = struct
+  type ('a, 'b) t = {
+    get : 'a -> 'b option;
+    p_size: ('b->int) -> int;
+    p_shrink: 'b Shrink.t -> ('a, 'b) t Iter.t;
+    p_print: unit -> string;
+  }
+
+  let create (type k)(type v) k v size st : (k,v) t =
+    let module T = Hashtbl.Make(struct
+        type t = k
+        let equal = k.Observable.eq
+        let hash = k.Observable.hash
+      end) in
+    (* make a table
+       @param extend if true, extend table on the fly *)
+    let rec make ~extend tbl = {
+      get=(fun x ->
+        try Some (T.find tbl x)
+        with Not_found ->
+          if extend then (
+            let v = v.gen st in
+            T.add tbl x v;
+            Some v
+          ) else None);
+      p_print=(fun () -> match v.print with
+        | None -> "<fun>"
+        | Some pp_v ->
+          let b = Buffer.create 64 in
+          T.iter
+            (fun key value ->
+               Printf.bprintf b "%s -> %s; "
+                 (k.Observable.print key) (pp_v value))
+            tbl;
+        Buffer.contents b);
+      p_shrink=(fun shrink_val yield ->
+        (* remove bindings one by one *)
+        T.iter
+          (fun x _ ->
+             let tbl' = T.copy tbl in
+             T.remove tbl' x;
+             yield (make ~extend:false tbl'))
+          tbl;
+        (* shrink bindings one by one *)
+        T.iter
+          (fun x y ->
+             shrink_val y
+               (fun y' ->
+                  let tbl' = T.copy tbl in
+                  T.replace tbl' x y';
+                  yield (make ~extend:false tbl')))
+          tbl
+      );
+      p_size=(fun size_v -> T.fold (fun _ v n -> n + size_v v) tbl 0);
+    } in
+    make ~extend:true (T.create size)
+
+  let get t x = t.get x
+  let shrink p t = t.p_shrink p
+  let print t = t.p_print ()
+  let size p t = t.p_size p
+end
+
+(** Internal representation of functions *)
+type (_, _) fun_repr =
+  | Fun_ret : ('a, 'b) Poly_tbl.t * 'b arbitrary * 'b -> ('a -> 'b, 'b) fun_repr
+  | Fun_append :
+      ('a, ('f, 'ret) fun_repr) Poly_tbl.t *
+      ('f, 'ret) fun_repr ->
+      ('a -> 'f, 'ret) fun_repr
+
+type (_, _) fun_gen =
+  | Fun_gen_ret : 'a Observable.t * 'b arbitrary -> ('a -> 'b, 'b) fun_gen
+  | Fun_gen_append : 'a Observable.t * ('b, 'ret) fun_gen -> ('a -> 'b, 'ret) fun_gen
+
+type _ fun_ =
+  | Fun : ('f, 'ret) fun_repr * 'f -> 'f fun_
+
 (** Reifying functions *)
 module Fn = struct
-  type ('a, 'ret) t =
-    | Ret : 'ret * 'ret arbitrary -> ('ret, 'ret) t
-    | Fun : 'a Observable.Predicate.t * ('f, 'ret) t * ('f, 'ret) t -> ('a -> 'f, 'ret) t
+  type 'a t = 'a fun_
 
-  (** Generator for reified functions *)
-  type ('a, 'ret) gen =
-    | G_ret : 'ret arbitrary -> ('ret, 'ret) gen
-    | G_fun : 'a Observable.t * ('f, 'ret) gen -> ('a -> 'f, 'ret) gen
+  let apply (Fun (_,f)) = f
 
-  let rec apply : type a ret. (a, ret) t -> a = function
-    | Ret (x,_) -> x
-    | Fun (pred, k1, k2) ->
-      fun x ->
-        if Observable.Predicate.eval pred x then apply k1 else apply k2
+  let make_
+    : type a b. (a, b) fun_repr -> a fun_
+    = fun r ->
+      let rec aux
+        : type a b. (a, b) fun_repr -> a
+        = function
+          | Fun_ret (tbl,_,def) ->
+            (fun x -> match Poly_tbl.get tbl x with
+               | None -> def
+               | Some y -> y)
+          | Fun_append (tbl,def) ->
+            (fun x -> match Poly_tbl.get tbl x with
+               | None -> aux def
+               | Some y -> aux y)
+      in
+      Fun (r,aux r)
 
-  let rec gen
-    : type a ret. (a, ret) gen -> (a, ret) t Gen.t
-    = fun g st -> match g with
-      | G_ret arb -> Ret (arb.gen st, arb)
-      | G_fun (o, k) ->
-        Fun (o st, gen k st, gen k st)
+  let rec shrink_rep
+    : type a b. (a,b) fun_repr Shrink.t
+    = fun r ->
+      let open Iter in
+      match r with
+        | Fun_ret (tbl,a,def) ->
+          let sh_v = match a.shrink with None -> Shrink.nil | Some s->s in
+          (Poly_tbl.shrink sh_v tbl >|= fun tbl' -> Fun_ret (tbl',a,def))
+          <+>
+          (sh_v def >|= fun def' -> Fun_ret (tbl,a,def'))
+        | Fun_append (tbl,def) ->
+          (Poly_tbl.shrink shrink_rep tbl >|= fun tbl' -> Fun_append (tbl',def))
+          <+>
+          (shrink_rep def >|= fun def' -> Fun_append (tbl,def'))
 
-  let rec shrink
-    : type a ret. (a,ret) t Shrink.t
-    = function
-      | Ret (x,arb) ->
-        let open Iter in
-        begin match arb.shrink with
-          | None -> Iter.empty
-          | Some f -> (f x >|= fun x -> Ret (x, arb))
-        end
-      | Fun (o, k1, k2) ->
-        let open Iter in
-        of_list
-          [ (Observable.Predicate.shrink o >|= fun o -> Fun(o,k1,k2));
-            (shrink k1 >|= fun k1 -> Fun (o,k1,k2));
-            (shrink k2 >|= fun k2 -> Fun (o,k1,k2));
-          ] |> flatten
+  let shrink
+    : type f. f fun_ Shrink.t
+    = fun (Fun (rep,_)) ->
+      let open Iter in
+      shrink_rep rep >|= make_
 
-  let rec size : type a ret. (a, ret) t -> int = function
-    | Ret (x,arb) ->
-      begin match arb.small with
-        | None ->  1
-        | Some f -> f x
-      end
-    | Fun (o, k1, k2) -> Observable.Predicate.size o + size k1 + size k2
+  let rec size_rep : type a b. (a,b) fun_repr -> int = function
+    | Fun_ret (tbl, a, def) ->
+      let size_v x = match a.small with None -> 0 | Some f -> f x in
+      Poly_tbl.size size_v tbl + size_v def
+    | Fun_append (tbl, def) ->
+      Poly_tbl.size size_rep tbl + size_rep def
 
-  let pp f =
+  let size (Fun (rep,_)) = size_rep rep
+
+  let print_rep f =
     let buf = Buffer.create 32 in
-    let rec aux : type a ret. Buffer.t -> (a,ret) t -> unit
+    let rec aux : type a ret. Buffer.t -> (a,ret) fun_repr -> unit
       = fun buf f -> match f with
-        | Ret (x,arb) ->
-          begin match arb.print with
-            | None -> Buffer.add_string buf "?"
-            | Some pp -> Buffer.add_string buf (pp x)
-          end
-        | Fun (o, k1, k2) ->
-          Printf.bprintf buf "(if %s %a %a)"
-            (Observable.Predicate.pp o) aux k1 aux k2
+        | Fun_ret (tbl,a,def) ->
+          Printf.bprintf buf "{";
+          Buffer.add_string buf (Poly_tbl.print tbl);
+          Printf.bprintf buf "_ -> %s" (match a.print with
+            | None -> "<opaque>"
+            | Some s -> s def
+          );
+          Printf.bprintf buf "}";
+        | Fun_append (tbl,def) ->
+          Printf.bprintf buf "{";
+          Buffer.add_string buf (Poly_tbl.print tbl);
+          Printf.bprintf buf "_ -> %a" aux def;
+          Printf.bprintf buf "}";
     in
     aux buf f;
     Buffer.contents buf
+
+  let print (Fun (rep,_)) = print_rep rep
+
+  let rec arb_rep
+    : type a b. (a,b) fun_gen -> (a,b) fun_repr arbitrary
+    = fun g ->
+      make
+        ~small:size_rep
+        ~print:print_rep
+        ~shrink:shrink_rep
+        (gen_rep g)
+
+  and gen_rep
+    : type a b. (a,b) fun_gen -> (a,b) fun_repr Gen.t
+    = fun g st -> match g with
+      | Fun_gen_ret (o, arb) ->
+        Fun_ret (Poly_tbl.create o arb 8 st, arb, arb.gen st)
+      | Fun_gen_append (o, g') ->
+        Fun_append
+          (Poly_tbl.create o (arb_rep g') 8 st, gen_rep g' st)
+
+  let gen g = Gen.map make_ (gen_rep g)
 end
 
-let (@->) o gen = Fn.G_fun (o,gen)
-let returning gen = Fn.G_ret gen
+let (@@->) o arb = Fun_gen_ret (o,arb)
 
-let fun_ (f:(_, _) Fn.gen): (_,_) Fn.t arbitrary =
-  let gen st = Fn.gen f st in
-  make
-    ~small:Fn.size
-    ~shrink:Fn.shrink
-    ~print:Fn.pp
-    gen
+let (@->) o gen = Fun_gen_append (o,gen)
 
-let fun1 o1 ret = fun_ (o1 @-> returning ret)
-let fun2 o1 o2 ret = fun_ (o1 @-> o2 @-> returning ret)
-let fun3 o1 o2 o3 ret = fun_ (o1 @-> o2 @-> o3 @-> returning ret)
+let fun_
+  : type a b. (a,b) fun_gen -> a fun_ arbitrary
+  = fun g ->
+    make
+      ~shrink:Fn.shrink
+      ~print:Fn.print
+      ~small:Fn.size
+      (Fn.gen g)
+
+let fun1 o1 ret = fun_ (o1 @@-> ret)
+let fun2 o1 o2 ret = fun_ (o1 @-> o2 @@-> ret)
+let fun3 o1 o2 o3 ret = fun_ (o1 @-> o2 @-> o3 @@-> ret)
 
 (* Generator combinators *)
 
@@ -874,14 +920,6 @@ let frequency ?print ?small ?shrink ?collect l =
     to given frequency *)
 let frequencyl ?print ?small l = make ?print ?small (Gen.frequencyl l)
 let frequencya ?print ?small l = make ?print ?small (Gen.frequencya l)
-
-let map ?rev f a =
-  make
-    ?print:(_opt_map_2 rev a.print ~f:(fun r p x -> p (r x)))
-    ?small:(_opt_map_2 rev a.small ~f:(fun r s x -> s (r x)))
-    ?shrink:(_opt_map_2 rev a.shrink ~f:(fun r g x -> Iter.(g (r x) >|= f)))
-    ?collect:(_opt_map_2 rev a.collect ~f:(fun r f x -> f (r x)))
-    (fun st -> f (a.gen st))
 
 let map_same_type f a =
   adapt_ a (fun st -> f (a.gen st))

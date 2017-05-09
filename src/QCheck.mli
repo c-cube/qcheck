@@ -341,6 +341,8 @@ module Print : sig
   type 'a t = 'a -> string
   (** Printer for values of type ['a] *)
 
+
+  val unit : unit t (** @since NEXT_RELEASE *)
   val int : int t (** Integer printer *)
   val bool : bool t (** Boolean printer *)
   val float : float t (** Floating point number printer *)
@@ -405,6 +407,8 @@ module Shrink : sig
   val nil : 'a t
   (** No shrink *)
 
+  val unit : unit t (** @since NEXT_RELEASE *)
+  val char : char t (** @since NEXT_RELEASE *)
   val int : int t
   val option : 'a t -> 'a option t
   val string : string t
@@ -428,112 +432,32 @@ end
 
 (** Observables are usable as arguments for random functions.
     The random function will observe its arguments in a way
-    that is determined from the observable instance, and from a random
-    generator.
+    that is determined from the observable instance.
 
-    Inspired from https://blogs.janestreet.com/quickcheck-for-core/ .
+    Inspired from https://blogs.janestreet.com/quickcheck-for-core/
+    and Koen Claessen's "Shrinking and Showing functions".
 
     @since NEXT_RELEASE
 *)
 
 module Observable : sig
-  (** A random predicate on ['a] *)
-  module Predicate : sig
-    type -'a t =
-      | Check of ('a -> bool) * string lazy_t
-      | Ite of 'a t * 'a t * 'a t
-      | Map : ('a -> 'b) * 'b t * string lazy_t -> 'a t
+  (** An observable for ['a], packing a printer and other things *)
+  type -'a t
 
-    val make : ?descr:string lazy_t -> ('a -> bool) -> 'a t
-    (** Make a predicate *)
-
-    val true_ : unit -> _ t
-    val false_ : unit -> _ t
-    val bool : bool t
-
-    val ite : 'a t -> 'a t -> 'a t -> 'a t
-
-    val map : ?descr:string lazy_t -> ('a -> 'b) -> 'b t -> 'a t
-
-    val eval : 'a t -> 'a -> bool
-    (** Evaluate the predicate *)
-
-    val pp : 'a t Print.t
-    val size : _ t -> int
-    val shrink : 'a t Shrink.t
-  end
-
-  (** An observable is a (random) predicate on ['a] *)
-  type -'a t = 'a Predicate.t Gen.t
-
-  type -'a sized = 'a Predicate.t Gen.sized
-
-  val return : ?descr:string lazy_t -> ('a -> bool) -> 'a t
-  (** Constant predicate *)
-
-  val return_pred : 'a Predicate.t -> 'a t
-
-  val check_eq : ?pp:'a Print.t -> ?eq:('a -> 'a -> bool) -> 'a Gen.t -> 'a t
-  (** The predicate that checks if its input is equal to some value *)
-
-  val check_leq : ?pp:'a Print.t -> ?leq:('a -> 'a -> bool) -> 'a Gen.t -> 'a t
-  (** The predicate that checks if its input is [<=] to some value *)
-
-  val check_less : ?pp:'a Print.t -> ?less:('a -> 'a -> bool) -> 'a Gen.t -> 'a t
-  (** The predicate that checks if its input is [<] to some value *)
-
-  val ite : 'a t -> 'a t -> 'a t -> 'a t
-  (** [ite a b c] applies [a] to its input. If [a] holds then it calls [b],
-      otherwise it calls [c] *)
-
-  val map : ?descr:string lazy_t -> ('a -> 'b) -> 'b t -> 'a t
-
-  val oneof : 'a t list -> 'a t
-
-  val decision_tree_sized : 'a t -> 'a sized
-
-  val decision_tree : 'a t -> 'a t
-
-  val and_ : 'a t -> 'a t -> 'a t
-
-  val or_ : 'a t -> 'a t -> 'a t
-
-  val not : 'a t -> 'a t
-
-  module Infix : sig
-    val (&&) : 'a t -> 'a t -> 'a t
-    val (||) : 'a t -> 'a t -> 'a t
-  end
-
-  include module type of Infix
-
-  val true_ : unit -> _ t
-  (** always true *)
-
-  val false_ : unit -> _ t
-  (** always false *)
-
-  val bool : bool t
   val unit : unit t
-
-  val int_range : int -> int -> int t
-  (** [int_range a b] observes integers that are assumed to live in
-      the interval [[a,b]]. *)
-
+  val bool : bool t
   val int : int t
-
-  val nat : int t
-  (** Alias to [int_range 0 max_int] *)
-
-  val int_tree : int t
-  (** Yields a predicate that compares its input to some random threshold,
-      and possibly recurses back *)
-
-  val string : string t
-
   val float : float t
+  val string : string t
+  val char : char t
 
-  val float_tree : float t
+  val make :
+    ?eq:('a -> 'a -> bool) ->
+    ?hash:('a -> int) ->
+    'a Print.t ->
+    'a t
+
+  val map : ('a -> 'b) -> 'b t -> 'a t
 
   val option : 'a t -> 'a option t
   val list : 'a t -> 'a list t
@@ -915,45 +839,47 @@ val fun2_unsafe : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> ('a -> 'b -> '
     @deprecated use {!fun_} instead since NEXT_RELEASE
 *)
 
-(** Reifying functions *)
+type (_,_) fun_repr
+(** internal data for functions. A [('f,'ret) fun_] is a function
+    of type ['f], fundamentaly. *)
+
+(** Generator of functions *)
+type (_, _) fun_gen =
+  | Fun_gen_ret : 'a Observable.t * 'b arbitrary -> ('a -> 'b, 'b) fun_gen
+  | Fun_gen_append : 'a Observable.t * ('b, 'ret) fun_gen -> ('a -> 'b, 'ret) fun_gen
+
+type _ fun_ =
+  | Fun : ('f, 'ret) fun_repr * 'f -> 'f fun_
+(** A function packed with the data required to print/shrink it *)
+
+(** Utils on functions
+    @since NEXT_RELEASE *)
 module Fn : sig
-  type ('a, 'ret) t =
-    | Ret : 'ret * 'ret arbitrary -> ('ret, 'ret) t
-    | Fun : 'a Observable.Predicate.t * ('f, 'ret) t * ('f, 'ret) t -> ('a -> 'f, 'ret) t
+  type 'a t = 'a fun_
 
-  (** Generator for reified functions *)
-  type ('a, 'ret) gen =
-    | G_ret : 'ret arbitrary -> ('ret, 'ret) gen
-    | G_fun : 'a Observable.t * ('f, 'ret) gen -> ('a -> 'f, 'ret) gen
+  val print : _ t Print.t
+  val shrink : _ t Shrink.t
 
-  val apply : ('a, 'ret) t -> 'a
-  (** Apply to arguments *)
-
-  val shrink : ('a, 'ret) t Shrink.t
-
-  val pp : ('a, 'ret) t Print.t
+  val apply : 'f t -> 'f
 end
 
-val (@->) : 'a Observable.t -> ('b,'ret) Fn.gen -> ('a -> 'b, 'ret) Fn.gen
+val (@->) : 'a Observable.t -> ('b,'ret) fun_gen -> ('a -> 'b,'ret) fun_gen
 
-val returning : 'a arbitrary -> ('a, 'a) Fn.gen
+val (@@->) : 'a Observable.t -> 'b arbitrary -> ('a -> 'b, 'b) fun_gen
 
-val fun_ : ('a, 'ret) Fn.gen -> ('a, 'ret) Fn.t arbitrary
-(** Random function, that observes its input of type ['a].
-    Use {!Fn.apply} to actually apply the function.
-    @since NEXT_RELEASE *)
+val fun_ : ('f, _) fun_gen -> 'f fun_ arbitrary
 
 val fun1 :
   'a Observable.t ->
   'b arbitrary ->
-  ('a -> 'b, 'b) Fn.t arbitrary
+  ('a -> 'b) fun_ arbitrary
 (** @since NEXT_RELEASE *)
 
 val fun2 :
   'a Observable.t ->
   'b Observable.t ->
   'c arbitrary ->
-  ('a -> 'b -> 'c, 'c) Fn.t arbitrary
+  ('a -> 'b -> 'c) fun_ arbitrary
 (** @since NEXT_RELEASE *)
 
 val fun3 :
@@ -961,7 +887,7 @@ val fun3 :
   'b Observable.t ->
   'c Observable.t ->
   'd arbitrary ->
-  ('a -> 'b -> 'c -> 'd, 'd) Fn.t arbitrary
+  ('a -> 'b -> 'c -> 'd) fun_ arbitrary
 (** @since NEXT_RELEASE *)
 
 val oneofl : ?print:'a Print.t -> ?collect:('a -> string) ->
