@@ -1204,7 +1204,20 @@ module Test = struct
   let stat_max_lines = 20 (* maximum number of lines for a histogram *)
 
   let print_stat ((name,_), tbl) =
-    let max_idx = Hashtbl.fold (fun i _ m -> max i m) tbl 0 in
+    let avg = ref 0. in
+    let num = ref 0 in
+    let max_idx =
+      Hashtbl.fold
+        (fun i res m ->
+           avg := !avg +. float_of_int (i * res);
+           num := !num + res;
+           max i m)
+        tbl 0
+    in
+    if !num > 0 then (
+      avg := !avg /. float_of_int !num
+    );
+    (* compute average *)
     (* group by buckets, if there are too many entries *)
     let hist_size, bucket_size =
       if max_idx > stat_max_lines
@@ -1231,6 +1244,7 @@ module Test = struct
     (* entries of the table, sorted by increasing index *)
     let out = Buffer.create 128 in
     Printf.bprintf out "stats %s:\n" name;
+    Printf.bprintf out "  num: %d, avg: %.2f\n" !num !avg;
     Array.iter
       (fun (key, value) ->
          (* NOTE: keep in sync: 25 here, 26 below *)
