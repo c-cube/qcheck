@@ -25,11 +25,23 @@ let collect =
     QCheck.(make ~collect:string_of_int (Gen.int_bound 4))
     (fun _ -> true)
 
+let stats =
+  QCheck.Test.make ~count:100 ~long_factor:100
+    ~name:"with_stats"
+    QCheck.(make (Gen.int_bound 120)
+        ~stats:[
+          "mod4", (fun i->i mod 4);
+          "num", (fun i->i);
+        ]
+    )
+    (fun _ -> true)
+
 let () =
   QCheck_runner.run_tests_main [
     passing;
     failing;
     error;
     collect;
+    stats;
   ]
 

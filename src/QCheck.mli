@@ -551,12 +551,17 @@ end
     etc. It is the "normal" way of describing how to generate
     values of a given type, to be then used in tests (see {!Test}) *)
 
+type 'a stat = string * ('a -> int)
+(** A statistic on a distribution of values of type ['a].
+    The function {b MUST} return a positive integer. *)
+
 type 'a arbitrary = {
   gen: 'a Gen.t;
   print: ('a -> string) option; (** print values *)
   small: ('a -> int) option;  (** size of example *)
   shrink: ('a Shrink.t) option;  (** shrink to smaller examples *)
   collect: ('a -> string) option;  (** map value to tag, and group by tag *)
+  stats: 'a stat list; (** statistics to collect and print *)
 }
 (** a value of type ['a arbitrary] is an object with a method for generating random
     values of type ['a], and additional methods to compute the size of values,
@@ -571,6 +576,7 @@ val make :
   ?small:('a -> int) ->
   ?shrink:'a Shrink.t ->
   ?collect:('a -> string) ->
+  ?stats:'a stat list ->
   'a Gen.t -> 'a arbitrary
 (** Builder for arbitrary. Default is to only have a generator, but other
     arguments can be added *)
@@ -579,6 +585,10 @@ val set_print : 'a Print.t -> 'a arbitrary -> 'a arbitrary
 val set_small : ('a -> int) -> 'a arbitrary -> 'a arbitrary
 val set_shrink : 'a Shrink.t -> 'a arbitrary -> 'a arbitrary
 val set_collect : ('a -> string) -> 'a arbitrary -> 'a arbitrary
+
+val add_stat : 'a stat -> 'a arbitrary -> 'a arbitrary
+(** Add a statistic  to the arbitrary instance
+    @since NEXT_RELEASE *)
 
 (** {2 Tests}
 
@@ -613,7 +623,16 @@ module TestResult : sig
     mutable count: int;  (* number of tests *)
     mutable count_gen: int; (* number of generated cases *)
     collect_tbl: (string, int) Hashtbl.t lazy_t;
+    stats_tbl: ('a stat * (int, int) Hashtbl.t) list; (** @since NEXT_RELEASE *)
   }
+
+  val collect : _ t -> (string,int) Hashtbl.t option
+  (** obtain statistics
+      @since NEXT_RELEASE *)
+
+  val stats : 'a t -> ('a stat * (int,int) Hashtbl.t) list
+  (** obtain statistics
+      @since NEXT_RELEASE *)
 end
 
 module Test : sig
@@ -686,6 +705,14 @@ module Test : sig
   val print_error : ?st:string -> 'a arbitrary -> string -> 'a TestResult.counter_ex * exn -> string
   val print_test_fail : string -> string list -> string
   val print_test_error : string -> string -> exn -> string -> string
+
+  val print_collect : (string,int) Hashtbl.t -> string
+  (** Print "collect" results
+      @since NEXT_RELEASE *)
+
+  val print_stat : ('a stat * (int,int) Hashtbl.t) -> string
+  (** Print statistics
+      @since NEXT_RELEASE *)
 
   val check_result : 'a cell -> 'a TestResult.t -> unit
   (** [check_result cell res] checks that [res] is [Ok _], and returns unit.

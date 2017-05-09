@@ -571,26 +571,32 @@ module Observable = struct
     map (fun (x,y,z,u) -> x,(y,z,u)) (pair a (triple b c d))
 end
 
+type 'a stat = string * ('a -> int)
+(** A statistic on a distribution of values of type ['a] *)
+
 type 'a arbitrary = {
   gen: 'a Gen.t;
   print: ('a -> string) option; (** print values *)
   small: ('a -> int) option;  (** size of example *)
   shrink: ('a -> 'a Iter.t) option;  (** shrink to smaller examples *)
   collect: ('a -> string) option;  (** map value to tag, and group by tag *)
+  stats: 'a stat list; (** statistics to collect and print *)
 }
 
-let make ?print ?small ?shrink ?collect gen = {
+let make ?print ?small ?shrink ?collect ?(stats=[]) gen = {
   gen;
   print;
   small;
   shrink;
   collect;
+  stats;
 }
 
 let set_small f o = {o with small=Some f}
 let set_print f o = {o with print=Some f}
 let set_shrink f o = {o with shrink=Some f}
 let set_collect f o = {o with collect=Some f}
+let add_stat s o = {o with stats=s :: o.stats}
 
 let small1 _ = 1
 
@@ -913,6 +919,7 @@ module TestResult = struct
     mutable count: int;  (* number of tests *)
     mutable count_gen: int; (* number of generated cases *)
     collect_tbl: (string, int) Hashtbl.t lazy_t;
+    stats_tbl: ('a stat * (int, int) Hashtbl.t) list;
   }
 
   (* indicate failure on the given [instance] *)
@@ -941,6 +948,11 @@ module TestResult = struct
 
   let error ~steps res instance e bt =
     res.state <- Error ({instance; shrink_steps=steps}, e, bt)
+
+  let collect r =
+    if Lazy.is_val r.collect_tbl then None else Some (Lazy.force r.collect_tbl)
+
+  let stats r = r.stats_tbl
 end
 
 module Test = struct
@@ -1036,6 +1048,15 @@ module Test = struct
         let n = try Hashtbl.find tbl key with Not_found -> 0 in
         Hashtbl.replace tbl key (n+1)
 
+  let update_stats st i =
+    List.iter
+      (fun ((_,f), tbl) ->
+         let key = f i in
+         assert (key>=0);
+         let n = try Hashtbl.find tbl key with Not_found -> 0 in
+         Hashtbl.replace tbl key (n+1))
+      st.res.R.stats_tbl
+
   (* try to shrink counter-ex [i] into a smaller one. Returns
      shrinked value and number of steps *)
   let shrink st i =
@@ -1093,6 +1114,7 @@ module Test = struct
     else (
       let input = new_input state in
       collect state input;
+      update_stats state input;
       let res =
         try
           if state.test.law input
@@ -1132,6 +1154,7 @@ module Test = struct
       res = {R.
         state=R.Success; count=0; count_gen=0;
         collect_tbl=lazy (Hashtbl.create 10);
+        stats_tbl= List.map (fun stat -> stat, Hashtbl.create 10) cell.arb.stats;
       };
     } in
     let res = check_state state in
@@ -1171,6 +1194,49 @@ module Test = struct
   let print_test_error name i e stack =
     Format.sprintf "@[test `%s`@ raised exception `%s`@ on `%s`@,%s@]"
       name (Printexc.to_string e) i stack
+
+  let print_collect c =
+    let out = Buffer.create 64 in
+    Hashtbl.iter
+      (fun case num -> Printf.bprintf out "%s: %d cases\n" case num) c;
+    Buffer.contents out
+
+  let stat_max_lines = 20 (* maximum number of lines for a histogram *)
+
+  let print_stat ((name,_), tbl) =
+    let max_idx = Hashtbl.fold (fun i _ m -> max i m) tbl 0 in
+    (* group by buckets, if there are too many entries *)
+    let hist_size, bucket_size =
+      if max_idx > stat_max_lines
+      then stat_max_lines, (max_idx/stat_max_lines +1)
+      else max_idx, 1
+    in
+    let max_val = ref 0 in (* max value after grouping by buckets *)
+    let rows =
+      Array.init hist_size
+        (fun i ->
+           let n = ref 0 in
+           for j=i to i+bucket_size-1 do
+             n := !n + (try Hashtbl.find tbl j with Not_found -> 0)
+           done;
+           max_val := max !max_val !n;
+           let key =
+             if bucket_size=1
+             then Printf.sprintf "%d" i
+             else Printf.sprintf "%d-%d" i (i+bucket_size-1)
+           in
+           key, !n)
+    in
+    (* entries of the table, sorted by increasing index *)
+    let out = Buffer.create 128 in
+    Printf.bprintf out "stats %s:\n" name;
+    Array.iter
+      (fun (key, value) ->
+         (* NOTE: keep in sync: 25 here, 26 below *)
+         let m = value * 25 / !max_val in
+         Printf.bprintf out "  %8s: %-26s %10d\n" key (String.make m '#') value)
+      rows;
+    Buffer.contents out
 
   let () = Printexc.register_printer
     (function
