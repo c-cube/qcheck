@@ -1247,9 +1247,9 @@ module Test = struct
     Printf.bprintf out "  num: %d, avg: %.2f\n" !num !avg;
     Array.iter
       (fun (key, value) ->
-         (* NOTE: keep in sync: 25 here, 26 below *)
-         let m = value * 25 / !max_val in
-         Printf.bprintf out "  %8s: %-26s %10d\n" key (String.make m '#') value)
+         (* NOTE: keep in sync *)
+         let m = value * 55 / !max_val in
+         Printf.bprintf out "  %8s: %-56s %10d\n" key (String.make m '#') value)
       rows;
     Buffer.contents out
 
