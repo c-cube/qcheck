@@ -1208,22 +1208,23 @@ module Test = struct
     (* group by buckets, if there are too many entries *)
     let hist_size, bucket_size =
       if max_idx > stat_max_lines
-      then stat_max_lines, (max_idx/stat_max_lines +1)
-      else max_idx, 1
+      then 1+stat_max_lines, int_of_float (ceil (float_of_int max_idx/. float_of_int stat_max_lines))
+      else 1+max_idx, 1
     in
     let max_val = ref 0 in (* max value after grouping by buckets *)
     let rows =
       Array.init hist_size
         (fun i ->
            let n = ref 0 in
-           for j=i to i+bucket_size-1 do
+           let i' = i * bucket_size in
+           for j=i' to i'+bucket_size-1 do
              n := !n + (try Hashtbl.find tbl j with Not_found -> 0)
            done;
            max_val := max !max_val !n;
            let key =
              if bucket_size=1
              then Printf.sprintf "%d" i
-             else Printf.sprintf "%d-%d" i (i+bucket_size-1)
+             else Printf.sprintf "%d-%d" i' (i'+bucket_size-1)
            in
            key, !n)
     in
