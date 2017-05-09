@@ -32,7 +32,7 @@ let regression_23 =
 
 let regressions = [ regression_23 ]
 let others =
-  [passing; failing; error]
+  [passing; failing; error; ]
   |> List.map (fun t -> QCheck_runner.to_ounit_test t)
 
 let suite =

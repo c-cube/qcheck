@@ -36,6 +36,23 @@ let stats =
     )
     (fun _ -> true)
 
+let fun1 =
+  QCheck.Test.make ~count:100
+    ~name:"FAIL_pred_map_commute"
+    QCheck.(triple
+        (small_list small_int)
+        (fun1_unsafe int int)
+        (fun1_unsafe int bool))
+    (fun (l,f,p) ->
+       List.filter p (List.map f l) = List.map f (List.filter p l))
+
+let fun2 =
+  QCheck.Test.make ~count:100
+    ~name:"FAIL_fun2_pred_strings"
+    QCheck.(fun1_unsafe string bool)
+    (fun p ->
+       not (p "some random string") || p "some other string")
+
 let () =
   QCheck_runner.run_tests_main [
     passing;
@@ -43,5 +60,7 @@ let () =
     error;
     collect;
     stats;
+    fun1;
+    fun2;
   ]
 
