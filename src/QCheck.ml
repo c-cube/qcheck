@@ -690,13 +690,15 @@ module Poly_tbl : sig
   val create: 'a Observable.t -> 'b arbitrary -> int -> ('a, 'b) t Gen.t
   val get : ('a, 'b) t -> 'a -> 'b option
   val size : ('b -> int) -> (_, 'b) t -> int
-  val shrink : 'b Shrink.t -> ('a, 'b) t Shrink.t
+  val shrink1 : ('a, 'b) t Shrink.t
+  val shrink2 : 'b Shrink.t -> ('a, 'b) t Shrink.t
   val print : (_,_) t Print.t
 end = struct
   type ('a, 'b) t = {
     get : 'a -> 'b option;
     p_size: ('b->int) -> int;
-    p_shrink: 'b Shrink.t -> ('a, 'b) t Iter.t;
+    p_shrink1: ('a, 'b) t Iter.t;
+    p_shrink2: 'b Shrink.t -> ('a, 'b) t Iter.t;
     p_print: unit -> string;
   }
 
@@ -727,14 +729,15 @@ end = struct
                  (k.Observable.print key) (pp_v value))
             tbl;
         Buffer.contents b);
-      p_shrink=(fun shrink_val yield ->
+      p_shrink1=(fun yield ->
         (* remove bindings one by one *)
         T.iter
           (fun x _ ->
              let tbl' = T.copy tbl in
              T.remove tbl' x;
              yield (make ~extend:false tbl'))
-          tbl;
+          tbl);
+      p_shrink2=(fun shrink_val yield ->
         (* shrink bindings one by one *)
         T.iter
           (fun x y ->
@@ -743,14 +746,14 @@ end = struct
                   let tbl' = T.copy tbl in
                   T.replace tbl' x y';
                   yield (make ~extend:false tbl')))
-          tbl
-      );
+          tbl);
       p_size=(fun size_v -> T.fold (fun _ v n -> n + size_v v) tbl 0);
     } in
     make ~extend:true (T.create size)
 
   let get t x = t.get x
-  let shrink p t = t.p_shrink p
+  let shrink1 t = t.p_shrink1
+  let shrink2 p t = t.p_shrink2 p
   let print t = t.p_print ()
   let size p t = t.p_size p
 end
@@ -800,13 +803,17 @@ module Fn = struct
       match r with
         | Fun_ret (tbl,a,def) ->
           let sh_v = match a.shrink with None -> Shrink.nil | Some s->s in
-          (Poly_tbl.shrink sh_v tbl >|= fun tbl' -> Fun_ret (tbl',a,def))
+          (Poly_tbl.shrink1 tbl >|= fun tbl' -> Fun_ret (tbl',a,def))
           <+>
           (sh_v def >|= fun def' -> Fun_ret (tbl,a,def'))
+          <+>
+          (Poly_tbl.shrink2 sh_v tbl >|= fun tbl' -> Fun_ret (tbl',a,def))
         | Fun_append (tbl,def) ->
-          (Poly_tbl.shrink shrink_rep tbl >|= fun tbl' -> Fun_append (tbl',def))
+          (Poly_tbl.shrink1 tbl >|= fun tbl' -> Fun_append (tbl',def))
           <+>
           (shrink_rep def >|= fun def' -> Fun_append (tbl,def'))
+          <+>
+          (Poly_tbl.shrink2 shrink_rep tbl >|= fun tbl' -> Fun_append (tbl',def))
 
   let shrink
     : type f. f fun_ Shrink.t
