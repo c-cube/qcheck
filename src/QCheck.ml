@@ -1270,6 +1270,7 @@ module Test = struct
       Hashtbl.fold
         (fun i res m -> m +. (float_of_int i -. !avg) ** 2. *. float_of_int res)
         tbl 0.
+      |> (fun s -> if !num>0 then s /. float_of_int !num else s)
       |> sqrt
     in
     (* compute median *)
