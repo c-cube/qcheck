@@ -514,6 +514,7 @@ let set_small f o = {o with small=Some f}
 let set_print f o = {o with print=Some f}
 let set_shrink f o = {o with shrink=Some f}
 let set_collect f o = {o with collect=Some f}
+let set_stats s o = {o with stats=s}
 let add_stat s o = {o with stats=s :: o.stats}
 
 let small1 _ = 1

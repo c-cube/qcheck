@@ -509,6 +509,7 @@ val set_print : 'a Print.t -> 'a arbitrary -> 'a arbitrary
 val set_small : ('a -> int) -> 'a arbitrary -> 'a arbitrary
 val set_shrink : 'a Shrink.t -> 'a arbitrary -> 'a arbitrary
 val set_collect : ('a -> string) -> 'a arbitrary -> 'a arbitrary
+val set_stats : 'a stat list -> 'a arbitrary -> 'a arbitrary (** @since NEXT_RELEASE *)
 
 val add_stat : 'a stat -> 'a arbitrary -> 'a arbitrary
 (** Add a statistic  to the arbitrary instance
