@@ -347,11 +347,17 @@ module Shrink = struct
     done
 
   let array ?shrink a yield =
-    for i=0 to Array.length a-1 do
-      let a' = Array.init (Array.length a-1)
-        (fun j -> if j< i then a.(j) else a.(j+1))
-      in
-      yield a'
+    let n = Array.length a in
+    let chunk_size = ref n in
+    while !chunk_size > 0 do
+      for i=0 to n - !chunk_size do
+        (* remove elements in [i .. i+!chunk_size] *)
+        let a' = Array.init (n - !chunk_size)
+          (fun j -> if j< i then a.(j) else a.(j + !chunk_size))
+        in
+        yield a'
+      done;
+      chunk_size := !chunk_size / 2;
     done;
     match shrink with
     | None -> ()
@@ -366,23 +372,8 @@ module Shrink = struct
         done
 
   let list ?shrink l yield =
-    let rec aux l r = match r with
-      | [] -> ()
-      | x :: r' ->
-          yield (List.rev_append l r');
-          aux (x::l) r'
-    in
-    aux [] l;
-    match shrink with
-    | None -> ()
-    | Some f ->
-        let rec aux l r = match r with
-          | [] -> ()
-          | x :: r' ->
-              f x (fun x' -> yield (List.rev_append l (x' :: r')));
-              aux (x :: l) r'
-        in
-        aux [] l
+    array ?shrink (Array.of_list l)
+      (fun a -> yield (Array.to_list a))
 
   let pair a b (x,y) yield =
     a x (fun x' -> yield (x',y));
