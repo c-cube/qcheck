@@ -20,18 +20,21 @@ Library "qcheck"
   BuildDepends:     unix, bytes, oUnit
 
 Executable qcheck_ounit_example
+  CompiledObject:   best
   Path:           example
   Install:        false
   BuildDepends:   qcheck, oUnit
   MainIs:         QCheck_ounit_test.ml
 
 Executable qcheck_runner_example
+  CompiledObject:   best
   Path:           example
   Install:        false
   BuildDepends:   qcheck, oUnit
   MainIs:         QCheck_runner_test.ml
 
 Executable qcheck_example
+  CompiledObject:   best
   Path:           example
   Install:        false
   BuildDepends:   qcheck, oUnit

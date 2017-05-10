@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: cf44386297451ee19a520838e92faf65)
+# DO NOT EDIT (digest: 0a85a19a819b6f9632b66811ed3d42e3)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -20,24 +20,25 @@ true: annot, bin_annot
 <src/*.ml{,i,y}>: pkg_oUnit
 <src/*.ml{,i,y}>: pkg_unix
 # Executable qcheck_ounit_example
-"example/QCheck_ounit_test.byte": pkg_bytes
-"example/QCheck_ounit_test.byte": pkg_oUnit
-"example/QCheck_ounit_test.byte": pkg_unix
-"example/QCheck_ounit_test.byte": use_qcheck
+<example/QCheck_ounit_test.{native,byte}>: pkg_bytes
+<example/QCheck_ounit_test.{native,byte}>: pkg_oUnit
+<example/QCheck_ounit_test.{native,byte}>: pkg_unix
+<example/QCheck_ounit_test.{native,byte}>: use_qcheck
 # Executable qcheck_runner_example
-"example/QCheck_runner_test.byte": pkg_bytes
-"example/QCheck_runner_test.byte": pkg_oUnit
-"example/QCheck_runner_test.byte": pkg_unix
-"example/QCheck_runner_test.byte": use_qcheck
+<example/QCheck_runner_test.{native,byte}>: pkg_bytes
+<example/QCheck_runner_test.{native,byte}>: pkg_oUnit
+<example/QCheck_runner_test.{native,byte}>: pkg_unix
+<example/QCheck_runner_test.{native,byte}>: use_qcheck
 # Executable qcheck_example
-"example/QCheck_test.byte": pkg_bytes
-"example/QCheck_test.byte": pkg_oUnit
-"example/QCheck_test.byte": pkg_unix
-"example/QCheck_test.byte": use_qcheck
+<example/QCheck_test.{native,byte}>: pkg_bytes
+<example/QCheck_test.{native,byte}>: pkg_oUnit
+<example/QCheck_test.{native,byte}>: pkg_unix
+<example/QCheck_test.{native,byte}>: use_qcheck
 <example/*.ml{,i,y}>: pkg_bytes
 <example/*.ml{,i,y}>: pkg_oUnit
 <example/*.ml{,i,y}>: pkg_unix
 <example/*.ml{,i,y}>: use_qcheck
 # OASIS_STOP
 
+"check_fun": -traverse
 true: color(always), safe_string, warn(+a-4-44)
