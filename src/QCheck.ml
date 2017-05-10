@@ -1252,18 +1252,29 @@ module Test = struct
   let print_stat ((name,_), tbl) =
     let avg = ref 0. in
     let num = ref 0 in
-    let max_idx =
+    let min_idx, max_idx =
       Hashtbl.fold
-        (fun i res m ->
+        (fun i res (m1,m2) ->
            avg := !avg +. float_of_int (i * res);
            num := !num + res;
-           max i m)
-        tbl 0
+           min i m1, max i m2)
+        tbl (max_int,0)
     in
+    (* compute average *)
     if !num > 0 then (
       avg := !avg /. float_of_int !num
     );
-    (* compute average *)
+    (* compute std-dev: sqroot of sum of squared distance-to-average
+       https://en.wikipedia.org/wiki/Standard_deviation *)
+    let stddev =
+      Hashtbl.fold
+        (fun i res m -> m +. (float_of_int i -. !avg) ** 2. *. float_of_int res)
+        tbl 0.
+      |> sqrt
+    in
+    (* compute median *)
+    let median = ref 0 in
+    let median_num = ref 0 in (* how many values have we seen yet? once >= !n/2 we set median *)
     (* group by buckets, if there are too many entries *)
     let hist_size, bucket_size =
       if max_idx > stat_max_lines
@@ -1277,7 +1288,15 @@ module Test = struct
            let n = ref 0 in
            let i' = i * bucket_size in
            for j=i' to i'+bucket_size-1 do
-             n := !n + (try Hashtbl.find tbl j with Not_found -> 0)
+             let n_j = try Hashtbl.find tbl j with Not_found -> 0 in
+             n := !n + n_j;
+             if !median_num < !num/2 then (
+               median_num := !median_num + n_j;
+               (* just went above median! *)
+               if !median_num >= !num/2 then (
+                 median := j;
+               )
+             );
            done;
            max_val := max !max_val !n;
            let key =
@@ -1290,7 +1309,9 @@ module Test = struct
     (* entries of the table, sorted by increasing index *)
     let out = Buffer.create 128 in
     Printf.bprintf out "stats %s:\n" name;
-    Printf.bprintf out "  num: %d, avg: %.2f\n" !num !avg;
+    Printf.bprintf out
+      "  num: %d, avg: %.2f, stddev: %.2f, median %d, min %d, max %d\n"
+      !num !avg stddev !median min_idx max_idx;
     Array.iter
       (fun (key, value) ->
          (* NOTE: keep in sync *)
