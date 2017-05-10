@@ -37,7 +37,7 @@ let stats =
     (fun _ -> true)
 
 let fun1 =
-  QCheck.Test.make ~count:100
+  QCheck.Test.make ~count:100 ~long_factor:100
     ~name:"FAIL_pred_map_commute"
     QCheck.(triple
         (small_list small_int)

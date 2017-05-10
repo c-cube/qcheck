@@ -1295,7 +1295,7 @@ module Test = struct
       (fun (key, value) ->
          (* NOTE: keep in sync *)
          let m = value * 55 / !max_val in
-         Printf.bprintf out "  %8s: %-56s %10d\n" key (String.make m '#') value)
+         Printf.bprintf out "  %15s: %-56s %10d\n" key (String.make m '#') value)
       rows;
     Buffer.contents out
 
