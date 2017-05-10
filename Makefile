@@ -77,7 +77,7 @@ update_next_tag:
 	sed -i "s/NEXT_RELEASE/$(VERSION)/g" src/*.ml src/*.mli
 
 watch:
-	while find src/ examples/ -print0 | xargs -0 inotifywait -e delete_self -e modify ; do \
+	while find src/ example/ -print0 | xargs -0 inotifywait -e delete_self -e modify ; do \
 		echo "============ at `date` ==========" ; \
 		make $(WATCH); \
 	done
