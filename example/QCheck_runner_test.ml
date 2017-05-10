@@ -53,16 +53,29 @@ let fun2 =
     (fun (QCheck.Fun (_,p)) ->
        not (p "some random string") || p "some other string")
 
+let int_gen = QCheck.small_nat (* int *)
+
 (* Another example (false) property *)
 let prop_foldleft_foldright =
   let open QCheck in
-  let int_gen = small_nat (* int *) in 
-  Test.make ~name:"fold_left fold_right" ~count:1000
+  Test.make ~name:"fold_left fold_right" ~count:1000 ~long_factor:20
     (triple 
        (fun2 Observable.int Observable.int int_gen)
        int_gen
        (list int_gen))
     (fun (f,z,xs) -> List.fold_right (Fn.apply f) xs z = List.fold_left (Fn.apply f) z xs)
+
+(* Another example (false) property *)
+let prop_foldleft_foldright_uncurry =
+  let open QCheck in
+  Test.make ~name:"fold_left fold_right uncurried" ~count:1000 ~long_factor:20
+    (triple 
+       (fun1 Observable.(pair int int) int_gen)
+       int_gen
+       (list int_gen))
+    (fun (f,z,xs) ->
+       List.fold_right (fun x y -> Fn.apply f (x,y)) xs z =
+       List.fold_left (fun x y -> Fn.apply f (x,y)) z xs)
 
 let () =
   QCheck_runner.run_tests_main [
@@ -74,5 +87,6 @@ let () =
     fun1;
     fun2;
     prop_foldleft_foldright;
+    prop_foldleft_foldright_uncurry;
   ]
 
