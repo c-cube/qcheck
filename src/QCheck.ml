@@ -656,7 +656,6 @@ let map ?rev f a =
     (fun st -> f (a.gen st))
 
 
-(* TODO: explain black magic in this!! *)
 let fun1_unsafe : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary =
   fun a1 a2 ->
     let magic_object = Obj.magic (object end) in
@@ -758,19 +757,18 @@ end = struct
 end
 
 (** Internal representation of functions *)
-type (_, _) fun_repr =
-  | Fun_ret : ('a, 'b) Poly_tbl.t * 'b arbitrary * 'b -> ('a -> 'b, 'b) fun_repr
-  | Fun_append :
-      ('a, ('f, 'ret) fun_repr) Poly_tbl.t *
-      ('f, 'ret) fun_repr ->
-      ('a -> 'f, 'ret) fun_repr
+type ('a, 'b) fun_repr_tbl = {
+  fun_tbl: ('a, 'b) Poly_tbl.t;
+  fun_arb: 'b arbitrary;
+  fun_default: 'b;
+}
 
-type (_, _) fun_gen =
-  | Fun_gen_ret : 'a Observable.t * 'b arbitrary -> ('a -> 'b, 'b) fun_gen
-  | Fun_gen_append : 'a Observable.t * ('b, 'ret) fun_gen -> ('a -> 'b, 'ret) fun_gen
+type 'f fun_repr =
+  | Fun_tbl : ('a, 'ret) fun_repr_tbl -> ('a -> 'ret) fun_repr
+  | Fun_map : ('f1 -> 'f2) * 'f1 fun_repr -> 'f2 fun_repr
 
 type _ fun_ =
-  | Fun : ('f, 'ret) fun_repr * 'f -> 'f fun_
+  | Fun : 'f fun_repr * 'f -> 'f fun_
 
 (** Reifying functions *)
 module Fn = struct
@@ -778,117 +776,182 @@ module Fn = struct
 
   let apply (Fun (_,f)) = f
 
-  let make_
-    : type a b. (a, b) fun_repr -> a fun_
-    = fun r ->
-      let rec aux
-        : type a b. (a, b) fun_repr -> a
-        = function
-          | Fun_ret (tbl,_,def) ->
-            (fun x -> match Poly_tbl.get tbl x with
-               | None -> def
-               | Some y -> y)
-          | Fun_append (tbl,def) ->
-            (fun x -> match Poly_tbl.get tbl x with
-               | None -> aux def
-               | Some y -> aux y)
-      in
-      Fun (r,aux r)
+  let make_ (r:_ fun_repr) : _ fun_ =
+    let rec call
+      : type f. f fun_repr -> f
+      = fun r -> match r with
+        | Fun_tbl r ->
+          begin fun x -> match Poly_tbl.get r.fun_tbl x with
+            | None -> r.fun_default
+            | Some y -> y
+          end
+        | Fun_map (g, r') -> g (call r')
+    in
+    Fun (r, call r)
 
-  let rec shrink_rep
-    : type a b. (a,b) fun_repr Shrink.t
-    = fun r ->
-      let open Iter in
-      match r with
-        | Fun_ret (tbl,a,def) ->
+  let mk_repr tbl arb def =
+    Fun_tbl { fun_tbl=tbl; fun_arb=arb; fun_default=def; }
+
+  let map_repr f repr = Fun_map (f,repr)
+  let map_fun f (Fun (repr,_)) = make_ (map_repr f repr)
+
+  let shrink_rep (r: _ fun_repr): _ Iter.t =
+    let open Iter in
+    let rec aux
+      : type f. f fun_repr Shrink.t
+      = function
+        | Fun_tbl {fun_arb=a; fun_tbl=tbl; fun_default=def} ->
           let sh_v = match a.shrink with None -> Shrink.nil | Some s->s in
-          (Poly_tbl.shrink1 tbl >|= fun tbl' -> Fun_ret (tbl',a,def))
+          (Poly_tbl.shrink1 tbl >|= fun tbl' -> mk_repr tbl' a def)
           <+>
-          (sh_v def >|= fun def' -> Fun_ret (tbl,a,def'))
+            (sh_v def >|= fun def' -> mk_repr tbl a def')
           <+>
-          (Poly_tbl.shrink2 sh_v tbl >|= fun tbl' -> Fun_ret (tbl',a,def))
-        | Fun_append (tbl,def) ->
-          (Poly_tbl.shrink1 tbl >|= fun tbl' -> Fun_append (tbl',def))
-          <+>
-          (shrink_rep def >|= fun def' -> Fun_append (tbl,def'))
-          <+>
-          (Poly_tbl.shrink2 shrink_rep tbl >|= fun tbl' -> Fun_append (tbl',def))
+            (Poly_tbl.shrink2 sh_v tbl >|= fun tbl' -> mk_repr tbl' a def)
+        | Fun_map (g, r') ->
+          aux r' >|= map_repr g
+    in
+    aux r
 
-  let shrink
-    : type f. f fun_ Shrink.t
-    = fun (Fun (rep,_)) ->
-      let open Iter in
-      shrink_rep rep >|= make_
+  let shrink (Fun (rep,_)) =
+    let open Iter in
+    shrink_rep rep >|= make_
 
-  let rec size_rep : type a b. (a,b) fun_repr -> int = function
-    | Fun_ret (tbl, a, def) ->
-      let size_v x = match a.small with None -> 0 | Some f -> f x in
-      Poly_tbl.size size_v tbl + size_v def
-    | Fun_append (tbl, def) ->
-      Poly_tbl.size size_rep tbl + size_rep def
+  let rec size_rep
+    : type f. f fun_repr -> int
+    = function
+      | Fun_map (_, r') -> size_rep r'
+      | Fun_tbl r ->
+        let size_v x = match r.fun_arb.small with None -> 0 | Some f -> f x in
+        Poly_tbl.size size_v r.fun_tbl + size_v r.fun_default
 
   let size (Fun (rep,_)) = size_rep rep
 
-  let print_rep f =
+  let print_rep r =
     let buf = Buffer.create 32 in
-    let rec aux : type a ret. Buffer.t -> (a,ret) fun_repr -> unit
-      = fun buf f -> match f with
-        | Fun_ret (tbl,a,def) ->
-          Printf.bprintf buf "{";
-          Buffer.add_string buf (Poly_tbl.print tbl);
-          Printf.bprintf buf "_ -> %s" (match a.print with
+    let rec aux
+      : type f. Buffer.t -> f fun_repr -> unit
+      = fun buf r -> match r with
+        | Fun_map (_, r') -> aux buf r'
+        | Fun_tbl r ->
+          Buffer.add_string buf (Poly_tbl.print r.fun_tbl);
+          Printf.bprintf buf "_ -> %s" (match r.fun_arb.print with
             | None -> "<opaque>"
-            | Some s -> s def
+            | Some s -> s r.fun_default
           );
-          Printf.bprintf buf "}";
-        | Fun_append (tbl,def) ->
-          Printf.bprintf buf "{";
-          Buffer.add_string buf (Poly_tbl.print tbl);
-          Printf.bprintf buf "_ -> %a" aux def;
-          Printf.bprintf buf "}";
     in
-    aux buf f;
+    Printf.bprintf buf "{";
+    aux buf r;
+    Printf.bprintf buf "}";
     Buffer.contents buf
 
   let print (Fun (rep,_)) = print_rep rep
 
-  let rec arb_rep
-    : type a b. (a,b) fun_gen -> (a,b) fun_repr arbitrary
-    = fun g ->
-      make
-        ~small:size_rep
-        ~print:print_rep
-        ~shrink:shrink_rep
-        (gen_rep g)
+  let gen_rep (a:_ Observable.t) (b:_ arbitrary): _ fun_repr Gen.t =
+    fun st ->
+      mk_repr (Poly_tbl.create a b 8 st) b (b.gen st)
 
-  and gen_rep
-    : type a b. (a,b) fun_gen -> (a,b) fun_repr Gen.t
-    = fun g st -> match g with
-      | Fun_gen_ret (o, arb) ->
-        Fun_ret (Poly_tbl.create o arb 8 st, arb, arb.gen st)
-      | Fun_gen_append (o, g') ->
-        Fun_append
-          (Poly_tbl.create o (arb_rep g') 8 st, gen_rep g' st)
-
-  let gen g = Gen.map make_ (gen_rep g)
+  let gen a b = Gen.map make_ (gen_rep a b)
 end
 
-let (@@->) o arb = Fun_gen_ret (o,arb)
+let fun1 o ret =
+  make
+    ~shrink:Fn.shrink
+    ~print:Fn.print
+    ~small:Fn.size
+    (Fn.gen o ret)
 
-let (@->) o gen = Fun_gen_append (o,gen)
+module Tuple = struct
+  (** heterogeneous list (generic tuple) used to uncurry functions *)
+  type 'a t =
+    | Nil : unit t
+    | Cons : 'a * 'b t -> ('a * 'b) t
 
-let fun_
-  : type a b. (a,b) fun_gen -> a fun_ arbitrary
-  = fun g ->
-    make
-      ~shrink:Fn.shrink
-      ~print:Fn.print
-      ~small:Fn.size
-      (Fn.gen g)
+  let nil = Nil
+  let cons x tail = Cons (x,tail)
 
-let fun1 o1 ret = fun_ (o1 @@-> ret)
-let fun2 o1 o2 ret = fun_ (o1 @-> o2 @@-> ret)
-let fun3 o1 o2 o3 ret = fun_ (o1 @-> o2 @-> o3 @@-> ret)
+  type 'a obs =
+    | O_nil : unit obs
+    | O_cons : 'a Observable.t * 'b obs -> ('a * 'b) obs
+
+  let o_nil = O_nil
+  let o_cons x tail = O_cons (x,tail)
+
+  let rec hash
+    : type a. a obs -> a t -> int
+    = fun o t -> match o, t with
+      | O_nil, Nil -> 42
+      | O_cons (o,tail_o), Cons (x, tail) ->
+        Observable.H.combine (Observable.hash o x) (hash tail_o tail)
+
+  let rec equal
+    : type a. a obs -> a t -> a t -> bool
+    = fun o a b -> match o, a, b with
+      | O_nil, Nil, Nil -> true
+      | O_cons (o, tail_o), Cons (x1, tail1), Cons (x2,tail2) ->
+        Observable.equal o x1 x2 &&
+        equal tail_o tail1 tail2
+
+  let print o tup =
+    let rec aux
+      : type a. a obs -> Buffer.t -> a t  -> unit
+      = fun o buf t -> match o, t with
+        | O_nil, Nil -> Printf.bprintf buf "()"
+        | O_cons (o, tail_o), Cons (x,tail) ->
+          Printf.bprintf buf "%s, %a"
+            (Observable.print o x) (aux tail_o) tail
+    in
+    let buf = Buffer.create 64 in
+    Buffer.add_string buf "(";
+    aux o buf tup;
+    Buffer.add_string buf ")";
+    Buffer.contents buf
+
+  let observable (o:'a obs) : 'a t Observable.t =
+    Observable.make
+      ~eq:(equal o)
+      ~hash:(hash o)
+      (print o)
+
+  let gen (o:'a obs) (ret:'b arbitrary) : ('a t -> 'b) fun_ Gen.t =
+    Fn.gen (observable o) ret
+
+  let gen_fun_rep f o ret =
+    Gen.map f (Fn.gen_rep (observable o) ret)
+
+  module Infix = struct
+    let (@::) x tail = cons x tail
+    let (@->) o tail = o_cons o tail
+  end
+  include Infix
+end
+
+let fun_nary (o:_ Tuple.obs) ret : _ arbitrary =
+  make
+    ~shrink:Fn.shrink
+    ~print:Fn.print
+    ~small:Fn.size
+    (Tuple.gen o ret)
+
+let fun2 o1 o2 ret =
+  let open Tuple in
+  map
+    ~rev:(Fn.map_fun (fun g (Cons (x, Cons (y,Nil))) -> g x y))
+    (Fn.map_fun (fun g x y -> g (x @:: y @:: nil)))
+    (fun_nary (o1 @-> o2 @-> o_nil) ret)
+
+let fun3 o1 o2 o3 ret =
+  let open Tuple in
+  map
+    ~rev:(Fn.map_fun (fun g (Cons (x, Cons (y, Cons (z,Nil)))) -> g x y z))
+    (Fn.map_fun (fun g x y z -> g (x @:: y @:: z @:: nil)))
+    (fun_nary (o1 @-> o2 @-> o3 @-> o_nil) ret)
+
+let fun4 o1 o2 o3 o4 ret =
+  let open Tuple in
+  map
+    ~rev:(Fn.map_fun (fun g (Cons (x, Cons (y, Cons (z,Cons (w,Nil))))) -> g x y z w))
+    (Fn.map_fun (fun g x y z w -> g (x @:: y @:: z @:: w @:: nil)))
+    (fun_nary (o1 @-> o2 @-> o3 @-> o4 @-> o_nil) ret)
 
 (* Generator combinators *)
 

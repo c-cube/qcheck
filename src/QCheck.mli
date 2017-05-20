@@ -457,6 +457,10 @@ module Observable : sig
   (** An observable for ['a], packing a printer and other things *)
   type -'a t
 
+  val equal : 'a t -> 'a -> 'a -> bool
+  val hash : 'a t -> 'a -> int
+  val print : 'a t -> 'a Print.t
+
   val unit : unit t
   val bool : bool t
   val int : int t
@@ -853,18 +857,25 @@ val fun2_unsafe : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> ('a -> 'b -> '
     @deprecated use {!fun_} instead since NEXT_RELEASE
 *)
 
-type (_,_) fun_repr
-(** internal data for functions. A [('f,'ret) fun_] is a function
-    of type ['f], fundamentaly. *)
+type _ fun_repr
+(** internal data for functions. A ['f fun_] is a function
+    of type ['f], fundamentally. *)
 
-(** Generator of functions *)
-type (_, _) fun_gen =
-  | Fun_gen_ret : 'a Observable.t * 'b arbitrary -> ('a -> 'b, 'b) fun_gen
-  | Fun_gen_append : 'a Observable.t * ('b, 'ret) fun_gen -> ('a -> 'b, 'ret) fun_gen
+(** A function packed with the data required to print/shrink it. See {!Fn}
+    to see how to apply, print, etc. such a function.
 
+    One can also directly pattern match on it to obtain
+    the executable function.
+
+    For example:
+    {[
+      QCheck.Test.make
+        QCheck.(pair (fun1 Observable.int bool) (small_list int))
+        (fun (Fun (_,f), l) -> l=(List.rev_map f l |> List.rev l))
+    ]}
+*)
 type _ fun_ =
-  | Fun : ('f, 'ret) fun_repr * 'f -> 'f fun_
-(** A function packed with the data required to print/shrink it *)
+  | Fun : 'f fun_repr * 'f -> 'f fun_
 
 (** Utils on functions
     @since NEXT_RELEASE *)
@@ -877,17 +888,51 @@ module Fn : sig
   val apply : 'f t -> 'f
 end
 
-val (@->) : 'a Observable.t -> ('b,'ret) fun_gen -> ('a -> 'b,'ret) fun_gen
+val fun1 : 'a Observable.t -> 'b arbitrary -> ('a -> 'b) fun_ arbitrary
+(** [fun1 o ret] makes random functions that take an argument observable
+    via [o] and map to random values generated from [ret].
+    To write functions with multiple arguments, it's better to use {!Tuple}
+    or {!Observable.pair} rather than applying {!fun_} several times
+    (shrinking will be faster).
+    @since NEXT_RELEASE *)
 
-val (@@->) : 'a Observable.t -> 'b arbitrary -> ('a -> 'b, 'b) fun_gen
+module Tuple : sig
+  (** Heterogeneous tuple, used to pass any number of arguments to
+      a function. *)
+  type 'a t =
+    | Nil : unit t
+    | Cons : 'a * 'b t -> ('a * 'b) t
 
-val fun_ : ('f, _) fun_gen -> 'f fun_ arbitrary
+  val nil : unit t
+  val cons : 'a -> 'b t -> ('a * 'b) t
 
-val fun1 :
-  'a Observable.t ->
-  'b arbitrary ->
-  ('a -> 'b) fun_ arbitrary
-(** @since NEXT_RELEASE *)
+  (** How to observe a  {!'a t} *)
+  type 'a obs
+
+  val o_nil : unit obs
+  val o_cons : 'a Observable.t -> 'b obs -> ('a * 'b) obs
+
+  module Infix : sig
+    val (@::) : 'a -> 'b t -> ('a * 'b) t
+    (** Alias to {!cons} *)
+
+    val (@->) : 'a Observable.t -> 'b obs -> ('a * 'b) obs
+    (** Alias to {!B_cons} *)
+  end
+
+  include module type of Infix
+
+  val observable : 'a obs -> 'a t Observable.t
+end
+
+val fun_nary : 'a Tuple.obs -> 'b arbitrary -> ('a Tuple.t -> 'b) fun_ arbitrary
+(** [fun_nary] makes random n-ary functions.
+    Example:
+    {[
+      let module O = Observable in
+      fun_nary Tuple.(O.int @-> O.float @-> O.string @-> o_nil) bool)
+    ]}
+    @since NEXT_RELEASE *)
 
 val fun2 :
   'a Observable.t ->
@@ -902,6 +947,15 @@ val fun3 :
   'c Observable.t ->
   'd arbitrary ->
   ('a -> 'b -> 'c -> 'd) fun_ arbitrary
+(** @since NEXT_RELEASE *)
+
+val fun4 :
+  'a Observable.t ->
+  'b Observable.t ->
+  'c Observable.t ->
+  'd Observable.t ->
+  'e arbitrary ->
+  ('a -> 'b -> 'c -> 'd -> 'e) fun_ arbitrary
 (** @since NEXT_RELEASE *)
 
 val oneofl : ?print:'a Print.t -> ?collect:('a -> string) ->
