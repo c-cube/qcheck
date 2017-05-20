@@ -900,6 +900,8 @@ module Tuple = struct
       : type a. a obs -> Buffer.t -> a t  -> unit
       = fun o buf t -> match o, t with
         | O_nil, Nil -> Printf.bprintf buf "()"
+        | O_cons (o, O_nil), Cons (x,Nil) ->
+          Printf.bprintf buf "%s" (Observable.print o x)
         | O_cons (o, tail_o), Cons (x,tail) ->
           Printf.bprintf buf "%s, %a"
             (Observable.print o x) (aux tail_o) tail
