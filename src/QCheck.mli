@@ -235,6 +235,19 @@ module Gen : sig
   (** Uniform integer generator producing integers within [low,high].
       @raise Invalid_argument if [low > high] or if the range is larger than [max_int] *)
 
+  val graft_corners : 'a t -> 'a list -> unit -> 'a t
+  (** [graft_corners gen l ()] makes a new generator that enumerates
+      the corner cases in [l] and then behaves like [g].
+      @since NEXT_RELEASE *)
+
+  val int_pos_corners : int list
+  (** Non-negative corner cases for int.
+      @since NEXT_RELEASE *)
+
+  val int_corners : int list
+  (** All corner cases for int.
+      @since NEXT_RELEASE *)
+
   val (--) : int -> int -> int t (** Synonym to {!int_range} *)
 
   val ui32 : int32 t (** Generates (unsigned) [int32] values *)

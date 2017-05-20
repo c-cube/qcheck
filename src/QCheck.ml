@@ -233,7 +233,10 @@ module Gen = struct
       match !cors with [] -> gen st
       | e::l -> cors := l; e
 
-  let nng_corners () = graft_corners nat [0;1;2;max_int] ()
+  let int_pos_corners = [0;1;2;max_int]
+  let int_corners = int_pos_corners @ [min_int]
+
+  let nng_corners () = graft_corners nat int_pos_corners ()
 
   (* sized, fix *)
 
@@ -400,6 +403,10 @@ module Observable = struct
     eq: ('a -> 'a -> bool);
     hash: ('a -> int);
   }
+
+  let hash o x = o.hash x
+  let equal o x y = o.eq x y
+  let print o x = o.print x
 
   let make ?(eq=(=)) ?(hash=Hashtbl.hash) print =
     {print; eq; hash; }
