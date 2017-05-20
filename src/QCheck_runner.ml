@@ -452,9 +452,14 @@ let print_error out cell c_ex exn bt =
     bt
 
 let run_tests
-    ?(verbose=verbose()) ?(long=long_tests()) ?(out=stdout) ?(rand=random_state()) l =
+    ?(colors=true) ?(verbose=verbose()) ?(long=long_tests()) ?(out=stdout) ?(rand=random_state()) l =
   let module T = QCheck.Test in
   let module R = QCheck.TestResult in
+  let pp_color c out s =
+    if colors
+    then Color.in_bold_color c output_string out s
+    else output_string out s
+  in
   let size = List.fold_left (fun acc (T.Test cell) ->
       max acc (expect_size long cell)) 4 l in
   if verbose then
@@ -492,12 +497,13 @@ let run_tests
   let total, fail, error = List.fold_left aux_fold (0, 0, 0) res in
   Printf.fprintf out "%s\n" (String.make 80 '=');
   if fail = 0 && error = 0 then (
-    Printf.fprintf out "success (ran %d tests)\n%!" total;
+    Printf.fprintf out "%a (ran %d tests)\n%!"
+      (pp_color `Green) "success" total;
     0
   ) else (
     Printf.fprintf out
-      "failure (%d tests failed, %d tests errored, ran %d tests)\n%!"
-      fail error total;
+      "%a (%d tests failed, %d tests errored, ran %d tests)\n%!"
+      (pp_color `Red) "failure" fail error total;
     1
   )
 
@@ -505,7 +511,9 @@ let run_tests_main ?(argv=Sys.argv) l =
   try
     let cli_args = parse_cli ~full_options:false argv in
     exit
-      (run_tests l ~verbose:cli_args.cli_verbose
+      (run_tests l
+         ~colors:cli_args.cli_colors
+         ~verbose:cli_args.cli_verbose
          ~long:cli_args.cli_long_tests ~out:stdout ~rand:cli_args.cli_rand)
   with
     | Arg.Bad msg -> print_endline msg; exit 1

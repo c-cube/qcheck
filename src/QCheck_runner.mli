@@ -131,11 +131,13 @@ val run_tap : OUnit.test -> OUnit.test_results
 (** {2 Run a Suite of Tests and Get Results} *)
 
 val run_tests :
-  ?verbose:bool -> ?long:bool -> ?out:out_channel -> ?rand:Random.State.t ->
+  ?colors:bool -> ?verbose:bool -> ?long:bool ->
+  ?out:out_channel -> ?rand:Random.State.t ->
   QCheck.Test.t list -> int
 (** Run a suite of tests, and print its results. This is an heritage from
     the "qcheck" library.
     @return an error code, [0] if all tests passed, [1] otherwise.
+    @param colors if true, colorful output
     @param verbose if true, prints more information about test cases *)
 
 val run_tests_main : ?argv:string array -> QCheck.Test.t list -> 'a
