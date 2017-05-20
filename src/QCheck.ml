@@ -706,6 +706,13 @@ end = struct
         let equal = k.Observable.eq
         let hash = k.Observable.hash
       end) in
+    let tbl_to_list tbl =
+      T.fold (fun k v l -> (k,v)::l) tbl []
+    and tbl_of_list l =
+      let tbl = T.create (max (List.length l) 8) in
+      List.iter (fun (k,v) -> T.add tbl k v) l;
+      tbl
+    in
     (* make a table
        @param extend if true, extend table on the fly *)
     let rec make ~extend tbl = {
@@ -728,13 +735,10 @@ end = struct
             tbl;
         Buffer.contents b);
       p_shrink1=(fun yield ->
-        (* remove bindings one by one *)
-        T.iter
-          (fun x _ ->
-             let tbl' = T.copy tbl in
-             T.remove tbl' x;
-             yield (make ~extend:false tbl'))
-          tbl);
+        Shrink.list (tbl_to_list tbl)
+          (fun l ->
+             yield (make ~extend:false (tbl_of_list l)))
+      );
       p_shrink2=(fun shrink_val yield ->
         (* shrink bindings one by one *)
         T.iter
