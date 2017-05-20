@@ -750,13 +750,19 @@ end = struct
   let size p t = t.p_size p
 end
 
-(** Internal representation of functions *)
+(* n-ary tuple for entries in the function's table *)
+type (_, _) fun_entry =
+  | FE_nil : 'b -> ('b, 'b) fun_entry (* a value *)
+  | FE_cons : 'a * ('b, 'ret) fun_entry -> ('a -> 'b, 'ret) fun_entry
+
+(** Internal representation of functions: a table (tuple->value),
+    + a default value *)
 type (_, _) fun_repr =
-  | Fun_ret : ('a, 'b) Poly_tbl.t * 'b arbitrary * 'b -> ('a -> 'b, 'b) fun_repr
-  | Fun_append :
-      ('a, ('f, 'ret) fun_repr) Poly_tbl.t *
-      ('f, 'ret) fun_repr ->
-      ('a -> 'f, 'ret) fun_repr
+  | Fun_repr
+    : (('a, 'ret) fun_entry, 'ret) Poly_tbl.t *
+        'ret arbitrary *
+        'ret ->
+    ('a, 'ret) fun_repr
 
 type (_, _) fun_gen =
   | Fun_gen_ret : 'a Observable.t * 'b arbitrary -> ('a -> 'b, 'b) fun_gen
