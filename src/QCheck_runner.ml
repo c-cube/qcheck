@@ -103,6 +103,7 @@ type cli_args = {
   cli_print_list : bool;
   cli_rand : Random.State.t;
   cli_slow_test : int; (* how many slow tests to display? *)
+  cli_colors: bool;
 }
 
 let parse_cli ~full_options argv =
@@ -111,10 +112,13 @@ let parse_cli ~full_options argv =
   let set_long_tests () = set_long_tests true in
   let set_backtraces () = Printexc.record_backtrace true in
   let set_list () = print_list := true in
+  let colors = ref true in
   let slow = ref 0 in
   let options = Arg.align (
     [ "-v", Arg.Unit set_verbose, " "
     ; "--verbose", Arg.Unit set_verbose, " enable verbose tests"
+    ; "--colors", Arg.Set colors, " colored output"
+    ; "--no-colors", Arg.Clear colors, " disable colored output"
     ] @
     (if full_options then
       [ "-l", Arg.Unit set_list, " "
@@ -131,10 +135,51 @@ let parse_cli ~full_options argv =
   Arg.parse_argv argv options (fun _ ->()) "run qtest suite";
   let cli_rand = setup_random_state_ () in
   { cli_verbose=verbose(); cli_long_tests=long_tests(); cli_rand;
-    cli_print_list= !print_list; cli_slow_test= !slow; }
+    cli_print_list= !print_list; cli_slow_test= !slow;
+    cli_colors= !colors; }
+
+module Color = struct
+  let fpf = Printf.fprintf
+  type color =
+    [ `Red
+    | `Yellow
+    | `Green
+    | `Blue
+    | `Normal
+    | `Cyan
+    ]
+
+  let int_of_color_ = function
+    | `Normal -> 0
+    | `Red -> 1
+    | `Green -> 2
+    | `Yellow -> 3
+    | `Blue -> 4
+    | `Cyan -> 6
+
+  (* same as [pp], but in color [c] *)
+  let in_color c pp out x =
+    let n = int_of_color_ c in
+    fpf out "\x1b[3%dm" n;
+    pp out x;
+    fpf out "\x1b[0m"
+
+  (* same as [pp], but in bold color [c] *)
+  let in_bold_color c pp out x =
+    let n = int_of_color_ c in
+    fpf out "\x1b[3%d;1m" n;
+    pp out x;
+    fpf out "\x1b[0m"
+end
 
 let run ?(argv=Sys.argv) test =
   let cli_args = parse_cli ~full_options:true argv in
+  (* print in colors *)
+  let pp_color c out s =
+    if cli_args.cli_colors
+    then Color.in_bold_color c output_string out s
+    else output_string out s
+  in
   let _counter = ref (0,0,0) in (* Success, Failure, Other *)
   let total_tests = test_case_count test in
   (* list of (test, execution time) *)
@@ -200,8 +245,16 @@ let run ?(argv=Sys.argv) test =
          then pf "  %s in %.2fs\n" (OUnit.string_of_path p) t)
       l
   );
-  if failures = [] then pl "SUCCESS";
-  if o <> 0 then pl "WARNING! SOME TESTS ARE NEITHER SUCCESSES NOR FAILURES!";
+  if failures = [] then (
+    pf "%a\n" (pp_color `Green) "SUCCESS";
+  );
+  if o <> 0 then (
+    pf "%a SOME TESTS ARE NEITHER SUCCESSES NOR FAILURES!\n"
+      (pp_color `Yellow) "WARNING!";
+  );
+  if failures <> [] then (
+    pf "%a\n" (pp_color `Red) "FAILURE";
+  );
   (* create a meaningful return code for the process running the tests *)
   match f, o with
     | 0, 0 -> 0
