@@ -77,6 +77,12 @@ let prop_foldleft_foldright_uncurry =
        List.fold_right (fun x y -> Fn.apply f (x,y)) xs z =
        List.fold_left (fun x y -> Fn.apply f (x,y)) z xs)
 
+let long_shrink =
+  let open QCheck in
+  let listgen = list_of_size (Gen.int_range 1000 10000) int in
+  Test.make ~name:"long_shrink" (pair listgen listgen)
+    (fun (xs,ys) -> List.rev (xs@ys) = (List.rev xs)@(List.rev ys))
+
 let () =
   QCheck_runner.run_tests_main [
     passing;
@@ -88,5 +94,6 @@ let () =
     fun2;
     prop_foldleft_foldright;
     prop_foldleft_foldright_uncurry;
+    long_shrink;
   ]
 
