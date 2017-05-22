@@ -22,6 +22,46 @@ let ps,pl = print_string,print_endline
 let va = Printf.sprintf
 let pf = Printf.printf
 
+module Color = struct
+  let fpf = Printf.fprintf
+  type color =
+    [ `Red
+    | `Yellow
+    | `Green
+    | `Blue
+    | `Normal
+    | `Cyan
+    ]
+
+  let int_of_color_ = function
+    | `Normal -> 0
+    | `Red -> 1
+    | `Green -> 2
+    | `Yellow -> 3
+    | `Blue -> 4
+    | `Cyan -> 6
+
+  (* same as [pp], but in color [c] *)
+  let in_color c pp out x =
+    let n = int_of_color_ c in
+    fpf out "\x1b[3%dm" n;
+    pp out x;
+    fpf out "\x1b[0m"
+
+  (* same as [pp], but in bold color [c] *)
+  let in_bold_color c pp out x =
+    let n = int_of_color_ c in
+    fpf out "\x1b[3%d;1m" n;
+    pp out x;
+    fpf out "\x1b[0m"
+
+  let pp_str_c ?(bold=true) ~colors c out s =
+    if colors then
+      if bold then in_bold_color c output_string out s
+      else in_color c output_string out s
+    else output_string out s
+end
+
 let separator1 = "\027[K" ^ (String.make 79 '\\')
 let separator2 = String.make 79 '/'
 
@@ -44,17 +84,19 @@ let result_msg = function
     | RTodo (_, msg) -> msg
 
 let result_flavour = function
-    | RError _ -> "Error"
-    | RFailure _ -> "Failure"
-    | RSuccess _ -> "Success"
-    | RSkip _ -> "Skip"
-    | RTodo _ -> "Todo"
+    | RError _ -> `Red, "Error"
+    | RFailure _ -> `Red, "Failure"
+    | RSuccess _ -> `Green, "Success"
+    | RSkip _ -> `Blue, "Skip"
+    | RTodo _ -> `Yellow, "Todo"
 
 let not_success = function RSuccess _ -> false | _ -> true
 
-let print_result_list =
-  List.iter (fun result -> pf "%s\n%s: %s\n\n%s\n%s\n"
-    separator1 (result_flavour result)
+let print_result_list ~colors =
+  List.iter (fun result ->
+    let c, res = result_flavour result in
+    pf "%s\n%a: %s\n\n%s\n%s\n"
+    separator1 (Color.pp_str_c ~colors c) res
     (string_of_path (result_path result))
     (result_msg result) separator2)
 
@@ -138,48 +180,11 @@ let parse_cli ~full_options argv =
     cli_print_list= !print_list; cli_slow_test= !slow;
     cli_colors= !colors; }
 
-module Color = struct
-  let fpf = Printf.fprintf
-  type color =
-    [ `Red
-    | `Yellow
-    | `Green
-    | `Blue
-    | `Normal
-    | `Cyan
-    ]
-
-  let int_of_color_ = function
-    | `Normal -> 0
-    | `Red -> 1
-    | `Green -> 2
-    | `Yellow -> 3
-    | `Blue -> 4
-    | `Cyan -> 6
-
-  (* same as [pp], but in color [c] *)
-  let in_color c pp out x =
-    let n = int_of_color_ c in
-    fpf out "\x1b[3%dm" n;
-    pp out x;
-    fpf out "\x1b[0m"
-
-  (* same as [pp], but in bold color [c] *)
-  let in_bold_color c pp out x =
-    let n = int_of_color_ c in
-    fpf out "\x1b[3%d;1m" n;
-    pp out x;
-    fpf out "\x1b[0m"
-end
-
 let run ?(argv=Sys.argv) test =
   let cli_args = parse_cli ~full_options:true argv in
+  let colors = cli_args.cli_colors in
   (* print in colors *)
-  let pp_color c out s =
-    if cli_args.cli_colors
-    then Color.in_bold_color c output_string out s
-    else output_string out s
-  in
+  let pp_color = Color.pp_str_c ~bold:true ~colors in
   let _counter = ref (0,0,0) in (* Success, Failure, Other *)
   let total_tests = test_case_count test in
   (* list of (test, execution time) *)
@@ -230,7 +235,7 @@ let run ?(argv=Sys.argv) test =
   let failures = List.filter not_success results in
   (*  assert (List.length failures = f);*)
   ps "\r";
-  print_result_list failures;
+  print_result_list ~colors failures;
   assert (List.length results = total_tests);
   pf "Ran: %d tests in: %.2f seconds.%s\n"
     total_tests running_time (String.make 40 ' ');
@@ -436,14 +441,14 @@ let print_success out cell r =
     (QCheck.TestResult.stats r);
   ()
 
-let print_fail out cell c_ex =
-  Printf.fprintf out "\n--- Failure %s\n\n" (String.make 68 '-');
+let print_fail ~colors out cell c_ex =
+  Printf.fprintf out "\n--- %a %s\n\n" (Color.pp_str_c ~colors `Red) "Failure" (String.make 68 '-');
   Printf.fprintf out "Test %s failed (%d shrink steps):\n\n%s\n%!"
     (QCheck.Test.get_name cell) c_ex.QCheck.TestResult.shrink_steps
     (print_inst (QCheck.Test.get_arbitrary cell) c_ex.QCheck.TestResult.instance)
 
-let print_error out cell c_ex exn bt =
-  Printf.fprintf out "\n=== Error %s\n\n" (String.make 70 '=');
+let print_error ~colors out cell c_ex exn bt =
+  Printf.fprintf out "\n=== %a %s\n\n" (Color.pp_str_c ~colors `Red) "Error" (String.make 70 '=');
   Printf.fprintf out "Test %s errored on (%d shrink steps):\n\n%s\n\nexception %s\n%s\n%!"
     (QCheck.Test.get_name cell)
     c_ex.QCheck.TestResult.shrink_steps
@@ -455,11 +460,7 @@ let run_tests
     ?(colors=true) ?(verbose=verbose()) ?(long=long_tests()) ?(out=stdout) ?(rand=random_state()) l =
   let module T = QCheck.Test in
   let module R = QCheck.TestResult in
-  let pp_color c out s =
-    if colors
-    then Color.in_bold_color c output_string out s
-    else output_string out s
-  in
+  let pp_color = Color.pp_str_c ~bold:true ~colors in
   let size = List.fold_left (fun acc (T.Test cell) ->
       max acc (expect_size long cell)) 4 l in
   if verbose then
@@ -488,10 +489,10 @@ let run_tests
       print_success out cell r;
       (total + 1, fail, error)
     | R.Failed l ->
-      List.iter (print_fail out cell) l;
+      List.iter (print_fail ~colors out cell) l;
       (total + 1, fail + 1, error)
     | R.Error (c_ex, exn, bt) ->
-      print_error out cell c_ex exn bt;
+      print_error ~colors out cell c_ex exn bt;
       (total + 1, fail, error + 1)
   in
   let total, fail, error = List.fold_left aux_fold (0, 0, 0) res in
