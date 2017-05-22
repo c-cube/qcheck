@@ -709,6 +709,48 @@ module Test : sig
       @raise Test_error if [res = Failed _] *)
 end
 
+(** {2 Sub-tests} *)
+
+(** The infrastructure used to find counter-examples to properties can
+    also be used to find data satisfying a predicate,
+    {i within a property being tested}.
+
+    See https://github.com/c-cube/qcheck/issues/31
+*)
+
+exception No_example_found of string
+
+val find_example :
+  ?name:string ->
+  ?count:int ->
+  f:('a -> bool) ->
+  'a arbitrary ->
+  'a arbitrary
+(** [find_example ~f arb] uses [arb] to generate some values of type ['a],
+    and checks them against [f]. If such a value is found, it is returned.
+    Otherwise an exception is raised.
+    {b NOTE} this should only be used from within a property in {!Test.make}.
+    @param count number of attempts
+    @param name description of the example to find (used in the exception)
+    @param f the property that the example must satisfy
+    @raise No_example_found if no example is found within [count] tries
+    @since NEXT_RELEASE
+*)
+
+val find_example_gen :
+  ?rand:Random.State.t ->
+  ?name:string ->
+  ?count:int ->
+  f:('a -> bool) ->
+  'a arbitrary ->
+  'a
+(** Toplevel version of {!find_example}.
+    [find_example_gen ~f arb ~n] is roughly the same as
+    [Gen.generate1 (find_example ~f arb |> gen)]
+    @param rand the random state to use to generate inputs
+    @raise No_example_found if no example was found within [count] tries
+    @since NEXT_RELEASE *)
+
 (** {2 Combinators for {!arbitrary}} *)
 
 val choose : 'a arbitrary list -> 'a arbitrary

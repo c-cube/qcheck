@@ -61,6 +61,9 @@ let sum_int = List.fold_left (+) 0
 exception FailedPrecondition
 (* raised if precondition is false *)
 
+exception No_example_found of string
+(* raised if an example failed to be found *)
+
 let assume b = if not b then raise FailedPrecondition
 
 let assume_fail () = raise FailedPrecondition
@@ -1182,7 +1185,7 @@ module Test = struct
           (fun x ->
             try
               not (st.test.law x)
-            with FailedPrecondition -> false
+            with FailedPrecondition | No_example_found _ -> false
             | _ -> true (* fail test (by error) *)
           ) (f i)
         in
@@ -1240,7 +1243,7 @@ module Test = struct
             CR_continue
           ) else handle_fail state input
         with
-        | FailedPrecondition ->
+        | FailedPrecondition | No_example_found _ ->
           state.step state.test.name state.test input FalseAssumption;
           CR_continue
         | e ->
@@ -1416,3 +1419,30 @@ module Test = struct
 
   let check_exn ?long ?rand (Test cell) = check_cell_exn ?long ?rand cell
 end
+
+let find_example ?(name="<example>") ?count ~f arb : _ arbitrary =
+  (* the random generator of examples satisfying [f]. To do that we
+     test the property [fun x -> not (f x)]; any counter-example *)
+  let gen st =
+    let cell =
+      Test.make_cell ~max_fail:1 ?count arb (fun x -> not (f x))
+    in
+    let res = Test.check_cell ~rand:st cell in
+    begin match res.TestResult.state with
+      | TestResult.Success -> raise (No_example_found name)
+      | TestResult.Error (_, _, _) -> raise (No_example_found name)
+      | TestResult.Failed [] -> assert false
+      | TestResult.Failed (failed::_) ->
+        (* found counter-example! *)
+        failed.TestResult.instance
+    end
+  in
+  make
+    ?print:arb.print
+    ?small:arb.small
+    ?shrink:arb.shrink
+    gen
+
+let find_example_gen ?rand ?name ?count ~f arb =
+  let arb = find_example ?name ?count ~f arb in
+  Gen.generate1 ?rand (gen arb)
