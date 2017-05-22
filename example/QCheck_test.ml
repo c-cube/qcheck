@@ -39,5 +39,7 @@ let suite =
   "tests" >::: (regressions @ others)
 
 let () =
-  exit (QCheck_runner.run suite)
+  try exit (QCheck_runner.run suite)
+  with Arg.Bad msg -> print_endline msg; exit 1
+     | Arg.Help msg -> print_endline msg; exit 0
 
