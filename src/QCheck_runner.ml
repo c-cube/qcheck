@@ -428,12 +428,13 @@ let expect_size long cell =
   let rec aux n = if n < 10 then 1 else 1 + (aux (n / 10)) in
   aux (expect long cell)
 
-let print_success out cell r =
+let print_success ~colors out cell r =
   begin match QCheck.TestResult.collect r with
     | None -> ()
     | Some tbl ->
       Printf.fprintf out
-        "\n+++ Collect %s\n\nCollect results for test %s:\n\n%s%!"
+        "\n+++ %a %s\n\nCollect results for test %s:\n\n%s%!"
+        (Color.pp_str_c ~colors `Blue) "Collect"
         (String.make 68 '+') (QCheck.Test.get_name cell) (QCheck.Test.print_collect tbl)
   end;
   List.iter
@@ -486,7 +487,7 @@ let run_tests
   let aux_fold (total, fail, error) (Res (cell, r)) =
     match r.R.state with
     | R.Success ->
-      print_success out cell r;
+      print_success ~colors out cell r;
       (total + 1, fail, error)
     | R.Failed l ->
       List.iter (print_fail ~colors out cell) l;
