@@ -60,10 +60,10 @@ let prop_foldleft_foldright =
   let open QCheck in
   Test.make ~name:"fold_left fold_right" ~count:1000 ~long_factor:20
     (triple 
-       (fun2 Observable.int Observable.int int_gen)
        int_gen
-       (list int_gen))
-    (fun (f,z,xs) -> List.fold_right (Fn.apply f) xs z = List.fold_left (Fn.apply f) z xs)
+       (list int_gen)
+       (fun2 Observable.int Observable.int int_gen))
+    (fun (z,xs,f) -> List.fold_right (Fn.apply f) xs z = List.fold_left (Fn.apply f) z xs)
 
 (* Another example (false) property *)
 let prop_foldleft_foldright_uncurry =
