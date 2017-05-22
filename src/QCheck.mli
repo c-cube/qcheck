@@ -532,6 +532,10 @@ val add_stat : 'a stat -> 'a arbitrary -> 'a arbitrary
 (** Add a statistic  to the arbitrary instance
     @since NEXT_RELEASE *)
 
+val gen : 'a arbitrary -> 'a Gen.t
+(** Access the underlying random generator of this arbitrary object
+    @since NEXT_RELEASE *)
+
 (** {2 Tests}
 
     A test is a universal property of type [foo -> bool] for some type [foo],

@@ -515,6 +515,8 @@ let set_collect f o = {o with collect=Some f}
 let set_stats s o = {o with stats=s}
 let add_stat s o = {o with stats=s :: o.stats}
 
+let gen o = o.gen
+
 let small1 _ = 1
 
 let make_scalar ?print ?collect gen =
