@@ -162,7 +162,7 @@ module Gen : sig
       pair of generated elements. *)
 
   val map3 : ('a -> 'b -> 'c -> 'd) -> 'a t -> 'b t -> 'c t -> 'd t
-  (** [map3 f g1 g2 g3] transforms two generators [g1], [g2], and [g3] by applying [f]
+  (** [map3 f g1 g2 g3] transforms three generators [g1], [g2], and [g3] by applying [f]
       to each triple of generated elements. *)
 
   val map_keep_input : ('a -> 'b) -> 'a t -> ('a * 'b) t
