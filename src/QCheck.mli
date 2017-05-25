@@ -724,9 +724,9 @@ val find_example :
   ?name:string ->
   ?count:int ->
   f:('a -> bool) ->
-  'a arbitrary ->
-  'a arbitrary
-(** [find_example ~f arb] uses [arb] to generate some values of type ['a],
+  'a Gen.t ->
+  'a Gen.t
+(** [find_example ~f gen] uses [gen] to generate some values of type ['a],
     and checks them against [f]. If such a value is found, it is returned.
     Otherwise an exception is raised.
     {b NOTE} this should only be used from within a property in {!Test.make}.
@@ -742,7 +742,7 @@ val find_example_gen :
   ?name:string ->
   ?count:int ->
   f:('a -> bool) ->
-  'a arbitrary ->
+  'a Gen.t ->
   'a
 (** Toplevel version of {!find_example}.
     [find_example_gen ~f arb ~n] is roughly the same as

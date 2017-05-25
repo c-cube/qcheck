@@ -1420,11 +1420,12 @@ module Test = struct
   let check_exn ?long ?rand (Test cell) = check_cell_exn ?long ?rand cell
 end
 
-let find_example ?(name="<example>") ?count ~f arb : _ arbitrary =
+let find_example ?(name="<example>") ?count ~f g : _ Gen.t =
   (* the random generator of examples satisfying [f]. To do that we
      test the property [fun x -> not (f x)]; any counter-example *)
   let gen st =
     let cell =
+      let arb = make g in
       Test.make_cell ~max_fail:1 ?count arb (fun x -> not (f x))
     in
     let res = Test.check_cell ~rand:st cell in
@@ -1437,12 +1438,8 @@ let find_example ?(name="<example>") ?count ~f arb : _ arbitrary =
         failed.TestResult.instance
     end
   in
-  make
-    ?print:arb.print
-    ?small:arb.small
-    ?shrink:arb.shrink
-    gen
+  gen
 
-let find_example_gen ?rand ?name ?count ~f arb =
-  let arb = find_example ?name ?count ~f arb in
-  Gen.generate1 ?rand (gen arb)
+let find_example_gen ?rand ?name ?count ~f g =
+  let g = find_example ?name ?count ~f g in
+  Gen.generate1 ?rand g
