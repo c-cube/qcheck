@@ -59,7 +59,7 @@ let int_gen = QCheck.small_nat (* int *)
 let prop_foldleft_foldright =
   let open QCheck in
   Test.make ~name:"fold_left fold_right" ~count:1000 ~long_factor:20
-    (triple 
+    (triple
        int_gen
        (list int_gen)
        (fun2 Observable.int Observable.int int_gen))
@@ -69,7 +69,7 @@ let prop_foldleft_foldright =
 let prop_foldleft_foldright_uncurry =
   let open QCheck in
   Test.make ~name:"fold_left fold_right uncurried" ~count:1000 ~long_factor:20
-    (triple 
+    (triple
        (fun1 Observable.(pair int int) int_gen)
        int_gen
        (list int_gen))
@@ -83,6 +83,17 @@ let long_shrink =
   Test.make ~name:"long_shrink" (pair listgen listgen)
     (fun (xs,ys) -> List.rev (xs@ys) = (List.rev xs)@(List.rev ys))
 
+let find_ex =
+  let open QCheck in
+  Test.make ~name:"find_example" (2--50)
+  (fun n ->
+    let st = Random.State.make [| 0 |] in
+    let f m = n < m && m < 2 * n in
+    try
+      let m = find_example_gen ~rand:st ~count:100_000 ~f Gen.(0 -- 1000) in
+      f m
+     with No_example_found _ -> false)
+
 let () =
   QCheck_runner.run_tests_main [
     passing;
@@ -95,5 +106,6 @@ let () =
     prop_foldleft_foldright;
     prop_foldleft_foldright_uncurry;
     long_shrink;
+    find_ex;
   ]
 
