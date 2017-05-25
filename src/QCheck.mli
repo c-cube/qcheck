@@ -437,8 +437,17 @@ module Shrink : sig
       @param shrink see {!list} *)
 
   val pair : 'a t -> 'b t -> ('a * 'b) t
+  (** [pair a b] uses [a] to shrink the first element of tuples,
+      then tries to shrink the second element using [b].
+      It is often better, when generating tuples, to put the "simplest"
+      element first (atomic type rather than list, etc.) because it will be
+      shrunk earlier. In particular, putting functions last might help. *)
+
   val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
+  (** Similar to {!pair} *)
+
   val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
+  (** Similar to {!pair} *)
 end
 
 (** {2 Observe Values} *)
@@ -875,13 +884,16 @@ val array_of_size : int Gen.t -> 'a arbitrary -> 'a array arbitrary
 (** Generates arrays with length from the given distribution. *)
 
 val pair : 'a arbitrary -> 'b arbitrary -> ('a * 'b) arbitrary
-(** Combines two generators into a generator of pairs. *)
+(** Combines two generators into a generator of pairs.
+    Order of elements can matter (w.r.t shrinking, see {!Shrink.pair}) *)
 
 val triple : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> ('a * 'b * 'c) arbitrary
-(** Combines three generators into a generator of 3-tuples. *)
+(** Combines three generators into a generator of 3-tuples.
+    Order matters for shrinking, see {!Shrink.pair} and the likes *)
 
 val quad : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> 'd arbitrary -> ('a * 'b * 'c * 'd) arbitrary
-(** Combines four generators into a generator of 4-tuples. *)
+(** Combines four generators into a generator of 4-tuples.
+    Order matters for shrinking, see {!Shrink.pair} and the likes *)
 
 val option : 'a arbitrary -> 'a option arbitrary
 (** Choose between returning Some random value, or None. *)
