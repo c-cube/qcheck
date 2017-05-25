@@ -238,15 +238,15 @@ module Gen : sig
   val graft_corners : 'a t -> 'a list -> unit -> 'a t
   (** [graft_corners gen l ()] makes a new generator that enumerates
       the corner cases in [l] and then behaves like [g].
-      @since NEXT_RELEASE *)
+      @since 0.6 *)
 
   val int_pos_corners : int list
   (** Non-negative corner cases for int.
-      @since NEXT_RELEASE *)
+      @since 0.6 *)
 
   val int_corners : int list
   (** All corner cases for int.
-      @since NEXT_RELEASE *)
+      @since 0.6 *)
 
   val (--) : int -> int -> int t (** Synonym to {!int_range}. *)
 
@@ -355,7 +355,7 @@ module Print : sig
   (** Printer for values of type ['a]. *)
 
 
-  val unit : unit t (** @since NEXT_RELEASE *)
+  val unit : unit t (** @since 0.6 *)
   val int : int t (** Integer printer. *)
   val bool : bool t (** Boolean printer. *)
   val float : float t (** Floating point number printer. *)
@@ -420,8 +420,8 @@ module Shrink : sig
   val nil : 'a t
   (** No shrink *)
 
-  val unit : unit t (** @since NEXT_RELEASE *)
-  val char : char t (** @since NEXT_RELEASE *)
+  val unit : unit t (** @since 0.6 *)
+  val char : char t (** @since 0.6 *)
   val int : int t
   val option : 'a t -> 'a option t
   val string : string t
@@ -459,7 +459,7 @@ end
     Inspired from https://blogs.janestreet.com/quickcheck-for-core/
     and Koen Claessen's "Shrinking and Showing functions".
 
-    @since NEXT_RELEASE
+    @since 0.6
 *)
 
 module Observable : sig
@@ -535,15 +535,15 @@ val set_print : 'a Print.t -> 'a arbitrary -> 'a arbitrary
 val set_small : ('a -> int) -> 'a arbitrary -> 'a arbitrary
 val set_shrink : 'a Shrink.t -> 'a arbitrary -> 'a arbitrary
 val set_collect : ('a -> string) -> 'a arbitrary -> 'a arbitrary
-val set_stats : 'a stat list -> 'a arbitrary -> 'a arbitrary (** @since NEXT_RELEASE *)
+val set_stats : 'a stat list -> 'a arbitrary -> 'a arbitrary (** @since 0.6 *)
 
 val add_stat : 'a stat -> 'a arbitrary -> 'a arbitrary
 (** Add a statistic to the arbitrary instance.
-    @since NEXT_RELEASE *)
+    @since 0.6 *)
 
 val gen : 'a arbitrary -> 'a Gen.t
 (** Access the underlying random generator of this arbitrary object.
-    @since NEXT_RELEASE *)
+    @since 0.6 *)
 
 (** {2 Tests}
 
@@ -578,16 +578,16 @@ module TestResult : sig
     mutable count: int;  (* Number of tests *)
     mutable count_gen: int; (* Number of generated cases *)
     collect_tbl: (string, int) Hashtbl.t lazy_t;
-    stats_tbl: ('a stat * (int, int) Hashtbl.t) list; (** @since NEXT_RELEASE *)
+    stats_tbl: ('a stat * (int, int) Hashtbl.t) list; (** @since 0.6 *)
   }
 
   val collect : _ t -> (string,int) Hashtbl.t option
   (** Obtain statistics
-      @since NEXT_RELEASE *)
+      @since 0.6 *)
 
   val stats : 'a t -> ('a stat * (int,int) Hashtbl.t) list
   (** Obtain statistics
-      @since NEXT_RELEASE *)
+      @since 0.6 *)
 end
 
 module Test : sig
@@ -663,11 +663,11 @@ module Test : sig
 
   val print_collect : (string,int) Hashtbl.t -> string
   (** Print "collect" results.
-      @since NEXT_RELEASE *)
+      @since 0.6 *)
 
   val print_stat : ('a stat * (int,int) Hashtbl.t) -> string
   (** Print statistics.
-      @since NEXT_RELEASE *)
+      @since 0.6 *)
 
   val check_result : 'a cell -> 'a TestResult.t -> unit
   (** [check_result cell res] checks that [res] is [Ok _], and returns unit.
@@ -743,7 +743,7 @@ val find_example :
     @param name description of the example to find (used in the exception).
     @param f the property that the example must satisfy.
     @raise No_example_found if no example is found within [count] tries.
-    @since NEXT_RELEASE
+    @since 0.6
 *)
 
 val find_example_gen :
@@ -758,7 +758,7 @@ val find_example_gen :
     [Gen.generate1 (find_example ~f arb |> gen)].
     @param rand the random state to use to generate inputs.
     @raise No_example_found if no example was found within [count] tries.
-    @since NEXT_RELEASE *)
+    @since 0.6 *)
 
 (** {2 Combinators for {!arbitrary}} *)
 
@@ -904,15 +904,15 @@ val fun1_unsafe : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary
     - when given the same argument (as decided by Pervasives.(=)), it returns the same value
     - it never does side effects, like printing or never raise exceptions etc.
     The functions generated are really printable.
-    renamed from {!fun1}. @since NEXT_RELEASE
-    @deprecated use {!fun_} instead. @since NEXT_RELEASE
+    renamed from {!fun1}. @since 0.6
+    @deprecated use {!fun_} instead. @since 0.6
 *)
 
 val fun2_unsafe : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> ('a -> 'b -> 'c) arbitrary
 (** Generator of functions of arity 2. The remark about [fun1] also apply
     here.
-    renamed from {!fun2}. @since NEXT_RELEASE
-    @deprecated use {!fun_} instead. @since NEXT_RELEASE
+    renamed from {!fun2}. @since 0.6
+    @deprecated use {!fun_} instead. @since 0.6
 *)
 
 type _ fun_repr
@@ -936,7 +936,7 @@ type _ fun_ =
   | Fun : 'f fun_repr * 'f -> 'f fun_
 
 (** Utils on functions
-    @since NEXT_RELEASE *)
+    @since 0.6 *)
 module Fn : sig
   type 'a t = 'a fun_
 
@@ -952,7 +952,7 @@ val fun1 : 'a Observable.t -> 'b arbitrary -> ('a -> 'b) fun_ arbitrary
     To write functions with multiple arguments, it's better to use {!Tuple}
     or {!Observable.pair} rather than applying {!fun_} several times
     (shrinking will be faster).
-    @since NEXT_RELEASE *)
+    @since 0.6 *)
 
 module Tuple : sig
   (** Heterogeneous tuple, used to pass any number of arguments to
@@ -990,14 +990,14 @@ val fun_nary : 'a Tuple.obs -> 'b arbitrary -> ('a Tuple.t -> 'b) fun_ arbitrary
       let module O = Observable in
       fun_nary Tuple.(O.int @-> O.float @-> O.string @-> o_nil) bool)
     ]}
-    @since NEXT_RELEASE *)
+    @since 0.6 *)
 
 val fun2 :
   'a Observable.t ->
   'b Observable.t ->
   'c arbitrary ->
   ('a -> 'b -> 'c) fun_ arbitrary
-(** @since NEXT_RELEASE *)
+(** @since 0.6 *)
 
 val fun3 :
   'a Observable.t ->
@@ -1005,7 +1005,7 @@ val fun3 :
   'c Observable.t ->
   'd arbitrary ->
   ('a -> 'b -> 'c -> 'd) fun_ arbitrary
-(** @since NEXT_RELEASE *)
+(** @since 0.6 *)
 
 val fun4 :
   'a Observable.t ->
@@ -1014,7 +1014,7 @@ val fun4 :
   'd Observable.t ->
   'e arbitrary ->
   ('a -> 'b -> 'c -> 'd -> 'e) fun_ arbitrary
-(** @since NEXT_RELEASE *)
+(** @since 0.6 *)
 
 val oneofl : ?print:'a Print.t -> ?collect:('a -> string) ->
              'a list -> 'a arbitrary

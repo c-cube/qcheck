@@ -1,5 +1,22 @@
 # Changes
 
+## 0.6
+
+- add `find_example` and `find_example_gen` to synthesize values from
+  properties (see #31)
+- add `QCheck.gen` for accessing the random generator easily
+- colorful runners, with `--no-colors` to disable them
+- add more generator (for corner cases)
+- better generation of random functions (see #8),
+  using `Observable` and an efficient internal representation using
+  heterogeneous tuples, printing, and shrinking.  deprecate old hacks.
+- add statistics gathering and display (see #30)
+
+- better printing of Tuple
+- improve `Shrink.{array,list}` (see #32)
+- Change asserts to raise `Invalid_arg` (following the doc), and update doc
+- Change `Gen.{int_bount,int_range}` to support up to 2^62
+
 ## 0.5.3.1
 
 - fix regression in runner output (print results of `collect`)
