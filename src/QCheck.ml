@@ -1068,7 +1068,7 @@ module TestResult = struct
     res.state <- Error ({instance; shrink_steps=steps}, e, bt)
 
   let collect r =
-    if Lazy.is_val r.collect_tbl then None else Some (Lazy.force r.collect_tbl)
+    if Lazy.is_val r.collect_tbl then Some (Lazy.force r.collect_tbl) else None
 
   let stats r = r.stats_tbl
 end
