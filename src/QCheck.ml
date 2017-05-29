@@ -23,6 +23,8 @@ open Printf
 
 module RS = Random.State
 
+let (|>) x f = f x
+
 let rec foldn ~f ~init:acc i =
   if i = 0 then acc else foldn ~f ~init:(f acc i) (i-1)
 
