@@ -409,11 +409,13 @@ let step ~size ~out ~verbose c name _ _ r =
   if verbose then
     Printf.fprintf out "\r[ ] %a -- %s%!" (pp_counter ~size) c name
 
-let callback ~size ~out ~verbose c name _ _ =
+let callback ~size ~out ~verbose ~colors c name _ _ =
   let pass = c.failed = 0 && c.errored = 0 in
+  let color = if pass then `Green else `Red in
   if verbose then
-    Printf.fprintf out "\r[%s] %a -- %s\n%!"
-      (if pass then "✓" else "✗") (pp_counter ~size) c name
+    Printf.fprintf out "\r[%a] %a -- %s\n%!"
+      (Color.pp_str_c ~bold:true ~colors color) (if pass then "✓" else "✗")
+      (pp_counter ~size) c name
 
 let print_inst arb x =
   match arb.QCheck.print with
@@ -478,7 +480,7 @@ let run_tests
     } in
     let r = QCheck.Test.check_cell ~long ~rand
         ~step:(step ~size ~out ~verbose c)
-        ~call:(callback ~size ~out ~verbose c)
+        ~call:(callback ~size ~out ~verbose ~colors c)
         cell
     in
     Res (cell, r)
