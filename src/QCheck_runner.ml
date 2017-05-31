@@ -478,6 +478,9 @@ let run_tests
       start; expected; gen = 0;
       passed = 0; failed = 0; errored = 0;
     } in
+    if verbose then
+      Printf.fprintf out "\r[ ] %a -- %s%!"
+        (pp_counter ~size) c (T.get_name cell);
     let r = QCheck.Test.check_cell ~long ~rand
         ~step:(step ~size ~out ~verbose c)
         ~call:(callback ~size ~out ~verbose ~colors c)
