@@ -333,11 +333,12 @@ module Shrink = struct
   let nil _ = Iter.empty
   let unit = nil
 
-  (* get closer to 0 *)
+  (* get closer to 0, by dichotomy or just enumerating smaller values *)
   let int x yield =
-    if x < -2 || x>2 then yield (x/2); (* faster this way *)
-    if x>0 then yield (x-1);
-    if x<0 then yield (x+1)
+    let y = ref x in
+    while !y < -2 || !y >2 do y := !y / 2; yield !y; done; (* fast path *)
+    if x>0 then for i=x-1 downto 0 do yield i done;
+    if x<0 then for i=x+1 to 0 do yield i done
 
   let char c yield =
     if Char.code c > 0 then yield (Char.chr (Char.code c-1))
