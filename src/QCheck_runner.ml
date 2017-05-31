@@ -397,11 +397,12 @@ let pp_counter ~size out c =
     size c.gen size c.errored size c.failed
     size c.passed size c.expected t
 
+
 let handler ~size ~out ~verbose c name _ r =
   let st = function
-    | QCheck.Test.Generating -> "generating"
-    | QCheck.Test.Collecting _ -> "collecting"
-    | QCheck.Test.Testing _ -> "testing"
+    | QCheck.Test.Generating    -> "generating"
+    | QCheck.Test.Collecting _  -> "collecting"
+    | QCheck.Test.Testing _     -> "   testing"
     | QCheck.Test.Shrinking (i, _) ->
       Printf.sprintf "shrinking: %4d" i
   in
@@ -411,7 +412,7 @@ let handler ~size ~out ~verbose c name _ r =
 
 
 let step ~size ~out ~verbose c name _ _ r =
-  let empty_line = String.make 20 ' ' in
+  let empty_line = String.make 100 ' ' in
   let aux = function
     | QCheck.Test.Success -> c.passed <- c.passed + 1
     | QCheck.Test.Failure -> c.failed <- c.failed + 1
@@ -420,11 +421,11 @@ let step ~size ~out ~verbose c name _ _ r =
   in
   c.gen <- c.gen + 1;
   aux r;
+  (* the empty_line string is useful to clear the state
+     previously printed by the handler *)
   if verbose then
-    (* the 'empty_line' string is useful to clear the state
-       previously printed by the handler *)
-    Printf.fprintf out "\r[ ] %a -- %s%s%!"
-      (pp_counter ~size) c name empty_line
+    Printf.fprintf out "\r%s\r[ ] %a -- %s%!"
+      empty_line (pp_counter ~size) c name
 
 let callback ~size ~out ~verbose ~colors c name _ _ =
   let pass = c.failed = 0 && c.errored = 0 in
