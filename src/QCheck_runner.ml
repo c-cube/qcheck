@@ -397,7 +397,21 @@ let pp_counter ~size out c =
     size c.gen size c.errored size c.failed
     size c.passed size c.expected t
 
+let handler ~size ~out ~verbose c name _ r =
+  let st = function
+    | QCheck.Test.Generating -> "generating"
+    | QCheck.Test.Collecting _ -> "collecting"
+    | QCheck.Test.Testing _ -> "testing"
+    | QCheck.Test.Shrinking (i, _) ->
+      Printf.sprintf "shrinking: %4d" i
+  in
+  if verbose then
+    Printf.fprintf out "\r[ ] %a -- %s (%s)%!"
+      (pp_counter ~size) c name (st r)
+
+
 let step ~size ~out ~verbose c name _ _ r =
+  let empty_line = String.make 20 ' ' in
   let aux = function
     | QCheck.Test.Success -> c.passed <- c.passed + 1
     | QCheck.Test.Failure -> c.failed <- c.failed + 1
@@ -407,7 +421,10 @@ let step ~size ~out ~verbose c name _ _ r =
   c.gen <- c.gen + 1;
   aux r;
   if verbose then
-    Printf.fprintf out "\r[ ] %a -- %s%!" (pp_counter ~size) c name
+    (* the 'empty_line' string is useful to clear the state
+       previously printed by the handler *)
+    Printf.fprintf out "\r[ ] %a -- %s%s%!"
+      (pp_counter ~size) c name empty_line
 
 let callback ~size ~out ~verbose ~colors c name _ _ =
   let pass = c.failed = 0 && c.errored = 0 in
@@ -482,6 +499,7 @@ let run_tests
       Printf.fprintf out "\r[ ] %a -- %s%!"
         (pp_counter ~size) c (T.get_name cell);
     let r = QCheck.Test.check_cell ~long ~rand
+        ~handler:(handler ~size ~out ~verbose c)
         ~step:(step ~size ~out ~verbose c)
         ~call:(callback ~size ~out ~verbose ~colors c)
         cell
