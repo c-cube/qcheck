@@ -94,6 +94,12 @@ let find_ex =
       f m
      with No_example_found _ -> false)
 
+(* test shrinking on integers *)
+let shrink_int =
+  QCheck.Test.make ~count:1000 ~name:"mod3_should_fail"
+   QCheck.int (fun i -> i mod 3 <> 0);;
+
+
 let () =
   QCheck_runner.run_tests_main [
     passing;
@@ -107,5 +113,6 @@ let () =
     prop_foldleft_foldright_uncurry;
     long_shrink;
     find_ex;
+    shrink_int;
   ]
 
