@@ -1142,7 +1142,8 @@ module Test = struct
     | Generating
     | Collecting of 'a
     | Testing of 'a
-    | Shrinking of int * 'a
+    | Shrinked of int * 'a
+    | Shrinking of int * int * 'a
 
   type 'a handler = string -> 'a cell -> 'a event -> unit
 
@@ -1193,13 +1194,16 @@ module Test = struct
      shrinked value and number of steps *)
   let shrink st i =
     let rec shrink_ st i ~steps =
-      st.handler st.test.name st.test (Shrinking (steps, i));
+      st.handler st.test.name st.test (Shrinked (steps, i));
       match st.test.arb.shrink with
       | None -> i, steps
       | Some f ->
+        let count = ref 0 in
         let i' = Iter.find
           (fun x ->
             try
+              incr count;
+              st.handler st.test.name st.test (Shrinking (steps, !count, x));
               not (st.test.law x)
             with FailedPrecondition | No_example_found _ -> false
             | _ -> true (* fail test (by error) *)

@@ -403,8 +403,10 @@ let handler ~size ~out ~verbose c name _ r =
     | QCheck.Test.Generating    -> "generating"
     | QCheck.Test.Collecting _  -> "collecting"
     | QCheck.Test.Testing _     -> "   testing"
-    | QCheck.Test.Shrinking (i, _) ->
+    | QCheck.Test.Shrinked (i, _) ->
       Printf.sprintf "shrinking: %4d" i
+    | QCheck.Test.Shrinking (i, j, _) ->
+      Printf.sprintf "shrinking: %4d.%04d" i j
   in
   if verbose then
     Printf.fprintf out "\r[ ] %a -- %s (%s)%!"
@@ -412,7 +414,7 @@ let handler ~size ~out ~verbose c name _ r =
 
 
 let step ~size ~out ~verbose c name _ _ r =
-  let empty_line = String.make 100 ' ' in
+  let empty_line = String.make 140 ' ' in
   let aux = function
     | QCheck.Test.Success -> c.passed <- c.passed + 1
     | QCheck.Test.Failure -> c.failed <- c.failed + 1
