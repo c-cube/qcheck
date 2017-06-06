@@ -685,7 +685,7 @@ module Test : sig
     | Generating
     | Collecting of 'a
     | Testing of 'a
-    | Shrinked of int * 'a
+    | Shrunk of int * 'a
     | Shrinking of int * int * 'a
 
   type 'a handler = string -> 'a cell -> 'a event -> unit

@@ -403,7 +403,7 @@ let handler ~size ~out ~verbose c name _ r =
     | QCheck.Test.Generating    -> "generating"
     | QCheck.Test.Collecting _  -> "collecting"
     | QCheck.Test.Testing _     -> "   testing"
-    | QCheck.Test.Shrinked (i, _) ->
+    | QCheck.Test.Shrunk (i, _) ->
       Printf.sprintf "shrinking: %4d" i
     | QCheck.Test.Shrinking (i, j, _) ->
       Printf.sprintf "shrinking: %4d.%04d" i j

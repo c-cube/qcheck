@@ -1142,7 +1142,7 @@ module Test = struct
     | Generating
     | Collecting of 'a
     | Testing of 'a
-    | Shrinked of int * 'a
+    | Shrunk of int * 'a
     | Shrinking of int * int * 'a
 
   type 'a handler = string -> 'a cell -> 'a event -> unit
@@ -1194,7 +1194,7 @@ module Test = struct
      shrinked value and number of steps *)
   let shrink st i =
     let rec shrink_ st i ~steps =
-      st.handler st.test.name st.test (Shrinked (steps, i));
+      st.handler st.test.name st.test (Shrunk (steps, i));
       match st.test.arb.shrink with
       | None -> i, steps
       | Some f ->
