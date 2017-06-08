@@ -520,6 +520,7 @@ let set_shrink f o = {o with shrink=Some f}
 let set_collect f o = {o with collect=Some f}
 let set_stats s o = {o with stats=s}
 let add_stat s o = {o with stats=s :: o.stats}
+let set_gen g o = {o with gen=g}
 
 let gen o = o.gen
 

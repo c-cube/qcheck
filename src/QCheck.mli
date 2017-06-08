@@ -537,6 +537,10 @@ val set_shrink : 'a Shrink.t -> 'a arbitrary -> 'a arbitrary
 val set_collect : ('a -> string) -> 'a arbitrary -> 'a arbitrary
 val set_stats : 'a stat list -> 'a arbitrary -> 'a arbitrary (** @since 0.6 *)
 
+val set_gen : 'a Gen.t -> 'a arbitrary -> 'a arbitrary
+(** Change the generator
+    @since NEXT_RELEASE *)
+
 val add_stat : 'a stat -> 'a arbitrary -> 'a arbitrary
 (** Add a statistic to the arbitrary instance.
     @since 0.6 *)
