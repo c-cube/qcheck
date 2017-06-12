@@ -1144,10 +1144,23 @@ module Test = struct
 
   let step_nil_ _ _ _ _ = ()
 
+  (* Events of a test *)
+  type 'a event =
+    | Generating
+    | Collecting of 'a
+    | Testing of 'a
+    | Shrunk of int * 'a
+    | Shrinking of int * int * 'a
+
+  type 'a handler = string -> 'a cell -> 'a event -> unit
+
+  let handler_nil_ _ _ _ = ()
+
   (* state required by {!check} to execute *)
   type 'a state = {
     test: 'a cell;
     step: 'a step;
+    handler : 'a handler;
     rand: Random.State.t;
     mutable res: 'a TestResult.t;
     mutable cur_count: int;  (** number of iterations to do *)
@@ -1187,12 +1200,17 @@ module Test = struct
   (* try to shrink counter-ex [i] into a smaller one. Returns
      shrinked value and number of steps *)
   let shrink st i =
-    let rec shrink_ st i ~steps = match st.test.arb.shrink with
+    let rec shrink_ st i ~steps =
+      st.handler st.test.name st.test (Shrunk (steps, i));
+      match st.test.arb.shrink with
       | None -> i, steps
       | Some f ->
+        let count = ref 0 in
         let i' = Iter.find
           (fun x ->
             try
+              incr count;
+              st.handler st.test.name st.test (Shrinking (steps, !count, x));
               not (st.test.law x)
             with FailedPrecondition | No_example_found _ -> false
             | _ -> true (* fail test (by error) *)
@@ -1239,11 +1257,14 @@ module Test = struct
   let rec check_state state =
     if is_done state then state.res
     else (
+      state.handler state.test.name state.test Generating;
       let input = new_input state in
+      state.handler state.test.name state.test (Collecting input);
       collect state input;
       update_stats state input;
       let res =
         try
+          state.handler state.test.name state.test (Testing input);
           if state.test.law input
           then (
             (* one test ok *)
@@ -1269,12 +1290,13 @@ module Test = struct
   let callback_nil_ _ _ _ = ()
 
   (* main checking function *)
-  let check_cell ?(long=false) ?(call=callback_nil_) ?(step=step_nil_)
+  let check_cell ?(long=false) ?(call=callback_nil_)
+      ?(step=step_nil_) ?(handler=handler_nil_)
       ?(rand=Random.State.make [| 0 |]) cell =
     let factor = if long then cell.long_factor else 1 in
     let state = {
       test=cell;
-      rand; step;
+      rand; step; handler;
       cur_count=factor*cell.count;
       cur_max_gen=factor*cell.max_gen;
       cur_max_fail=factor*cell.max_fail;

@@ -397,7 +397,24 @@ let pp_counter ~size out c =
     size c.gen size c.errored size c.failed
     size c.passed size c.expected t
 
+
+let handler ~size ~out ~verbose c name _ r =
+  let st = function
+    | QCheck.Test.Generating    -> "generating"
+    | QCheck.Test.Collecting _  -> "collecting"
+    | QCheck.Test.Testing _     -> "   testing"
+    | QCheck.Test.Shrunk (i, _) ->
+      Printf.sprintf "shrinking: %4d" i
+    | QCheck.Test.Shrinking (i, j, _) ->
+      Printf.sprintf "shrinking: %4d.%04d" i j
+  in
+  if verbose then
+    Printf.fprintf out "\r[ ] %a -- %s (%s)%!"
+      (pp_counter ~size) c name (st r)
+
+
 let step ~size ~out ~verbose c name _ _ r =
+  let empty_line = String.make 140 ' ' in
   let aux = function
     | QCheck.Test.Success -> c.passed <- c.passed + 1
     | QCheck.Test.Failure -> c.failed <- c.failed + 1
@@ -406,14 +423,19 @@ let step ~size ~out ~verbose c name _ _ r =
   in
   c.gen <- c.gen + 1;
   aux r;
+  (* the empty_line string is useful to clear the state
+     previously printed by the handler *)
   if verbose then
-    Printf.fprintf out "\r[ ] %a -- %s%!" (pp_counter ~size) c name
+    Printf.fprintf out "\r%s\r[ ] %a -- %s%!"
+      empty_line (pp_counter ~size) c name
 
-let callback ~size ~out ~verbose c name _ _ =
+let callback ~size ~out ~verbose ~colors c name _ _ =
   let pass = c.failed = 0 && c.errored = 0 in
+  let color = if pass then `Green else `Red in
   if verbose then
-    Printf.fprintf out "\r[%s] %a -- %s\n%!"
-      (if pass then "✓" else "✗") (pp_counter ~size) c name
+    Printf.fprintf out "\r[%a] %a -- %s\n%!"
+      (Color.pp_str_c ~bold:true ~colors color) (if pass then "✓" else "✗")
+      (pp_counter ~size) c name
 
 let print_inst arb x =
   match arb.QCheck.print with
@@ -476,9 +498,13 @@ let run_tests
       start; expected; gen = 0;
       passed = 0; failed = 0; errored = 0;
     } in
+    if verbose then
+      Printf.fprintf out "\r[ ] %a -- %s%!"
+        (pp_counter ~size) c (T.get_name cell);
     let r = QCheck.Test.check_cell ~long ~rand
+        ~handler:(handler ~size ~out ~verbose c)
         ~step:(step ~size ~out ~verbose c)
-        ~call:(callback ~size ~out ~verbose c)
+        ~call:(callback ~size ~out ~verbose ~colors c)
         cell
     in
     Res (cell, r)

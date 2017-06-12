@@ -685,6 +685,16 @@ module Test : sig
     | FalseAssumption
     | Error of exn * string
 
+  type 'a event =
+    | Generating
+    | Collecting of 'a
+    | Testing of 'a
+    | Shrunk of int * 'a
+    | Shrinking of int * int * 'a
+
+  type 'a handler = string -> 'a cell -> 'a event -> unit
+  (** Handler executed after each event during testing of an instance. *)
+
   type 'a step = string -> 'a cell -> 'a -> res -> unit
   (** Callback executed after each instance of a test has been run.
       The callback is given the instance tested, and the current results
@@ -695,7 +705,8 @@ module Test : sig
       [f name cell res] means test [cell], named [name], gave [res]. *)
 
   val check_cell :
-    ?long:bool -> ?call:'a callback -> ?step:'a step ->
+    ?long:bool -> ?call:'a callback ->
+    ?step:'a step -> ?handler:'a handler ->
     ?rand:Random.State.t -> 'a cell -> 'a TestResult.t
   (** [check_cell ~long ~rand test] generates up to [count] random
       values of type ['a] using [arbitrary] and the random state [st]. The
