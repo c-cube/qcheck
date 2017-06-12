@@ -400,7 +400,7 @@ type res =
 
 let pp_counter ~size out c =
   let t = Unix.gettimeofday () -. c.start in
-  Printf.fprintf out "(%*d) %*d ; %*d ; %*d / %*d -- %7.1fs"
+  Printf.fprintf out "%*d %*d %*d %*d / %*d %7.1fs"
     size c.gen size c.errored size c.failed
     size c.passed size c.expected t
 
@@ -418,7 +418,7 @@ let handler ~size ~out ~verbose c name _ r =
   let now=Unix.gettimeofday() in
   if verbose && now -. !last_msg > time_between_msg then (
     last_msg := now;
-    Printf.fprintf out "%s[ ] %a -- %s (%s)%!"
+    Printf.fprintf out "%s[ ] %a %s (%s)%!"
       Color.reset_line (pp_counter ~size) c name (st r)
   )
 
@@ -435,7 +435,7 @@ let step ~size ~out ~verbose c name _ _ r =
   let now=Unix.gettimeofday() in
   if verbose && now -. !last_msg > time_between_msg then (
     last_msg := now;
-    Printf.fprintf out "%s[ ] %a -- %s%!"
+    Printf.fprintf out "%s[ ] %a %s%!"
       Color.reset_line (pp_counter ~size) c name
   )
 
@@ -443,7 +443,7 @@ let callback ~size ~out ~verbose ~colors c name _ _ =
   let pass = c.failed = 0 && c.errored = 0 in
   let color = if pass then `Green else `Red in
   if verbose then (
-    Printf.fprintf out "%s[%a] %a -- %s\n%!"
+    Printf.fprintf out "%s[%a] %a %s\n%!"
       Color.reset_line
       (Color.pp_str_c ~bold:true ~colors color) (if pass then "✓" else "✗")
       (pp_counter ~size) c name
@@ -500,9 +500,9 @@ let run_tests
       max acc (expect_size long cell)) 4 l in
   if verbose then
     Printf.fprintf out
-      "%*s; %*s; %*s; %*s / %*s -     time -- test name\n%!"
-      (size + 5) "generated" (size + 1) "error"
-      (size + 1) "fail" size "pass" (size + 1) "total";
+      "%*s %*s %*s %*s / %*s     time test name\n%!"
+      (size + 4) "generated" size "error"
+      size "fail" size "pass" size "total";
   let aux_map (T.Test cell) =
     let expected = expect long cell in
     let start = Unix.gettimeofday () in
@@ -511,7 +511,7 @@ let run_tests
       passed = 0; failed = 0; errored = 0;
     } in
     if verbose then
-      Printf.fprintf out "%s[ ] %a -- %s%!"
+      Printf.fprintf out "%s[ ] %a %s%!"
         Color.reset_line (pp_counter ~size) c (T.get_name cell);
     let r = QCheck.Test.check_cell ~long ~rand
         ~handler:(handler ~size ~out ~verbose c)
