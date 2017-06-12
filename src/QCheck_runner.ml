@@ -55,6 +55,8 @@ module Color = struct
     pp out x;
     fpf out "\x1b[0m"
 
+  let reset_line = "\x1b[2K\r"
+
   let pp_str_c ?(bold=true) ~colors c out s =
     if colors then
       if bold then in_bold_color c output_string out s
@@ -105,7 +107,7 @@ let st = ref None
 
 let set_seed_ s =
   seed := s;
-  Printf.printf "\rrandom seed: %d\n%!" s;
+  Printf.printf "%srandom seed: %d\n%!" Color.reset_line s;
   let state = Random.State.make [| s |] in
   st := Some state;
   state
@@ -208,7 +210,7 @@ let run ?(argv=Sys.argv) test =
         (* print a single line *)
         if ended then va " (after %.2fs)\n" (!stop -. !start) else "\n"
       ) else (
-        ps "\r";
+        ps Color.reset_line;
         if ended then " *" else ""
       )
     in
@@ -234,7 +236,7 @@ let run ?(argv=Sys.argv) test =
   let (_s, f, o) = !_counter in
   let failures = List.filter not_success results in
   (*  assert (List.length failures = f);*)
-  ps "\r";
+  ps Color.reset_line;
   print_result_list ~colors failures;
   assert (List.length results = total_tests);
   pf "Ran: %d tests in: %.2f seconds.%s\n"
@@ -300,8 +302,8 @@ let callback ~verbose ~print_res ~print name cell result =
   let module T = QCheck.Test in
   let arb = T.get_arbitrary cell in
   if verbose then (
-    print.info "\rlaw %s: %d relevant cases (%d total)\n"
-      name result.R.count result.R.count_gen;
+    print.info "%slaw %s: %d relevant cases (%d total)\n"
+      Color.reset_line name result.R.count result.R.count_gen;
     begin match QCheck.TestResult.collect result with
       | None -> ()
       | Some tbl ->
@@ -313,9 +315,9 @@ let callback ~verbose ~print_res ~print name cell result =
     match result.R.state with
       | R.Success -> ()
       | R.Failed l ->
-        print.fail "\r  %s\n" (T.print_fail arb name l);
+        print.fail "%s  %s\n" Color.reset_line (T.print_fail arb name l);
       | R.Error (i,e,st) ->
-        print.err "\r  %s\n" (T.print_error ~st arb name (i,e));
+        print.err "%s  %s\n" Color.reset_line (T.print_error ~st arb name (i,e));
   )
 
 let name_of_cell cell =
@@ -352,6 +354,11 @@ let conf_long = OUnit2.Conf.make_bool "qcheck_long" false "enable long QCheck te
 let default_rand () =
   (* random seed, for repeatability of tests *)
   Random.State.make [| 89809344; 994326685; 290180182 |]
+
+(* time of last printed message. Useful for rate limiting in verbose mode *)
+let last_msg = ref 0.
+
+let time_between_msg = 0.1
 
 let to_ounit2_test ?(rand = default_rand()) (QCheck.Test.Test cell) =
   let module T = QCheck.Test in
@@ -397,7 +404,6 @@ let pp_counter ~size out c =
     size c.gen size c.errored size c.failed
     size c.passed size c.expected t
 
-
 let handler ~size ~out ~verbose c name _ r =
   let st = function
     | QCheck.Test.Generating    -> "generating"
@@ -408,13 +414,16 @@ let handler ~size ~out ~verbose c name _ r =
     | QCheck.Test.Shrinking (i, j, _) ->
       Printf.sprintf "shrinking: %4d.%04d" i j
   in
-  if verbose then
-    Printf.fprintf out "\r[ ] %a -- %s (%s)%!"
-      (pp_counter ~size) c name (st r)
+  (* use timestamps for rate-limiting *)
+  let now=Unix.gettimeofday() in
+  if verbose && now -. !last_msg > time_between_msg then (
+    last_msg := now;
+    Printf.fprintf out "%s[ ] %a -- %s (%s)%!"
+      Color.reset_line (pp_counter ~size) c name (st r)
+  )
 
 
 let step ~size ~out ~verbose c name _ _ r =
-  let empty_line = String.make 140 ' ' in
   let aux = function
     | QCheck.Test.Success -> c.passed <- c.passed + 1
     | QCheck.Test.Failure -> c.failed <- c.failed + 1
@@ -423,19 +432,22 @@ let step ~size ~out ~verbose c name _ _ r =
   in
   c.gen <- c.gen + 1;
   aux r;
-  (* the empty_line string is useful to clear the state
-     previously printed by the handler *)
-  if verbose then
-    Printf.fprintf out "\r%s\r[ ] %a -- %s%!"
-      empty_line (pp_counter ~size) c name
+  let now=Unix.gettimeofday() in
+  if verbose && now -. !last_msg > time_between_msg then (
+    last_msg := now;
+    Printf.fprintf out "%s[ ] %a -- %s%!"
+      Color.reset_line (pp_counter ~size) c name
+  )
 
 let callback ~size ~out ~verbose ~colors c name _ _ =
   let pass = c.failed = 0 && c.errored = 0 in
   let color = if pass then `Green else `Red in
-  if verbose then
-    Printf.fprintf out "\r[%a] %a -- %s\n%!"
+  if verbose then (
+    Printf.fprintf out "%s[%a] %a -- %s\n%!"
+      Color.reset_line
       (Color.pp_str_c ~bold:true ~colors color) (if pass then "✓" else "✗")
       (pp_counter ~size) c name
+  )
 
 let print_inst arb x =
   match arb.QCheck.print with
@@ -499,8 +511,8 @@ let run_tests
       passed = 0; failed = 0; errored = 0;
     } in
     if verbose then
-      Printf.fprintf out "\r[ ] %a -- %s%!"
-        (pp_counter ~size) c (T.get_name cell);
+      Printf.fprintf out "%s[ ] %a -- %s%!"
+        Color.reset_line (pp_counter ~size) c (T.get_name cell);
     let r = QCheck.Test.check_cell ~long ~rand
         ~handler:(handler ~size ~out ~verbose c)
         ~step:(step ~size ~out ~verbose c)
