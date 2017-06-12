@@ -1019,6 +1019,11 @@ let map_keep_input ?print ?small f a =
         | Some f, _ -> Some (fun (_,y) -> f y)
         | None, Some f -> Some (fun (x,_) -> f x)
         | None, None -> None)
+    ?shrink:(match a.shrink with
+      | None -> None
+      | Some s ->
+        let s' (x,_) = Iter.map (fun x->x, f x) (s x) in
+        Some s')
     Gen.(map_keep_input f a.gen)
 
 module TestResult = struct
