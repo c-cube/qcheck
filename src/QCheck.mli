@@ -426,6 +426,10 @@ module Shrink : sig
   val option : 'a t -> 'a option t
   val string : string t
 
+  val int_aggressive : int t
+  (** Shrink integers by trying all smaller integers (can take a lot of time!)
+      @since NEXT_RELEASE *)
+
   val list : ?shrink:'a t -> 'a list t
   (** Try to shrink lists by removing elements one by one.
       @param shrink if provided, will be used to also try to reduce
