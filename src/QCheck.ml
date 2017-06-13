@@ -319,12 +319,14 @@ module Iter = struct
     a (fun x -> b (fun y -> c (fun z -> d (fun w -> yield (x,y,z,w)))))
 
   exception IterExit
-  let find p iter =
+  let find_map p iter =
     let r = ref None in
-    (try iter (fun x -> if p x then (r := Some x; raise IterExit))
+    (try iter (fun x -> match p x with Some _ as y -> r := y; raise IterExit | None -> ())
      with IterExit -> ()
     );
     !r
+
+  let find p iter = find_map (fun x->if p x then Some x else None) iter
 end
 
 module Shrink = struct
@@ -1207,30 +1209,39 @@ module Test = struct
          Hashtbl.replace tbl key (n+1))
       st.res.R.stats_tbl
 
+  type res_or_exn =
+    | Shrink_fail
+    | Shrink_exn of exn
+
   (* try to shrink counter-ex [i] into a smaller one. Returns
      shrinked value and number of steps *)
-  let shrink st i =
-    let rec shrink_ st i ~steps =
+  let shrink st (i:'a) (r:res_or_exn) : 'a * res_or_exn * int =
+    let is_err = match r with
+      | Shrink_exn _ -> true | _ -> false
+    in
+    let rec shrink_ st i r ~steps =
       st.handler st.test.name st.test (Shrunk (steps, i));
       match st.test.arb.shrink with
-      | None -> i, steps
+      | None -> i, r, steps
       | Some f ->
         let count = ref 0 in
-        let i' = Iter.find
+        let i' = Iter.find_map
           (fun x ->
             try
               incr count;
               st.handler st.test.name st.test (Shrinking (steps, !count, x));
-              not (st.test.law x)
-            with FailedPrecondition | No_example_found _ -> false
-            | _ -> true (* fail test (by error) *)
+              if not (st.test.law x) && not is_err
+              then Some (x, Shrink_fail)
+              else None
+            with FailedPrecondition | No_example_found _ -> None
+            | e when is_err -> Some (x, Shrink_exn e) (* fail test (by error) *)
           ) (f i)
         in
         match i' with
-        | None -> i, steps
-        | Some i' -> shrink_ st i' ~steps:(steps+1) (* shrink further *)
+        | None -> i, r, steps
+        | Some (i',r') -> shrink_ st i' r' ~steps:(steps+1) (* shrink further *)
     in
-    shrink_ ~steps:0 st i
+    shrink_ ~steps:0 st i r
 
   type 'a check_result =
     | CR_continue
@@ -1240,7 +1251,12 @@ module Test = struct
   let handle_exn state input e bt : _ check_result =
     (* first, shrink
        TODO: shall we shrink differently (i.e. expected only an error)? *)
-    let input, steps = shrink state input in
+    let input, r, steps = shrink state input (Shrink_exn e) in
+    (* recover exception of shrunk input *)
+    let e = match r with
+      | Shrink_fail -> e
+      | Shrink_exn e' -> e'
+    in
     state.step state.test.name state.test input (Error (e, bt));
     R.error state.res ~steps input e bt;
     CR_yield state.res
@@ -1249,7 +1265,7 @@ module Test = struct
      we should. *)
   let handle_fail state input : _ check_result =
     (* first, shrink *)
-    let input, steps = shrink state input in
+    let input, _, steps = shrink state input Shrink_fail in
     (* fail *)
     decr_count state;
     state.step state.test.name state.test input Failure;
