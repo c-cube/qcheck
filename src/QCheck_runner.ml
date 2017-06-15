@@ -463,8 +463,7 @@ let expect_size long cell =
   aux (expect long cell)
 
 (* print user messages for a test *)
-let print_messages ~colors out cell r =
-  let l = r.QCheck.TestResult.msg_l in
+let print_messages ~colors out cell l =
   if l<>[] then (
     Printf.fprintf out
       "\n+++ %a %s\n\nMessages for test %s\n\n%!"
@@ -491,7 +490,8 @@ let print_fail ~colors out cell c_ex =
   Printf.fprintf out "\n--- %a %s\n\n" (Color.pp_str_c ~colors `Red) "Failure" (String.make 68 '-');
   Printf.fprintf out "Test %s failed (%d shrink steps):\n\n%s\n%!"
     (QCheck.Test.get_name cell) c_ex.QCheck.TestResult.shrink_steps
-    (print_inst (QCheck.Test.get_arbitrary cell) c_ex.QCheck.TestResult.instance)
+    (print_inst (QCheck.Test.get_arbitrary cell) c_ex.QCheck.TestResult.instance);
+  print_messages ~colors out cell c_ex.QCheck.TestResult.msg_l
 
 let print_error ~colors out cell c_ex exn bt =
   Printf.fprintf out "\n=== %a %s\n\n" (Color.pp_str_c ~colors `Red) "Error" (String.make 70 '=');
@@ -500,7 +500,8 @@ let print_error ~colors out cell c_ex exn bt =
     c_ex.QCheck.TestResult.shrink_steps
     (print_inst (QCheck.Test.get_arbitrary cell) c_ex.QCheck.TestResult.instance)
     (Printexc.to_string exn)
-    bt
+    bt;
+  print_messages ~colors out cell c_ex.QCheck.TestResult.msg_l
 
 let run_tests
     ?(colors=true) ?(verbose=verbose()) ?(long=long_tests()) ?(out=stdout) ?(rand=random_state()) l =
@@ -545,7 +546,6 @@ let run_tests
         print_error ~colors out cell c_ex exn bt;
         (total + 1, fail, error + 1)
     in
-    print_messages ~colors out cell r;
     acc
   in
   let total, fail, error = List.fold_left aux_fold (0, 0, 0) res in

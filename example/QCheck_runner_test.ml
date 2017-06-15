@@ -63,7 +63,15 @@ let prop_foldleft_foldright =
        int_gen
        (list int_gen)
        (fun2 Observable.int Observable.int int_gen))
-    (fun (z,xs,f) -> List.fold_right (Fn.apply f) xs z = List.fold_left (Fn.apply f) z xs)
+    (fun (z,xs,f) ->
+       let l1 = List.fold_right (Fn.apply f) xs z in
+       let l2 = List.fold_left (Fn.apply f) z xs in
+       if l1=l2 then true
+       else QCheck.Test.fail_reportf "l=%s, fold_left=%s, fold_right=%s@."
+           (QCheck.Print.(list int) xs)
+           (QCheck.Print.int l1)
+           (QCheck.Print.int l2)
+    )
 
 (* Another example (false) property *)
 let prop_foldleft_foldright_uncurry =
@@ -85,13 +93,12 @@ let long_shrink =
 
 let find_ex =
   let open QCheck in
-  Test.make_full ~name:"find_example" (2--50)
-  (fun ctx n ->
+  Test.make ~name:"find_example" (2--50)
+  (fun n ->
     let st = Random.State.make [| 0 |] in
     let f m = n < m && m < 2 * n in
     try
       let m = find_example_gen ~rand:st ~count:100_000 ~f Gen.(0 -- 1000) in
-      QCheck.Test.ctx_reportf ctx "example for %d is %d" n m;
       f m
      with No_example_found _ -> false)
 
