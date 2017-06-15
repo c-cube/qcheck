@@ -462,6 +462,17 @@ let expect_size long cell =
   let rec aux n = if n < 10 then 1 else 1 + (aux (n / 10)) in
   aux (expect long cell)
 
+(* print user messages for a test *)
+let print_messages ~colors out cell r =
+  let l = r.QCheck.TestResult.msg_l in
+  if l<>[] then (
+    Printf.fprintf out
+      "\n+++ %a %s\n\nMessages for test %s\n\n%!"
+      (Color.pp_str_c ~colors `Blue) "Messages"
+      (String.make 68 '+') (QCheck.Test.get_name cell);
+    List.iter (Printf.fprintf out "%s\n%!") l
+  )
+
 let print_success ~colors out cell r =
   begin match QCheck.TestResult.collect r with
     | None -> ()
@@ -523,16 +534,19 @@ let run_tests
   in
   let res = List.map aux_map l in
   let aux_fold (total, fail, error) (Res (cell, r)) =
-    match r.R.state with
-    | R.Success ->
-      print_success ~colors out cell r;
-      (total + 1, fail, error)
-    | R.Failed l ->
-      List.iter (print_fail ~colors out cell) l;
-      (total + 1, fail + 1, error)
-    | R.Error (c_ex, exn, bt) ->
-      print_error ~colors out cell c_ex exn bt;
-      (total + 1, fail, error + 1)
+    let acc = match r.R.state with
+      | R.Success ->
+        print_success ~colors out cell r;
+        (total + 1, fail, error)
+      | R.Failed l ->
+        List.iter (print_fail ~colors out cell) l;
+        (total + 1, fail + 1, error)
+      | R.Error (c_ex, exn, bt) ->
+        print_error ~colors out cell c_ex exn bt;
+        (total + 1, fail, error + 1)
+    in
+    print_messages ~colors out cell r;
+    acc
   in
   let total, fail, error = List.fold_left aux_fold (0, 0, 0) res in
   Printf.fprintf out "%s\n" (String.make 80 '=');

@@ -587,6 +587,7 @@ module TestResult : sig
     mutable count_gen: int; (* Number of generated cases *)
     collect_tbl: (string, int) Hashtbl.t lazy_t;
     stats_tbl: ('a stat * (int, int) Hashtbl.t) list; (** @since 0.6 *)
+    msg_l: string list; (** messages. @since NEXT_RELEASE *)
   }
 
   val collect : _ t -> (string,int) Hashtbl.t option
@@ -601,6 +602,26 @@ end
 module Test : sig
   type 'a cell
   (** A single property test *)
+
+  type test_context
+  (** Context for a single test run, with some internal state
+      @since NEXT_RELEASE *)
+
+  val ctx_rand : test_context -> Random.State.t
+  (** Current random generator, useful in combination with {!find_example_gen}.
+      @since NEXT_RELEASE *)
+
+  val ctx_report : test_context -> string -> unit
+  (** Report some message for the current test (typically, pretty-print
+      some value if the test fails).
+      @since NEXT_RELEASE *)
+
+  val ctx_reportf : test_context -> ('a, Format.formatter, unit, unit) format4 -> 'a
+  (** Format version of {!ctx_report}
+      @since NEXT_RELEASE *)
+
+  val ctx_messages : test_context -> string list
+  (** All reported messages *)
 
   val make_cell :
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
@@ -624,8 +645,16 @@ module Test : sig
         function, only the smallest failures will be printed.
   *)
 
+  val make_cell_full :
+    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
+    ?small:('a -> int) -> ?name:string -> 'a arbitrary -> (test_context -> 'a -> bool) ->
+    'a cell
+  (** More general version of {!make_cell}, with a context given to the
+      property to check.
+      @since NEXT_RELEASE *)
+
   val get_arbitrary : 'a cell -> 'a arbitrary
-  val get_law : 'a cell -> ('a -> bool)
+  val get_law : 'a cell -> (test_context -> 'a -> bool)
   val get_name : _ cell -> string
   val set_name : _ cell -> string -> unit
 
@@ -647,6 +676,16 @@ module Test : sig
   (** [make arb prop] builds a test that checks property [prop] on instances
       of the generator [arb].
       See {!make_cell} for a description of the parameters.
+  *)
+
+  val make_full :
+    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
+    ?small:('a -> int) -> ?name:string ->
+    'a arbitrary ->
+    (test_context -> 'a -> bool) -> t
+  (** [make arb prop] builds a test that checks property [prop] on instances
+      of the generator [arb]. Here [prop] takes an explicit context.
+      @since NEXT_RELEASE
   *)
 
   (** {6 Running the test} *)

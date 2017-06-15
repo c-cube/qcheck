@@ -85,12 +85,13 @@ let long_shrink =
 
 let find_ex =
   let open QCheck in
-  Test.make ~name:"find_example" (2--50)
-  (fun n ->
+  Test.make_full ~name:"find_example" (2--50)
+  (fun ctx n ->
     let st = Random.State.make [| 0 |] in
     let f m = n < m && m < 2 * n in
     try
       let m = find_example_gen ~rand:st ~count:100_000 ~f Gen.(0 -- 1000) in
+      QCheck.Test.ctx_reportf ctx "example for %d is %d" n m;
       f m
      with No_example_found _ -> false)
 

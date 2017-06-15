@@ -1059,6 +1059,7 @@ module TestResult = struct
     mutable count_gen: int; (* number of generated cases *)
     collect_tbl: (string, int) Hashtbl.t lazy_t;
     stats_tbl: ('a stat * (int, int) Hashtbl.t) list;
+    msg_l: string list;
   }
 
   (* indicate failure on the given [instance] *)
@@ -1095,12 +1096,27 @@ module TestResult = struct
 end
 
 module Test = struct
+  type test_context = {
+    ctx_rand: Random.State.t;
+    mutable ctx_msg: string list;
+  }
+
+  let ctx_rand c = c.ctx_rand
+  let ctx_messages c = c.ctx_msg
+  let ctx_report c s = c.ctx_msg <- s :: c.ctx_msg
+
+  let ctx_reportf c m =
+    let buf = Buffer.create 64 in
+    Format.kfprintf
+      (fun out -> Format.fprintf out "@?"; ctx_report c (Buffer.contents buf))
+      (Format.formatter_of_buffer buf) m
+
   type 'a cell = {
     count : int; (* number of tests to do *)
     long_factor : int; (* multiplicative factor for long test count *)
     max_gen : int; (* max number of instances to generate (>= count) *)
     max_fail : int; (* max number of failures *)
-    law : 'a -> bool; (* the law to check *)
+    law : test_context -> 'a -> bool; (* the law to check *)
     arb : 'a arbitrary; (* how to generate/print/shrink instances *)
     mutable name : string; (* name of the law *)
   }
@@ -1121,7 +1137,7 @@ module Test = struct
     let r = ref 0 in
     (fun () -> incr r; Printf.sprintf "anon_test_%d" !r)
 
-  let make_cell ?(count=default_count) ?(long_factor=1) ?max_gen
+  let make_cell_full ?(count=default_count) ?(long_factor=1) ?max_gen
   ?(max_fail=1) ?small ?(name=fresh_name()) arb law
   =
     let max_gen = match max_gen with None -> count + 200 | Some x->x in
@@ -1136,9 +1152,15 @@ module Test = struct
       long_factor;
     }
 
+  let make_cell ?count ?long_factor ?max_gen ?max_fail ?small ?name arb f =
+    make_cell_full ?count ?long_factor ?max_gen ?max_fail ?small ?name
+      arb (fun _ctx x -> f x)
+
   let make ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law =
     Test (make_cell ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law)
 
+  let make_full ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law =
+    Test (make_cell_full ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law)
 
   (** {6 Running the test} *)
 
@@ -1173,7 +1195,7 @@ module Test = struct
     test: 'a cell;
     step: 'a step;
     handler : 'a handler;
-    rand: Random.State.t;
+    ctx: test_context;
     mutable res: 'a TestResult.t;
     mutable cur_count: int;  (** number of iterations to do *)
     mutable cur_max_gen: int; (** maximum number of generations allowed *)
@@ -1189,7 +1211,7 @@ module Test = struct
   let new_input state =
     state.res.R.count_gen <- state.res.R.count_gen + 1;
     state.cur_max_gen <- state.cur_max_gen - 1;
-    state.test.arb.gen state.rand
+    state.test.arb.gen state.ctx.ctx_rand
 
   (* statistics on inputs *)
   let collect st i = match st.test.arb.collect with
@@ -1230,7 +1252,7 @@ module Test = struct
             try
               incr count;
               st.handler st.test.name st.test (Shrinking (steps, !count, x));
-              if not (st.test.law x) && not is_err
+              if not (st.test.law st.ctx x) && not is_err
               then Some (x, Shrink_fail)
               else None
             with FailedPrecondition | No_example_found _ -> None
@@ -1291,7 +1313,7 @@ module Test = struct
       let res =
         try
           state.handler state.test.name state.test (Testing input);
-          if state.test.law input
+          if state.test.law state.ctx input
           then (
             (* one test ok *)
             decr_count state;
@@ -1313,7 +1335,7 @@ module Test = struct
 
   type 'a callback = string -> 'a cell -> 'a TestResult.t -> unit
 
-  let callback_nil_ _ _ _ = ()
+  let callback_nil_ : _ callback = fun _ _ _ -> ()
 
   (* main checking function *)
   let check_cell ?(long=false) ?(call=callback_nil_)
@@ -1322,7 +1344,8 @@ module Test = struct
     let factor = if long then cell.long_factor else 1 in
     let state = {
       test=cell;
-      rand; step; handler;
+      ctx={ctx_rand=rand; ctx_msg=[]; };
+      step; handler;
       cur_count=factor*cell.count;
       cur_max_gen=factor*cell.max_gen;
       cur_max_fail=factor*cell.max_fail;
@@ -1330,9 +1353,12 @@ module Test = struct
         state=R.Success; count=0; count_gen=0;
         collect_tbl=lazy (Hashtbl.create 10);
         stats_tbl= List.map (fun stat -> stat, Hashtbl.create 10) cell.arb.stats;
+        msg_l=[];
       };
     } in
     let res = check_state state in
+    (* update list of messages *)
+    let res = {res with R.msg_l=List.rev state.ctx.ctx_msg; } in
     call cell.name cell res;
     res
 
