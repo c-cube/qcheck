@@ -466,7 +466,7 @@ let expect_size long cell =
 let print_messages ~colors out cell l =
   if l<>[] then (
     Printf.fprintf out
-      "\n+++ %a %s\n\nMessages for test %s\n\n%!"
+      "\n+++ %a %s\n\nMessages for test %s:\n\n%!"
       (Color.pp_str_c ~colors `Blue) "Messages"
       (String.make 68 '+') (QCheck.Test.get_name cell);
     List.iter (Printf.fprintf out "%s\n%!") l
