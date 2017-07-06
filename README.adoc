@@ -181,12 +181,14 @@ contains everything needed for testing on trees:
 - a printer (optional), very useful for printing counterexamples
 - a *shrinker* (optional), very useful for trying to reduce big
   counterexamples to small counterexamples that are usually
-  more easy to understand. A range of combinators in `QCheck.Shrink`
-  and `QCheck.Iter` are available for building shrinking functions.
-  The above shrinker strategy is to
-    - reduce the integer leaves, and
-    - substitute an internal `Node` with either of its subtrees or
-      by splicing in a recursively shrunk subtree.
+  more easy to understand. 
+
+The above shrinker strategy is to
+- reduce the integer leaves, and
+- substitute an internal `Node` with either of its subtrees or
+  by splicing in a recursively shrunk subtree.
+A range of combinators in `QCheck.Shrink` and `QCheck.Iter` are available
+for building shrinking functions.
 
 
 We can write a failing test using this generator to see the
