@@ -57,37 +57,72 @@ any list `l`:
 [source,OCaml]
 ----
 let test =
-  QCheck.Test.make ~count:1000
-    ~name:"list_rev_is_involutive"
-   QCheck.(list int)
+  QCheck.Test.make ~count:1000 ~name:"list_rev_is_involutive"
+   QCheck.(list small_nat)
    (fun l -> List.rev (List.rev l) = l);;
 
 (* we can check right now the property... *)
 QCheck.Test.check_exn test;;
 ----
 
-Now, let's run the test with a decent runner that
-will print the results nicely
-(the exact output will change at each run, because of
-the random seed):
+
+In the above example, we applied the combinator `list` to
+the random generator `small_nat` (ints between 0 and 100), to create a
+new generator of lists of random integers. These builtin generators
+come with printers and shrinkers which are handy for outputting and
+minimizing a counterexample when a test fails.
+
+Consider the buggy property `List.rev l = l`:
+
+[source,OCaml]
+----
+let test =
+  QCheck.Test.make ~count:1000 ~name:"my_buggy_test"
+   QCheck.(list small_nat)
+   (fun l -> List.rev l = l);;
+----
+
+When we run this test we are presented with a counterexample:
+
+[source,OCaml]
+----
+# QCheck.Test.check_exn test;;
+Exception:
+QCheck.Test.Test_fail ("my_buggy_test", ["[0; 1] (after 23 shrink steps)"]).
+----
+
+In this case QCheck found the minimal counterexample `[0;1]` to the property
+`List.rev l = l` and it spent 23 steps shrinking it.
+
+
+Now, let's run the buggy test with a decent runner that will print the results
+nicely (the exact output will change at each run, because of the random seed):
 
 ----
 # QCheck_runner.run_tests [test];;
-random seed: 415927808
-success (ran 1 tests)
-- : int = 0
+
+--- Failure --------------------------------------------------------------------
+
+Test my_buggy_test failed (10 shrink steps):
+
+[0; 1]
+================================================================================
+failure (1 tests failed, 0 tests errored, ran 1 tests)
+- : int = 1
 ----
+
+
+For an even nicer output `QCheck_runner.run_tests` also accepts an optional
+parameter `~verbose:true`.
+
 
 
 === Mirrors and Trees
 
-In the first example, we applied the combinator `list` to
-the random generator `small_nat` (ints between 0 and 100), and
-that generates lists of random integers.
 
 `QCheck` provides many useful combinators to write
 generators, especially for recursive types, algebraic types,
-tuples.
+and tuples.
 
 Let's see how to generate random trees:
 
@@ -112,22 +147,28 @@ QCheck.Gen.generate ~n:20 tree_gen;;
 
 let arbitrary_tree =
   let open QCheck.Iter in
+  let rec print_tree = function
+    | Leaf i -> "Leaf " ^ (string_of_int i)
+    | Node (a,b) -> "Node (" ^ (print_tree a) ^ "," ^ (print_tree b) ^ ")"
+  in
   let rec shrink_tree = function
     | Leaf i -> QCheck.Shrink.int i >|= leaf
     | Node (a,b) ->
+      of_list [a;b]
+      <+>
       (shrink_tree a >|= fun a' -> node a' b)
       <+>
       (shrink_tree b >|= fun b' -> node a b')
   in
-  QCheck.make tree_gen ~shrink:shrink_tree ;;
+  QCheck.make tree_gen ~print:print_tree ~shrink:shrink_tree;;
 
 ----
 
-Here we write a random generator, `tree_gen`, using
-the `fix` combinator. `fix` is *sized* (it's a function from `int` to
+Here we write a generator of random trees, `tree_gen`, using
+the `fix` combinator. `fix` is *sized* (it is a function from `int` to
 a random generator; in particular for size 0 it returns only leaves).
-The `sized` combinator first generates a size, and applies its argument
-to this size.
+The `sized` combinator first generates a random size, and then applies
+its argument to this size.
 
 Other combinators include monadic abstraction, lifting functions,
 generation of lists, arrays, and a choice function.
@@ -135,39 +176,78 @@ generation of lists, arrays, and a choice function.
 Then, we define `arbitrary_tree`, a `tree QCheck.arbitrary` value, which
 contains everything needed for testing on trees:
 
-- a random generator (mandatory)
-- a printer (optional, not provided here, but it would be easy to add)
-- a *shrinker* (optional, very useful), for trying to reduce big
-  counter-examples to small counter-examples  that are usually
-  more easy to understand. There are some combinators in `QCheck.Shrink`
-  and `QCheck.Iter` to build those shrinking functions.
+- a random generator (mandatory), weighted with `frequency` to
+  increase the chance of generating deep trees
+- a printer (optional), very useful for printing counterexamples
+- a *shrinker* (optional), very useful for trying to reduce big
+  counterexamples to small counterexamples that are usually
+  more easy to understand. 
 
-Now let's write a test using this generator:
+The above shrinker strategy is to
+
+- reduce the integer leaves, and
+- substitute an internal `Node` with either of its subtrees or
+  by splicing in a recursively shrunk subtree.
+
+A range of combinators in `QCheck.Shrink` and `QCheck.Iter` are available
+for building shrinking functions.
+
+
+We can write a failing test using this generator to see the
+printer and shrinker in action:
 
 [source,OCaml]
 ----
-
 let rec mirror_tree (t:tree) : tree = match t with
   | Leaf _ -> t
   | Node (a,b) -> node (mirror_tree b) (mirror_tree a);;
 
+let test_buggy =
+  QCheck.Test.make ~name:"buggy_mirror" ~count:200
+    arbitrary_tree (fun t -> t = mirror_tree t);;
+
+QCheck_runner.run_tests [test_buggy];;
+----
+
+This test fails with:
+
+[source,OCaml]
+----
+
+--- Failure --------------------------------------------------------------------
+
+Test mirror_buggy failed (6 shrink steps):
+
+Node (Leaf 0,Leaf 1)
+================================================================================
+failure (1 tests failed, 0 tests errored, ran 1 tests)
+- : int = 1
+----
+
+
+With the (new found) understanding that mirroring a tree
+changes its structure, we can formulate another property
+that involves sequentializing its elements in a traversal:
+
+[source,OCaml]
+----
 let tree_infix (t:tree): int list =
   let rec aux acc t = match t with
     | Leaf i -> i :: acc
     | Node (a,b) ->
       aux (aux acc b) a
   in
-  aux [] t  ;;
+  aux [] t;;
 
 let test_mirror =
   QCheck.Test.make ~name:"mirror_tree" ~count:200
     arbitrary_tree
-    (fun (t:tree) ->
-       List.rev (tree_infix t) = tree_infix (mirror_tree t))  ;;
+    (fun t -> List.rev (tree_infix t) = tree_infix (mirror_tree t));;
 
 QCheck_runner.run_tests [test_mirror];;
 
 ----
+
 
 === Preconditions
 
