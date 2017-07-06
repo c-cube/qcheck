@@ -107,6 +107,10 @@ let shrink_int =
   QCheck.Test.make ~count:1000 ~name:"mod3_should_fail"
    QCheck.int (fun i -> i mod 3 <> 0);;
 
+let stats_negs =
+  QCheck.(Test.make ~count:5_000 ~name:"stats_neg"
+      (add_stat ("dist",fun x -> x) small_signed_int))
+    (fun _ -> true)
 
 let () =
   QCheck_runner.run_tests_main [
@@ -122,5 +126,6 @@ let () =
     long_shrink;
     find_ex;
     shrink_int;
+    stats_negs;
   ]
 

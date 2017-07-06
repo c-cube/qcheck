@@ -1204,7 +1204,6 @@ module Test = struct
     List.iter
       (fun ((_,f), tbl) ->
          let key = f i in
-         assert (key>=0);
          let n = try Hashtbl.find tbl key with Not_found -> 0 in
          Hashtbl.replace tbl key (n+1))
       st.res.R.stats_tbl
@@ -1411,7 +1410,7 @@ module Test = struct
            avg := !avg +. float_of_int (i * res);
            num := !num + res;
            min i m1, max i m2)
-        tbl (max_int,0)
+        tbl (max_int,min_int)
     in
     (* compute average *)
     if !num > 0 then (
@@ -1431,16 +1430,17 @@ module Test = struct
     let median_num = ref 0 in (* how many values have we seen yet? once >= !n/2 we set median *)
     (* group by buckets, if there are too many entries *)
     let hist_size, bucket_size =
-      if max_idx > stat_max_lines
-      then 1+stat_max_lines, int_of_float (ceil (float_of_int max_idx/. float_of_int stat_max_lines))
-      else 1+max_idx, 1
+      if max_idx-min_idx > stat_max_lines
+      then 1+stat_max_lines,
+        int_of_float (ceil (float_of_int (max_idx-min_idx)/. float_of_int stat_max_lines))
+      else 1+max_idx-min_idx, 1
     in
     let max_val = ref 0 in (* max value after grouping by buckets *)
     let rows =
       Array.init hist_size
         (fun i ->
            let n = ref 0 in
-           let i' = i * bucket_size in
+           let i' = min_idx + i * bucket_size in
            for j=i' to i'+bucket_size-1 do
              let n_j = try Hashtbl.find tbl j with Not_found -> 0 in
              n := !n + n_j;
@@ -1456,7 +1456,7 @@ module Test = struct
            let key =
              if bucket_size=1
              then Printf.sprintf "%d" i
-             else Printf.sprintf "%d-%d" i' (i'+bucket_size-1)
+             else Printf.sprintf "%d..%d" i' (i'+bucket_size-1)
            in
            key, !n)
     in
