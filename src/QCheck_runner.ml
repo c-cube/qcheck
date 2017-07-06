@@ -482,7 +482,11 @@ let print_success ~colors out cell r =
         (String.make 68 '+') (QCheck.Test.get_name cell) (QCheck.Test.print_collect tbl)
   end;
   List.iter
-    (fun st -> print_string (QCheck.Test.print_stat st))
+    (fun st ->
+       Printf.fprintf out
+         "\n+++ %a %s\n\nStat for test %s:\n\n%s%!"
+        (Color.pp_str_c ~colors `Blue) "Stat" (String.make 68 '+') 
+        (QCheck.Test.get_name cell) (QCheck.Test.print_stat st))
     (QCheck.TestResult.stats r);
   ()
 
