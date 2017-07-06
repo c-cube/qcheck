@@ -184,9 +184,11 @@ contains everything needed for testing on trees:
   more easy to understand. 
 
 The above shrinker strategy is to
+
 - reduce the integer leaves, and
 - substitute an internal `Node` with either of its subtrees or
   by splicing in a recursively shrunk subtree.
+
 A range of combinators in `QCheck.Shrink` and `QCheck.Iter` are available
 for building shrinking functions.
 
