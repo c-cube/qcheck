@@ -1412,6 +1412,11 @@ module Test = struct
            min i m1, max i m2)
         tbl (max_int,min_int)
     in
+    (* round min_idx to the closest multiple of 10 that is smaller *)
+    let min_idx =
+      if min_idx>0 then 10 * min_idx / 10
+      else 10 * (min_idx/10 - (min_idx mod 10))
+    in
     (* compute average *)
     if !num > 0 then (
       avg := !avg /. float_of_int !num
