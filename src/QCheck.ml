@@ -1429,14 +1429,14 @@ module Test = struct
     let median = ref 0 in
     let median_num = ref 0 in (* how many values have we seen yet? once >= !n/2 we set median *)
     (Hashtbl.fold (fun i cnt acc -> (i,cnt)::acc) tbl [])
-      |> List.sort (fun (i,_) (j,_) -> compare i j)
-      |> List.iter
-	  (fun (i,cnt) ->
-            if !median_num < !num/2 then (
-	      median_num := !median_num + cnt;
-              (* just went above median! *)
-	      if !median_num >= !num/2 then
-		median := i));
+    |> List.sort (fun (i,_) (j,_) -> compare i j)
+    |> List.iter
+      (fun (i,cnt) ->
+         if !median_num < !num/2 then (
+           median_num := !median_num + cnt;
+           (* just went above median! *)
+           if !median_num >= !num/2 then
+             median := i));
     (* group by buckets, if there are too many entries: *)
     (* first compute histogram and bucket size *)
     let hist_size, bucket_size =
@@ -1451,10 +1451,10 @@ module Test = struct
     let bucket_count = Array.init hist_size (fun _ -> 0) in
     Hashtbl.iter
       (fun j count ->
-	let bucket = Int64.(to_int (div (sub (of_int j) (of_int min_idx)) (of_int bucket_size))) in
-	let new_count = bucket_count.(bucket) + count in
-	bucket_count.(bucket) <- new_count;
-        max_val := max !max_val new_count) tbl;
+         let bucket = Int64.(to_int (div (sub (of_int j) (of_int min_idx)) (of_int bucket_size))) in
+         let new_count = bucket_count.(bucket) + count in
+         bucket_count.(bucket) <- new_count;
+         max_val := max !max_val new_count) tbl;
     (* print entries of the table, sorted by increasing index *)
     let out = Buffer.create 128 in
     Printf.bprintf out "stats %s:\n" name;
