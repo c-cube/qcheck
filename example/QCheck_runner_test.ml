@@ -112,8 +112,20 @@ let stats_negs =
       (add_stat ("dist",fun x -> x) small_signed_int))
     (fun _ -> true)
 
+let stats_tests =
+  let open QCheck in
+  [
+    Test.make ~name:"stat_display_test_1" ~count:1000 (add_stat ("dist",fun x -> x) small_signed_int) (fun _ -> true);
+    Test.make ~name:"stat_display_test_2" ~count:1000 (add_stat ("dist",fun x -> x) small_nat) (fun _ -> true);
+    Test.make ~name:"stat_display_test_3" ~count:1000 (add_stat ("dist",fun x -> x) (int_range (-43643) 435434)) (fun _ -> true);
+    Test.make ~name:"stat_display_test_4" ~count:1000 (add_stat ("dist",fun x -> x) (int_range (-40000) 40000)) (fun _ -> true);
+    Test.make ~name:"stat_display_test_5" ~count:1000 (add_stat ("dist",fun x -> x) (int_range (-4) 4)) (fun _ -> true);
+    Test.make ~name:"stat_display_test_6" ~count:1000 (add_stat ("dist",fun x -> x) (int_range (-4) 17)) (fun _ -> true);
+    Test.make ~name:"stat_display_test_7" ~count:100000 (add_stat ("dist",fun x -> x) int) (fun _ -> true);
+  ]
+
 let () =
-  QCheck_runner.run_tests_main [
+  QCheck_runner.run_tests_main ([
     passing;
     failing;
     error;
@@ -127,5 +139,5 @@ let () =
     find_ex;
     shrink_int;
     stats_negs;
-  ]
+  ] @ stats_tests)
 
