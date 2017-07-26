@@ -1412,11 +1412,6 @@ module Test = struct
            min i m1, max i m2)
         tbl (max_int,min_int)
     in
-    (* round min_idx to the closest multiple of 10 that is smaller *)
-    let min_idx =
-      if min_idx>0 then 10 * min_idx / 10
-      else 10 * (min_idx/10 - (min_idx mod 10))
-    in
     (* compute average *)
     if !num > 0 then (
       avg := !avg /. float_of_int !num
@@ -1433,50 +1428,50 @@ module Test = struct
     (* compute median *)
     let median = ref 0 in
     let median_num = ref 0 in (* how many values have we seen yet? once >= !n/2 we set median *)
-    (* group by buckets, if there are too many entries *)
+    (Hashtbl.fold (fun i cnt acc -> (i,cnt)::acc) tbl [])
+      |> List.sort (fun (i,_) (j,_) -> compare i j)
+      |> List.iter
+	  (fun (i,cnt) ->
+            if !median_num < !num/2 then (
+	      median_num := !median_num + cnt;
+              (* just went above median! *)
+	      if !median_num >= !num/2 then
+		median := i));
+    (* group by buckets, if there are too many entries: *)
+    (* first compute histogram and bucket size *)
     let hist_size, bucket_size =
-      if max_idx-min_idx > stat_max_lines
+      let sample_width = Int64.(sub (of_int max_idx) (of_int min_idx)) in
+      if sample_width > Int64.of_int stat_max_lines
       then 1+stat_max_lines,
-        int_of_float (ceil (float_of_int (max_idx-min_idx)/. float_of_int stat_max_lines))
+        int_of_float (ceil (Int64.to_float sample_width /. float_of_int stat_max_lines))
       else 1+max_idx-min_idx, 1
     in
+    (* accumulate bucket counts *)
     let max_val = ref 0 in (* max value after grouping by buckets *)
-    let rows =
-      Array.init hist_size
-        (fun i ->
-           let n = ref 0 in
-           let i' = min_idx + i * bucket_size in
-           for j=i' to i'+bucket_size-1 do
-             let n_j = try Hashtbl.find tbl j with Not_found -> 0 in
-             n := !n + n_j;
-             if !median_num < !num/2 then (
-               median_num := !median_num + n_j;
-               (* just went above median! *)
-               if !median_num >= !num/2 then (
-                 median := j;
-               )
-             );
-           done;
-           max_val := max !max_val !n;
-           let key =
-             if bucket_size=1
-             then Printf.sprintf "%d" i
-             else Printf.sprintf "%d..%d" i' (i'+bucket_size-1)
-           in
-           key, !n)
-    in
-    (* entries of the table, sorted by increasing index *)
+    let bucket_count = Array.init hist_size (fun _ -> 0) in
+    Hashtbl.iter
+      (fun j count ->
+	let bucket = Int64.(to_int (div (sub (of_int j) (of_int min_idx)) (of_int bucket_size))) in
+	let new_count = bucket_count.(bucket) + count in
+	bucket_count.(bucket) <- new_count;
+        max_val := max !max_val new_count) tbl;
+    (* print entries of the table, sorted by increasing index *)
     let out = Buffer.create 128 in
     Printf.bprintf out "stats %s:\n" name;
     Printf.bprintf out
       "  num: %d, avg: %.2f, stddev: %.2f, median %d, min %d, max %d\n"
       !num !avg stddev !median min_idx max_idx;
-    Array.iter
-      (fun (key, value) ->
-         (* NOTE: keep in sync *)
-         let m = value * 55 / !max_val in
-         Printf.bprintf out "  %15s: %-56s %10d\n" key (String.make m '#') value)
-      rows;
+    for i = 0 to hist_size - 1 do
+      let i' = min_idx + i * bucket_size in
+      let blabel =
+        if bucket_size=1
+        then Printf.sprintf "%d" i'
+        else Printf.sprintf "%d..%d" i' (i'+bucket_size-1) in
+      let bcount = bucket_count.(i) in
+      (* NOTE: keep in sync *)
+      let bar_len = bcount * 55 / !max_val in
+      Printf.bprintf out "  %15s: %-56s %10d\n" blabel (String.make bar_len '#') bcount
+    done;
     Buffer.contents out
 
   let () = Printexc.register_printer
