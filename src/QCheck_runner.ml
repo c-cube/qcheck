@@ -315,9 +315,9 @@ let callback ~verbose ~print_res ~print name cell result =
     match result.R.state with
       | R.Success -> ()
       | R.Failed l ->
-        print.fail "%s  %s\n" Color.reset_line (T.print_fail arb name l);
+        print.fail "%s%s\n" Color.reset_line (T.print_fail arb name l);
       | R.Error (i,e,st) ->
-        print.err "%s  %s\n" Color.reset_line (T.print_error ~st arb name (i,e));
+        print.err "%s%s\n" Color.reset_line (T.print_error ~st arb name (i,e));
   )
 
 let name_of_cell cell =

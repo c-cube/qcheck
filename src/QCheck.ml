@@ -1367,11 +1367,21 @@ module Test = struct
     | None -> "<instance>"
     | Some pp -> pp i
 
-  let print_c_ex arb c =
-    if c.R.shrink_steps > 0
-    then Printf.sprintf "%s (after %d shrink steps)"
-      (print_instance arb c.R.instance) c.R.shrink_steps
-    else print_instance arb c.R.instance
+  let print_c_ex arb c : string =
+    let buf = Buffer.create 64 in
+    begin
+      if c.R.shrink_steps > 0
+      then Printf.bprintf buf "%s (after %d shrink steps)"
+          (print_instance arb c.R.instance) c.R.shrink_steps
+      else Buffer.add_string buf (print_instance arb c.R.instance)
+    end;
+    List.iter
+      (fun msg ->
+         Buffer.add_char buf '\n';
+         Buffer.add_string buf msg;
+         Buffer.add_char buf '\n')
+      c.R.msg_l;
+    Buffer.contents buf
 
   let pp_print_test_fail name out l =
     let rec pp_list out = function
@@ -1379,7 +1389,7 @@ module Test = struct
       | [x] -> Format.fprintf out "%s@," x
       | x :: y -> Format.fprintf out "%s@,%a" x pp_list y
     in
-    Format.fprintf out "@[<hv2>test `%s`@ failed on ≥ %d cases:@ @[<v>%a@]@]"
+    Format.fprintf out "@[test `%s`@ failed on ≥ %d cases:@ @[<v>%a@]@]"
       name (List.length l) pp_list l
 
   let asprintf fmt =
@@ -1387,7 +1397,7 @@ module Test = struct
     let out = Format.formatter_of_buffer buf in
     Format.kfprintf (fun _ -> Buffer.contents buf) out fmt
 
-  let print_test_fail name l = asprintf "@[<2>%a@]@?" (pp_print_test_fail name) l
+  let print_test_fail name l = asprintf "@[%a@]@?" (pp_print_test_fail name) l
 
   let print_test_error name i e stack =
     Format.sprintf "@[test `%s`@ raised exception `%s`@ on `%s`@,%s@]"

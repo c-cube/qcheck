@@ -18,9 +18,15 @@ let error =
     QCheck.int
     (fun _ -> raise Error)
 
+let simple_qcheck =
+  QCheck.Test.make ~name:"fail_check_err_message"
+    ~count: 100
+    QCheck.small_int
+    (fun _ -> QCheck.Test.fail_reportf "@[<v>this@ will@ always@ fail@]")
+
 let () =
   Printexc.record_backtrace true;
   let open OUnit2 in
   run_test_tt_main
     ("tests" >:::
-     List.map QCheck_runner.to_ounit2_test [passing; failing; error])
+       List.map QCheck_runner.to_ounit2_test [passing; failing; error; simple_qcheck])
