@@ -1042,7 +1042,7 @@ module TestResult = struct
   type 'a counter_ex = {
     instance: 'a; (** The counter-example(s) *)
     shrink_steps: int; (** How many shrinking steps for this counterex *)
-    msg_l: string list; (** messages. @since NEXT_RELEASE *)
+    msg_l: string list; (** messages. @since 0.7 *)
   }
 
   type 'a failed_state = 'a counter_ex list

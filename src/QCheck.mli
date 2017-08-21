@@ -415,7 +415,7 @@ module Shrink : sig
 
   val int_aggressive : int t
   (** Shrink integers by trying all smaller integers (can take a lot of time!)
-      @since NEXT_RELEASE *)
+      @since 0.7 *)
 
   val list : ?shrink:'a t -> 'a list t
   (** Try to shrink lists by removing elements one by one.
@@ -530,7 +530,7 @@ val set_stats : 'a stat list -> 'a arbitrary -> 'a arbitrary (** @since 0.6 *)
 
 val set_gen : 'a Gen.t -> 'a arbitrary -> 'a arbitrary
 (** Change the generator
-    @since NEXT_RELEASE *)
+    @since 0.7 *)
 
 val add_stat : 'a stat -> 'a arbitrary -> 'a arbitrary
 (** Add a statistic to the arbitrary instance.
@@ -557,7 +557,7 @@ module TestResult : sig
   type 'a counter_ex = {
     instance: 'a; (** The counter-example(s) *)
     shrink_steps: int; (** How many shrinking steps for this counterex *)
-    msg_l: string list; (** messages. @since NEXT_RELEASE *)
+    msg_l: string list; (** messages. @since 0.7 *)
   }
 
   type 'a failed_state = 'a counter_ex list
@@ -593,11 +593,11 @@ module Test : sig
   val fail_report : string -> 'a
   (** Fail the test with some additional message that will
       be reported.
-      @since NEXT_RELEASE *)
+      @since 0.7 *)
 
   val fail_reportf : ('a, Format.formatter, unit, 'b) format4 -> 'a
   (** Format version of {!fail_report}
-      @since NEXT_RELEASE *)
+      @since 0.7 *)
 
   val make_cell :
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->

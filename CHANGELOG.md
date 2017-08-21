@@ -1,5 +1,24 @@
 # Changes
 
+## 0.7
+
+- switch to BSD license, make it more explicit (close #43)
+- improve multi-line message printing in ounit (closes #46)
+- fix complexity of `add_stat`
+- allow negative entries in statistics (see #40)
+- add a way for tests to report messages to the user (see #39)
+- add `QCheck.Shrink.int_aggressive` and make default int shrinker faster
+- shrinker for `map_keep_input`
+- add `QCheck.set_gen`, missing for some reason
+
+- more compact verbose output (see #33)
+- better handling of dynamic progress line
+- Add colors to checkmarks in verbose mode
+- improve statistics display for runner
+
+- recover exception of shrunk input
+- print status line before the solving starts
+
 ## 0.6
 
 - add `find_example` and `find_example_gen` to synthesize values from
