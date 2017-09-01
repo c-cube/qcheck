@@ -36,7 +36,7 @@ You can use opam:
 
 == License
 
-The code is now released under the LGPL license.
+The code is now released under the BSD license.
 
 [[examples]]
 == An Introduction to the Library
