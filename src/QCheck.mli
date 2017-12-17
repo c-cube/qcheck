@@ -347,22 +347,31 @@ module Print : sig
 
 
   val unit : unit t (** @since 0.6 *)
+
   val int : int t (** Integer printer. *)
+
   val bool : bool t (** Boolean printer. *)
+
   val float : float t (** Floating point number printer. *)
+
   val char : char t (** Character printer. *)
+
   val string : string t (** String printer. *)
+
   val option : 'a t -> 'a option t (** Option printer. *)
 
   val pair : 'a t -> 'b t -> ('a*'b) t
   (** Pair printer. Expects printers for each component. *)
+
   val triple : 'a t -> 'b t -> 'c t -> ('a*'b*'c) t
   (** Triple (3-tuple) printer. Expects printers for each component. *)
+
   val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a*'b*'c*'d) t
   (** Quadruple (4-tuple) printer. Expects printers for each component. *)
 
   val list : 'a t -> 'a list t
   (** List printer. Expects a printer for the list element type. *)
+
   val array : 'a t -> 'a array t
   (** Array printer. Expects a printer for the array entry type. *)
 
@@ -420,9 +429,13 @@ module Shrink : sig
   (** No shrink *)
 
   val unit : unit t (** @since 0.6 *)
+
   val char : char t (** @since 0.6 *)
+
   val int : int t
+
   val option : 'a t -> 'a option t
+
   val string : string t
 
   val filter : ('a -> bool) -> 'a t -> 'a t

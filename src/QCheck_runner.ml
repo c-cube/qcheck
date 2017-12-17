@@ -7,7 +7,7 @@ all rights reserved.
 
 open OUnit
 
-let ps,pl = print_string,print_endline
+let ps = print_string
 let va = Printf.sprintf
 let pf = Printf.printf
 
@@ -22,7 +22,7 @@ module Color = struct
     | `Cyan
     ]
 
-  let int_of_color_ = function
+  let int_of_color_ : color -> int = function
     | `Normal -> 0
     | `Red -> 1
     | `Green -> 2

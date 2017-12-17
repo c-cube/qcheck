@@ -41,4 +41,4 @@ true: annot, bin_annot
 # OASIS_STOP
 
 "check_fun": -traverse
-true: color(always), safe_string, warn(+a-4-44)
+true: color(always), safe_string, warn(+a-4-44-48@8)

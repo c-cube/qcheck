@@ -940,9 +940,6 @@ module Tuple = struct
   let gen (o:'a obs) (ret:'b arbitrary) : ('a t -> 'b) fun_ Gen.t =
     Fn.gen (observable o) ret
 
-  let gen_fun_rep f o ret =
-    Gen.map f (Fn.gen_rep (observable o) ret)
-
   module Infix = struct
     let (@::) x tail = cons x tail
     let (@->) o tail = o_cons o tail
