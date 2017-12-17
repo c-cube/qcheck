@@ -133,6 +133,10 @@ module Gen : sig
   val return : 'a -> 'a t
   (** Create a constant generator. *)
 
+  val pure : 'a -> 'a t
+  (** Synonym for {!return}
+      @since NEXT_RELEASE *)
+
   val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
   (** Monadic bind for writing dependent generators. First generates an ['a] and then
       passes it to the given function, to generate a ['b]. *)
@@ -391,6 +395,14 @@ module Iter : sig
   val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
   val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
   val find : ('a -> bool) -> 'a t -> 'a option
+
+  val filter : ('a -> bool) -> 'a t -> 'a t
+
+  val append_l : 'a t list -> 'a t
+  (** @since NEXT_RELEASE *)
+
+  val flatten : 'a t t -> 'a t
+  (** @since NEXT_RELEASE *)
 end
 
 (** {2 Shrink Values}
@@ -412,6 +424,13 @@ module Shrink : sig
   val int : int t
   val option : 'a t -> 'a option t
   val string : string t
+
+  val filter : ('a -> bool) -> 'a t -> 'a t
+  (** [filter f shrink] shrinks values the same as [shrink], but
+      only keep smaller values that satisfy [f].
+      This way it's easy to preserve invariants that are enforced by
+      generators, when shrinking values
+      @since NEXT_RELEASE *)
 
   val int_aggressive : int t
   (** Shrink integers by trying all smaller integers (can take a lot of time!)
@@ -496,7 +515,7 @@ type 'a stat = string * ('a -> int)
 (** A statistic on a distribution of values of type ['a].
     The function {b MUST} return a positive integer. *)
 
-type 'a arbitrary = {
+type 'a arbitrary = private {
   gen: 'a Gen.t;
   print: ('a -> string) option; (** print values *)
   small: ('a -> int) option;  (** size of example *)
@@ -510,6 +529,8 @@ type 'a arbitrary = {
 
     {b NOTE} the collect field is unstable and might be removed, or
     moved into {!Test}.
+
+    Made private @since NEXT_RELEASE
 *)
 
 val make :
@@ -520,13 +541,22 @@ val make :
   ?stats:'a stat list ->
   'a Gen.t -> 'a arbitrary
 (** Builder for arbitrary. Default is to only have a generator, but other
-    arguments can be added. *)
+    arguments can be added.
+    @param print printer for values (counter-examples)
+    @param collect for statistics
+    @param shrink to shrink counter-examples
+*)
 
 val set_print : 'a Print.t -> 'a arbitrary -> 'a arbitrary
 val set_small : ('a -> int) -> 'a arbitrary -> 'a arbitrary
 val set_shrink : 'a Shrink.t -> 'a arbitrary -> 'a arbitrary
 val set_collect : ('a -> string) -> 'a arbitrary -> 'a arbitrary
 val set_stats : 'a stat list -> 'a arbitrary -> 'a arbitrary (** @since 0.6 *)
+
+val add_shrink_invariant : ('a -> bool) -> 'a arbitrary -> 'a arbitrary
+(** Update shrinker by only keeping smaller values satisfying the
+    given invariant.
+    @since NEXT_RELEASE *)
 
 val set_gen : 'a Gen.t -> 'a arbitrary -> 'a arbitrary
 (** Change the generator

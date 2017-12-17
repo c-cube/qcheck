@@ -65,6 +65,7 @@ module Gen = struct
   type 'a sized = int -> Random.State.t -> 'a
 
   let return x _st = x
+  let pure = return
 
   let (>>=) gen f st =
     f (gen st) st
@@ -298,6 +299,9 @@ module Iter = struct
   let map2 f a b yield = a (fun x -> b (fun y -> yield (f x y)))
   let (>|=) a f = map f a
   let append a b yield = a yield; b yield
+  let append_l l yield = List.iter (fun s->s yield) l
+  let flatten s yield = s (fun sub -> sub yield)
+  let filter f s yield = s (fun x -> if f x then yield x)
   let (<+>) = append
   let of_list l yield = List.iter yield l
   let of_array a yield = Array.iter yield a
@@ -339,6 +343,8 @@ module Shrink = struct
     while !y < -2 || !y >2 do y := !y / 2; yield !y; done; (* fast path *)
     if x>0 then for i=x-1 downto 0 do yield i done;
     if x<0 then for i=x+1 to 0 do yield i done
+
+  let filter f shrink x = Iter.filter f (shrink x)
 
   let char c yield =
     if Char.code c > 0 then yield (Char.chr (Char.code c-1))
@@ -521,6 +527,10 @@ let set_collect f o = {o with collect=Some f}
 let set_stats s o = {o with stats=s}
 let add_stat s o = {o with stats=s :: o.stats}
 let set_gen g o = {o with gen=g}
+
+let add_shrink_invariant f o = match o.shrink with
+  | None -> o
+  | Some shr -> {o with shrink=Some (Shrink.filter f shr)}
 
 let gen o = o.gen
 
