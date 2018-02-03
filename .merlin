@@ -1,6 +1,0 @@
-S src/
-B _build/src
-PKG unix
-PKG oUnit
-PKG bytes
-FLG -w +a-4-44

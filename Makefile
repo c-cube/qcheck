@@ -1,75 +1,24 @@
-# OASIS_START
-# DO NOT EDIT (digest: a3c674b4239234cbbe53afe090018954)
 
-SETUP = ocaml setup.ml
+all: build test
 
-build: setup.data
-	$(SETUP) -build $(BUILDFLAGS)
+build:
+	jbuilder build @install
 
-doc: setup.data build
-	$(SETUP) -doc $(DOCFLAGS)
-
-test: setup.data build
-	$(SETUP) -test $(TESTFLAGS)
-
-all:
-	$(SETUP) -all $(ALLFLAGS)
-
-install: setup.data
-	$(SETUP) -install $(INSTALLFLAGS)
-
-uninstall: setup.data
-	$(SETUP) -uninstall $(UNINSTALLFLAGS)
-
-reinstall: setup.data
-	$(SETUP) -reinstall $(REINSTALLFLAGS)
+test:
+	jbuilder runtest --no-buffer
 
 clean:
-	$(SETUP) -clean $(CLEANFLAGS)
+	jbuilder clean
 
-distclean:
-	$(SETUP) -distclean $(DISTCLEANFLAGS)
+doc:
+	jbuilder build @doc
 
-setup.data:
-	$(SETUP) -configure $(CONFIGUREFLAGS)
+EXAMPLES=$(addprefix example/, QCheck_test.exe QCheck_ounit_test.exe QCheck_runner_test.exe)
 
-configure:
-	$(SETUP) -configure $(CONFIGUREFLAGS)
+examples:
+	jbuilder build $(EXAMPLES)
 
-.PHONY: build doc test all install uninstall reinstall clean distclean configure
-
-# OASIS_STOP
-
-VERSION=$(shell grep Version: _oasis | awk '{ print $$2 }')
-
-release:
-	./mk-release.sh ${VERSION} || true
-	scp qcheck-${VERSION}.tar.gz cedeela.fr:~/simon/root/software/releases/
-
-push_doc: doc
-	scp -r qcheck.docdir/* cedeela.fr:~/simon/root/software/qcheck
-
-tags:
-	otags qCheck.ml qCheck.mli
-
-man:
-	mkdir -p man/man3/
-	ocamlfind ocamldoc -I _build/ -man -d man/man3 qCheck.ml qCheck.mli
-
-install_file: doc man
-	@rm qcheck.install || true
-	@echo 'doc: [' >> qcheck.install
-	@for m in $(wildcard qcheck.docdir/*.html) ; do \
-		echo "  \"?$${m}\"" >> qcheck.install; \
-	done
-	@echo ']' >> qcheck.install
-	@echo 'man: [' >> qcheck.install
-	@for m in $(wildcard man/man3/[A-Z]*.3o) ; do \
-		echo "  \"?$${m}\"" >> qcheck.install; \
-	done
-	@echo ']' >> qcheck.install
-
-VERSION=$(shell awk '/^Version:/ {print $$2}' _oasis)
+VERSION=$(shell awk '/^version:/ {print $$2}' qcheck.opam)
 
 update_next_tag:
 	@echo "update version to $(VERSION)..."
@@ -77,9 +26,10 @@ update_next_tag:
 	sed -i "s/NEXT_RELEASE/$(VERSION)/g" src/*.ml src/*.mli
 
 watch:
-	while find src/ example/ -print0 | xargs -0 inotifywait -e delete_self -e modify ; do \
+	while find src/ -print0 | xargs -0 inotifywait -e delete_self -e modify ; do \
 		echo "============ at `date` ==========" ; \
-		make $(WATCH); \
+		sleep 0.2; \
+		make all; \
 	done
 
-.PHONY: man install_file tags release update_next_tag
+.PHONY: benchs tests examples update_next_tag push_doc push_stable watch
