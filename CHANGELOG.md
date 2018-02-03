@@ -1,5 +1,13 @@
 # Changes
 
+## 0.8
+
+- migrate to jbuilder
+- fix warnings
+- add some useful functions
+- update oasis files (close #48)
+- update copyright header (closes #47)
+
 ## 0.7
 
 - switch to BSD license, make it more explicit (close #43)
