@@ -135,7 +135,7 @@ module Gen : sig
 
   val pure : 'a -> 'a t
   (** Synonym for {!return}
-      @since NEXT_RELEASE *)
+      @since 0.8 *)
 
   val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
   (** Monadic bind for writing dependent generators. First generates an ['a] and then
@@ -408,10 +408,10 @@ module Iter : sig
   val filter : ('a -> bool) -> 'a t -> 'a t
 
   val append_l : 'a t list -> 'a t
-  (** @since NEXT_RELEASE *)
+  (** @since 0.8 *)
 
   val flatten : 'a t t -> 'a t
-  (** @since NEXT_RELEASE *)
+  (** @since 0.8 *)
 end
 
 (** {2 Shrink Values}
@@ -443,7 +443,7 @@ module Shrink : sig
       only keep smaller values that satisfy [f].
       This way it's easy to preserve invariants that are enforced by
       generators, when shrinking values
-      @since NEXT_RELEASE *)
+      @since 0.8 *)
 
   val int_aggressive : int t
   (** Shrink integers by trying all smaller integers (can take a lot of time!)
@@ -543,7 +543,7 @@ type 'a arbitrary = private {
     {b NOTE} the collect field is unstable and might be removed, or
     moved into {!Test}.
 
-    Made private @since NEXT_RELEASE
+    Made private @since 0.8
 *)
 
 val make :
@@ -569,7 +569,7 @@ val set_stats : 'a stat list -> 'a arbitrary -> 'a arbitrary (** @since 0.6 *)
 val add_shrink_invariant : ('a -> bool) -> 'a arbitrary -> 'a arbitrary
 (** Update shrinker by only keeping smaller values satisfying the
     given invariant.
-    @since NEXT_RELEASE *)
+    @since 0.8 *)
 
 val set_gen : 'a Gen.t -> 'a arbitrary -> 'a arbitrary
 (** Change the generator
