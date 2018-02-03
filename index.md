@@ -1,8 +1,10 @@
 # QCheck
 
+Repository: <https://github.com/c-cube/qcheck>
+
 Documentation:
 
-- [0.8](last)
+- [last](0.8)
 
 - [0.8](0.8)
 - [0.7](0.7)
@@ -11,4 +13,3 @@ Documentation:
 - [0.5.2](0.5.2)
 - [0.5.1](0.5.1)
 - [0.5](0.5)
-- [dev](dev)
