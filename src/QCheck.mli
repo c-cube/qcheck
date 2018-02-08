@@ -196,15 +196,15 @@ module Gen : sig
 
   val float: float t   (** Generates floating point numbers. *)
 
-  val pfloat : float t (** Generates positive floating point numbers. *)
+  val pfloat : float t (** Generates positive floating point numbers (0. included). *)
 
-  val nfloat : float t (** Generates negative floating point numbers. *)
+  val nfloat : float t (** Generates negative floating point numbers. (-0. included) *)
 
   val nat : int t (** Generates small natural numbers. *)
 
-  val neg_int : int t (** Generates negative integers. *)
+  val neg_int : int t (** Generates non-strictly negative integers (0 included). *)
 
-  val pint : int t (** Generates positive integers uniformly. *)
+  val pint : int t (** Generates non-strictly positive integers uniformly (0 included). *)
 
   val int : int t (** Generates integers uniformly. *)
 
@@ -873,14 +873,16 @@ val int64 : int64 arbitrary
 (** Int64 generator. Uniformly distributed. *)
 
 val pos_int : int arbitrary
-(** Positive int generator. Uniformly distributed. *)
+(** Positive int generator (0 included). Uniformly distributed.
+    See {!Gen.pos_int} *)
 
 val small_int_corners : unit -> int arbitrary
 (** As [small_int], but each newly created generator starts with
  a list of corner cases before falling back on random generation. *)
 
 val neg_int : int arbitrary
-(** Negative int generator. The distribution is similar to that of
+(** Negative int generator (0 included, see {!Gen.neg_int}).
+    The distribution is similar to that of
     [small_int], not of [pos_int].
 *)
 
