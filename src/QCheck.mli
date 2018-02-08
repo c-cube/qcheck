@@ -874,7 +874,7 @@ val int64 : int64 arbitrary
 
 val pos_int : int arbitrary
 (** Positive int generator (0 included). Uniformly distributed.
-    See {!Gen.pos_int} *)
+    See {!Gen.pint} *)
 
 val small_int_corners : unit -> int arbitrary
 (** As [small_int], but each newly created generator starts with
