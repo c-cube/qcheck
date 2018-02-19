@@ -50,6 +50,12 @@ val set_verbose : bool -> unit
 val set_long_tests : bool -> unit
 (** Change the value of [long_tests ()] *)
 
+val get_time_between_msg : unit -> float
+(** Get the minimum time to wait between printing messages. *)
+
+val set_time_between_msg : float -> unit
+(** Set the minimum tiem between messages. *)
+
 (** {2 Conversion of tests to OUnit Tests} *)
 
 val to_ounit_test :

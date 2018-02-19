@@ -347,7 +347,11 @@ let default_rand () =
 (* time of last printed message. Useful for rate limiting in verbose mode *)
 let last_msg = ref 0.
 
-let time_between_msg = 0.1
+let time_between_msg = ref 0.1
+
+let get_time_between_msg () = !time_between_msg
+
+let set_time_between_msg f = time_between_msg := f
 
 let to_ounit2_test ?(rand = default_rand()) (QCheck.Test.Test cell) =
   let module T = QCheck.Test in
@@ -405,7 +409,7 @@ let handler ~size ~out ~verbose c name _ r =
   in
   (* use timestamps for rate-limiting *)
   let now=Unix.gettimeofday() in
-  if verbose && now -. !last_msg > time_between_msg then (
+  if verbose && now -. !last_msg > get_time_between_msg () then (
     last_msg := now;
     Printf.fprintf out "%s[ ] %a %s (%s)%!"
       Color.reset_line (pp_counter ~size) c name (st r)
@@ -422,7 +426,7 @@ let step ~size ~out ~verbose c name _ _ r =
   c.gen <- c.gen + 1;
   aux r;
   let now=Unix.gettimeofday() in
-  if verbose && now -. !last_msg > time_between_msg then (
+  if verbose && now -. !last_msg > get_time_between_msg () then (
     last_msg := now;
     Printf.fprintf out "%s[ ] %a %s%!"
       Color.reset_line (pp_counter ~size) c name
