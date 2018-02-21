@@ -51,10 +51,12 @@ val set_long_tests : bool -> unit
 (** Change the value of [long_tests ()] *)
 
 val get_time_between_msg : unit -> float
-(** Get the minimum time to wait between printing messages. *)
+(** Get the minimum time to wait between printing messages.
+    @since NEXT_RELEASE *)
 
 val set_time_between_msg : float -> unit
-(** Set the minimum tiem between messages. *)
+(** Set the minimum tiem between messages.
+    @since NEXT_RELEASE *)
 
 (** {2 Conversion of tests to OUnit Tests} *)
 
