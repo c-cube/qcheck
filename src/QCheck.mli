@@ -618,6 +618,9 @@ module TestResult : sig
     mutable count_gen: int; (* Number of generated cases *)
     collect_tbl: (string, int) Hashtbl.t lazy_t;
     stats_tbl: ('a stat * (int, int) Hashtbl.t) list; (** @since 0.6 *)
+    mutable instances: 'a list;
+    (** List of instances used for this test, in no particular order.
+        @since NEXT_RELEASE *)
   }
 
   val collect : _ t -> (string,int) Hashtbl.t option

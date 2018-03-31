@@ -1055,6 +1055,7 @@ module TestResult = struct
     mutable count_gen: int; (* number of generated cases *)
     collect_tbl: (string, int) Hashtbl.t lazy_t;
     stats_tbl: ('a stat * (int, int) Hashtbl.t) list;
+    mutable instances: 'a list;
   }
 
   (* indicate failure on the given [instance] *)
@@ -1302,6 +1303,7 @@ module Test = struct
       state.handler state.test.name state.test Generating;
       let input = new_input state in
       state.handler state.test.name state.test (Collecting input);
+      state.res.R.instances <- input :: state.res.R.instances;
       collect state input;
       update_stats state input;
       let res =
@@ -1347,6 +1349,7 @@ module Test = struct
       res = {R.
         state=R.Success; count=0; count_gen=0;
         collect_tbl=lazy (Hashtbl.create 10);
+        instances=[];
         stats_tbl= List.map (fun stat -> stat, Hashtbl.create 10) cell.arb.stats;
       };
     } in
