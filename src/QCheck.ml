@@ -1089,6 +1089,10 @@ module TestResult = struct
     if Lazy.is_val r.collect_tbl then Some (Lazy.force r.collect_tbl) else None
 
   let stats r = r.stats_tbl
+
+  let is_success r = match r.state with
+    | Success -> true
+    | Failed _ | Error _ -> false
 end
 
 module Test = struct

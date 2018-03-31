@@ -630,6 +630,10 @@ module TestResult : sig
   val stats : 'a t -> ('a stat * (int,int) Hashtbl.t) list
   (** Obtain statistics
       @since 0.6 *)
+
+  val is_success : _ t -> bool
+  (** Returns true iff the state if [Success]
+      @since NEXT_RELEASE *)
 end
 
 module Test : sig
@@ -775,7 +779,8 @@ module Test : sig
       @raise Test_error if [res = Failed _] *)
 
   val check_exn : ?long:bool -> ?rand:Random.State.t -> t -> unit
-  (** Same as {!check_cell} but calls  {!check_result} on the result.
+  (** Checks the property against some test cases, and calls {!check_result},
+      which might raise an exception in case of failure.
       @raise Test_error if [res = Error _]
       @raise Test_error if [res = Failed _] *)
 end
