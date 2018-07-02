@@ -22,6 +22,8 @@ depends: [
   "jbuilder" {build}
   "base-bytes"
   "base-unix"
+]
+depopts: [
   "ounit"
 ]
 available: [ ocaml-version >= "4.02.0" ]
