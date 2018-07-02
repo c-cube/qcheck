@@ -1,8 +1,8 @@
 
 (library
-  ((name qcheck)
-   (public_name qcheck)
+  ((name qcheck_ounit)
+   (public_name qcheck.ounit)
    (wrapped false)
-   (libraries (unix bytes))
+   (libraries (unix bytes qcheck oUnit))
    (flags (:standard -w +a-4-42-44-48-50-58-32-60@8 -safe-string))
    ))
