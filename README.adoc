@@ -17,6 +17,8 @@ can be useful too, for generating random values.
 
 toc::[]
 
+image::https://travis-ci.org/c-cube/qcheck.svg?branch=master[alt="Build Status", link="https://travis-ci.org/c-cube/qcheck"]
+
 == Use
 
 See the documentation. I also wrote

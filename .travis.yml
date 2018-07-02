@@ -1,0 +1,15 @@
+language: c
+install: wget https://raw.githubusercontent.com/ocaml/ocaml-ci-scripts/master/.travis-docker.sh
+script: bash -ex .travis-docker.sh
+services:
+- docker
+env:
+  global:
+  - PINS="qcheck:."
+  - DISTRO="ubuntu-16.04"
+  matrix:
+  - PACKAGE="qcheck" OCAML_VERSION="4.02.3" DEPOPTS="ounit"
+  - PACKAGE="qcheck" OCAML_VERSION="4.03.0" DEPOPTS="ounit"
+  - PACKAGE="qcheck" OCAML_VERSION="4.04.2" DEPOPTS="ounit"
+  - PACKAGE="qcheck" OCAML_VERSION="4.05.0" DEPOPTS="ounit"
+  - PACKAGE="qcheck" OCAML_VERSION="4.06.0" DEPOPTS="ounit"
