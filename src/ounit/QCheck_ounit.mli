@@ -1,6 +1,8 @@
 
 (** {1 Conversion of tests to OUnit Tests} *)
 
+include module type of QCheck_runner
+
 val to_ounit_test :
   ?verbose:bool -> ?long:bool -> ?rand:Random.State.t ->
   QCheck.Test.t -> OUnit.test
@@ -64,3 +66,4 @@ v}
 val run_tap : OUnit.test -> OUnit.test_results
 (** TAP-compatible test runner, in case we want to use a test harness.
     It prints one line per test. *)
+

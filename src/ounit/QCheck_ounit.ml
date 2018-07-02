@@ -1,8 +1,7 @@
 
 open OUnit
 
-module QR = QCheck_runner
-module Color = QR.Color
+include QCheck_runner
 
 let ps = print_string
 let va = Printf.sprintf
@@ -69,27 +68,27 @@ let to_ounit2_test ?(rand =default_rand()) (QCheck.Test.Test cell) =
       let verbose = conf_verbose ctxt in
       let long = conf_long ctxt in
       let print = {
-        QR.Raw.
+        Raw.
         info = (fun fmt -> logf ctxt `Info fmt);
         fail = (fun fmt -> Printf.ksprintf assert_failure fmt);
         err = (fun fmt -> logf ctxt `Error fmt);
       } in
       T.check_cell_exn cell
-        ~long ~rand ~call:(QR.Raw.callback ~verbose ~print_res:true ~print))
+        ~long ~rand ~call:(Raw.callback ~verbose ~print_res:true ~print))
 
 let to_ounit2_test_list ?rand lst =
   List.rev (List.rev_map (to_ounit2_test ?rand) lst)
 
 (* to convert a test to a [OUnit.test], we register a callback that will
    possibly print errors and counter-examples *)
-let to_ounit_test_cell ?(verbose=QR.verbose()) ?(long=QR.long_tests())
-    ?(rand=QR.random_state()) cell =
+let to_ounit_test_cell ?(verbose=verbose()) ?(long=long_tests())
+    ?(rand=random_state()) cell =
   let module T = QCheck.Test in
   let name = T.get_name cell in
   let run () =
     try
       T.check_cell_exn cell ~long ~rand
-        ~call:(QR.Raw.callback ~verbose ~print_res:verbose ~print:QR.Raw.print_std);
+        ~call:(Raw.callback ~verbose ~print_res:verbose ~print:Raw.print_std);
       true
     with T.Test_fail _ ->
       false
@@ -110,8 +109,8 @@ let time_fun f x y =
   Unix.gettimeofday () -. begin_time, res
 
 let run ?(argv=Sys.argv) test =
-  let cli_args = QR.Raw.parse_cli ~full_options:true argv in
-  let colors = cli_args.QR.Raw.cli_colors in
+  let cli_args = Raw.parse_cli ~full_options:true argv in
+  let colors = cli_args.Raw.cli_colors in
   (* print in colors *)
   let pp_color = Color.pp_str_c ~bold:true ~colors in
   let _counter = ref (0,0,0) in (* Success, Failure, Other *)
@@ -133,7 +132,7 @@ let run ?(argv=Sys.argv) test =
       (if o=0 then "" else va " %d!" o) total_tests
     and path = string_of_path p in
     let end_marker =
-      if cli_args.QR.Raw.cli_print_list then (
+      if cli_args.Raw.cli_print_list then (
         (* print a single line *)
         if ended then va " (after %.2fs)\n" (!stop -. !start) else "\n"
       ) else (
@@ -143,7 +142,7 @@ let run ?(argv=Sys.argv) test =
     in
     let line = cartouche ^ path ^ end_marker in
     let remaining = 79 - String.length line in
-    let cover = if remaining > 0 && not cli_args.QR.Raw.cli_print_list
+    let cover = if remaining > 0 && not cli_args.Raw.cli_print_list
       then String.make remaining ' ' else "" in
     pf "%s%s%!" line cover;
   in
@@ -169,13 +168,13 @@ let run ?(argv=Sys.argv) test =
   pf "Ran: %d tests in: %.2f seconds.%s\n"
     total_tests running_time (String.make 40 ' ');
   (* XXX: suboptimal, but should work fine *)
-  if cli_args.QR.Raw.cli_slow_test > 0 then (
-    pf "Display the %d slowest tests:\n" cli_args.QR.Raw.cli_slow_test;
+  if cli_args.Raw.cli_slow_test > 0 then (
+    pf "Display the %d slowest tests:\n" cli_args.Raw.cli_slow_test;
     let l = !exec_times in
     let l = List.sort (fun (_,t1)(_,t2) -> compare t2 t1) l in
     List.iteri
       (fun i (p,t) ->
-         if i<cli_args.QR.Raw.cli_slow_test
+         if i<cli_args.Raw.cli_slow_test
          then pf "  %s in %.2fs\n" (OUnit.string_of_path p) t)
       l
   );
