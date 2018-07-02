@@ -37,13 +37,13 @@ let others =
   [ passing;
     failing;
     error;
-  ] |> List.map (fun t -> QCheck_runner.to_ounit_test t)
+  ] |> List.map (fun t -> QCheck_ounit.to_ounit_test t)
 
 let suite =
   "tests" >::: (regressions @ others)
 
 let () =
-  try exit (QCheck_runner.run suite)
+  try exit (QCheck_ounit.run suite)
   with Arg.Bad msg -> print_endline msg; exit 1
      | Arg.Help msg -> print_endline msg; exit 0
 

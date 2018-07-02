@@ -29,4 +29,4 @@ let () =
   let open OUnit2 in
   run_test_tt_main
     ("tests" >:::
-       List.map QCheck_runner.to_ounit2_test [passing; failing; error; simple_qcheck])
+       List.map QCheck_ounit.to_ounit2_test [passing; failing; error; simple_qcheck])

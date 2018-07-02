@@ -13,7 +13,7 @@ clean:
 doc:
 	jbuilder build @doc
 
-EXAMPLES=$(addprefix example/, QCheck_test.exe QCheck_ounit_test.exe QCheck_runner_test.exe)
+EXAMPLES=$(addprefix example/, ounit/QCheck_test.exe ounit/QCheck_ounit_test.exe QCheck_runner_test.exe)
 
 examples:
 	jbuilder build $(EXAMPLES)
