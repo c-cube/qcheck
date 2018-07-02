@@ -292,8 +292,9 @@ or an error number otherwise.
 
 http://ounit.forge.ocamlcore.org/[OUnit] is a popular unit-testing framework
 for OCaml.
-QCheck provides some helpers, in `QCheck_runner`, to convert its random tests
-into OUnit tests that can be part of a wider test-suite.
+QCheck provides a sub-library `qcheck.ounit` with some helpers, in `QCheck_ounit`,
+to convert its random tests into OUnit tests that can be part of a wider
+test-suite.
 
 [source,OCaml]
 ----
@@ -313,6 +314,6 @@ let _ =
   let open OUnit in
   run_test_tt_main
     ("tests" >:::
-       List.map QCheck_runner.to_ounit_test [passing; failing])
+       List.map QCheck_ounit.to_ounit_test [passing; failing])
 
 ----
