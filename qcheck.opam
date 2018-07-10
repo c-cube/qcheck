@@ -22,6 +22,7 @@ depends: [
   "jbuilder" {build}
   "base-bytes"
   "base-unix"
+  "odoc" {doc}
 ]
 depopts: [
   "ounit"
