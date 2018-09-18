@@ -51,6 +51,9 @@ and type the following to load QCheck:
 #require "qcheck";;
 ----
 
+NOTE: alternatively, it is now possible to locally do: `dune utop src`
+to load `qcheck`.
+
 === List Reverse is Involutive
 
 We write a random test for checking that `List.rev (List.rev l) = l` for
@@ -315,5 +318,38 @@ let _ =
   run_test_tt_main
     ("tests" >:::
        List.map QCheck_ounit.to_ounit_test [passing; failing])
+
+----
+
+=== Integration with alcotest
+
+https://github.com/mirage/alcotest/[Alcotest] is a simple and colorful test framework for
+OCaml. QCheck now provides a sub-library `qcheck-alcotest` to
+easily integrate into an alcotest test suite:
+
+[source,OCaml]
+----
+
+let passing =
+  QCheck.Test.make ~count:1000
+    ~name:"list_rev_is_involutive"
+    QCheck.(list small_int)
+    (fun l -> List.rev (List.rev l) = l);;
+
+let failing =
+  QCheck.Test.make ~count:10
+    ~name:"fail_sort_id"
+    QCheck.(list small_int)
+    (fun l -> l = List.sort compare l);;
+
+
+let () =
+  let suite =
+    List.map QCheck_alcotest.to_alcotest
+      [ passing; failing]
+  in
+  Alcotest.run "my test" [
+    "suite", suite
+  ]
 
 ----
