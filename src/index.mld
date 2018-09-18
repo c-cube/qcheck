@@ -1,0 +1,13 @@
+
+{1 QCheck compatibility package}
+
+
+This library is there to ensure compatibility with QCheck 0.8 and earlier.
+
+It has a unique module {!QCheck_runner} that merges the custom runners
+from [qcheck-core.runner] ({!QCheck_base_runner})
+and the OUnit runners from [qcheck-ounit] ({!QCheck_ounit})
+into a single module.
+
+By depending on [qcheck-core], this library also brings {!QCheck} in scope,
+so it can be used transparently.
