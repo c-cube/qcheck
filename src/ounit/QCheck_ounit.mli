@@ -1,5 +1,8 @@
 
-(** {1 Conversion of tests to OUnit Tests} *)
+(** {1 Conversion of tests to OUnit Tests}
+
+    @since 0.9
+*)
 
 val to_ounit_test :
   ?verbose:bool -> ?long:bool -> ?rand:Random.State.t ->

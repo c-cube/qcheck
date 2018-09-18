@@ -1,5 +1,22 @@
 # Changes
 
+## 0.9
+
+- add `qcheck-ounit` sublibrary
+- use environment variables to configure `qcheck-alcotest` tests
+- alcotest backend for qcheck
+- make `qcheck.ounit` tests verbose by default
+- make `qcheck` is a compatibility library, depends on `qcheck-core`
+- split lib into `qcheck` and `qcheck.ounit`
+- add `TestResult.is_success` helper
+- give access to list of instances in test results
+- allow setting `time_between_msg` in runner
+
+- chore: remove submodule
+- chore: add travis support
+- doc: explanations about qcheck.ounit runners
+- doc: update readme
+
 ## 0.8
 
 - migrate to jbuilder

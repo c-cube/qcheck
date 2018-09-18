@@ -29,8 +29,8 @@ VERSION=$(shell awk '/^version:/ {print $$2}' qcheck.opam)
 
 update_next_tag:
 	@echo "update version to $(VERSION)..."
-	sed -i "s/NEXT_VERSION/$(VERSION)/g" src/*.ml src/*.mli
-	sed -i "s/NEXT_RELEASE/$(VERSION)/g" src/*.ml src/*.mli
+	sed -i "s/NEXT_VERSION/$(VERSION)/g" `find src -name '*.ml' -or -name '*.mli'`
+	sed -i "s/NEXT_RELEASE/$(VERSION)/g" `find src -name '*.ml' -or -name '*.mli'`
 
 release: update_next_tag
 	@echo "release version $(VERSION)..."

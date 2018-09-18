@@ -52,11 +52,11 @@ val set_long_tests : bool -> unit
 
 val get_time_between_msg : unit -> float
 (** Get the minimum time to wait between printing messages.
-    @since NEXT_RELEASE *)
+    @since 0.9 *)
 
 val set_time_between_msg : float -> unit
 (** Set the minimum tiem between messages.
-    @since NEXT_RELEASE *)
+    @since 0.9 *)
 
 (** {2 Run a Suite of Tests and Get Results} *)
 

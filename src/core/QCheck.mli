@@ -620,7 +620,7 @@ module TestResult : sig
     stats_tbl: ('a stat * (int, int) Hashtbl.t) list; (** @since 0.6 *)
     mutable instances: 'a list;
     (** List of instances used for this test, in no particular order.
-        @since NEXT_RELEASE *)
+        @since 0.9 *)
   }
 
   val collect : _ t -> (string,int) Hashtbl.t option
@@ -633,7 +633,7 @@ module TestResult : sig
 
   val is_success : _ t -> bool
   (** Returns true iff the state if [Success]
-      @since NEXT_RELEASE *)
+      @since 0.9 *)
 end
 
 module Test : sig
