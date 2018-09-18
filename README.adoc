@@ -295,7 +295,7 @@ or an error number otherwise.
 
 http://ounit.forge.ocamlcore.org/[OUnit] is a popular unit-testing framework
 for OCaml.
-QCheck provides a sub-library `qcheck.ounit` with some helpers, in `QCheck_ounit`,
+QCheck provides a sub-library `qcheck-ounit` with some helpers, in `QCheck_ounit`,
 to convert its random tests into OUnit tests that can be part of a wider
 test-suite.
 
@@ -321,7 +321,10 @@ let _ =
 
 ----
 
-=== Integration with alcotest
+NOTE: the package `qcheck` contains the module `QCheck_runner`
+which contains both custom runners and OUnit-based runners.
+
+=== Integration within alcotest
 
 https://github.com/mirage/alcotest/[Alcotest] is a simple and colorful test framework for
 OCaml. QCheck now provides a sub-library `qcheck-alcotest` to
@@ -353,3 +356,19 @@ let () =
   ]
 
 ----
+
+=== Compatibility notes
+
+Starting with 0.9, the library is split into several components:
+
+- `qcheck-core` depends only on unix and bytes. It contains the module
+  `QCheck` and a `QCheck_base_runner` module with our custom runners.
+- `qcheck-ounit` provides an integration layer for `OUnit`
+- `qcheck` provides a compatibility API with older versions of qcheck,
+  using both `qcheck-core` and `qcheck-ounit`.
+  It provides `QCheck_runner` which is similar to older versions and contains
+  both custom and Ounit-based runners.
+- `qcheck-alcotest` provides an integration layer with `alcotest`
+
+Normally, for contributors,
+`opam pin https://github.com/c-cube/qcheck` will pin all these packages.
