@@ -5,11 +5,11 @@ services:
 - docker
 env:
   global:
-  - PINS="qcheck:."
+  - PINS="qcheck:. qcheck-ounit:. qcheck-alcotest:."
   - DISTRO="ubuntu-16.04"
   matrix:
-  - PACKAGE="qcheck" OCAML_VERSION="4.02.3" DEPOPTS="ounit"
-  - PACKAGE="qcheck" OCAML_VERSION="4.03.0" DEPOPTS="ounit"
-  - PACKAGE="qcheck" OCAML_VERSION="4.04.2" DEPOPTS="ounit"
-  - PACKAGE="qcheck" OCAML_VERSION="4.05.0" DEPOPTS="ounit"
-  - PACKAGE="qcheck" OCAML_VERSION="4.06.0" DEPOPTS="ounit"
+  - PACKAGE="qcheck" OCAML_VERSION="4.02.3" DEPOPTS="ounit alcotest"
+  - PACKAGE="qcheck" OCAML_VERSION="4.03.0" DEPOPTS="ounit alcotest"
+  - PACKAGE="qcheck" OCAML_VERSION="4.04.2" DEPOPTS="ounit alcotest"
+  - PACKAGE="qcheck" OCAML_VERSION="4.05.0" DEPOPTS="ounit alcotest"
+  - PACKAGE="qcheck" OCAML_VERSION="4.06.0" DEPOPTS="ounit alcotest"
