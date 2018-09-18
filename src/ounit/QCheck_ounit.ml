@@ -45,7 +45,7 @@ let print_result_list ~colors =
     (result_msg result) separator2)
 
 let conf_seed = OUnit2.Conf.make_int "seed" ~-1 "set random seed"
-let conf_verbose = OUnit2.Conf.make_bool "qcheck_verbose" false "enable verbose QCheck tests"
+let conf_verbose = OUnit2.Conf.make_bool "qcheck_verbose" true "enable verbose QCheck tests"
 let conf_long = OUnit2.Conf.make_bool "qcheck_long" false "enable long QCheck tests"
 
 let default_rand () =
