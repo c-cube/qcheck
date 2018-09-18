@@ -1,0 +1,8 @@
+
+(library
+  (name qcheck_core)
+  (public_name qcheck-core)
+  (wrapped false)
+  (libraries unix bytes)
+  (flags :standard -w +a-4-42-44-48-50-58-32-60@8 -safe-string)
+  )

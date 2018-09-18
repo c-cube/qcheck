@@ -1,7 +1,6 @@
 
 open OUnit
-
-include QCheck_runner
+open QCheck_base_runner
 
 let ps = print_string
 let va = Printf.sprintf

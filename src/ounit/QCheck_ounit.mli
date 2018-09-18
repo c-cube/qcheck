@@ -1,8 +1,6 @@
 
 (** {1 Conversion of tests to OUnit Tests} *)
 
-include module type of QCheck_runner
-
 val to_ounit_test :
   ?verbose:bool -> ?long:bool -> ?rand:Random.State.t ->
   QCheck.Test.t -> OUnit.test

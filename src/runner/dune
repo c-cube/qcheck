@@ -1,0 +1,8 @@
+
+(library
+  (name qcheck_runner)
+  (public_name qcheck-core.runner)
+  (wrapped false)
+  (libraries qcheck-core)
+  (flags :standard -w +a-4-42-44-48-50-58-32-60@8 -safe-string)
+  )

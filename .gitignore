@@ -6,7 +6,7 @@ _build
 TAGS
 *.docdir
 man
-qcheck.install
+*.install
 *.tar.gz
 *.byte
 .merlin
