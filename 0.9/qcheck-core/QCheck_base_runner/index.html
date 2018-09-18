@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>QCheck_base_runner (qcheck-core.QCheck_base_runner)</title><link rel="stylesheet" href="../../odoc.css"/><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><meta name="generator" content="doc-ock-html v1.0.0-1-g1fc9bf0"/></head><body><nav id="top"><a href="../index.html">Up</a> &mdash; <span class="package">package <a href="../index.html">qcheck-core</a></span></nav><header><h1><span class="keyword">Module</span> <span class="module-path">QCheck_base_runner</span></h1></header><h2>Runners for Tests</h2><p>Once you built some tests using <a href="../QCheck/Test/index.html#val-make">QCheck.Test.make</a>, you need to
+run the tests. This module contains several <b>runners</b>,
+which are designed to run every test and report the result.</p><p>By default, you can use <a href="index.html#val-run_tests">run_tests</a> in a test program as follows:
+</p><pre><code class="code">      let testsuite = [
+        Test.make ...;
+        Test.make ...;
+      ]
+
+      let () =
+        let errcode = QCheck_runners.run_tests ~verbose:true testsuite in
+        exit errcode</code></pre><p>
+which will run the tests, and exit the program. The error code
+will be 0 if all tests pass, 1 otherwise.</p><p><a href="index.html#val-run_tests_main">run_tests_main</a> can be used as a shortcut for that, also
+featuring command-line parsing (using Arg) to activate
+verbose mode and others.</p><h3>State</h3><div class="spec val" id="val-random_state"><a href="#val-random_state" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>random_state : unit <span class="keyword">&#8209;&gt;</span> Random.State.t</code></div><div class="doc"><p>Access the current random state</p></div></div><div class="spec val" id="val-verbose"><a href="#val-verbose" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>verbose : unit <span class="keyword">&#8209;&gt;</span> bool</code></div><div class="doc"><p>Is the default mode verbose or quiet?</p></div></div><div class="spec val" id="val-long_tests"><a href="#val-long_tests" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>long_tests : unit <span class="keyword">&#8209;&gt;</span> bool</code></div><div class="doc"><p>Is the default mode to run long tests or nor?</p></div></div><div class="spec val" id="val-set_seed"><a href="#val-set_seed" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>set_seed : int <span class="keyword">&#8209;&gt;</span> unit</code></div><div class="doc"><p>Change the <a href="index.html#val-random_state">random_state</a> by creating a new one, initialized with
+the given seed.</p></div></div><div class="spec val" id="val-set_verbose"><a href="#val-set_verbose" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>set_verbose : bool <span class="keyword">&#8209;&gt;</span> unit</code></div><div class="doc"><p>Change the value of <code class="code">verbose ()</code></p></div></div><div class="spec val" id="val-set_long_tests"><a href="#val-set_long_tests" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>set_long_tests : bool <span class="keyword">&#8209;&gt;</span> unit</code></div><div class="doc"><p>Change the value of <code class="code">long_tests ()</code></p></div></div><div class="spec val" id="val-get_time_between_msg"><a href="#val-get_time_between_msg" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>get_time_between_msg : unit <span class="keyword">&#8209;&gt;</span> float</code></div><div class="doc"><p>Get the minimum time to wait between printing messages.</p><ul class="at-tag"><li><span class="at-tag since">Since</span>: 0.9</li></ul></div></div><div class="spec val" id="val-set_time_between_msg"><a href="#val-set_time_between_msg" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>set_time_between_msg : float <span class="keyword">&#8209;&gt;</span> unit</code></div><div class="doc"><p>Set the minimum tiem between messages.</p><ul class="at-tag"><li><span class="at-tag since">Since</span>: 0.9</li></ul></div></div><h3>Run a Suite of Tests and Get Results</h3><div class="spec val" id="val-run_tests"><a href="#val-run_tests" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>run_tests : ?&#8288;colors:bool <span class="keyword">&#8209;&gt;</span> ?&#8288;verbose:bool <span class="keyword">&#8209;&gt;</span> ?&#8288;long:bool <span class="keyword">&#8209;&gt;</span> ?&#8288;out:Pervasives.out_channel <span class="keyword">&#8209;&gt;</span> ?&#8288;rand:Random.State.t <span class="keyword">&#8209;&gt;</span> <a href="../QCheck/Test/index.html#type-t">QCheck.Test.t</a> list <span class="keyword">&#8209;&gt;</span> int</code></div><div class="doc"><p>Run a suite of tests, and print its results. This is an heritage from
+the &quot;qcheck&quot; library.</p><ul class="at-tag"><li><span class="at-tag return">Returns</span> an error code, <code class="code">0</code> if all tests passed, <code class="code">1</code> otherwise.</li><li><span class="at-tag parameter">Parameter</span> <span class="module-path">colors</span>: if true, colorful output</li><li><span class="at-tag parameter">Parameter</span> <span class="module-path">verbose</span>: if true, prints more information about test cases</li></ul></div></div><div class="spec val" id="val-run_tests_main"><a href="#val-run_tests_main" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>run_tests_main : ?&#8288;argv:string array <span class="keyword">&#8209;&gt;</span> <a href="../QCheck/Test/index.html#type-t">QCheck.Test.t</a> list <span class="keyword">&#8209;&gt;</span> <span class="type-var">'a</span></code></div><div class="doc"><p>Can be used as the main function of a test file. Exits with a non-0 code
+if the tests fail. It refers to <a href="index.html#val-run_tests">run_tests</a> for actually running tests
+after CLI options have been parsed.</p><p>The available options are:</p><ul><li>&quot;--verbose&quot; (or &quot;-v&quot;) for activating verbose tests</li><li>&quot;--seed &lt;n&gt;&quot; (or &quot;-s &lt;n&gt;&quot;) for repeating a previous run by setting the random seed</li><li>&quot;--long&quot; for running the long versions of the tests</li></ul><p>Below is an example of the output of the <code class="code">run_tests</code> and <code class="code">run_tests_main</code>
+function: </p><pre>random seed: 438308050
+generated  error;  fail; pass / total -     time -- test name
+[✓] (1000)    0 ;    0 ; 1000 / 1000 --     0.5s -- list_rev_is_involutive
+[✗] (   1)    0 ;    1 ;    0 /   10 --     0.0s -- should_fail_sort_id
+[✗] (   1)    1 ;    0 ;    0 /   10 --     0.0s -- should_error_raise_exn
+[✓] (1000)    0 ;    0 ; 1000 / 1000 --     0.0s -- collect_results
+
+--- Failure --------------------------------------------------------------------
+
+Test should_fail_sort_id failed (11 shrink steps):
+
+[1; 0]
+
+=== Error ======================================================================
+
+Test should_error_raise_exn errored on (62 shrink steps):
+
+0
+
+exception QCheck_runner_test.Error
+Raised at file &quot;example/QCheck_runner_test.ml&quot;, line 20, characters 20-25
+Called from file &quot;src/QCheck.ml&quot;, line 839, characters 13-33
+
+
++++ Collect ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Collect results for test collect_results:
+
+4: 207 cases
+3: 190 cases
+2: 219 cases
+1: 196 cases
+0: 188 cases
+
+================================================================================
+failure (1 tests failed, 1 tests errored, ran 4 tests)</pre></div></div><div class="spec module" id="module-Color"><a href="#module-Color" class="anchor"></a><div class="def module"><code><span class="keyword">module </span><a href="Color/index.html">Color</a> : <span class="keyword">sig</span> ... <span class="keyword">end</span></code></div><div class="doc"><h3>Utils for colored output</h3></div></div><div class="spec module" id="module-Raw"><a href="#module-Raw" class="anchor"></a><div class="def module"><code><span class="keyword">module </span><a href="Raw/index.html">Raw</a> : <span class="keyword">sig</span> ... <span class="keyword">end</span></code></div><div class="doc"><h3>Internal Utils</h3></div></div></body></html>

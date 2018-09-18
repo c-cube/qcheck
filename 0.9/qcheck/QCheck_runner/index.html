@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>QCheck_runner (qcheck.QCheck_runner)</title><link rel="stylesheet" href="../../odoc.css"/><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><meta name="generator" content="doc-ock-html v1.0.0-1-g1fc9bf0"/></head><body><nav id="top"><a href="../index.html">Up</a> &mdash; <span class="package">package <a href="../index.html">qcheck</a></span></nav><header><h1><span class="keyword">Module</span> <span class="module-path">QCheck_runner</span></h1></header><div class="spec include"><div class="doc"></div><details open="open"><summary><span class="def"><code><span class="keyword">include </span><a href="../../qcheck-core/QCheck_base_runner/index.html">QCheck_base_runner</a></code></span></summary><h2>Runners for Tests</h2><p>Once you built some tests using <a href="../../qcheck-core/QCheck/Test/index.html#val-make">QCheck.Test.make</a>, you need to
+run the tests. This module contains several <b>runners</b>,
+which are designed to run every test and report the result.</p><p>By default, you can use <a href="index.html#val-run_tests">run_tests</a> in a test program as follows:
+</p><pre><code class="code">      let testsuite = [
+        Test.make ...;
+        Test.make ...;
+      ]
+
+      let () =
+        let errcode = QCheck_runners.run_tests ~verbose:true testsuite in
+        exit errcode</code></pre><p>
+which will run the tests, and exit the program. The error code
+will be 0 if all tests pass, 1 otherwise.</p><p><a href="index.html#val-run_tests_main">run_tests_main</a> can be used as a shortcut for that, also
+featuring command-line parsing (using Arg) to activate
+verbose mode and others.</p><h3>State</h3><div class="spec val" id="val-random_state"><a href="#val-random_state" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>random_state : unit <span class="keyword">&#8209;&gt;</span> Random.State.t</code></div><div class="doc"><p>Access the current random state</p></div></div><div class="spec val" id="val-verbose"><a href="#val-verbose" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>verbose : unit <span class="keyword">&#8209;&gt;</span> bool</code></div><div class="doc"><p>Is the default mode verbose or quiet?</p></div></div><div class="spec val" id="val-long_tests"><a href="#val-long_tests" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>long_tests : unit <span class="keyword">&#8209;&gt;</span> bool</code></div><div class="doc"><p>Is the default mode to run long tests or nor?</p></div></div><div class="spec val" id="val-set_seed"><a href="#val-set_seed" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>set_seed : int <span class="keyword">&#8209;&gt;</span> unit</code></div><div class="doc"><p>Change the <a href="index.html#val-random_state">random_state</a> by creating a new one, initialized with
+the given seed.</p></div></div><div class="spec val" id="val-set_verbose"><a href="#val-set_verbose" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>set_verbose : bool <span class="keyword">&#8209;&gt;</span> unit</code></div><div class="doc"><p>Change the value of <code class="code">verbose ()</code></p></div></div><div class="spec val" id="val-set_long_tests"><a href="#val-set_long_tests" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>set_long_tests : bool <span class="keyword">&#8209;&gt;</span> unit</code></div><div class="doc"><p>Change the value of <code class="code">long_tests ()</code></p></div></div><div class="spec val" id="val-get_time_between_msg"><a href="#val-get_time_between_msg" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>get_time_between_msg : unit <span class="keyword">&#8209;&gt;</span> float</code></div><div class="doc"><p>Get the minimum time to wait between printing messages.</p><ul class="at-tag"><li><span class="at-tag since">Since</span>: 0.9</li></ul></div></div><div class="spec val" id="val-set_time_between_msg"><a href="#val-set_time_between_msg" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>set_time_between_msg : float <span class="keyword">&#8209;&gt;</span> unit</code></div><div class="doc"><p>Set the minimum tiem between messages.</p><ul class="at-tag"><li><span class="at-tag since">Since</span>: 0.9</li></ul></div></div><h3>Run a Suite of Tests and Get Results</h3><div class="spec val" id="val-run_tests"><a href="#val-run_tests" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>run_tests : ?&#8288;colors:bool <span class="keyword">&#8209;&gt;</span> ?&#8288;verbose:bool <span class="keyword">&#8209;&gt;</span> ?&#8288;long:bool <span class="keyword">&#8209;&gt;</span> ?&#8288;out:Pervasives.out_channel <span class="keyword">&#8209;&gt;</span> ?&#8288;rand:Random.State.t <span class="keyword">&#8209;&gt;</span> <a href="../../qcheck-core/QCheck/Test/index.html#type-t">QCheck.Test.t</a> list <span class="keyword">&#8209;&gt;</span> int</code></div><div class="doc"><p>Run a suite of tests, and print its results. This is an heritage from
+the &quot;qcheck&quot; library.</p><ul class="at-tag"><li><span class="at-tag return">Returns</span> an error code, <code class="code">0</code> if all tests passed, <code class="code">1</code> otherwise.</li><li><span class="at-tag parameter">Parameter</span> <span class="module-path">colors</span>: if true, colorful output</li><li><span class="at-tag parameter">Parameter</span> <span class="module-path">verbose</span>: if true, prints more information about test cases</li></ul></div></div><div class="spec val" id="val-run_tests_main"><a href="#val-run_tests_main" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>run_tests_main : ?&#8288;argv:string array <span class="keyword">&#8209;&gt;</span> <a href="../../qcheck-core/QCheck/Test/index.html#type-t">QCheck.Test.t</a> list <span class="keyword">&#8209;&gt;</span> <span class="type-var">'a</span></code></div><div class="doc"><p>Can be used as the main function of a test file. Exits with a non-0 code
+if the tests fail. It refers to <a href="index.html#val-run_tests">run_tests</a> for actually running tests
+after CLI options have been parsed.</p><p>The available options are:</p><ul><li>&quot;--verbose&quot; (or &quot;-v&quot;) for activating verbose tests</li><li>&quot;--seed &lt;n&gt;&quot; (or &quot;-s &lt;n&gt;&quot;) for repeating a previous run by setting the random seed</li><li>&quot;--long&quot; for running the long versions of the tests</li></ul><p>Below is an example of the output of the <code class="code">run_tests</code> and <code class="code">run_tests_main</code>
+function: </p><pre>random seed: 438308050
+generated  error;  fail; pass / total -     time -- test name
+[✓] (1000)    0 ;    0 ; 1000 / 1000 --     0.5s -- list_rev_is_involutive
+[✗] (   1)    0 ;    1 ;    0 /   10 --     0.0s -- should_fail_sort_id
+[✗] (   1)    1 ;    0 ;    0 /   10 --     0.0s -- should_error_raise_exn
+[✓] (1000)    0 ;    0 ; 1000 / 1000 --     0.0s -- collect_results
+
+--- Failure --------------------------------------------------------------------
+
+Test should_fail_sort_id failed (11 shrink steps):
+
+[1; 0]
+
+=== Error ======================================================================
+
+Test should_error_raise_exn errored on (62 shrink steps):
+
+0
+
+exception QCheck_runner_test.Error
+Raised at file &quot;example/QCheck_runner_test.ml&quot;, line 20, characters 20-25
+Called from file &quot;src/QCheck.ml&quot;, line 839, characters 13-33
+
+
++++ Collect ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Collect results for test collect_results:
+
+4: 207 cases
+3: 190 cases
+2: 219 cases
+1: 196 cases
+0: 188 cases
+
+================================================================================
+failure (1 tests failed, 1 tests errored, ran 4 tests)</pre></div></div><div class="spec module" id="module-Color"><a href="#module-Color" class="anchor"></a><div class="def module"><code><span class="keyword">module </span>Color = <a href="../../qcheck-core/QCheck_base_runner/index.html#module-Color">QCheck_base_runner.Color</a></code></div><div class="doc"><h3>Utils for colored output</h3></div></div><div class="spec module" id="module-Raw"><a href="#module-Raw" class="anchor"></a><div class="def module"><code><span class="keyword">module </span>Raw = <a href="../../qcheck-core/QCheck_base_runner/index.html#module-Raw">QCheck_base_runner.Raw</a></code></div><div class="doc"><h3>Internal Utils</h3></div></div></details></div><div class="spec include"><div class="doc"></div><details open="open"><summary><span class="def"><code><span class="keyword">include </span><a href="../../qcheck-ounit/QCheck_ounit/index.html">QCheck_ounit</a></code></span></summary><h2>Conversion of tests to OUnit Tests</h2><ul class="at-tag"><li><span class="at-tag since">Since</span>: 0.9</li></ul><div class="spec val" id="val-to_ounit_test"><a href="#val-to_ounit_test" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>to_ounit_test : ?&#8288;verbose:bool <span class="keyword">&#8209;&gt;</span> ?&#8288;long:bool <span class="keyword">&#8209;&gt;</span> ?&#8288;rand:Random.State.t <span class="keyword">&#8209;&gt;</span> <a href="../../qcheck-core/QCheck/Test/index.html#type-t">QCheck.Test.t</a> <span class="keyword">&#8209;&gt;</span> OUnit.test</code></div><div class="doc"><p><code class="code">to_ounit_test ~rand t</code> wraps <code class="code">t</code> into a OUnit test</p><ul class="at-tag"><li><span class="at-tag parameter">Parameter</span> <span class="module-path">verbose</span>: used to print information on stdout (default: <code class="code">verbose()</code>)</li><li><span class="at-tag parameter">Parameter</span> <span class="module-path">rand</span>: the random generator to use (default: <code class="code">random_state ()</code>)</li></ul></div></div><div class="spec val" id="val-to_ounit_test_cell"><a href="#val-to_ounit_test_cell" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>to_ounit_test_cell : ?&#8288;verbose:bool <span class="keyword">&#8209;&gt;</span> ?&#8288;long:bool <span class="keyword">&#8209;&gt;</span> ?&#8288;rand:Random.State.t <span class="keyword">&#8209;&gt;</span> <span class="type-var">_</span> <a href="../../qcheck-core/QCheck/Test/index.html#type-cell">QCheck.Test.cell</a> <span class="keyword">&#8209;&gt;</span> OUnit.test</code></div><div class="doc"><p>Same as <a href="index.html#val-to_ounit_test">to_ounit_test</a> but with a polymorphic test cell</p></div></div><div class="spec val" id="val-(&gt;:::)"><a href="#val-(&gt;:::)" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>(&gt;:::) : string <span class="keyword">&#8209;&gt;</span> <a href="../../qcheck-core/QCheck/Test/index.html#type-t">QCheck.Test.t</a> list <span class="keyword">&#8209;&gt;</span> OUnit.test</code></div><div class="doc"><p>Same as <span class="xref-unresolved" title="unresolved reference to &quot;OUnit.&gt;:::&quot;">OUnit.&gt;:::</span> but with a list of QCheck tests</p></div></div><div class="spec val" id="val-to_ounit2_test"><a href="#val-to_ounit2_test" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>to_ounit2_test : ?&#8288;rand:Random.State.t <span class="keyword">&#8209;&gt;</span> <a href="../../qcheck-core/QCheck/Test/index.html#type-t">QCheck.Test.t</a> <span class="keyword">&#8209;&gt;</span> OUnit2.test</code></div><div class="doc"><p><code class="code">to_ounit2_test ?rand t</code> wraps <code class="code">t</code> into a OUnit2 test</p><ul class="at-tag"><li><span class="at-tag parameter">Parameter</span> <span class="module-path">rand</span>: the random generator to use (default: a static seed for reproducibility),
+can be overridden with &quot;-seed&quot; on the command-line</li></ul></div></div><div class="spec val" id="val-to_ounit2_test_list"><a href="#val-to_ounit2_test_list" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>to_ounit2_test_list : ?&#8288;rand:Random.State.t <span class="keyword">&#8209;&gt;</span> <a href="../../qcheck-core/QCheck/Test/index.html#type-t">QCheck.Test.t</a> list <span class="keyword">&#8209;&gt;</span> OUnit2.test list</code></div><div class="doc"><p><code class="code">to_ounit2_test_list ?rand t</code> like <code class="code">to_ounit2_test</code> but for a list of tests</p></div></div><h3>OUnit runners</h3><p>QCheck provides some custom runners for OUnit tests.</p><ul><li><a href="index.html#val-run">run</a> is used by <a href="https://github.com/vincent-hugot/qtest">qtest</a>.</li><li><a href="index.html#val-run_tap">run_tap</a> should be compatible with <a href="https://en.wikipedia.org/wiki/Test_Anything_Protocol">TAP</a>.</li></ul><p>Note that <span class="xref-unresolved" title="unresolved reference to &quot;OUnit.run_test_tt&quot;">OUnit.run_test_tt</span> or <span class="xref-unresolved" title="unresolved reference to &quot;OUnit.run_test_tt_main&quot;">OUnit.run_test_tt_main</span> can be used as well,
+in particular when QCheck tests are mixed with normal unit tests.</p><p>For OUnit2 you can use <span class="xref-unresolved" title="unresolved reference to &quot;OUnit2.run_test_tt_main&quot;">OUnit2.run_test_tt_main</span>.</p><div class="spec val" id="val-run"><a href="#val-run" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>run : ?&#8288;argv:string array <span class="keyword">&#8209;&gt;</span> OUnit.test <span class="keyword">&#8209;&gt;</span> int</code></div><div class="doc"><p><code class="code">run test</code> runs the test, and returns an error code that is <code class="code">0</code>
+if all tests passed, <code class="code">1</code> otherwise.
+This is the default runner used by the comment-to-test generator.</p><ul class="at-tag"><li><span class="at-tag parameter">Parameter</span> <span class="module-path">argv</span>: the command line arguments to parse parameters from (default <code class="code">Sys.argv</code>)</li><li><span class="at-tag raise">Raises</span> <span class="module-path">Arg.Bad</span>: in case <code class="code">argv</code> contains unknown arguments</li><li><p><span class="at-tag raise">Raises</span> <span class="module-path">Arg.Help</span>: in case <code class="code">argv</code> contains &quot;--help&quot;</p><p>This test runner displays execution in a compact way, making it good
+for suites that have lots of tests.</p><p>Output example: </p><pre>random seed: 101121210
+random seed: 101121210
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+Error: tests&gt;error_raise_exn
+
+test `error_raise_exn` raised exception `QCheck_ounit_test.Error`
+on `0 (after 62 shrink steps)`
+Raised at file &quot;example/QCheck_ounit_test.ml&quot;, line 19, characters 20-25
+Called from file &quot;src/QCheck.ml&quot;, line 846, characters 13-33
+
+///////////////////////////////////////////////////////////////////////////////
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+Failure: tests&gt;fail_sort_id
+
+fail_sort_id
+///////////////////////////////////////////////////////////////////////////////
+Ran: 4 tests in: 0.74 seconds.
+WARNING! SOME TESTS ARE NEITHER SUCCESSES NOR FAILURES!</pre></li></ul></div></div><div class="spec val" id="val-run_tap"><a href="#val-run_tap" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>run_tap : OUnit.test <span class="keyword">&#8209;&gt;</span> OUnit.test_results</code></div><div class="doc"><p>TAP-compatible test runner, in case we want to use a test harness.
+It prints one line per test.</p></div></div></details></div></body></html>
