@@ -25,7 +25,19 @@ val to_ounit2_test : ?rand:Random.State.t -> QCheck.Test.t -> OUnit2.test
 val to_ounit2_test_list : ?rand:Random.State.t -> QCheck.Test.t list -> OUnit2.test list
 (** [to_ounit2_test_list ?rand t] like [to_ounit2_test] but for a list of tests *)
 
-(** {2 OUnit runners} *)
+(** {2 OUnit runners}
+
+    QCheck provides some custom runners for OUnit tests.
+
+    - {!run} is used by {{: https://github.com/vincent-hugot/qtest} qtest}.
+    - {!run_tap} should be compatible with {{: https://en.wikipedia.org/wiki/Test_Anything_Protocol} TAP}.
+
+    Note that {!OUnit.run_test_tt} or {!OUnit.run_test_tt_main} can be used as well,
+    in particular when QCheck tests are mixed with normal unit tests.
+
+    For OUnit2 you can use {!OUnit2.run_test_tt_main}.
+*)
+
 
 val run : ?argv:string array -> OUnit.test -> int
 (** [run test] runs the test, and returns an error code  that is [0]
