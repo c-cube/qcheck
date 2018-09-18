@@ -13,10 +13,17 @@ clean:
 doc:
 	@dune build @doc
 
-EXAMPLES=$(addprefix example/, ounit/QCheck_test.exe ounit/QCheck_ounit_test.exe QCheck_runner_test.exe)
+example-test:
+	@dune exec example/ounit/QCheck_test.exe
 
-examples:
-	@dune build $(EXAMPLES)
+example-ounit-test:
+	@dune exec example/ounit/QCheck_ounit_test.exe
+
+example-runner:
+	@dune exec example/QCheck_runner_test.exe
+
+example-alcotest:
+	@dune exec example/alcotest/QCheck_alcotest_test.exe
 
 VERSION=$(shell awk '/^version:/ {print $$2}' qcheck.opam)
 

@@ -1,0 +1,8 @@
+
+(library
+  (name qcheck_alcotest)
+  (public_name qcheck-alcotest)
+  (wrapped false)
+  (libraries unix bytes qcheck-core qcheck-core.runner alcotest)
+  (flags :standard -w +a-4-42-44-48-50-58-32-60@8 -safe-string)
+  )
