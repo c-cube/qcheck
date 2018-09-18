@@ -1,5 +1,0 @@
-
-(executables
-  ((names (QCheck_ounit_test QCheck_test))
-   (libraries (qcheck oUnit qcheck.ounit))
-  ))
