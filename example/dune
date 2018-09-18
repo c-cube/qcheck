@@ -1,0 +1,5 @@
+
+(executables
+  (names QCheck_runner_test)
+  (libraries qcheck)
+  )

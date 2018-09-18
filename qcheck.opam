@@ -10,16 +10,16 @@ tags: [
   "quickcheck"
 ]
 build: [
-  ["jbuilder" "build" "-p" name "-j" jobs]
+  ["dune" "build" "-p" name "-j" jobs]
 ]
 build-doc: [
-  ["jbuilder" "build" "@doc"]
+  ["dune" "build" "@doc" "-p" name]
 ]
 build-test: [
-  ["jbuilder" "runtest"]
+  ["dune" "runtest" "-p" name]
 ]
 depends: [
-  "jbuilder" {build}
+  "dune" {build}
   "base-bytes"
   "base-unix"
   "odoc" {doc}
@@ -27,7 +27,7 @@ depends: [
 depopts: [
   "ounit"
 ]
-available: [ ocaml-version >= "4.02.0" ]
+available: [ ocaml-version >= "4.03.0" ]
 dev-repo: "https://github.com/c-cube/qcheck.git"
 bug-reports: "https://github.com/c-cube/qcheck/issues"
 conflicts: [

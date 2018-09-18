@@ -1,9 +1,0 @@
-
-(library
-  ((name qcheck_ounit)
-   (public_name qcheck.ounit)
-   (optional)
-   (wrapped false)
-   (libraries (unix bytes qcheck oUnit))
-   (flags (:standard -w +a-4-42-44-48-50-58-32-60@8 -safe-string))
-   ))

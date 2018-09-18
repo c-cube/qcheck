@@ -2,21 +2,21 @@
 all: build test
 
 build:
-	jbuilder build @install
+	@dune build @install
 
 test:
-	jbuilder runtest --no-buffer
+	@dune runtest --no-buffer
 
 clean:
-	jbuilder clean
+	@dune clean
 
 doc:
-	jbuilder build @doc
+	@dune build @doc
 
 EXAMPLES=$(addprefix example/, ounit/QCheck_test.exe ounit/QCheck_ounit_test.exe QCheck_runner_test.exe)
 
 examples:
-	jbuilder build $(EXAMPLES)
+	@dune build $(EXAMPLES)
 
 VERSION=$(shell awk '/^version:/ {print $$2}' qcheck.opam)
 
