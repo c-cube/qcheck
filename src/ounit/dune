@@ -1,7 +1,7 @@
 
 (library
   (name qcheck_ounit)
-  (public_name qcheck.ounit)
+  (public_name qcheck-ounit)
   (optional)
   (wrapped false)
   (libraries unix bytes qcheck-core qcheck-core.runner oUnit)

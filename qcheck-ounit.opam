@@ -23,12 +23,9 @@ depends: [
   "base-bytes"
   "base-unix"
   "qcheck-core" { >= "0.9" }
-  "qcheck-ounit" { >= "0.9" }
+  "ounit" {>= "2.0"}
   "odoc" {doc}
 ]
 available: [ ocaml-version >= "4.03.0" ]
 dev-repo: "https://github.com/c-cube/qcheck.git"
 bug-reports: "https://github.com/c-cube/qcheck/issues"
-conflicts: [
-  "ounit" { < "2.0" }
-]

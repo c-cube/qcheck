@@ -6,4 +6,4 @@
   (optional)
   (modules QCheck_runner)
   (synopsis "compatibility library for qcheck")
-  (libraries qcheck-core qcheck-core.runner qcheck.ounit))
+  (libraries qcheck-core qcheck-core.runner qcheck-ounit))

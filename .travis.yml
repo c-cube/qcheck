@@ -5,7 +5,7 @@ services:
 - docker
 env:
   global:
-  - PINS="qcheck:. qcheck-core:. qcheck-alcotest:."
+  - PINS="qcheck:. qcheck-core:. qcheck-ounit:. qcheck-alcotest:."
   - DISTRO="ubuntu-16.04"
   matrix:
   - PACKAGE="qcheck" OCAML_VERSION="4.03.0" DEPOPTS="ounit alcotest"
