@@ -1,6 +1,6 @@
-opam-version: "1.2"
+opam-version: "2.0"
 maintainer: "simon.cruanes.2007@m4x.org"
-author: [ "Simon Cruanes <simon.cruanes.2007@m4x.orgr>" ]
+author: [ "Simon Cruanes <simon.cruanes.2007@m4x.org>" ]
 homepage: "https://github.com/c-cube/qcheck/"
 doc: ["http://c-cube.github.io/qcheck/"]
 version: "0.9"
@@ -11,11 +11,9 @@ tags: [
 ]
 build: [
   ["dune" "build" "-p" name "-j" jobs]
+  ["dune" "build" "@doc" "-p" name] {with-doc}
 ]
-build-doc: [
-  ["dune" "build" "@doc" "-p" name]
-]
-build-test: [
+run-test: [
   ["dune" "runtest" "-p" name]
 ]
 depends: [
@@ -25,7 +23,7 @@ depends: [
   "qcheck-core" { >= "0.9" }
   "alcotest"
   "odoc" {doc}
+  "ocaml" {>= "4.03.0"}
 ]
-available: [ ocaml-version >= "4.03.0" ]
-dev-repo: "https://github.com/c-cube/qcheck.git"
+dev-repo: "git+https://github.com/c-cube/qcheck.git"
 bug-reports: "https://github.com/c-cube/qcheck/issues"
