@@ -1103,6 +1103,7 @@ module Test = struct
     max_fail : int; (* max number of failures *)
     law : 'a -> bool; (* the law to check *)
     arb : 'a arbitrary; (* how to generate/print/shrink instances *)
+    if_assumptions_fail: [`Fatal | `Warning] * float;
     mutable name : string; (* name of the law *)
   }
 
@@ -1122,7 +1123,10 @@ module Test = struct
     let r = ref 0 in
     (fun () -> incr r; Printf.sprintf "anon_test_%d" !r)
 
-  let make_cell ?(count=default_count) ?(long_factor=1) ?max_gen
+  let default_if_assumptions_fail = `Warning, 0.05
+
+  let make_cell ?(if_assumptions_fail=default_if_assumptions_fail)
+      ?(count=default_count) ?(long_factor=1) ?max_gen
   ?(max_fail=1) ?small ?(name=fresh_name()) arb law
   =
     let max_gen = match max_gen with None -> count + 200 | Some x->x in
@@ -1135,10 +1139,11 @@ module Test = struct
       name;
       count;
       long_factor;
+      if_assumptions_fail;
     }
 
-  let make ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law =
-    Test (make_cell ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law)
+  let make ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law =
+    Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law)
 
   (** {6 Running the test} *)
 
@@ -1175,7 +1180,7 @@ module Test = struct
     handler : 'a handler;
     rand: Random.State.t;
     mutable res: 'a TestResult.t;
-    mutable cur_count: int;  (** number of iterations to do *)
+    mutable cur_count: int;  (** number of iterations remaining to do *)
     mutable cur_max_gen: int; (** maximum number of generations allowed *)
     mutable cur_max_fail: int; (** maximum number of counter-examples allowed *)
   }
@@ -1339,15 +1344,44 @@ module Test = struct
 
   let callback_nil_ : _ callback = fun _ _ _ -> ()
 
+  (* check that there are sufficiently many tests which passed, to avoid
+     the case where they all passed by failed precondition *)
+  let check_if_assumptions target_count cell res : _ R.t =
+    let percentage_of_count = float_of_int res.R.count /. float_of_int target_count in
+    let assm_flag, assm_frac = cell.if_assumptions_fail in 
+    if R.is_success res && percentage_of_count < assm_frac then (
+      let msg =
+        format_of_string "!!! %s %s\n\
+         only %.1f%% tests (of %d) passed precondition for %S\n\n\
+         NOTE: it is likely that the precondition is too strong, or that \
+         the generator is buggy.\n%!"
+      in
+      match assm_flag with
+      | `Warning ->
+        Printf.eprintf
+          msg "WARNING" (String.make 68 '!')
+          (percentage_of_count *. 100.) cell.count cell.name;
+        res
+      | `Fatal ->
+        (* turn it into an error *)
+        Printf.eprintf
+          msg "ERROR" (String.make 68 '!')
+          (percentage_of_count *. 100.) cell.count cell.name;
+        {res with R.state=R.Failed []}
+    ) else (
+      res
+    )
+
   (* main checking function *)
   let check_cell ?(long=false) ?(call=callback_nil_)
       ?(step=step_nil_) ?(handler=handler_nil_)
       ?(rand=Random.State.make [| 0 |]) cell =
     let factor = if long then cell.long_factor else 1 in
+    let target_count = factor*cell.count in
     let state = {
       test=cell; rand;
       step; handler;
-      cur_count=factor*cell.count;
+      cur_count=target_count;
       cur_max_gen=factor*cell.max_gen;
       cur_max_fail=factor*cell.max_fail;
       res = {R.
@@ -1357,7 +1391,7 @@ module Test = struct
         stats_tbl= List.map (fun stat -> stat, Hashtbl.create 10) cell.arb.stats;
       };
     } in
-    let res = check_state state in
+    let res = check_state state |> check_if_assumptions target_count cell in
     call cell.name cell res;
     res
 

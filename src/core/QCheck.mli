@@ -650,6 +650,7 @@ module Test : sig
       @since 0.7 *)
 
   val make_cell :
+    ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
     ?small:('a -> int) -> ?name:string -> 'a arbitrary -> ('a -> bool) ->
     'a cell
@@ -669,6 +670,13 @@ module Test : sig
         the field [arbitrary.small].
         If there is no shrinking function but there is a [small]
         function, only the smallest failures will be printed.
+      @param if_assumptions_fail the minimum
+        fraction of tests that must satisfy the precondition for a success
+        to be considered valid.
+        The fraction should be between 0. and 1.
+        A warning will be emitted otherwise if
+        the flag is [`Warning], the test will be a failure if the flag is [`Fatal].
+        (since NEXT_RELEASE)
   *)
 
   val get_arbitrary : 'a cell -> 'a arbitrary
@@ -689,6 +697,7 @@ module Test : sig
       put tests on different types in the same list of tests. *)
 
   val make :
+    ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
     ?small:('a -> int) -> ?name:string -> 'a arbitrary -> ('a -> bool) -> t
   (** [make arb prop] builds a test that checks property [prop] on instances
