@@ -53,6 +53,22 @@ let fun2 =
     (fun (QCheck.Fun (_,p)) ->
        not (p "some random string") || p "some other string")
 
+let bad_assume_warn =
+  QCheck.Test.make ~count:2_000
+    ~name:"WARN_unlikely_precond"
+    QCheck.int
+    (fun x ->
+       QCheck.assume (x mod 100 = 1);
+       true)
+
+let bad_assume_fail =
+  QCheck.Test.make ~count:2_000 ~if_assumptions_fail:(`Fatal, 0.1)
+    ~name:"FAIL_unlikely_precond"
+    QCheck.int
+    (fun x ->
+       QCheck.assume (x mod 100 = 1);
+       true)
+
 let int_gen = QCheck.small_nat (* int *)
 
 (* Another example (false) property *)
@@ -139,5 +155,7 @@ let () =
     find_ex;
     shrink_int;
     stats_negs;
+    bad_assume_warn;
+    bad_assume_fail;
   ] @ stats_tests)
 
