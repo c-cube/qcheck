@@ -1042,11 +1042,20 @@ module TestResult = struct
 
   type 'a failed_state = 'a counter_ex list
 
+  (** Result state.
+      changed in NEXT_RELEASE (move to inline records) *)
   type 'a state =
     | Success
-    | Failed of 'a failed_state (** Failed instances *)
-    | Error of 'a counter_ex * exn * string (** Error, backtrace, and instance
-                                                that triggered it *)
+    | Failed of {
+        instances: 'a failed_state; (** Failed instance(s) *)
+      }
+    | Failed_other of {msg: string}
+    | Error of {
+        instance: 'a counter_ex;
+        exn: exn;
+        backtrace: string;
+      } (** Error, backtrace, and instance that triggered it *)
+
 
   (* result returned by running a test *)
   type 'a t = {
@@ -1055,6 +1064,7 @@ module TestResult = struct
     mutable count_gen: int; (* number of generated cases *)
     collect_tbl: (string, int) Hashtbl.t lazy_t;
     stats_tbl: ('a stat * (int, int) Hashtbl.t) list;
+    mutable warnings: string list;
     mutable instances: 'a list;
   }
 
@@ -1062,37 +1072,39 @@ module TestResult = struct
   let fail ~msg_l ~small ~steps:shrink_steps res instance =
     let c_ex = {instance; shrink_steps; msg_l; } in
     match res.state with
-    | Success -> res.state <- Failed [ c_ex ]
-    | Error (x, e, bt) ->
-        res.state <- Error (x,e,bt); (* same *)
-    | Failed [] -> assert false
-    | Failed (c_ex' :: _ as l) ->
+    | Success -> res.state <- Failed {instances=[ c_ex ]}
+    | Error e ->
+        res.state <- Error e; (* same *)
+    | Failed_other _ -> ()
+    | Failed {instances=[]} -> assert false
+    | Failed {instances=((c_ex'::_) as l)} ->
         match small with
         | Some small ->
             (* all counter-examples in [l] have same size according to [small],
                so we just compare to the first one, and we enforce
                the invariant *)
             begin match Pervasives.compare (small instance) (small c_ex'.instance) with
-            | 0 -> res.state <- Failed (c_ex :: l) (* same size: add [c_ex] to [l] *)
-            | n when n<0 -> res.state <- Failed [c_ex] (* drop [l] *)
+            | 0 -> res.state <- Failed {instances=c_ex :: l} (* same size: add [c_ex] to [l] *)
+            | n when n<0 -> res.state <- Failed {instances=[c_ex]} (* drop [l] *)
             | _ -> () (* drop [c_ex], not small enough *)
             end
         | _ ->
             (* no [small] function, keep all counter-examples *)
             res.state <-
-              Failed (c_ex :: l)
+              Failed {instances=c_ex :: l}
 
-  let error ~msg_l ~steps res instance e bt =
-    res.state <- Error ({instance; shrink_steps=steps; msg_l; }, e, bt)
+  let error ~msg_l ~steps res instance exn backtrace =
+    res.state <- Error {instance={instance; shrink_steps=steps; msg_l; }; exn; backtrace}
 
   let collect r =
     if Lazy.is_val r.collect_tbl then Some (Lazy.force r.collect_tbl) else None
 
   let stats r = r.stats_tbl
+  let warnings r = r.warnings
 
   let is_success r = match r.state with
     | Success -> true
-    | Failed _ | Error _ -> false
+    | Failed _ | Error _ | Failed_other _ -> false
 end
 
 module Test = struct
@@ -1346,30 +1358,28 @@ module Test = struct
 
   (* check that there are sufficiently many tests which passed, to avoid
      the case where they all passed by failed precondition *)
-  let check_if_assumptions target_count cell res : _ R.t =
+  let check_if_assumptions target_count cell res : unit =
     let percentage_of_count = float_of_int res.R.count /. float_of_int target_count in
-    let assm_flag, assm_frac = cell.if_assumptions_fail in 
+    let assm_flag, assm_frac = cell.if_assumptions_fail in
     if R.is_success res && percentage_of_count < assm_frac then (
       let msg =
-        format_of_string "!!! %s %s\n\
+        format_of_string "%s: \
          only %.1f%% tests (of %d) passed precondition for %S\n\n\
          NOTE: it is likely that the precondition is too strong, or that \
          the generator is buggy.\n%!"
       in
       match assm_flag with
       | `Warning ->
-        Printf.eprintf
-          msg "WARNING" (String.make 68 '!')
-          (percentage_of_count *. 100.) cell.count cell.name;
-        res
+        let msg = Printf.sprintf
+          msg "WARNING"
+          (percentage_of_count *. 100.) cell.count cell.name in
+        res.R.warnings <- msg :: res.R.warnings
       | `Fatal ->
         (* turn it into an error *)
-        Printf.eprintf
-          msg "ERROR" (String.make 68 '!')
-          (percentage_of_count *. 100.) cell.count cell.name;
-        {res with R.state=R.Failed []}
-    ) else (
-      res
+        let msg = Printf.sprintf
+          msg "ERROR"
+          (percentage_of_count *. 100.) cell.count cell.name in
+        res.R.state <- R.Failed_other {msg}
     )
 
   (* main checking function *)
@@ -1387,11 +1397,12 @@ module Test = struct
       res = {R.
         state=R.Success; count=0; count_gen=0;
         collect_tbl=lazy (Hashtbl.create 10);
-        instances=[];
+        instances=[]; warnings=[];
         stats_tbl= List.map (fun stat -> stat, Hashtbl.create 10) cell.arb.stats;
       };
     } in
-    let res = check_state state |> check_if_assumptions target_count cell in
+    let res = check_state state in
+    check_if_assumptions target_count cell res;
     call cell.name cell res;
     res
 
@@ -1529,16 +1540,21 @@ module Test = struct
   let print_fail arb name l =
     print_test_fail name (List.map (print_c_ex arb) l)
 
+  let print_fail_other name ~msg =
+    print_test_fail name [msg]
+
   let print_error ?(st="") arb name (i,e) =
     print_test_error name (print_c_ex arb i) e st
 
   let check_result cell res = match res.R.state with
     | R.Success -> ()
-    | R.Error (i,e, bt) ->
-      raise (Test_error (cell.name, print_c_ex cell.arb i, e, bt))
-    | R.Failed l ->
-        let l = List.map (print_c_ex cell.arb) l in
-        raise (Test_fail (cell.name, l))
+    | R.Error {instance; exn; backtrace} ->
+      raise (Test_error (cell.name, print_c_ex cell.arb instance, exn, backtrace))
+    | R.Failed {instances=l} ->
+      let l = List.map (print_c_ex cell.arb) l in
+      raise (Test_fail (cell.name, l))
+    | R.Failed_other {msg} ->
+      raise (Test_fail (cell.name, [msg]))
 
   let check_cell_exn ?long ?call ?step ?rand cell =
     let res = check_cell ?long ?call ?step ?rand cell in
@@ -1558,11 +1574,14 @@ let find_example ?(name="<example>") ?count ~f g : _ Gen.t =
     let res = Test.check_cell ~rand:st cell in
     begin match res.TestResult.state with
       | TestResult.Success -> raise (No_example_found name)
-      | TestResult.Error (_, _, _) -> raise (No_example_found name)
-      | TestResult.Failed [] -> assert false
-      | TestResult.Failed (failed::_) ->
+      | TestResult.Error _ -> raise (No_example_found name)
+      | TestResult.Failed {instances=[]} -> assert false
+      | TestResult.Failed {instances=failed::_} ->
         (* found counter-example! *)
         failed.TestResult.instance
+      | TestResult.Failed_other {msg=_} ->
+        raise (No_example_found name)
+
     end
   in
   gen

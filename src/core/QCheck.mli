@@ -605,19 +605,28 @@ module TestResult : sig
 
   type 'a failed_state = 'a counter_ex list
 
+  (** Result state.
+      changed in NEXT_RELEASE (move to inline records, add Fail_other) *)
   type 'a state =
     | Success
-    | Failed of 'a failed_state (** Failed instances *)
-    | Error of 'a counter_ex * exn * string (** Error, backtrace, and instance
-                                                that triggered it *)
+    | Failed of {
+        instances: 'a failed_state; (** Failed instance(s) *)
+      }
+    | Failed_other of {msg: string}
+    | Error of {
+        instance: 'a counter_ex;
+        exn: exn;
+        backtrace: string;
+      } (** Error, backtrace, and instance that triggered it *)
 
   (* result returned by running a test *)
-  type 'a t = {
+  type 'a t = private {
     mutable state : 'a state;
     mutable count: int;  (* Number of tests *)
     mutable count_gen: int; (* Number of generated cases *)
     collect_tbl: (string, int) Hashtbl.t lazy_t;
     stats_tbl: ('a stat * (int, int) Hashtbl.t) list; (** @since 0.6 *)
+    mutable warnings: string list;
     mutable instances: 'a list;
     (** List of instances used for this test, in no particular order.
         @since 0.9 *)
@@ -630,6 +639,10 @@ module TestResult : sig
   val stats : 'a t -> ('a stat * (int,int) Hashtbl.t) list
   (** Obtain statistics
       @since 0.6 *)
+
+  val warnings : _ t -> string list
+  (** Obtain list of warnings
+      @since NEXT_RELEASE *)
 
   val is_success : _ t -> bool
   (** Returns true iff the state if [Success]
@@ -721,6 +734,7 @@ module Test : sig
   val print_instance : 'a arbitrary -> 'a -> string
   val print_c_ex : 'a arbitrary -> 'a TestResult.counter_ex -> string
   val print_fail : 'a arbitrary -> string -> 'a TestResult.counter_ex list -> string
+  val print_fail_other : string -> msg:string -> string
   val print_error : ?st:string -> 'a arbitrary -> string -> 'a TestResult.counter_ex * exn -> string
   val print_test_fail : string -> string list -> string
   val print_test_error : string -> string -> exn -> string -> string
