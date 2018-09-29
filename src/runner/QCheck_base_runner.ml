@@ -130,10 +130,13 @@ module Raw = struct
       (* even if [not verbose], print errors *)
       match result.R.state with
         | R.Success -> ()
-        | R.Failed l ->
+        | R.Failed {instances=l} ->
           print.fail "%s%s\n" Color.reset_line (T.print_fail arb name l);
-        | R.Error (i,e,st) ->
-          print.err "%s%s\n" Color.reset_line (T.print_error ~st arb name (i,e));
+        | R.Failed_other {msg} ->
+          print.fail "%s%s\n" Color.reset_line (T.print_fail_other name ~msg);
+        | R.Error {instance; exn; backtrace} ->
+          print.err "%s%s\n" Color.reset_line
+            (T.print_error ~st:backtrace arb name (instance,exn));
     )
 
   let print_std = { info = Printf.printf; fail = Printf.printf; err = Printf.printf }
@@ -269,6 +272,12 @@ let print_success ~colors out cell r =
         (Color.pp_str_c ~colors `Blue) "Collect"
         (String.make 68 '+') (QCheck.Test.get_name cell) (QCheck.Test.print_collect tbl)
   end;
+  List.iter (fun msg ->
+       Printf.fprintf out
+         "\n!!! %a %s\n\nWarning for test %s:\n\n%s%!"
+        (Color.pp_str_c ~colors `Yellow) "Warning" (String.make 68 '!')
+        (QCheck.Test.get_name cell) msg)
+    (QCheck.TestResult.warnings r);
   List.iter
     (fun st ->
        Printf.fprintf out
@@ -284,6 +293,10 @@ let print_fail ~colors out cell c_ex =
     (QCheck.Test.get_name cell) c_ex.QCheck.TestResult.shrink_steps
     (print_inst (QCheck.Test.get_arbitrary cell) c_ex.QCheck.TestResult.instance);
   print_messages ~colors out cell c_ex.QCheck.TestResult.msg_l
+
+let print_fail_other ~colors out cell msg =
+  Printf.fprintf out "\n--- %a %s\n\n" (Color.pp_str_c ~colors `Red) "Failure" (String.make 68 '-');
+  Printf.fprintf out "Test %s failed:\n\n%s\n%!" (QCheck.Test.get_name cell) msg
 
 let print_error ~colors out cell c_ex exn bt =
   Printf.fprintf out "\n=== %a %s\n\n" (Color.pp_str_c ~colors `Red) "Error" (String.make 70 '=');
@@ -331,10 +344,13 @@ let run_tests
       | R.Success ->
         print_success ~colors out cell r;
         (total + 1, fail, error)
-      | R.Failed l ->
+      | R.Failed {instances=l} ->
         List.iter (print_fail ~colors out cell) l;
         (total + 1, fail + 1, error)
-      | R.Error (c_ex, exn, bt) ->
+      | R.Failed_other {msg} ->
+        print_fail_other ~colors out cell msg;
+        (total + 1, fail + 1, error)
+      | R.Error {instance=c_ex; exn; backtrace=bt} ->
         print_error ~colors out cell c_ex exn bt;
         (total + 1, fail, error + 1)
     in
