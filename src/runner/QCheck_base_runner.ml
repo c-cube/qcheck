@@ -339,25 +339,27 @@ let run_tests
     Res (cell, r)
   in
   let res = List.map aux_map l in
-  let aux_fold (total, fail, error) (Res (cell, r)) =
+  let aux_fold (total, fail, error, warns) (Res (cell, r)) =
+    let warns = warns + List.length r.R.warnings in
     let acc = match r.R.state with
       | R.Success ->
         print_success ~colors out cell r;
-        (total + 1, fail, error)
+        (total + 1, fail, error, warns)
       | R.Failed {instances=l} ->
         List.iter (print_fail ~colors out cell) l;
-        (total + 1, fail + 1, error)
+        (total + 1, fail + 1, error, warns)
       | R.Failed_other {msg} ->
         print_fail_other ~colors out cell msg;
-        (total + 1, fail + 1, error)
+        (total + 1, fail + 1, error, warns)
       | R.Error {instance=c_ex; exn; backtrace=bt} ->
         print_error ~colors out cell c_ex exn bt;
-        (total + 1, fail, error + 1)
+        (total + 1, fail, error + 1, warns)
     in
     acc
   in
-  let total, fail, error = List.fold_left aux_fold (0, 0, 0) res in
+  let total, fail, error, warns = List.fold_left aux_fold (0, 0, 0,0) res in
   Printf.fprintf out "%s\n" (String.make 80 '=');
+  if warns > 0 then Printf.fprintf out "%d warning(s)\n" warns;
   if fail = 0 && error = 0 then (
     Printf.fprintf out "%a (ran %d tests)\n%!"
       (pp_color `Green) "success" total;
