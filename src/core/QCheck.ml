@@ -1073,8 +1073,7 @@ module TestResult = struct
     let c_ex = {instance; shrink_steps; msg_l; } in
     match res.state with
     | Success -> res.state <- Failed {instances=[ c_ex ]}
-    | Error e ->
-        res.state <- Error e; (* same *)
+    | Error _
     | Failed_other _ -> ()
     | Failed {instances=[]} -> assert false
     | Failed {instances=((c_ex'::_) as l)} ->
