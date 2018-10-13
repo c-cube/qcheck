@@ -208,14 +208,14 @@ module Gen : sig
 
   val int : int t (** Generates integers uniformly. *)
 
-  val small_nat : int t (** Synonym to {!nat}. @since 0.5.1 *)
+  val small_nat : int t (** Small integers (< 100) @since 0.5.1 *)
 
   val small_int : int t
   (** Small UNSIGNED integers, for retrocompatibility.
       @deprecated use {!small_nat}. *)
 
   val small_signed_int : int t
-  (** Small SIGNED integers.
+  (** Small SIGNED integers, based on {!small_nat}.
       @since 0.5.2 *)
 
   val int_bound : int -> int t
@@ -286,12 +286,16 @@ module Gen : sig
       Accepts an optional character generator (the default is {!char}). *)
 
   val small_string : ?gen:char t -> string t
-  (** Builds a string generator. String size is in the range [0--10].
+  (** Builds a string generator, length is {!small_nat}
       Accepts an optional character generator (the default is {!char}). *)
 
   val small_list : 'a t -> 'a list t
-  (** Generates lists of small size (range [0 -- 10]).
+  (** Generates lists of small size (see {!small_nat}).
       @since 0.5.3 *)
+
+  val small_array : 'a t -> 'a array t
+  (** Generates arrays of small size (see {!small_nat}).
+      @since NEXT_RELEASE *)
 
   val join : 'a t t -> 'a t
   (** Collapses a generator of generators to simply a generator.
@@ -938,10 +942,10 @@ val string : string arbitrary
     and distribution of characters of [char]. *)
 
 val small_string : string arbitrary
-(** Same as {!string} but with a small length (that is, [0--10]). *)
+(** Same as {!string} but with a small length (ie {!Gen.small_nat} ). *)
 
 val small_list : 'a arbitrary -> 'a list arbitrary
-(** Generates lists of small size (range [0 -- 10]).
+(** Generates lists of small size (see {!Gen.small_nat}).
     @since 0.5.3 *)
 
 val string_of_size : int Gen.t -> string arbitrary

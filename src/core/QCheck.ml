@@ -94,15 +94,17 @@ module Gen = struct
 
   let frequency l st = frequencyl l st st
 
+  let small_nat st =
+    let p = RS.float st 1. in
+    if p < 0.75 then RS.int st 10 else RS.int st 100
+
   (* natural number generator *)
   let nat st =
     let p = RS.float st 1. in
-    if p < 0.5 then RS.int st 10
-    else if p < 0.75 then RS.int st 100
-    else if p < 0.95 then RS.int st 1_000
-    else RS.int st 10_000
-
-  let small_nat = nat
+    if p < 0.6 then small_nat st
+    else if p < 0.8 then RS.int st 1_000
+    else if p < 0.9 then RS.int st 10_000
+    else RS.int st 1_000_000
 
   let unit _st = ()
 
@@ -214,9 +216,10 @@ module Gen = struct
       Bytes.set s i (gen st)
     done;
     Bytes.unsafe_to_string s
-  let string ?gen st = string_size ?gen small_nat st
-  let small_string ?gen st = string_size ?gen (0--10) st
-  let small_list gen = list_size (0--10) gen
+  let string ?gen st = string_size ?gen nat st
+  let small_string ?gen st = string_size ?gen small_nat st
+  let small_list gen = list_size small_nat gen
+  let small_array gen = array_size small_nat gen
 
   let join g st = (g st) st
 
@@ -588,11 +591,11 @@ let string_gen gen =
 
 let string = string_gen Gen.char
 let string_of_size size = string_gen_of_size size Gen.char
-let small_string = string_gen_of_size Gen.(0--10) Gen.char
+let small_string = string_gen_of_size Gen.small_nat Gen.char
 
 let printable_string = string_gen Gen.printable
 let printable_string_of_size size = string_gen_of_size size Gen.printable
-let small_printable_string = string_gen_of_size Gen.(0--10) Gen.printable
+let small_printable_string = string_gen_of_size Gen.small_nat Gen.printable
 
 let numeral_string = string_gen Gen.numeral
 let numeral_string_of_size size = string_gen_of_size size Gen.numeral
