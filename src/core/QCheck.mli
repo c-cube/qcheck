@@ -202,6 +202,8 @@ module Gen : sig
 
   val nat : int t (** Generates small natural numbers. *)
 
+  val big_nat : int t (** Generates natural numbers, possibly large. @since NEXT_RELEASE *)
+
   val neg_int : int t (** Generates non-strictly negative integers (0 included). *)
 
   val pint : int t (** Generates non-strictly positive integers uniformly (0 included). *)

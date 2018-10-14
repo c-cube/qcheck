@@ -101,9 +101,14 @@ module Gen = struct
   (* natural number generator *)
   let nat st =
     let p = RS.float st 1. in
-    if p < 0.6 then small_nat st
-    else if p < 0.8 then RS.int st 1_000
-    else if p < 0.9 then RS.int st 10_000
+    if p < 0.5 then RS.int st 10
+    else if p < 0.75 then RS.int st 100
+    else if p < 0.95 then RS.int st 1_000
+    else RS.int st 10_000
+
+  let big_nat st =
+    let p = RS.float st 1. in
+    if p < 0.75 then nat st
     else RS.int st 1_000_000
 
   let unit _st = ()
