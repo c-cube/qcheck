@@ -22,7 +22,7 @@ image::https://travis-ci.org/c-cube/qcheck.svg?branch=master[alt="Build Status",
 == Use
 
 See the documentation. I also wrote
-http://cedeela.fr/quickcheck-for-ocaml.html[a blog post] that explains
+http://cedeela.fr/quickcheck-for-ocaml[a blog post] that explains
 how to use it and some design choices; however, be warned that the API
 changed in lots of small ways (in the right direction, I hope) so the code
 will not work any more.
