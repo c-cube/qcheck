@@ -339,16 +339,16 @@ module Shrink = struct
   let int x yield =
     let y = ref x in
     (* try some divisors *)
-    while !y < -2 || !y >2 do y := !y / 2; yield !y; done; (* fast path *)
+    while !y < -2 || !y >2 do y := !y / 2; yield (x - !y); done; (* fast path *)
     if x>0 then yield (x-1);
     if x<0 then yield (x+1);
     ()
 
   (* aggressive shrinker for integers,
-     get closer to 0, by dichotomy or just enumerating smaller values *)
+     get from 0 to x, by dichotomy or just enumerating smaller values *)
   let int_aggressive x yield =
     let y = ref x in
-    while !y < -2 || !y >2 do y := !y / 2; yield !y; done; (* fast path *)
+    while !y < -2 || !y >2 do y := !y / 2; yield (x - !y); done; (* fast path *)
     if x>0 then for i=x-1 downto 0 do yield i done;
     if x<0 then for i=x+1 to 0 do yield i done
 
