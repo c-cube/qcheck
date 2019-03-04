@@ -12,7 +12,7 @@ This library spent some time in
 https://github.com/vincent-hugot/iTeML[qtest], but is now
 standalone again!
 Note that @gasche's
-http://gasche.github.io/random-generator/doc/Generator.html[generator library]
+https://github.com/gasche/random-generator/[generator library]
 can be useful too, for generating random values.
 
 toc::[]
