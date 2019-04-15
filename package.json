@@ -1,0 +1,20 @@
+{
+    "name": "qcheck-dev",
+    "esy": {
+      "build": "refmterr dune build -p qcheck-rely",
+      "install": [
+        "esy-installer qcheck-rely.install"
+      ]
+    },
+    "scripts": {
+        "example-rely": "dune exec example/rely/QCheck_rely_test.exe"
+    },
+    "dependencies": {
+      "@opam/dune": "*",
+      "@opam/qcheck": "*",
+      "@esy-ocaml/reason": "*",
+      "refmterr": "*",
+      "ocaml": "^4.2.0",
+      "@reason-native/rely": "*"
+    }
+  }
