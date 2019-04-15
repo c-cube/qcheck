@@ -1,0 +1,4 @@
+
+(executable
+  (name QCheck_rely_test)
+  (libraries qcheck-core qcheck-rely rely.lib))
