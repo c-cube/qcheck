@@ -456,7 +456,7 @@ module Shrink : sig
       @since 0.7 *)
 
   val list : ?shrink:'a t -> 'a list t
-  (** Try to shrink lists by removing elements one by one.
+  (** Try to shrink lists by removing one or more elements.
       @param shrink if provided, will be used to also try to reduce
       the elements of the list themselves (e.g. in an [int list]
       one can try to decrease the integers). *)

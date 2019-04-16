@@ -395,8 +395,45 @@ module Shrink = struct
         done
 
   let list ?shrink l yield =
-    array ?shrink (Array.of_list l)
-      (fun a -> yield (Array.to_list a))
+    let n = List.length l in
+    let chunk_size = ref (n/2) in
+
+    let rec fill_queue n l q = match n,l with
+      | 0,_ -> l
+      | _,x::xs -> (Queue.push x q; fill_queue (n-1) xs q)
+      | _,_ -> failwith "size mismatch in fill_queue"
+    in
+
+    while !chunk_size > 0 do
+      let q = Queue.create () in
+      let l' = fill_queue !chunk_size l q in
+      (* remove chunk_size elements in queue *)
+      let rec pos_loop rev_prefix suffix =
+        begin
+          yield (List.rev_append rev_prefix suffix);
+          match suffix with
+          | [] -> ()
+          | x::xs ->
+            (Queue.push x q;
+             pos_loop ((Queue.pop q)::rev_prefix) xs)
+        end
+      in
+      pos_loop [] l';
+      chunk_size := !chunk_size / 2;
+    done;
+    match shrink with
+    | None -> ()
+    | Some f ->
+      (* try to shrink each element of the list *)
+      let rec elem_loop rev_prefix suffix = match suffix with
+        | [] -> ()
+        | x::xs ->
+          begin
+            f x (fun x' -> yield (List.rev_append rev_prefix (x'::xs)));
+            elem_loop (x::rev_prefix) xs
+          end
+      in
+      elem_loop [] l
 
   let pair a b (x,y) yield =
     a x (fun x' -> yield (x',y));
