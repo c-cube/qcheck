@@ -11,3 +11,4 @@ man
 *.byte
 .merlin
 _esy
+esy.lock
