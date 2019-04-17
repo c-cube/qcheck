@@ -4,7 +4,10 @@
       "build": "refmterr dune build -p qcheck-rely",
       "install": [
         "esy-installer qcheck-rely.install"
-      ]
+      ],
+      "sandboxEnv": {
+        "PROJECT_DIR": "."
+      }
     },
     "scripts": {
         "example-rely": "dune exec example/rely/QCheck_rely_test.exe"

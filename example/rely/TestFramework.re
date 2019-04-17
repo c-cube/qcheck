@@ -1,8 +1,4 @@
-let projectDir =
-  Pervasives.__FILE__
-  |> Filename.dirname
-  |> Filename.dirname
-  |> Filename.dirname;
+let projectDir = Sys.getenv("PROJECT_DIR");
 
 include Rely.Make({
   let config =
