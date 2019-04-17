@@ -1543,10 +1543,11 @@ module Test = struct
     let hist_size, bucket_size =
       let sample_width = Int64.(sub (of_int max_idx) (of_int min_idx)) in
       if sample_width > Int64.of_int stat_max_lines
-      then 1+stat_max_lines,
+      then stat_max_lines,
         int_of_float (ceil (Int64.to_float sample_width /. float_of_int stat_max_lines))
-      else 1+max_idx-min_idx, 1
+      else max_idx-min_idx, 1
     in
+    let hist_size = if min_idx + bucket_size * hist_size <= max_idx then 1+hist_size else hist_size in
     (* accumulate bucket counts *)
     let max_val = ref 0 in (* max value after grouping by buckets *)
     let bucket_count = Array.init hist_size (fun _ -> 0) in
@@ -1562,16 +1563,23 @@ module Test = struct
     Printf.bprintf out
       "  num: %d, avg: %.2f, stddev: %.2f, median %d, min %d, max %d\n"
       !num !avg stddev !median min_idx max_idx;
+    let indwidth =
+      max (String.length (Printf.sprintf "%d" min_idx))
+        (max (String.length (Printf.sprintf "%d" max_idx))
+           (String.length (Printf.sprintf "%d" (min_idx + bucket_size * hist_size)))) in
+    let labwidth = if bucket_size=1 then indwidth else 2+2*indwidth in
     for i = 0 to hist_size - 1 do
       let i' = min_idx + i * bucket_size in
       let blabel =
         if bucket_size=1
-        then Printf.sprintf "%d" i'
-        else Printf.sprintf "%d..%d" i' (i'+bucket_size-1) in
+        then Printf.sprintf "%*d" indwidth i'
+        else
+          let bucket_bound = i'+bucket_size-1 in
+          Printf.sprintf "%*d..%*d" indwidth i' indwidth (if bucket_bound < i' then max_int else bucket_bound) in
       let bcount = bucket_count.(i) in
       (* NOTE: keep in sync *)
       let bar_len = bcount * 55 / !max_val in
-      Printf.bprintf out "  %15s: %-56s %10d\n" blabel (String.make bar_len '#') bcount
+      Printf.bprintf out "  %*s: %-56s %10d\n" labwidth blabel (String.make bar_len '#') bcount
     done;
     Buffer.contents out
 
