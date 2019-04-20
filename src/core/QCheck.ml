@@ -398,25 +398,29 @@ module Shrink = struct
     let n = List.length l in
     let chunk_size = ref (n/2) in
 
+    (* push the [n] first elements of [l] into [q], return the rest of the list *)
     let rec fill_queue n l q = match n,l with
-      | 0,_ -> l
-      | _,x::xs -> (Queue.push x q; fill_queue (n-1) xs q)
-      | _,_ -> failwith "size mismatch in fill_queue"
+      | 0, _ -> l
+      | _, x::xs ->
+        Queue.push x q;
+        fill_queue (n-1) xs q
+      | _, _ -> assert false
     in
 
+    (* remove elements from the list, by chunks of size [chunk_size] (bigger
+       chunks first) *)
     while !chunk_size > 0 do
       let q = Queue.create () in
       let l' = fill_queue !chunk_size l q in
-      (* remove chunk_size elements in queue *)
+      (* remove [chunk_size] elements in queue *)
       let rec pos_loop rev_prefix suffix =
-        begin
-          yield (List.rev_append rev_prefix suffix);
-          match suffix with
-          | [] -> ()
-          | x::xs ->
-            (Queue.push x q;
-             pos_loop ((Queue.pop q)::rev_prefix) xs)
-        end
+        yield (List.rev_append rev_prefix suffix);
+        match suffix with
+        | [] -> ()
+        | x::xs ->
+          Queue.push x q;
+          let y = Queue.pop q in
+          (pos_loop [@tailcall]) (y::rev_prefix) xs
       in
       pos_loop [] l';
       chunk_size := !chunk_size / 2;
@@ -428,10 +432,8 @@ module Shrink = struct
       let rec elem_loop rev_prefix suffix = match suffix with
         | [] -> ()
         | x::xs ->
-          begin
-            f x (fun x' -> yield (List.rev_append rev_prefix (x'::xs)));
-            elem_loop (x::rev_prefix) xs
-          end
+          f x (fun x' -> yield (List.rev_append rev_prefix (x'::xs)));
+          elem_loop (x::rev_prefix) xs
       in
       elem_loop [] l
 
