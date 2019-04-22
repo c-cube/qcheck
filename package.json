@@ -10,7 +10,7 @@
       }
     },
     "scripts": {
-        "example-rely": "dune exec example/rely/QCheck_rely_test.exe"
+        "example-rely": "dune exec example/rely/QCheckRely_test.exe"
     },
     "dependencies": {
       "@opam/dune": "*",

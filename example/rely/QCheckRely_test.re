@@ -26,12 +26,19 @@ let simple_qcheck =
   );
 
 describe("qcheck-rely", ({test, _}) => {
+  let qcheckTest = QCheckRely.toRely(test);
   let _ =
-    List.map(
-      QCheck_rely.to_rely(test),
-      [passing, failing, error, simple_qcheck],
-    );
-  ();
+       List.map(
+         qcheckTest.make,
+         [passing, failing, error, simple_qcheck],
+       );
+     ();
+  qcheckTest.make(
+    QCheck.Test.make(
+      ~count=1000, ~name="list_rev_is_involutive", QCheck.(list(small_int)), l =>
+      List.rev(List.rev(l)) == l
+    ),
+  );
 });
 
 TestFramework.cli();
