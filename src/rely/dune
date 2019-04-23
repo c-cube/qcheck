@@ -1,7 +1,6 @@
 (library
-  (name qcheck_rely)
+  (name QCheckRely)
   (public_name qcheck-rely)
-  (wrapped false)
-  (libraries qcheck-core qcheck-core.runner rely.lib)
+  (libraries qcheck-core qcheck-core.runner rely.lib console.lib)
   (flags :standard -w +a-4-42-44-48-50-58-32-60@8 -safe-string)
   )

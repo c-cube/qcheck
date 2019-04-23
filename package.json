@@ -18,6 +18,7 @@
       "@esy-ocaml/reason": "*",
       "refmterr": "*",
       "ocaml": "^4.2.0",
-      "@reason-native/rely": "*"
+      "@reason-native/rely": "*",
+      "@reason-native/console": "*"
     }
   }
