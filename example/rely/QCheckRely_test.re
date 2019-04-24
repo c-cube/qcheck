@@ -54,12 +54,12 @@ describe("qcheck-rely", ({test, _}) => {
   /** Alternate syntax, worse matcher output */
   let {make, _} = QCheckRely.toRely(test);
 
-  make(
+  let simpleFailingTest =
     QCheck.Test.make(
       ~name="fail_check_err_message", ~count=100, QCheck.small_int, _ =>
       QCheck.Test.fail_reportf("@[<v>this@ will@ always@ fail@]")
-    ),
-  );
+    );
+  make(simpleFailingTest);
 });
 
 TestFramework.cli();
