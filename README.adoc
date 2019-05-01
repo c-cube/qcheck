@@ -186,7 +186,7 @@ contains everything needed for testing on trees:
 - a printer (optional), very useful for printing counterexamples
 - a *shrinker* (optional), very useful for trying to reduce big
   counterexamples to small counterexamples that are usually
-  more easy to understand. 
+  more easy to understand.
 
 The above shrinker strategy is to
 
@@ -354,6 +354,45 @@ let () =
   Alcotest.run "my test" [
     "suite", suite
   ]
+
+----
+
+=== Integration within Rely
+https://reason-native.com/docs/rely/[Rely] is a Jest-inspire native reason testing framework.
+@reason-native/qcheck-rely is available via NPM and provides matchers for the easy
+use of qCheck within Rely.
+
+[source, Reason]
+----
+open TestFramework;
+open QCheckRely;
+
+let {describe} = extendDescribe(QCheckRely.Matchers.matchers);
+
+describe("qcheck-rely", ({test}) => {
+  test("passing test", ({expect}) => {
+    let passing =
+      QCheck.Test.make(
+        ~count=1000,
+        ~name="list_rev_is_involutive",
+        QCheck.(list(small_int)),
+        l =>
+        List.rev(List.rev(l)) == l
+      );
+    expect.ext.qCheckTest(passing);
+    ();
+  });
+  test("failing test", ({expect}) => {
+    let failing =
+      QCheck.Test.make(
+        ~count=10, ~name="fail_sort_id", QCheck.(list(small_int)), l =>
+        l == List.sort(compare, l)
+      );
+
+    expect.ext.qCheckTest(failing);
+    ();
+  });
+});
 
 ----
 
