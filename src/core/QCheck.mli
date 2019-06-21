@@ -313,8 +313,14 @@ module Gen : sig
       to the size-bounded generator.
       @since 0.5 *)
 
-  val fix : ('a sized -> 'a sized) -> 'a sized
-  (** Fixpoint combinator for generating recursive, size-bounded data types.
+  val fix : (('a -> 'b t) -> ('a -> 'b t)) -> 'a -> 'b t
+  (** Parametrized fixpoint combinator for generating recursive values.
+
+      The fixpoint is parametrized over an arbitrary state ('a), and the
+      fixpoint computation may change the value of this state in the recursive
+      calls.
+
+      In particular, this can be used for size-bounded generators ('a is int).
       The passed size-parameter should decrease to ensure termination. *)
 
   (** Example:
