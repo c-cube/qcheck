@@ -412,11 +412,13 @@ module Iter : sig
 
   val of_list : 'a list -> 'a t
   val of_array : 'a array -> 'a t
+
   val pair : 'a t -> 'b t -> ('a * 'b) t
   val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
   val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
-  val find : ('a -> bool) -> 'a t -> 'a option
+  val sequence_list : 'a t list -> 'a list t
 
+  val find : ('a -> bool) -> 'a t -> 'a option
   val filter : ('a -> bool) -> 'a t -> 'a t
 
   val append_l : 'a t list -> 'a t

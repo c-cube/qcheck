@@ -318,6 +318,13 @@ module Iter = struct
   let quad a b c d yield =
     a (fun x -> b (fun y -> c (fun z -> d (fun w -> yield (x,y,z,w)))))
 
+  let sequence_list (type a) (gs  : a t list) : a list t = fun yield ->
+    List.fold_left (fun acc g yield ->
+        acc @@ fun rev_xs ->
+        g @@ fun x ->
+        yield (x :: rev_xs)
+    ) (return []) gs @@ fun rev_xs -> yield (List.rev rev_xs)
+
   exception IterExit
   let find_map p iter =
     let r = ref None in
