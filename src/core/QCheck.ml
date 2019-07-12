@@ -333,6 +333,7 @@ module Shrink = struct
   type 'a t = 'a -> 'a Iter.t
 
   let nil _ = Iter.empty
+
   let unit = nil
 
   (* balanced shrinker for integers (non-exhaustive) *)
@@ -394,7 +395,7 @@ module Shrink = struct
           )
         done
 
-  let list ?shrink l yield =
+  let list_spine l yield =
     let n = List.length l in
     let chunk_size = ref (n/2) in
 
@@ -424,18 +425,23 @@ module Shrink = struct
       in
       pos_loop [] l';
       chunk_size := !chunk_size / 2;
-    done;
+    done
+
+  let list_elems shrink l yield =
+    (* try to shrink each element of the list *)
+    let rec elem_loop rev_prefix suffix = match suffix with
+      | [] -> ()
+      | x::xs ->
+         shrink x (fun x' -> yield (List.rev_append rev_prefix (x'::xs)));
+         elem_loop (x::rev_prefix) xs
+    in
+    elem_loop [] l
+
+  let list ?shrink l yield =
+    list_spine l yield;
     match shrink with
     | None -> ()
-    | Some f ->
-      (* try to shrink each element of the list *)
-      let rec elem_loop rev_prefix suffix = match suffix with
-        | [] -> ()
-        | x::xs ->
-          f x (fun x' -> yield (List.rev_append rev_prefix (x'::xs)));
-          elem_loop (x::rev_prefix) xs
-      in
-      elem_loop [] l
+    | Some shrink -> list_elems shrink l yield
 
   let pair a b (x,y) yield =
     a x (fun x' -> yield (x',y));

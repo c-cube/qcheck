@@ -467,6 +467,12 @@ module Shrink : sig
       the elements of the list themselves (e.g. in an [int list]
       one can try to decrease the integers). *)
 
+  val list_spine : 'a list t
+  (** Try to shrink lists by removing one or more elements. *)
+
+  val list_elems : 'a t -> 'a list t
+  (** Shrinks the elements of a list, without changing the list size. *)
+
   val array : ?shrink:'a t -> 'a array t
   (** Shrink an array.
       @param shrink see {!list} *)
