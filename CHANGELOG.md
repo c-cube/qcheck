@@ -1,5 +1,19 @@
 # Changes
 
+## 0.10
+
+- `Shrink`: decompose Shrink.list into Shrink.list_spine and Shrink.list_elems
+- `Gen.fix` has a more general and useful type
+- update README to include `Rely` section (qcheck now available for reason-native!)
+- Fix stat printing
+- speed-up list shrinker
+- Better int shrinking
+- core: modify proba distributions again, add `big_nat`
+- feat: add `small_array`, modify distributions
+- print number of warnings in runner's summary
+- refactor: modify type of results to make them more accurate
+- feat: warn/fail if too many tests passed only b/c precondition failed
+
 ## 0.9
 
 - add `qcheck-ounit` sublibrary

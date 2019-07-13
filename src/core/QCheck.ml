@@ -1096,7 +1096,7 @@ module TestResult = struct
   type 'a failed_state = 'a counter_ex list
 
   (** Result state.
-      changed in NEXT_RELEASE (move to inline records) *)
+      changed in 0.10 (move to inline records) *)
   type 'a state =
     | Success
     | Failed of {

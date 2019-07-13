@@ -202,7 +202,7 @@ module Gen : sig
 
   val nat : int t (** Generates small natural numbers. *)
 
-  val big_nat : int t (** Generates natural numbers, possibly large. @since NEXT_RELEASE *)
+  val big_nat : int t (** Generates natural numbers, possibly large. @since 0.10 *)
 
   val neg_int : int t (** Generates non-strictly negative integers (0 included). *)
 
@@ -297,7 +297,7 @@ module Gen : sig
 
   val small_array : 'a t -> 'a array t
   (** Generates arrays of small size (see {!small_nat}).
-      @since NEXT_RELEASE *)
+      @since 0.10 *)
 
   val join : 'a t t -> 'a t
   (** Collapses a generator of generators to simply a generator.
@@ -469,11 +469,11 @@ module Shrink : sig
 
   val list_spine : 'a list t
   (** Try to shrink lists by removing one or more elements.
-      @since NEXT_RELEASE *)
+      @since 0.10 *)
 
   val list_elems : 'a t -> 'a list t
   (** Shrinks the elements of a list, without changing the list size.
-      @since NEXT_RELEASE *)
+      @since 0.10 *)
 
   val array : ?shrink:'a t -> 'a array t
   (** Shrink an array.
@@ -626,7 +626,7 @@ module TestResult : sig
   type 'a failed_state = 'a counter_ex list
 
   (** Result state.
-      changed in NEXT_RELEASE (move to inline records, add Fail_other) *)
+      changed in 0.10 (move to inline records, add Fail_other) *)
   type 'a state =
     | Success
     | Failed of {
@@ -662,7 +662,7 @@ module TestResult : sig
 
   val warnings : _ t -> string list
   (** Obtain list of warnings
-      @since NEXT_RELEASE *)
+      @since 0.10 *)
 
   val is_success : _ t -> bool
   (** Returns true iff the state if [Success]
@@ -709,7 +709,7 @@ module Test : sig
         The fraction should be between 0. and 1.
         A warning will be emitted otherwise if
         the flag is [`Warning], the test will be a failure if the flag is [`Fatal].
-        (since NEXT_RELEASE)
+        (since 0.10)
   *)
 
   val get_arbitrary : 'a cell -> 'a arbitrary
