@@ -190,11 +190,11 @@ module Gen : sig
   val shuffle_l : 'a list -> 'a list t
   (** Creates a generator of shuffled lists. *)
 
-  val unit: unit t (** The unit generator. *)
+  val unit : unit t (** The unit generator. *)
 
-  val bool: bool t (** The boolean generator. *)
+  val bool : bool t (** The boolean generator. *)
 
-  val float: float t   (** Generates floating point numbers. *)
+  val float : float t   (** Generates floating point numbers. *)
 
   val pfloat : float t (** Generates positive floating point numbers (0. included). *)
 
