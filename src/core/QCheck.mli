@@ -210,6 +210,13 @@ module Gen : sig
   [bound] (exclusive).  If [bound] is negative, the result is negative or zero.
   @raise Invalid_argument if [bound] is zero. *)
 
+  val float_range : float -> float -> float t
+  (** [float_range low high] generates floating-point numbers within [low] and [high] (inclusive)
+      @raise Invalid_argument if [high < low] or if the range is larger than [max_float]. *)
+
+  val (--.) : float -> float -> float t
+  (** Synonym for [float_range]  *)
+
   val nat : int t (** Generates small natural numbers. *)
 
   val big_nat : int t (** Generates natural numbers, possibly large. @since 0.10 *)
@@ -910,6 +917,10 @@ val float_bound_exclusive : float -> float arbitrary
 (** [float_bound_exclusive n] is uniform between [0] included and [n] excluded.
     If [bound] is negative, the result is negative or zero.
     @raise Invalid_argument if [bound] is zero. *)
+
+val float_range : float -> float -> float arbitrary
+(** [float_range low high] is uniform between [low] included and [high] included.
+    @raise Invalid_argument if [low > high] or if the range is larger than [max_float]. *)
 
 val int : int arbitrary
 (** Int generator. Uniformly distributed. *)
