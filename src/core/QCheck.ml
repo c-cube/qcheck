@@ -122,6 +122,14 @@ module Gen = struct
   let pfloat st = abs_float (float st)
   let nfloat st = -.(pfloat st)
 
+  let float_bound_inclusive bound st = RS.float st bound
+
+  let float_bound_exclusive bound st =
+    match bound with
+    | 0. -> raise (Invalid_argument "Gen.float_bound_exclusive")
+    | b_pos when bound > 0. -> RS.float st (b_pos -. epsilon_float)
+    | b_neg -> RS.float st (b_neg +. epsilon_float)
+
   let neg_int st = -(nat st)
 
   let opt f st =
@@ -613,6 +621,12 @@ let bool = make_scalar ~print:string_of_bool Gen.bool
 let float = make_scalar ~print:string_of_float Gen.float
 let pos_float = make_scalar ~print:string_of_float Gen.pfloat
 let neg_float = make_scalar ~print:string_of_float Gen.nfloat
+
+let float_bound_inclusive bound =
+  make_scalar ~print:string_of_float (Gen.float_bound_inclusive bound)
+
+let float_bound_exclusive bound =
+  make_scalar ~print:string_of_float (Gen.float_bound_exclusive bound)
 
 let int = make_int Gen.int
 let int_bound n = make_int (Gen.int_bound n)

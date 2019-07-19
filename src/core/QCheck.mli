@@ -200,6 +200,16 @@ module Gen : sig
 
   val nfloat : float t (** Generates negative floating point numbers. (-0. included) *)
 
+  val float_bound_inclusive : float -> float t
+  (** [float_bound_inclusive bound] returns a random floating-point number between 0 and
+  [bound] (inclusive).  If [bound] is negative, the result is negative or zero.  If
+  [bound] is 0, the result is 0. *)
+
+  val float_bound_exclusive : float -> float t
+  (** [float_bound_exclusive bound] returns a random floating-point number between 0 and
+  [bound] (exclusive).  If [bound] is negative, the result is negative or zero.
+  @raise Invalid_argument if [bound] is zero. *)
+
   val nat : int t (** Generates small natural numbers. *)
 
   val big_nat : int t (** Generates natural numbers, possibly large. @since 0.10 *)
@@ -891,6 +901,15 @@ val pos_float : float arbitrary
 
 val neg_float : float arbitrary
 (** Negative float generator (no nan and no infinities). *)
+
+val float_bound_inclusive : float -> float arbitrary
+(** [float_bound_inclusive n] is uniform between [0] and [n] included. If [bound] is
+    negative, the result is negative or zero.  If [bound] is 0, the result is 0. *)
+
+val float_bound_exclusive : float -> float arbitrary
+(** [float_bound_exclusive n] is uniform between [0] included and [n] excluded.
+    If [bound] is negative, the result is negative or zero.
+    @raise Invalid_argument if [bound] is zero. *)
 
 val int : int arbitrary
 (** Int generator. Uniformly distributed. *)
