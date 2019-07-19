@@ -190,15 +190,36 @@ module Gen : sig
   val shuffle_l : 'a list -> 'a list t
   (** Creates a generator of shuffled lists. *)
 
-  val unit: unit t (** The unit generator. *)
+  val unit : unit t (** The unit generator. *)
 
-  val bool: bool t (** The boolean generator. *)
+  val bool : bool t (** The boolean generator. *)
 
-  val float: float t   (** Generates floating point numbers. *)
+  val float : float t   (** Generates floating point numbers. *)
 
   val pfloat : float t (** Generates positive floating point numbers (0. included). *)
 
   val nfloat : float t (** Generates negative floating point numbers. (-0. included) *)
+
+  val float_bound_inclusive : float -> float t
+  (** [float_bound_inclusive bound] returns a random floating-point number between 0 and
+      [bound] (inclusive).  If [bound] is negative, the result is negative or zero.  If
+      [bound] is 0, the result is 0.
+      @since NEXT_RELEASE *)
+
+  val float_bound_exclusive : float -> float t
+  (** [float_bound_exclusive bound] returns a random floating-point number between 0 and
+      [bound] (exclusive).  If [bound] is negative, the result is negative or zero.
+      @raise Invalid_argument if [bound] is zero.
+      @since NEXT_RELEASE *)
+
+  val float_range : float -> float -> float t
+  (** [float_range low high] generates floating-point numbers within [low] and [high] (inclusive)
+      @raise Invalid_argument if [high < low] or if the range is larger than [max_float].
+      @since NEXT_RELEASE *)
+
+  val (--.) : float -> float -> float t
+  (** Synonym for [float_range]
+      @since NEXT_RELEASE *)
 
   val nat : int t (** Generates small natural numbers. *)
 
@@ -891,6 +912,22 @@ val pos_float : float arbitrary
 
 val neg_float : float arbitrary
 (** Negative float generator (no nan and no infinities). *)
+
+val float_bound_inclusive : float -> float arbitrary
+(** [float_bound_inclusive n] is uniform between [0] and [n] included. If [bound] is
+    negative, the result is negative or zero.  If [bound] is 0, the result is 0.
+    @since NEXT_RELEASE *)
+
+val float_bound_exclusive : float -> float arbitrary
+(** [float_bound_exclusive n] is uniform between [0] included and [n] excluded.
+    If [bound] is negative, the result is negative or zero.
+    @raise Invalid_argument if [bound] is zero.
+    @since NEXT_RELEASE *)
+
+val float_range : float -> float -> float arbitrary
+(** [float_range low high] is uniform between [low] included and [high] included.
+    @raise Invalid_argument if [low > high] or if the range is larger than [max_float].
+    @since NEXT_RELEASE *)
 
 val int : int arbitrary
 (** Int generator. Uniformly distributed. *)
