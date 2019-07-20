@@ -191,7 +191,18 @@ module Gen : sig
   (** Creates a generator of shuffled lists. *)
 
   val shuffle_w_l : (int * 'a) list -> 'a list t
-  (** Creates a generator of weighted shuffled lists. *)
+  (** Creates a generator of weighted shuffled lists. A given list is shuffled on each
+      generation according to the weights of its elements. An element with a larger weight
+      is more likely to be at the front of the list than an element with a smaller weight.
+      If we want to pick random elements from the (head of) list but need to prioritize
+      some elements over others, this generator can be useful.
+
+      Example: given a weighted list [[1, "one"; 5, "five"; 10, "ten"]], the generator is
+      more likely to generate [["ten"; "five"; "one"]] or [["five"; "ten"; "one"]] than
+      [["one"; "ten"; "five"]] because "ten" and "five" have larger weights than "one".
+
+      @since NEXT_RELEASE
+  *)
 
   val unit : unit t (** The unit generator. *)
 
