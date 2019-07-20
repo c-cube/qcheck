@@ -243,6 +243,7 @@ module Gen : sig
 
   val int_bound : int -> int t
   (** Uniform integer generator producing integers within [0... bound].
+      For [bound < 2^{30}] is same as [Random.State.int bound].
       @raise Invalid_argument if the argument is negative. *)
 
   val int_range : int -> int -> int t
