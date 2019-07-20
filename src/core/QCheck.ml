@@ -214,8 +214,8 @@ module Gen = struct
       let fl_w = float_of_int w in
       (float_bound_inclusive 1. st ** (1. /. fl_w), v)
     in
-    let samples = List.map sample l in
-    List.sort (fun (w1, _) (w2, _) -> compare w2 w1) samples |> List.map snd
+    let samples = List.rev_map sample l in
+    List.sort (fun (w1, _) (w2, _) -> compare w1 w2) samples |> List.rev_map snd
 
   let pair g1 g2 st = (g1 st, g2 st)
 
