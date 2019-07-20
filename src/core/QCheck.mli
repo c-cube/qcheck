@@ -190,6 +190,9 @@ module Gen : sig
   val shuffle_l : 'a list -> 'a list t
   (** Creates a generator of shuffled lists. *)
 
+  val shuffle_w_l : (int * 'a) list -> 'a list t
+  (** Creates a generator of weighted shuffled lists. *)
+
   val unit : unit t (** The unit generator. *)
 
   val bool : bool t (** The boolean generator. *)
