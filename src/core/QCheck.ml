@@ -244,6 +244,8 @@ module Gen = struct
     done;
     Bytes.unsafe_to_string s
   let string ?gen st = string_size ?gen nat st
+  let string_of gen = string_size ~gen nat
+  let string_readable = string_size ~gen:char nat
   let small_string ?gen st = string_size ?gen small_nat st
   let small_list gen = list_size small_nat gen
   let small_array gen = array_size small_nat gen
