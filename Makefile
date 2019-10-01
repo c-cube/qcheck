@@ -35,7 +35,7 @@ update_next_tag:
 release: update_next_tag
 	@echo "release version $(VERSION)..."
 	git tag -f $(VERSION) ; git push origin :$(VERSION) ; git push origin $(VERSION)
-	opam publish prepare https://github.com/c-cube/qcheck/archive/$(VERSION).tar.gz
+	opam publish https://github.com/c-cube/qcheck/archive/$(VERSION).tar.gz
 	@echo "review the release, then type 'opam publish submit qcheck.$(VERSION)/'"
 
 

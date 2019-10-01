@@ -1,5 +1,14 @@
 # Changes
 
+## 0.11
+
+- Add `QCheck.Gen.{string_of,string_readable}`
+- fix `int_bound` bound inclusiveness problem
+- change implementation of `int_bound` to generate values using `Random.State.int` for `bound < 2^30`
+- add weighted shuffled lists generator
+- add `float_range` to generate a floating-point number in the given range (inclusive)
+- add `float_bound_inclusive` and `float_bound_exclusive` to generate floating-point numbers between 0 and a given bound
+
 ## 0.10
 
 - `Shrink`: decompose Shrink.list into Shrink.list_spine and Shrink.list_elems

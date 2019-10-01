@@ -4,7 +4,7 @@ author: [ "Simon Cruanes <simon.cruanes.2007@m4x.org>" ]
 homepage: "https://github.com/c-cube/qcheck/"
 synopsis: "Core qcheck library"
 doc: ["http://c-cube.github.io/qcheck/"]
-version: "0.10"
+version: "0.11"
 tags: [
   "test"
   "property"
@@ -12,10 +12,8 @@ tags: [
 ]
 build: [
   ["dune" "build" "-p" name "-j" jobs]
-  ["dune" "build" "@doc" "-p" name] {with-doc}
-]
-run-test: [
-  ["dune" "runtest" "-p" name]
+  ["dune" "build" "@doc" "-p" name "-j" jobs] {with-doc}
+  ["dune" "runtest" "-p" name "-j" jobs] {with-test}
 ]
 depends: [
   "dune"

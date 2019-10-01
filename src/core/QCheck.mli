@@ -201,7 +201,7 @@ module Gen : sig
       more likely to generate [["ten"; "five"; "one"]] or [["five"; "ten"; "one"]] than
       [["one"; "ten"; "five"]] because "ten" and "five" have larger weights than "one".
 
-      @since NEXT_RELEASE
+      @since 0.11
   *)
 
   val unit : unit t (** The unit generator. *)
@@ -218,22 +218,22 @@ module Gen : sig
   (** [float_bound_inclusive bound] returns a random floating-point number between 0 and
       [bound] (inclusive).  If [bound] is negative, the result is negative or zero.  If
       [bound] is 0, the result is 0.
-      @since NEXT_RELEASE *)
+      @since 0.11 *)
 
   val float_bound_exclusive : float -> float t
   (** [float_bound_exclusive bound] returns a random floating-point number between 0 and
       [bound] (exclusive).  If [bound] is negative, the result is negative or zero.
       @raise Invalid_argument if [bound] is zero.
-      @since NEXT_RELEASE *)
+      @since 0.11 *)
 
   val float_range : float -> float -> float t
   (** [float_range low high] generates floating-point numbers within [low] and [high] (inclusive)
       @raise Invalid_argument if [high < low] or if the range is larger than [max_float].
-      @since NEXT_RELEASE *)
+      @since 0.11 *)
 
   val (--.) : float -> float -> float t
   (** Synonym for [float_range]
-      @since NEXT_RELEASE *)
+      @since 0.11 *)
 
   val nat : int t (** Generates small natural numbers. *)
 
@@ -327,11 +327,11 @@ module Gen : sig
 
   val string_of : char t -> string t
   (** Builds a string generator using the given character generator.
-      @since NEXT_RELEASE *)
+      @since 0.11 *)
 
   val string_readable : string t
   (** Builds a string generator using the {!char} character generator.
-      @since NEXT_RELEASE *)
+      @since 0.11 *)
 
   val small_string : ?gen:char t -> string t
   (** Builds a string generator, length is {!small_nat}
@@ -941,18 +941,18 @@ val neg_float : float arbitrary
 val float_bound_inclusive : float -> float arbitrary
 (** [float_bound_inclusive n] is uniform between [0] and [n] included. If [bound] is
     negative, the result is negative or zero.  If [bound] is 0, the result is 0.
-    @since NEXT_RELEASE *)
+    @since 0.11 *)
 
 val float_bound_exclusive : float -> float arbitrary
 (** [float_bound_exclusive n] is uniform between [0] included and [n] excluded.
     If [bound] is negative, the result is negative or zero.
     @raise Invalid_argument if [bound] is zero.
-    @since NEXT_RELEASE *)
+    @since 0.11 *)
 
 val float_range : float -> float -> float arbitrary
 (** [float_range low high] is uniform between [low] included and [high] included.
     @raise Invalid_argument if [low > high] or if the range is larger than [max_float].
-    @since NEXT_RELEASE *)
+    @since 0.11 *)
 
 val int : int arbitrary
 (** Int generator. Uniformly distributed. *)
