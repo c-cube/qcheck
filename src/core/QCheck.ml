@@ -1,4 +1,3 @@
-
 (*
 QCheck: Random testing for OCaml
 copyright (c) 2013-2017, Guillaume Bury, Simon Cruanes, Vincent Hugot, Jan Midtgaard
@@ -75,7 +74,8 @@ module Gen = struct
   let map2 f x y st = f (x st) (y st)
   let map3 f x y z st = f (x st) (y st) (z st)
   let map_keep_input f gen st = let x = gen st in x, f x
-  let (>|=) x f = map f x
+  let (>|=) x f st = f (x st)
+  let (<$>) f x st = f (x st)
 
   let oneof l st = List.nth l (Random.State.int st (List.length l)) st
   let oneofl xs st = List.nth xs (Random.State.int st (List.length xs))
@@ -172,6 +172,8 @@ module Gen = struct
     if bool st
     then small_nat st
     else - (small_nat st)
+
+  let char_range a b = map Char.chr (Char.code a -- Char.code b)
 
   let random_binary_string st length =
     (* 0b011101... *)

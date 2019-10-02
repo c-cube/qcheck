@@ -163,6 +163,10 @@ module Gen : sig
   val (>|=) : 'a t -> ('a -> 'b) -> 'b t
   (** An infix synonym for {!map}. *)
 
+  val (<$>) : ('a -> 'b) -> 'a t -> 'b t
+  (** An infix synonym for {!map}
+      @since NEXT_RELEASE *)
+
   val oneof : 'a t list -> 'a t
   (** Constructs a generator that selects among a given list of generators. *)
 
@@ -314,6 +318,11 @@ module Gen : sig
   val printable : char t (** Generates printable characters. *)
 
   val numeral : char t (** Generates numeral characters. *)
+
+  val char_range : char -> char -> char t
+  (** Generates chars between the two bounds, inclusive.
+      Example: [char_range 'a' 'z'] for all lower case ascii letters.
+      @since NEXT_RELEASE *)
 
   val string_size : ?gen:char t -> int t -> string t
   (** Builds a string generator from a (non-negative) size generator.
