@@ -423,7 +423,7 @@ module Shrink = struct
 
   let list_spine l yield =
     let n = List.length l in
-    let chunk_size = ref (n/2) in
+    let chunk_size = ref ((n+1)/2) in
 
     (* push the [n] first elements of [l] into [q], return the rest of the list *)
     let rec fill_queue n l q = match n,l with
