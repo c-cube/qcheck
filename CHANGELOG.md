@@ -1,5 +1,10 @@
 # Changes
 
+## 0.12
+
+- fix singleton list shrinking
+- feat: add `Gen.char_range` and `Gen.(<$>)` (credit @spewspews)
+
 ## 0.11
 
 - Add `QCheck.Gen.{string_of,string_readable}`
