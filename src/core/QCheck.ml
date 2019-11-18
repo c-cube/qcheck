@@ -198,6 +198,9 @@ module Gen = struct
   let array gen st = array_size nat gen st
   let array_repeat n g = array_size (return n) g
 
+  let flatten_l l st = List.map (fun f->f st) l
+  let flatten_a a st = Array.map (fun f->f st) a
+
   let shuffle_a a st =
     for i = Array.length a-1 downto 1 do
       let j = Random.State.int st (i+1) in

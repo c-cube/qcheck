@@ -350,6 +350,14 @@ module Gen : sig
   (** Generates lists of small size (see {!small_nat}).
       @since 0.5.3 *)
 
+  val flatten_l : 'a t list -> 'a list t
+  (** Generate a list of elements from individual generators
+      @since NEXT_RELEASE *)
+
+  val flatten_a : 'a t array -> 'a array t
+  (** Generate an array of elements from individual generators
+      @since NEXT_RELEASE *)
+
   val small_array : 'a t -> 'a array t
   (** Generates arrays of small size (see {!small_nat}).
       @since 0.10 *)
