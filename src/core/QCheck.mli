@@ -358,6 +358,14 @@ module Gen : sig
   (** Generate an array of elements from individual generators
       @since NEXT_RELEASE *)
 
+  val flatten_opt : 'a t option -> 'a option t
+  (** Generate an option from an optional generator
+      @since NEXT_RELEASE *)
+
+  val flatten_res : ('a t, 'e) result -> ('a,'e) result t
+  (** Generate a result from [Ok g], an error from [Error e]
+      @since NEXT_RELEASE *)
+
   val small_array : 'a t -> 'a array t
   (** Generates arrays of small size (see {!small_nat}).
       @since 0.10 *)

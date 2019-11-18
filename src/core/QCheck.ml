@@ -200,6 +200,14 @@ module Gen = struct
 
   let flatten_l l st = List.map (fun f->f st) l
   let flatten_a a st = Array.map (fun f->f st) a
+  let flatten_opt o st =
+    match o with
+    | None -> None
+    | Some f -> Some (f st)
+  let flatten_res r st =
+    match r with
+    | Ok f -> Ok (f st)
+    | Error e -> Error e
 
   let shuffle_a a st =
     for i = Array.length a-1 downto 1 do
