@@ -6,6 +6,7 @@ all rights reserved.
 
 (** {1 Quickcheck inspired property-based testing} *)
 
+let poly_compare=compare
 open Printf
 
 module RS = Random.State
@@ -228,7 +229,7 @@ module Gen = struct
       (float_bound_inclusive 1. st ** (1. /. fl_w), v)
     in
     let samples = List.rev_map sample l in
-    List.sort (fun (w1, _) (w2, _) -> compare w1 w2) samples |> List.rev_map snd
+    List.sort (fun (w1, _) (w2, _) -> poly_compare w1 w2) samples |> List.rev_map snd
 
   let pair g1 g2 st = (g1 st, g2 st)
 
@@ -1180,7 +1181,7 @@ module TestResult = struct
             (* all counter-examples in [l] have same size according to [small],
                so we just compare to the first one, and we enforce
                the invariant *)
-            begin match Pervasives.compare (small instance) (small c_ex'.instance) with
+            begin match poly_compare (small instance) (small c_ex'.instance) with
             | 0 -> res.state <- Failed {instances=c_ex :: l} (* same size: add [c_ex] to [l] *)
             | n when n<0 -> res.state <- Failed {instances=[c_ex]} (* drop [l] *)
             | _ -> () (* drop [c_ex], not small enough *)
@@ -1583,7 +1584,7 @@ module Test = struct
     let median = ref 0 in
     let median_num = ref 0 in (* how many values have we seen yet? once >= !n/2 we set median *)
     (Hashtbl.fold (fun i cnt acc -> (i,cnt)::acc) tbl [])
-    |> List.sort (fun (i,_) (j,_) -> compare i j)
+    |> List.sort (fun (i,_) (j,_) -> poly_compare i j)
     |> List.iter
       (fun (i,cnt) ->
          if !median_num < !num/2 then (
