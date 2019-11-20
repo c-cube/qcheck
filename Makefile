@@ -20,7 +20,7 @@ example-ounit-test:
 	@dune exec example/ounit/QCheck_ounit_test.exe
 
 example-runner:
-	@dune exec example/QCheck_runner_test.exe
+	@dune exec example/QCheck_runner_test.exe -- --debug-shrink=log.tmp
 
 example-alcotest:
 	@dune exec example/alcotest/QCheck_alcotest_test.exe

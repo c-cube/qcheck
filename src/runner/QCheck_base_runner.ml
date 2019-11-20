@@ -94,6 +94,14 @@ let long_tests, set_long_tests =
   let r = ref false in
   (fun () -> !r), (fun b -> r := b)
 
+let debug_shrink, set_debug_shrink =
+  let r = ref None in
+  (fun () -> !r), (fun s -> r := Some (open_out s))
+
+let debug_shrink_list, set_debug_shrink_list =
+  let r = ref [] in
+  (fun () -> !r), (fun b -> r := b :: !r)
+
 module Raw = struct
   type ('b,'c) printer = {
     info: 'a. ('a,'b,'c,unit) format4 -> 'a;
@@ -108,6 +116,8 @@ module Raw = struct
     cli_rand : Random.State.t;
     cli_slow_test : int; (* how many slow tests to display? *)
     cli_colors: bool;
+    cli_debug_shrink : out_channel option;
+    cli_debug_shrink_list : string list;
   }
 
   (* main callback for individual tests
@@ -165,13 +175,16 @@ module Raw = struct
           ; "--seed", Arg.Set_int seed, " set random seed (to repeat tests)"
           ; "--long", Arg.Unit set_long_tests, " run long tests"
           ; "-bt", Arg.Unit set_backtraces, " enable backtraces"
+          ; "--debug-shrink", Arg.String set_debug_shrink, " enable shrinking debug to <file>"
+          ; "--debug-shrink-list", Arg.String set_debug_shrink_list, " filter test to debug shrinking on"
           ]
       ) in
     Arg.parse_argv argv options (fun _ ->()) "run qtest suite";
     let cli_rand = setup_random_state_ () in
     { cli_verbose=verbose(); cli_long_tests=long_tests(); cli_rand;
       cli_print_list= !print_list; cli_slow_test= !slow;
-      cli_colors= !colors; }
+      cli_colors= !colors; cli_debug_shrink = debug_shrink();
+      cli_debug_shrink_list = debug_shrink_list(); }
 end
 
 open Raw
@@ -189,30 +202,85 @@ type counter = {
 type res =
   | Res : 'a QCheck.Test.cell * 'a QCheck.TestResult.t -> res
 
+type handler = {
+  handler : 'a. 'a QCheck.Test.handler;
+}
+
+type handler_gen =
+  colors:bool ->
+  debug_shrink:(out_channel option) ->
+  debug_shrink_list:(string list) ->
+  size:int -> out:out_channel -> verbose:bool -> counter -> handler
+
 let pp_counter ~size out c =
   let t = Unix.gettimeofday () -. c.start in
   Printf.fprintf out "%*d %*d %*d %*d / %*d %7.1fs"
     size c.gen size c.errored size c.failed
     size c.passed size c.expected t
 
-let handler ~size ~out ~verbose c name _ r =
-  let st = function
-    | QCheck.Test.Generating    -> "generating"
-    | QCheck.Test.Collecting _  -> "collecting"
-    | QCheck.Test.Testing _     -> "   testing"
-    | QCheck.Test.Shrunk (i, _) ->
-      Printf.sprintf "shrinking: %4d" i
-    | QCheck.Test.Shrinking (i, j, _) ->
-      Printf.sprintf "shrinking: %4d.%04d" i j
-  in
-  (* use timestamps for rate-limiting *)
-  let now=Unix.gettimeofday() in
-  if verbose && now -. !last_msg > get_time_between_msg () then (
-    last_msg := now;
-    Printf.fprintf out "%s[ ] %a %s (%s)%!"
-      Color.reset_line (pp_counter ~size) c name (st r)
-  )
+let debug_shrinking_counter_example cell out x =
+  match (QCheck.Test.get_arbitrary cell).QCheck.print with
+  | None -> Printf.fprintf out "<no printer provided>"
+  | Some print -> Printf.fprintf out "%s" (print x)
 
+let debug_shrinking_size cell out x =
+  match (QCheck.Test.get_arbitrary cell).QCheck.small with
+  | None -> ()
+  | Some f -> Printf.fprintf out ", size %d" (f x)
+
+let debug_shrinking_choices_aux ~colors out name i cell x =
+  Printf.fprintf out "\n~~~ %a %s\n\n"
+    (Color.pp_str_c ~colors `Cyan) "Shrink" (String.make 69 '~');
+  Printf.fprintf out
+    "Test %s sucessfully shrunk counter example (step %d%a) to:\n\n%a\n%!"
+    name i
+    (debug_shrinking_size cell) x
+    (debug_shrinking_counter_example cell) x
+
+let debug_shrinking_choices
+    ~colors ~debug_shrink ~debug_shrink_list name cell i x =
+  match debug_shrink with
+  | None -> ()
+  | Some out ->
+    begin match debug_shrink_list with
+      | [] ->
+        debug_shrinking_choices_aux ~colors out name i cell x
+      | l when List.mem name l ->
+        debug_shrinking_choices_aux ~colors out name i cell x
+      | _ -> ()
+    end
+
+
+let default_handler
+  ~colors ~debug_shrink ~debug_shrink_list
+  ~size ~out ~verbose c =
+  let handler name cell r =
+    let st = function
+      | QCheck.Test.Generating    -> "generating"
+      | QCheck.Test.Collecting _  -> "collecting"
+      | QCheck.Test.Testing _     -> "   testing"
+      | QCheck.Test.Shrunk (i, _) ->
+        Printf.sprintf "shrinking: %4d" i
+      | QCheck.Test.Shrinking (i, j, _) ->
+        Printf.sprintf "shrinking: %4d.%04d" i j
+    in
+    (* debug shrinking choices *)
+    begin match r with
+      | QCheck.Test.Shrunk (i, x) ->
+          debug_shrinking_choices
+          ~colors ~debug_shrink ~debug_shrink_list name cell i x
+      | _ ->
+        ()
+    end;
+    (* use timestamps for rate-limiting *)
+    let now=Unix.gettimeofday() in
+    if verbose && now -. !last_msg > get_time_between_msg () then (
+      last_msg := now;
+      Printf.fprintf out "%s[ ] %a %s (%s)%!"
+        Color.reset_line (pp_counter ~size) c name (st r)
+    )
+  in
+  { handler; }
 
 let step ~size ~out ~verbose c name _ _ r =
   let aux = function
@@ -309,7 +377,10 @@ let print_error ~colors out cell c_ex exn bt =
   print_messages ~colors out cell c_ex.QCheck.TestResult.msg_l
 
 let run_tests
-    ?(colors=true) ?(verbose=verbose()) ?(long=long_tests()) ?(out=stdout) ?(rand=random_state()) l =
+    ?(handler=default_handler)
+    ?(colors=true) ?(verbose=verbose()) ?(long=long_tests())
+    ?(debug_shrink=debug_shrink()) ?(debug_shrink_list=debug_shrink_list())
+    ?(out=stdout) ?(rand=random_state()) l =
   let module T = QCheck.Test in
   let module R = QCheck.TestResult in
   let pp_color = Color.pp_str_c ~bold:true ~colors in
@@ -331,7 +402,8 @@ let run_tests
       Printf.fprintf out "%s[ ] %a %s%!"
         Color.reset_line (pp_counter ~size) c (T.get_name cell);
     let r = QCheck.Test.check_cell ~long ~rand
-        ~handler:(handler ~size ~out ~verbose c)
+        ~handler:(handler ~colors ~debug_shrink ~debug_shrink_list
+                    ~size ~out ~verbose c).handler
         ~step:(step ~size ~out ~verbose c)
         ~call:(callback ~size ~out ~verbose ~colors c)
         cell
