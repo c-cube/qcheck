@@ -61,7 +61,7 @@ val set_time_between_msg : float -> unit
 
 (** {2 Event handlers} *)
 
-type counter = {
+type counter = private {
   start : float;
   expected : int;
   mutable gen : int;
