@@ -165,7 +165,7 @@ module Gen : sig
 
   val (<$>) : ('a -> 'b) -> 'a t -> 'b t
   (** An infix synonym for {!map}
-      @since NEXT_RELEASE *)
+      @since 0.13 *)
 
   val oneof : 'a t list -> 'a t
   (** Constructs a generator that selects among a given list of generators. *)
@@ -322,7 +322,7 @@ module Gen : sig
   val char_range : char -> char -> char t
   (** Generates chars between the two bounds, inclusive.
       Example: [char_range 'a' 'z'] for all lower case ascii letters.
-      @since NEXT_RELEASE *)
+      @since 0.13 *)
 
   val string_size : ?gen:char t -> int t -> string t
   (** Builds a string generator from a (non-negative) size generator.
@@ -352,19 +352,19 @@ module Gen : sig
 
   val flatten_l : 'a t list -> 'a list t
   (** Generate a list of elements from individual generators
-      @since NEXT_RELEASE *)
+      @since 0.13 *)
 
   val flatten_a : 'a t array -> 'a array t
   (** Generate an array of elements from individual generators
-      @since NEXT_RELEASE *)
+      @since 0.13 *)
 
   val flatten_opt : 'a t option -> 'a option t
   (** Generate an option from an optional generator
-      @since NEXT_RELEASE *)
+      @since 0.13 *)
 
   val flatten_res : ('a t, 'e) result -> ('a,'e) result t
   (** Generate a result from [Ok g], an error from [Error e]
-      @since NEXT_RELEASE *)
+      @since 0.13 *)
 
   val small_array : 'a t -> 'a array t
   (** Generates arrays of small size (see {!small_nat}).

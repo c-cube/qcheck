@@ -1,5 +1,12 @@
 # Changes
 
+## 0.13
+
+- make counter private
+- Add debug shrinking log
+- fix: small fix related to stdlib/pervasives
+- feat: add flatten combinators in `gen`
+
 ## 0.12
 
 - fix singleton list shrinking
