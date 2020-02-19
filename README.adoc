@@ -293,7 +293,7 @@ or an error number otherwise.
 
 === Integration within OUnit
 
-http://ounit.forge.ocamlcore.org/[OUnit] is a popular unit-testing framework
+https://github.com/gildor478/ounit[OUnit] is a popular unit-testing framework
 for OCaml.
 QCheck provides a sub-library `qcheck-ounit` with some helpers, in `QCheck_ounit`,
 to convert its random tests into OUnit tests that can be part of a wider

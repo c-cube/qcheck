@@ -20,7 +20,7 @@ depends: [
   "base-bytes"
   "base-unix"
   "qcheck-core" { = version }
-  "ounit" {>= "2.0"}
+  "ounit2"
   "odoc" {with-doc}
   "ocaml" {>= "4.03.0"}
 ]
