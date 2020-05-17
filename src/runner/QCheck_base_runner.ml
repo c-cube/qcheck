@@ -346,12 +346,14 @@ let print_success ~colors out cell r =
         (Color.pp_str_c ~colors `Yellow) "Warning" (String.make 68 '!')
         (QCheck.Test.get_name cell) msg)
     (QCheck.TestResult.warnings r);
+
+  if QCheck.TestResult.stats r <> []  then
+     Printf.fprintf out
+       "\n+++ %a %s\n%!"
+       (Color.pp_str_c ~colors `Blue) ("Stats for " ^ QCheck.Test.get_name cell)
+       (String.make 56 '+');
   List.iter
-    (fun st ->
-       Printf.fprintf out
-         "\n+++ %a %s\n\nStat for test %s:\n\n%s%!"
-        (Color.pp_str_c ~colors `Blue) "Stat" (String.make 68 '+')
-        (QCheck.Test.get_name cell) (QCheck.Test.print_stat st))
+    (fun st -> Printf.fprintf out "\n%s%!" (QCheck.Test.print_stat st))
     (QCheck.TestResult.stats r);
   ()
 
