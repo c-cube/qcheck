@@ -689,8 +689,12 @@ let small_signed_int = make_int Gen.small_signed_int
 let small_int_corners () = make_int (Gen.nng_corners ())
 let neg_int = make_int Gen.neg_int
 
-let int32 = make_scalar ~print:(fun i -> Int32.to_string i ^ "l") Gen.ui32
-let int64 = make_scalar ~print:(fun i -> Int64.to_string i ^ "L") Gen.ui64
+let int32 =
+  make ~print:(fun i -> Int32.to_string i ^ "l") ~small:small1
+    ~shrink:Shrink.int32 Gen.ui32
+let int64 =
+  make ~print:(fun i -> Int64.to_string i ^ "L") ~small:small1
+    ~shrink:Shrink.int64 Gen.ui64
 
 let char = make_scalar ~print:(sprintf "%C") Gen.char
 let printable_char = make_scalar ~print:(sprintf "%C") Gen.printable
