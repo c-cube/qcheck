@@ -383,6 +383,24 @@ module Shrink = struct
     if x<0 then yield (x+1);
     ()
 
+  let int32 x yield =
+    let open Int32 in
+    let y = ref x in
+    (* try some divisors *)
+    while !y < -2l || !y > 2l do y := div !y 2l; yield (sub x !y); done; (* fast path *)
+    if x>0l then yield (pred x);
+    if x<0l then yield (succ x);
+    ()
+
+  let int64 x yield =
+    let open Int64 in
+    let y = ref x in
+    (* try some divisors *)
+    while !y < -2L || !y > 2L do y := div !y 2L; yield (sub x !y); done; (* fast path *)
+    if x>0L then yield (pred x);
+    if x<0L then yield (succ x);
+    ()
+
   (* aggressive shrinker for integers,
      get from 0 to x, by dichotomy or just enumerating smaller values *)
   let int_aggressive x yield =
