@@ -266,7 +266,7 @@ module Gen : sig
 
   val int_range : int -> int -> int t
   (** Uniform integer generator producing integers within [low,high].
-      @raise Invalid_argument if [low > high] or if the range is larger than [max_int]. *)
+      @raise Invalid_argument if [low > high]. *)
 
   val graft_corners : 'a t -> 'a list -> unit -> 'a t
   (** [graft_corners gen l ()] makes a new generator that enumerates
