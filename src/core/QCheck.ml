@@ -162,7 +162,17 @@ module Gen = struct
     else fun st -> let r = pint st in r mod (n + 1)
   let int_range a b =
     if b < a then invalid_arg "Gen.int_range";
-    fun st -> a + (int_bound (b-a) st)
+    if a >= 0 || b <= 0 then (* range smaller than max_int *)
+      fun st -> a + (int_bound (b-a) st)
+    else
+      (* range potentially bigger than max_int: we split on 0 and
+         choose the itv wrt to their size ratio *)
+      fun st ->
+      let f_a = float_of_int a in
+      let ratio = (-.f_a) /. (float_of_int b -. f_a) in
+      if Random.float 1. < ratio then - (int_bound a st)
+      else int_bound b st
+
   let (--) = int_range
 
   (* NOTE: we keep this alias to not break code that uses [small_int]
