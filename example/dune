@@ -1,5 +1,4 @@
 
 (executables
-  (names QCheck_runner_test)
-  (libraries qcheck)
-  )
+  (names QCheck_runner_test reg_96)
+  (libraries qcheck))
