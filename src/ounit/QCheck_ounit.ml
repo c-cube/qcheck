@@ -69,7 +69,7 @@ let to_ounit2_test ?(rand =default_rand()) (QCheck.Test.Test cell) =
       let print = {
         Raw.
         info = (fun fmt -> logf ctxt `Info fmt);
-        fail = (fun fmt -> Printf.ksprintf assert_failure fmt);
+        fail = (fun fmt -> logf ctxt `Error ("failure: " ^^ fmt));
         err = (fun fmt -> logf ctxt `Error fmt);
       } in
       T.check_cell_exn cell
