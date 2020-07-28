@@ -115,7 +115,8 @@ val run_tests_main : ?argv:string array -> QCheck.Test.t list -> 'a
     - "--long" for running the long versions of the tests
 
     Below is an example of the output of the [run_tests] and [run_tests_main]
-    function: {v
+    function:
+    {v
 random seed: 438308050
 generated  error;  fail; pass / total -     time -- test name
 [✓] (1000)    0 ;    0 ; 1000 / 1000 --     0.5s -- list_rev_is_involutive

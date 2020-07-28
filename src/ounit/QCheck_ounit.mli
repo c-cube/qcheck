@@ -17,7 +17,7 @@ val to_ounit_test_cell :
 (** Same as {!to_ounit_test} but with a polymorphic test cell *)
 
 val (>:::) : string -> QCheck.Test.t list -> OUnit.test
-(** Same as {!OUnit.>:::} but with a list of QCheck tests *)
+(** Same as [OUnit.(>:::)] but with a list of QCheck tests *)
 
 val to_ounit2_test : ?rand:Random.State.t -> QCheck.Test.t -> OUnit2.test
 (** [to_ounit2_test ?rand t] wraps [t] into a OUnit2 test
@@ -54,7 +54,8 @@ val run : ?argv:string array -> OUnit.test -> int
     This test runner displays execution in a compact way, making it good
     for suites that have lots of tests.
 
-    Output example: {v
+    Output example:
+    {v
 random seed: 101121210
 random seed: 101121210
 \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\

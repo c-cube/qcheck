@@ -241,15 +241,20 @@ module Gen : sig
 
   val nat : int t (** Generates small natural numbers. *)
 
-  val big_nat : int t (** Generates natural numbers, possibly large. @since 0.10 *)
+  val big_nat : int t
+  (** Generates natural numbers, possibly large.
+      @since 0.10 *)
 
-  val neg_int : int t (** Generates non-strictly negative integers (0 included). *)
+  val neg_int : int t
+  (** Generates non-strictly negative integers (0 included). *)
 
   val pint : int t (** Generates non-strictly positive integers uniformly (0 included). *)
 
   val int : int t (** Generates integers uniformly. *)
 
-  val small_nat : int t (** Small integers (< 100) @since 0.5.1 *)
+  val small_nat : int t
+  (** Small integers (< 100)
+      @since 0.5.1 *)
 
   val small_int : int t
   (** Small UNSIGNED integers, for retrocompatibility.
@@ -311,9 +316,12 @@ module Gen : sig
 
   val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t (** Generates triples. *)
 
-  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t (** Generates quadruples. @since 0.5.1 *)
+  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
+  (** Generates quadruples.
+      @since 0.5.1 *)
 
-  val char : char t (** Generates characters upto character code 255. *)
+  val char : char t
+  (** Generates characters upto character code 255. *)
 
   val printable : char t (** Generates printable characters. *)
 
@@ -640,7 +648,7 @@ type 'a arbitrary = private {
     {b NOTE} the collect field is unstable and might be removed, or
     moved into {!Test}.
 
-    Made private @since 0.8
+    Made private since 0.8
 *)
 
 val make :
@@ -696,8 +704,12 @@ val gen : 'a arbitrary -> 'a Gen.t
 module TestResult : sig
   type 'a counter_ex = {
     instance: 'a; (** The counter-example(s) *)
+
     shrink_steps: int; (** How many shrinking steps for this counterex *)
-    msg_l: string list; (** messages. @since 0.7 *)
+
+    msg_l: string list;
+    (** messages.
+        @since 0.7 *)
   }
 
   type 'a failed_state = 'a counter_ex list
@@ -815,7 +827,7 @@ module Test : sig
       See {!make_cell} for a description of the parameters.
   *)
 
-  (** {6 Running the test} *)
+  (** {3 Running the test} *)
 
   exception Test_fail of string * string list
   (** Exception raised when a test failed, with the list of counter-examples.
@@ -947,7 +959,7 @@ val find_example_gen :
     @raise No_example_found if no example was found within [count] tries.
     @since 0.6 *)
 
-(** {2 Combinators for {!arbitrary}} *)
+(** {2 Combinators for arbitrary} *)
 
 val choose : 'a arbitrary list -> 'a arbitrary
 (** Choose among the given list of generators. The list must not
@@ -1109,15 +1121,19 @@ val fun1_unsafe : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary
     - when given the same argument (as decided by Pervasives.(=)), it returns the same value
     - it never does side effects, like printing or never raise exceptions etc.
     The functions generated are really printable.
-    renamed from {!fun1}. @since 0.6
-    @deprecated use {!fun_} instead. @since 0.6
+
+    renamed from {!fun1} since 0.6
+
+    @deprecated use {!fun_} instead.
+
+    @since 0.6
 *)
 
 val fun2_unsafe : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> ('a -> 'b -> 'c) arbitrary
 (** Generator of functions of arity 2. The remark about [fun1] also apply
     here.
-    renamed from {!fun2}. @since 0.6
-    @deprecated use {!fun_} instead. @since 0.6
+    renamed from {!fun2} since 0.6
+    @deprecated use {!fun_} instead since 0.6
 *)
 
 type _ fun_repr
