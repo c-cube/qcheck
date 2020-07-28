@@ -1,5 +1,13 @@
 # Changes
 
+## 0.14
+
+- modify `int_range` to make it accept ranges bigger than `max_int`.
+- less newline-verbose stats
+- add `int{32,64}` shrinkers to arbitrary gens
+- add `int{32,int64}` shrinkers
+- move to ounit2 for `QCheck_ounit`
+
 ## 0.13
 
 - make counter private

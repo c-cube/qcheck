@@ -526,10 +526,10 @@ module Shrink : sig
   val int : int t
 
   val int32 : int32 t
-  (** @since NEXT_RELEASE *)
+  (** @since 0.14 *)
 
   val int64 : int64 t
-  (** @since NEXT_RELEASE *)
+  (** @since 0.14 *)
 
   val option : 'a t -> 'a option t
 
