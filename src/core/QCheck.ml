@@ -301,6 +301,13 @@ module Gen = struct
     list_repeat n g rand
 
   let generate1 ?(rand=Random.State.make_self_init()) g = g rand
+
+  include Qcheck_ops.Make(struct
+      type nonrec 'a t = 'a t
+      let (>|=) = (>|=)
+      let monoid_product a b = map2 (fun x y -> x,y) a b
+      let (>>=) = (>>=)
+    end)
 end
 
 module Print = struct
@@ -375,6 +382,13 @@ module Iter = struct
     !r
 
   let find p iter = find_map (fun x->if p x then Some x else None) iter
+
+  include Qcheck_ops.Make(struct
+      type nonrec 'a t = 'a t
+      let (>|=) = (>|=)
+      let monoid_product a b = map2 (fun x y -> x,y) a b
+      let (>>=) = (>>=)
+    end)
 end
 
 module Shrink = struct
