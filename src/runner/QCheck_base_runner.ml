@@ -49,9 +49,9 @@ end
 let seed = ref ~-1
 let st = ref None
 
-let set_seed_ s =
+let set_seed_ ~colors s =
   seed := s;
-  Printf.printf "%srandom seed: %d\n%!" Color.reset_line s;
+  if colors then Printf.printf "%srandom seed: %d\n%!" Color.reset_line s;
   let state = Random.State.make [| s |] in
   st := Some state;
   state
@@ -65,19 +65,19 @@ let get_time_between_msg () = !time_between_msg
 
 let set_time_between_msg f = time_between_msg := f
 
-let set_seed s = ignore (set_seed_ s)
+let set_seed s = ignore (set_seed_ ~colors:false s)
 
-let setup_random_state_ () =
+let setup_random_state_ ~colors () =
   let s = if !seed = ~-1 then (
       Random.self_init ();  (* make new, truly random seed *)
       Random.int (1 lsl 29);
     ) else !seed in
-  set_seed_ s
+  set_seed_ ~colors s
 
 (* initialize random generator from seed (if any) *)
-let random_state () = match !st with
+let random_state ~colors () = match !st with
   | Some st -> st
-  | None -> setup_random_state_ ()
+  | None -> setup_random_state_ ~colors ()
 
 let verbose, set_verbose =
   let r = ref false in
@@ -173,7 +173,7 @@ module Raw = struct
           ]
       ) in
     Arg.parse_argv argv options (fun _ ->()) "run qtest suite";
-    let cli_rand = setup_random_state_ () in
+    let cli_rand = setup_random_state_ ~colors:!colors () in
     { cli_verbose=verbose(); cli_long_tests=long_tests(); cli_rand;
       cli_print_list= !print_list; cli_slow_test= !slow;
       cli_colors= !colors; cli_debug_shrink = debug_shrink();
@@ -375,7 +375,8 @@ let run_tests
     ?(handler=default_handler)
     ?(colors=true) ?(verbose=verbose()) ?(long=long_tests())
     ?(debug_shrink=debug_shrink()) ?(debug_shrink_list=debug_shrink_list())
-    ?(out=stdout) ?(rand=random_state()) l =
+    ?(out=stdout) ?rand l =
+  let rand = match rand with Some x -> x | None -> random_state ~colors () in
   let module T = QCheck.Test in
   let module R = QCheck.TestResult in
   let pp_color = Color.pp_str_c ~bold:true ~colors in
