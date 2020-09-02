@@ -75,9 +75,11 @@ let setup_random_state_ ~colors () =
   set_seed_ ~colors s
 
 (* initialize random generator from seed (if any) *)
-let random_state ~colors () = match !st with
+let random_state_ ~colors () = match !st with
   | Some st -> st
   | None -> setup_random_state_ ~colors ()
+
+let random_state() = random_state_ ~colors:false ()
 
 let verbose, set_verbose =
   let r = ref false in
@@ -376,7 +378,7 @@ let run_tests
     ?(colors=true) ?(verbose=verbose()) ?(long=long_tests())
     ?(debug_shrink=debug_shrink()) ?(debug_shrink_list=debug_shrink_list())
     ?(out=stdout) ?rand l =
-  let rand = match rand with Some x -> x | None -> random_state ~colors () in
+  let rand = match rand with Some x -> x | None -> random_state_ ~colors () in
   let module T = QCheck.Test in
   let module R = QCheck.TestResult in
   let pp_color = Color.pp_str_c ~bold:true ~colors in
