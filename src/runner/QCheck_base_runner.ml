@@ -4,10 +4,6 @@ copyright (c) 2013-2017, Guillaume Bury, Simon Cruanes, Vincent Hugot, Jan Midtg
 all rights reserved.
 *)
 
-let ps = print_string
-let va = Printf.sprintf
-let pf = Printf.printf
-
 module Color = struct
   let fpf = Printf.fprintf
   type color =
@@ -49,9 +45,6 @@ module Color = struct
       else in_color c output_string out s
     else output_string out s
 end
-
-let separator1 = "\027[K" ^ (String.make 79 '\\')
-let separator2 = String.make 79 '/'
 
 let seed = ref ~-1
 let st = ref None
