@@ -51,7 +51,8 @@ let st = ref None
 
 let set_seed_ ~colors s =
   seed := s;
-  if colors then Printf.printf "%srandom seed: %d\n%!" Color.reset_line s;
+  if colors then Printf.printf "%srandom seed: %d\n%!" Color.reset_line s
+  else Printf.printf "random seed: %d\n%!" s;
   let state = Random.State.make [| s |] in
   st := Some state;
   state
