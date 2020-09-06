@@ -39,7 +39,7 @@ let to_alcotest
   let print = Raw.print_std in
   let run() =
     T.check_cell_exn cell
-      ~long ~rand ~call:(Raw.callback ~verbose ~print_res:true ~print)
+      ~long ~rand ~call:(Raw.callback ~colors:false ~verbose ~print_res:true ~print)
   in
   let name = T.get_name cell in
   name, `Slow, run

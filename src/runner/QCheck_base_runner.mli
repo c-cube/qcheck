@@ -186,6 +186,7 @@ module Raw : sig
 
   (* main callback for display *)
   val callback :
+    colors:bool ->
     verbose:bool ->
     print_res:bool ->
     print:('a, 'b) printer ->

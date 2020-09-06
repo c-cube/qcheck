@@ -119,13 +119,14 @@ module Raw = struct
   (* main callback for individual tests
      @param verbose if true, print statistics and details
      @param print_res if true, print the result on [out] *)
-  let callback ~verbose ~print_res ~print name cell result =
+  let callback ~colors ~verbose ~print_res ~print name cell result =
     let module R = QCheck.TestResult in
     let module T = QCheck.Test in
     let arb = T.get_arbitrary cell in
+    let reset_line = if colors then Color.reset_line else "\n" in
     if verbose then (
       print.info "%slaw %s: %d relevant cases (%d total)\n"
-        Color.reset_line name result.R.count result.R.count_gen;
+        reset_line name result.R.count result.R.count_gen;
       begin match QCheck.TestResult.collect result with
         | None -> ()
         | Some tbl ->
@@ -137,11 +138,11 @@ module Raw = struct
       match result.R.state with
         | R.Success -> ()
         | R.Failed {instances=l} ->
-          print.fail "%s%s\n" Color.reset_line (T.print_fail arb name l);
+          print.fail "%s%s\n" reset_line (T.print_fail arb name l);
         | R.Failed_other {msg} ->
-          print.fail "%s%s\n" Color.reset_line (T.print_fail_other name ~msg);
+          print.fail "%s%s\n" reset_line (T.print_fail_other name ~msg);
         | R.Error {instance; exn; backtrace} ->
-          print.err "%s%s\n" Color.reset_line
+          print.err "%s%s\n" reset_line
             (T.print_error ~st:backtrace arb name (instance,exn));
     )
 
@@ -273,12 +274,13 @@ let default_handler
     if verbose && now -. !last_msg > get_time_between_msg () then (
       last_msg := now;
       Printf.fprintf out "%s[ ] %a %s (%s)%!"
-        Color.reset_line (pp_counter ~size) c name (st r)
+        (if colors then Color.reset_line else "\n")
+        (pp_counter ~size) c name (st r)
     )
   in
   { handler; }
 
-let step ~size ~out ~verbose c name _ _ r =
+let step ~colors ~size ~out ~verbose c name _ _ r =
   let aux = function
     | QCheck.Test.Success -> c.passed <- c.passed + 1
     | QCheck.Test.Failure -> c.failed <- c.failed + 1
@@ -291,7 +293,7 @@ let step ~size ~out ~verbose c name _ _ r =
   if verbose && now -. !last_msg > get_time_between_msg () then (
     last_msg := now;
     Printf.fprintf out "%s[ ] %a %s%!"
-      Color.reset_line (pp_counter ~size) c name
+      (if colors then Color.reset_line else "\n") (pp_counter ~size) c name
   )
 
 let callback ~size ~out ~verbose ~colors c name _ _ =
@@ -299,7 +301,7 @@ let callback ~size ~out ~verbose ~colors c name _ _ =
   let color = if pass then `Green else `Red in
   if verbose then (
     Printf.fprintf out "%s[%a] %a %s\n%!"
-      Color.reset_line
+      (if colors then Color.reset_line else "\n")
       (Color.pp_str_c ~bold:true ~colors color) (if pass then "✓" else "✗")
       (pp_counter ~size) c name
   )
@@ -399,11 +401,12 @@ let run_tests
     } in
     if verbose then
       Printf.fprintf out "%s[ ] %a %s%!"
-        Color.reset_line (pp_counter ~size) c (T.get_name cell);
+        (if colors then Color.reset_line else "")
+        (pp_counter ~size) c (T.get_name cell);
     let r = QCheck.Test.check_cell ~long ~rand
         ~handler:(handler ~colors ~debug_shrink ~debug_shrink_list
                     ~size ~out ~verbose c).handler
-        ~step:(step ~size ~out ~verbose c)
+        ~step:(step ~colors ~size ~out ~verbose c)
         ~call:(callback ~size ~out ~verbose ~colors c)
         cell
     in
