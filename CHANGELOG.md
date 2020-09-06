@@ -1,5 +1,12 @@
 # Changes
 
+## 0.15
+
+- fix: in main runner, remove reset line in more places if `colors=false`
+- fix: invalid arg in `int_range` when a<0
+- fix(runner): do not use ansi code for random seed if `colors=false`
+- feat: on `>=4.08`, provide let operators
+
 ## 0.14
 
 - modify `int_range` to make it accept ranges bigger than `max_int`.
