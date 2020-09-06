@@ -73,7 +73,7 @@ let to_ounit2_test ?(rand =default_rand()) (QCheck.Test.Test cell) =
         err = (fun fmt -> logf ctxt `Error fmt);
       } in
       T.check_cell_exn cell
-        ~long ~rand ~call:(Raw.callback ~verbose ~print_res:true ~print))
+        ~long ~rand ~call:(Raw.callback ~colors:false ~verbose ~print_res:true ~print))
 
 let to_ounit2_test_list ?rand lst =
   List.rev (List.rev_map (to_ounit2_test ?rand) lst)
@@ -87,7 +87,7 @@ let to_ounit_test_cell ?(verbose=verbose()) ?(long=long_tests())
   let run () =
     try
       T.check_cell_exn cell ~long ~rand
-        ~call:(Raw.callback ~verbose ~print_res:verbose ~print:Raw.print_std);
+        ~call:(Raw.callback ~colors:false ~verbose ~print_res:verbose ~print:Raw.print_std);
       true
     with T.Test_fail _ ->
       false
