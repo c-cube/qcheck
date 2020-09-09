@@ -429,7 +429,7 @@ module Gen : sig
   (** [generate1 g] generates one instance of [g]. *)
 
   include Qcheck_ops.S with type 'a t_let := 'a t
-  (** @since NEXT_RELEASE *)
+  (** @since 0.15 *)
 end
 
 (** {2 Pretty printing} *)
@@ -508,7 +508,7 @@ module Iter : sig
   (** @since 0.8 *)
 
   include Qcheck_ops.S with type 'a t_let := 'a t
-  (** @since NEXT_RELEASE *)
+  (** @since 0.15 *)
 end
 
 (** {2 Shrink Values}
