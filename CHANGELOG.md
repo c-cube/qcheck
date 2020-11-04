@@ -1,5 +1,12 @@
 # Changes
 
+## 0.16
+
+- fix(runner): detect more failures in the runner
+- fix: catch exceptions in generators and log them. (#99)
+- test: add test for #99
+- fix doc
+
 ## 0.15
 
 - fix: in main runner, remove reset line in more places if `colors=false`
