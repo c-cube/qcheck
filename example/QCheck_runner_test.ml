@@ -120,9 +120,12 @@ let find_ex =
 
 let find_ex_uncaught_issue_99 : _ list =
   let open QCheck in
-  let rs = make (find_example ~count:10 ~f:(fun _ -> false) Gen.int) in
-  let t1 = Test.make ~name:"FAIL_#99_1" rs (fun _ -> true) in
-  let t2 = Test.make ~name:"FAIL_#99_2" ~count:10 int (fun i -> i <= max_int) in
+  let t1 =
+    let rs = make (find_example ~count:10 ~f:(fun _ -> false) Gen.int) in
+    Test.make ~name:"FAIL_#99_1" rs (fun _ -> true) in
+  let t2 =
+    Test.make ~name:"should_succeed_#99_2" ~count:10 int
+      (fun i -> i <= max_int) in
   [t1;t2]
 
 (* test shrinking on integers *)
