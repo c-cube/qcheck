@@ -118,6 +118,13 @@ let find_ex =
       f m
      with No_example_found _ -> false)
 
+let find_ex_uncaught_issue_99 : _ list =
+  let open QCheck in
+  let rs = make (find_example ~count:10 ~f:(fun _ -> false) Gen.int) in
+  let t1 = Test.make ~name:"FAIL_#99_1" rs (fun _ -> true) in
+  let t2 = Test.make ~name:"FAIL_#99_2" ~count:10 int (fun i -> i <= max_int) in
+  [t1;t2]
+
 (* test shrinking on integers *)
 let shrink_int =
   QCheck.Test.make ~count:1000 ~name:"mod3_should_fail"
@@ -157,5 +164,5 @@ let () =
     stats_negs;
     bad_assume_warn;
     bad_assume_fail;
-  ] @ stats_tests)
+  ] @ find_ex_uncaught_issue_99 @ stats_tests)
 
