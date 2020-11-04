@@ -296,8 +296,8 @@ let step ~colors ~size ~out ~verbose c name _ _ r =
       (if colors then Color.reset_line else "\n") (pp_counter ~size) c name
   )
 
-let callback ~size ~out ~verbose ~colors c name _ _ =
-  let pass = c.failed = 0 && c.errored = 0 in
+let callback ~size ~out ~verbose ~colors c name _ r =
+  let pass = QCheck.TestResult.is_success r in
   let color = if pass then `Green else `Red in
   if verbose then (
     Printf.fprintf out "%s[%a] %a %s\n%!"
