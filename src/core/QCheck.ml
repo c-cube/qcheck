@@ -1465,11 +1465,25 @@ module Test = struct
       then the input that caused the failure is returned in [Failed].
       If [func input] raises [FailedPrecondition] then  the input is discarded, unless
          max_gen is 0. *)
-  let rec check_state state =
+  let rec check_state state : _ R.t =
     if is_done state then state.res
     else (
       state.handler state.test.name state.test Generating;
-      let input = new_input state in
+      match new_input state with
+      | i ->
+        check_state_input state i
+      | exception e ->
+        (* turn it into an error *)
+        let bt = Printexc.get_backtrace() in
+        let msg =
+          Printf.sprintf
+            "ERROR: uncaught exception in generator for test %s after %d steps:\n%s\n%s"
+            state.test.name state.test.count (Printexc.to_string e) bt
+        in
+        state.res.R.state <- R.Failed_other {msg};
+        state.res
+    )
+  and check_state_input state input =
       state.handler state.test.name state.test (Collecting input);
       state.res.R.instances <- input :: state.res.R.instances;
       collect state input;
@@ -1497,7 +1511,6 @@ module Test = struct
       match res with
         | CR_continue -> check_state state
         | CR_yield x -> x
-    )
 
   type 'a callback = string -> 'a cell -> 'a TestResult.t -> unit
 
