@@ -15,7 +15,7 @@ Note that @gasche's
 https://github.com/gasche/random-generator/[generator library]
 can be useful too, for generating random values.
 
-Jan Mitgaard has http://janmidtgaard.dk/quickcheck/index.html[a lecture] about
+Jan Midtgaard has http://janmidtgaard.dk/quickcheck/index.html[a lecture] about
 property-based testing that relies on QCheck.
 
 toc::[]
