@@ -15,6 +15,9 @@ Note that @gasche's
 https://github.com/gasche/random-generator/[generator library]
 can be useful too, for generating random values.
 
+Jan Mitgaard has http://janmidtgaard.dk/quickcheck/index.html[a lecture] about
+property-based testing that relies on QCheck.
+
 toc::[]
 
 image::https://travis-ci.org/c-cube/qcheck.svg?branch=master[alt="Build Status", link="https://travis-ci.org/c-cube/qcheck"]
