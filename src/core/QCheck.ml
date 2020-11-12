@@ -172,7 +172,7 @@ module Gen = struct
       fun st ->
       let f_a = float_of_int a in
       let ratio = (-.f_a) /. (1. +. float_of_int b -. f_a) in
-      if Random.State.float st 1. <= ratio then - (Gen.int_bound (- (a+1)) st) - 1
+      if Random.State.float st 1. <= ratio then - (int_bound (- (a+1)) st) - 1
       else int_bound b st
     )
 
