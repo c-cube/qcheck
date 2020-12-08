@@ -305,6 +305,8 @@ module Gen = struct
 
   let generate1 ?(rand=Random.State.make_self_init()) g = g rand
 
+  let delay f st = f () st
+
   include Qcheck_ops.Make(struct
       type nonrec 'a t = 'a t
       let (>|=) = (>|=)

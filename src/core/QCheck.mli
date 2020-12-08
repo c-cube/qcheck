@@ -422,6 +422,12 @@ module Gen : sig
 
   *)
 
+  val delay : (unit -> 'a t) -> 'a t
+  (** Delay execution of some code until the generator is actually called.
+      This can be used to manually implement recursion or control flow
+      in a generator.
+      @since NEXT_RELEASE *)
+
   val generate : ?rand:Random.State.t -> n:int -> 'a t -> 'a list
   (** [generate ~n g] generates [n] instances of [g]. *)
 
