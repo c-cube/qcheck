@@ -11,9 +11,12 @@ The documentation can be found https://c-cube.github.io/qcheck/[here].
 This library spent some time in
 https://github.com/vincent-hugot/iTeML[qtest], but is now
 standalone again!
-Note that @gasche's
-https://github.com/gasche/random-generator/[generator library]
-can be useful too, for generating random values.
+
+To construct advanced random generators, the following libraries might be
+of interest:
+
+- https://gitlab.inria.fr/fpottier/feat/[Feat]
+- @gasche's https://github.com/gasche/random-generator/[generator library]
 
 Jan Midtgaard has http://janmidtgaard.dk/quickcheck/index.html[a lecture] about
 property-based testing that relies on QCheck.
