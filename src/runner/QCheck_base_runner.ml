@@ -393,6 +393,7 @@ let run_tests
       (size + 4) "generated" size "error"
       size "fail" size "pass" size "total";
   let aux_map (T.Test cell) =
+    let rand = Random.State.copy rand in
     let expected = expect long cell in
     let start = Unix.gettimeofday () in
     let c = {
