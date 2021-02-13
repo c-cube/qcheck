@@ -1705,6 +1705,7 @@ module Test = struct
     (function
       | Test_fail (name,l) -> Some (print_test_fail name l)
       | Test_error (name,i,e,st) -> Some (print_test_error name i e st)
+      | User_fail s -> Some ("qcheck: user fail:\n" ^ s)
       | _ -> None)
 
   let print_fail arb name l =
