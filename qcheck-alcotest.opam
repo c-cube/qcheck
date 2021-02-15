@@ -4,7 +4,7 @@ author: [ "Simon Cruanes <simon.cruanes.2007@m4x.org>" ]
 homepage: "https://github.com/c-cube/qcheck/"
 synopsis: "Alcotest backend for qcheck"
 doc: ["http://c-cube.github.io/qcheck/"]
-version: "0.16"
+version: "0.17"
 tags: [
   "test"
   "quickcheck"

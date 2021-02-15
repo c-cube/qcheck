@@ -1,5 +1,14 @@
 # Changes
 
+## 0.17
+
+- new function: `Gen.delay`
+
+- install printer for an internal exception
+- fix(runner): use random state independently for each test
+- Fixes distribution and `min_int` issues
+- doc: point to @jmid 's website
+
 ## 0.16
 
 - fix(runner): detect more failures in the runner
