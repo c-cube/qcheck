@@ -60,22 +60,70 @@ let assume_fail () = raise FailedPrecondition
 
 let (==>) b1 b2 = if b1 then b2 else raise FailedPrecondition
 
+module Seq = struct
+
+  include Seq
+
+  (* Implementation copied from Stdlib as it was only added in OCaml 4.11 *)
+  let rec append seq1 seq2 () =
+    let open Seq in
+    match seq1 () with
+    | Nil -> seq2 ()
+    | Cons (x, next) -> Cons (x, append next seq2)
+
+  let (<*>) (fs : ('a -> 'b) Seq.t) (xs : 'a Seq.t) : 'b Seq.t =
+    Seq.flat_map (fun f -> Seq.map (fun x -> f x) xs) fs 
+
+  end
+
+module Tree = struct
+  type 'a t = Tree of 'a * ('a t) Seq.t
+
+  (** [map] *)
+  let rec (>|=) (a : 'a t) (f : 'a -> 'b) : 'b t = 
+    let Tree (x, xs) = a in
+    let y = f x in
+    let ys = Seq.map (fun smaller_x -> smaller_x >|= f) xs in
+    Tree (y, ys)
+
+
+  (** [ap] *)
+  let rec (<*>) (f : ('a -> 'b) t) (a : 'a t) : 'b t =
+    let Tree (x, xs) = a in
+    let Tree (f, fs) = f in
+    let y = f x in
+    let ys = Seq.(<*>) (Seq.map (fun f x' -> f <*> x') fs) xs in
+    Tree (y, ys)
+
+  (** [bind] *)
+  let rec (>>=) (a : 'a t) (f : 'a -> 'b t) : 'b t =
+    let Tree (x, xs) = a in
+    let Tree (y, ys_of_x) = f x in
+    let ys_of_xs = Seq.map (fun smaller_x -> smaller_x >>= f) xs in
+    let ys = Seq.append ys_of_xs ys_of_x in
+    Tree (y, ys)
+
+  let pure x = Tree (x, Seq.empty)
+
+  end
+
 module Gen = struct
-  type 'a t = RS.t -> 'a
-  type 'a sized = int -> Random.State.t -> 'a
+
+  (* TODO maybe the type shoulde be changed to [RS.t -> (unit -> 'a) tree] or use laziness? To avoid eagerly evaluating shrinks during generation (see implem of [(>>=)] that requires evaluating to append Sequences). *)
+  type 'a t = RS.t -> 'a Tree.t
+  type 'a sized = int -> Random.State.t -> 'a Tree.t
 
   let return x _st = x
   let pure = return
 
-  let (>>=) gen f st =
-    f (gen st) st
+  let (>>=) gen f st = Tree.(>>=) (gen st)  (fun a -> f a st)
 
-  let (<*>) f x st = f st (x st)
+  let (<*>) (f : ('a -> 'b) t) (x : 'a t) (st : RS.t) = Tree.(<*>) (f st)  (x st)
   let map f x st = f (x st)
   let map2 f x y st = f (x st) (y st)
   let map3 f x y z st = f (x st) (y st) (z st)
   let map_keep_input f gen st = let x = gen st in x, f x
-  let (>|=) x f st = f (x st)
+  let (>|=) x f st = Tree.(>|=) (x st)  f
   let (<$>) f x st = f (x st)
 
   let oneof l st = List.nth l (Random.State.int st (List.length l)) st
@@ -112,9 +160,13 @@ module Gen = struct
     if p < 0.75 then nat st
     else RS.int st 1_000_000
 
-  let unit _st = ()
+  let unit _st = Tree.pure ()
 
-  let bool st = RS.bool st
+  let bool st =
+    let false_gen = Tree.pure false in
+    if RS.bool st
+    then Tree.Tree (true, Seq.return false_gen)
+    else false_gen
 
   let float st =
     exp (RS.float st 15. *. (if RS.float st 1. < 0.5 then 1. else -1.))
@@ -183,6 +235,9 @@ module Gen = struct
   let small_int = small_nat
 
   let small_signed_int st =
+    let shrink x =
+
+      in
     if bool st
     then small_nat st
     else - (small_nat st)
@@ -310,7 +365,7 @@ module Gen = struct
   include Qcheck_ops.Make(struct
       type nonrec 'a t = 'a t
       let (>|=) = (>|=)
-      let monoid_product a b = map2 (fun x y -> x,y) a b
+      let monoid_product a b = (a >|= (fun x y -> (x, y))) <*> b
       let (>>=) = (>>=)
     end)
 end
@@ -640,47 +695,46 @@ end
 type 'a stat = string * ('a -> int)
 (** A statistic on a distribution of values of type ['a] *)
 
+
 type 'a arbitrary = {
   gen: 'a Gen.t;
   print: ('a -> string) option; (** print values *)
   small: ('a -> int) option;  (** size of example *)
-  shrink: ('a -> 'a Iter.t) option;  (** shrink to smaller examples *)
+  (* shrink: ('a -> 'a Iter.t) option;  (\** shrink to smaller examples *\) *)
   collect: ('a -> string) option;  (** map value to tag, and group by tag *)
   stats: 'a stat list; (** statistics to collect and print *)
 }
 
-let make ?print ?small ?shrink ?collect ?(stats=[]) gen = {
+let make ?print ?small  ?collect ?(stats=[]) gen = {
   gen;
   print;
   small;
-  shrink;
   collect;
   stats;
 }
 
 let set_small f o = {o with small=Some f}
 let set_print f o = {o with print=Some f}
-let set_shrink f o = {o with shrink=Some f}
 let set_collect f o = {o with collect=Some f}
 let set_stats s o = {o with stats=s}
 let add_stat s o = {o with stats=s :: o.stats}
 let set_gen g o = {o with gen=g}
 
-let add_shrink_invariant f o = match o.shrink with
-  | None -> o
-  | Some shr -> {o with shrink=Some (Shrink.filter f shr)}
+(* TODO let add_shrink_invariant f o = match o.shrink with
+ *   | None -> o
+ *   | Some shr -> {o with shrink=Some (Shrink.filter f shr)} *)
 
 let gen o = o.gen
 
 let small1 _ = 1
 
 let make_scalar ?print ?collect gen =
-  make ~shrink:Shrink.nil ~small:small1 ?print ?collect gen
+  make ~small:small1 ?print ?collect gen
 let make_int ?collect gen =
-  make ~shrink:Shrink.int ~small:small1 ~print:Print.int ?collect gen
+  make ~small:small1 ~print:Print.int ?collect gen
 
 let adapt_ o gen =
-  make ?print:o.print ?small:o.small ?shrink:o.shrink ?collect:o.collect gen
+  make ?print:o.print ?small:o.small ?collect:o.collect gen
 
 let choose l = match l with
   | [] -> raise (Invalid_argument "quickcheck.choose")
@@ -692,7 +746,7 @@ let choose l = match l with
           arb.gen st)
 
 let unit : unit arbitrary =
-  make ~small:small1 ~shrink:Shrink.nil ~print:(fun _ -> "()") Gen.unit
+  make ~small:small1 ~print:(fun _ -> "()") Gen.unit
 
 let bool = make_scalar ~print:string_of_bool Gen.bool
 let float = make_scalar ~print:string_of_float Gen.float
