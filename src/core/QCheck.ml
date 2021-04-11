@@ -339,7 +339,7 @@ module Gen = struct
   let char_range ?(origin : char option) (a : char) (b : char) : char t =
     (int_range ?origin:(Option.map Char.code origin) (Char.code a) (Char.code b)) >|= Char.chr
 
-  let random_binary_string (length : int) : string t = fun st ->
+  let random_binary_string (length : int) (st : Random.State.t) : string =
     (* 0b011101... *)
     let s = Bytes.create (length + 2) in
     Bytes.set s 0 '0';
@@ -347,11 +347,53 @@ module Gen = struct
     for i = 0 to length - 1 do
       Bytes.set s (i+2) (if RS.bool st then '0' else '1')
     done;
-    (* TODO typically we could shrink towards 0b000000... in the future *)
-    Tree.pure (Bytes.unsafe_to_string s)
+    Bytes.unsafe_to_string s
 
-  let ui32 : int32 t = random_binary_string 32 >|= Int32.of_string
-  let ui64 : int64 t = random_binary_string 64 >|= Int64.of_string
+  let ui32 : int32 t = fun st ->
+    let x = random_binary_string 32 st |> Int32.of_string in
+    (* TODO factor out with a functor for int/int32/int64/etc. *)
+    let int32_towards_seq destination x =
+      let open Int32 in
+      Seq.unfold (fun current_shrink -> 
+          if current_shrink = x
+            then None
+            else
+              (*
+                Halve the operands before subtracting them so they don't overflow.
+                Consider [int_towards min_int max_int]
+              *)
+              let half_diff =  sub (div x 2l) (div current_shrink 2l) in
+              Some (current_shrink, add current_shrink half_diff)
+          ) destination
+            in
+    let rec int32_towards destination x = 
+      let shrink_trees = int32_towards_seq destination x |> Seq.map (int32_towards destination) in
+      Tree.Tree (x, shrink_trees)
+    in
+  int32_towards 0l x
+
+  let ui64 : int64 t = fun st ->
+    let x = random_binary_string 64 st |> Int64.of_string in
+    (* TODO factor out with a functor for int/int32/int64/etc. *)
+    let int64_towards_seq destination x =
+      let open Int64 in
+      Seq.unfold (fun current_shrink -> 
+          if current_shrink = x
+            then None
+            else
+              (*
+                Halve the operands before subtracting them so they don't overflow.
+                Consider [int_towards min_int max_int]
+              *)
+              let half_diff =  sub (div x 2L) (div current_shrink 2L) in
+              Some (current_shrink, add current_shrink half_diff)
+          ) destination
+            in
+    let rec int64_towards destination x = 
+      let shrink_trees = int64_towards_seq destination x |> Seq.map (int64_towards destination) in
+      Tree.Tree (x, shrink_trees)
+    in
+  int64_towards 0L x
 
   let list_size (size : int t) (gen : 'a t) : 'a list t =
     size >>= fun size ->
@@ -417,16 +459,22 @@ module Gen = struct
   let char : char t = int_range ~origin:(int_of_char 'a') 0 255 >|= char_of_int
 
   let printable_chars =
-    let l = 126-32+1 in
-    let s = Bytes.create l in
-    for i = 0 to l-2 do
-      Bytes.set s i (char_of_int (32+i))
-    done;
-    Bytes.set s (l-1) '\n';
-    Bytes.unsafe_to_string s
+    (* ' ' *)
+    let first_printable_char = 32 in
+    (* '~' *)
+    let last_printable_char = 126 in
+    let newline = '\n' in
+    let printable_chars = List.init (last_printable_char - first_printable_char) char_of_int in
+    newline :: printable_chars
 
-  let printable st = printable_chars.[RS.int st (String.length printable_chars)]
-  let numeral st = char_of_int (48 + RS.int st 10)
+  let printable : char t =
+  int_range ~origin:(int_of_char 'a') 0 (List.length printable_chars - 1)
+    >|= List.nth printable_chars
+  
+  let numeral : char t =
+    let zero = 48 in
+    let nine = 57 in
+    int_range ~origin:zero zero nine >|= char_of_int
 
   let string_size ?(gen = char) (size : int t) : string t =
       list_size size gen >|= (fun l -> List.to_seq l |> String.of_seq)
@@ -877,11 +925,9 @@ let small_int_corners () = make_int (Gen.nng_corners ())
 let neg_int = make_int Gen.neg_int
 
 let int32 =
-  make ~print:(fun i -> Int32.to_string i ^ "l") ~small:small1
-    ~shrink:Shrink.int32 Gen.ui32
+  make ~print:(fun i -> Int32.to_string i ^ "l") ~small:small1 Gen.ui32
 let int64 =
-  make ~print:(fun i -> Int64.to_string i ^ "L") ~small:small1
-    ~shrink:Shrink.int64 Gen.ui64
+  make ~print:(fun i -> Int64.to_string i ^ "L") ~small:small1 Gen.ui64
 
 let char = make_scalar ~print:(sprintf "%C") Gen.char
 let printable_char = make_scalar ~print:(sprintf "%C") Gen.printable
