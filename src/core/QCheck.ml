@@ -1055,35 +1055,36 @@ module Poly_tbl : sig
   val create: 'a Observable.t -> 'b arbitrary -> int -> ('a, 'b) t Gen.t
   val get : ('a, 'b) t -> 'a -> 'b option
   val size : ('b -> int) -> (_, 'b) t -> int
-  val shrink1 : ('a, 'b) t Shrink.t
-  val shrink2 : 'b Shrink.t -> ('a, 'b) t Shrink.t
+  (* val shrink1 : ('a, 'b) t Shrink.t
+  val shrink2 : 'b Shrink.t -> ('a, 'b) t Shrink.t *)
   val print : (_,_) t Print.t
 end = struct
   type ('a, 'b) t = {
     get : 'a -> 'b option;
-    p_size: ('b->int) -> int;
-    p_shrink1: ('a, 'b) t Iter.t;
-    p_shrink2: 'b Shrink.t -> ('a, 'b) t Iter.t;
+    p_size: ('b -> int) -> int;
+    (* p_shrink1: ('a, 'b) t Iter.t;
+    p_shrink2: 'b Shrink.t -> ('a, 'b) t Iter.t; *)
     p_print: unit -> string;
   }
 
-  let create (type k)(type v) k v size st : (k,v) t =
+  let create (type k) (type v) (k : k Observable.t) (v : v arbitrary) (size : int) : (k, v) t Gen.t = 
+  fun st ->
     let module T = Hashtbl.Make(struct
         type t = k
         let equal = k.Observable.eq
         let hash = k.Observable.hash
       end) in
-    let tbl_to_list tbl =
+    (* let tbl_to_list tbl =
       T.fold (fun k v l -> (k,v)::l) tbl []
     and tbl_of_list l =
       let tbl = T.create (max (List.length l) 8) in
       List.iter (fun (k,v) -> T.add tbl k v) l;
       tbl
-    in
+    in *)
     (* make a table
        @param extend if true, extend table on the fly *)
     let rec make ~extend tbl = {
-      get=(fun x ->
+      get = (fun x ->
         try Some (T.find tbl x)
         with Not_found ->
           if extend then (
@@ -1091,17 +1092,18 @@ end = struct
             T.add tbl x v;
             Some v
           ) else None);
-      p_print=(fun () -> match v.print with
+      p_print = (fun () -> match v.print with
         | None -> "<fun>"
         | Some pp_v ->
           let b = Buffer.create 64 in
           T.iter
-            (fun key value ->
+            (fun key value_tree ->
+              let Tree.Tree (value, _shrinks) = value_tree in
                Printf.bprintf b "%s -> %s; "
                  (k.Observable.print key) (pp_v value))
             tbl;
         Buffer.contents b);
-      p_shrink1=(fun yield ->
+      (* p_shrink1=(fun yield ->
         Shrink.list (tbl_to_list tbl)
           (fun l ->
              yield (make ~extend:false (tbl_of_list l)))
@@ -1115,14 +1117,14 @@ end = struct
                   let tbl' = T.copy tbl in
                   T.replace tbl' x y';
                   yield (make ~extend:false tbl')))
-          tbl);
+          tbl); *)
       p_size=(fun size_v -> T.fold (fun _ v n -> n + size_v v) tbl 0);
     } in
     make ~extend:true (T.create size)
 
   let get t x = t.get x
-  let shrink1 t = t.p_shrink1
-  let shrink2 p t = t.p_shrink2 p
+  (* let shrink1 t = t.p_shrink1
+  let shrink2 p t = t.p_shrink2 p *)
   let print t = t.p_print ()
   let size p t = t.p_size p
 end
