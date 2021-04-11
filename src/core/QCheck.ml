@@ -65,15 +65,50 @@ module Seq = struct
   include Seq
 
   (* Implementation copied from Stdlib as it was only added in OCaml 4.11 *)
-  let rec append seq1 seq2 () =
+  (* let rec append seq1 seq2 () =
     let open Seq in
     match seq1 () with
     | Nil -> seq2 ()
-    | Cons (x, next) -> Cons (x, append next seq2)
+    | Cons (x, next) -> Cons (x, append next seq2) *)
 
   let (<*>) (fs : ('a -> 'b) Seq.t) (xs : 'a Seq.t) : 'b Seq.t =
     Seq.flat_map (fun f -> Seq.map (fun x -> f x) xs) fs 
 
+      (** TODO Generalize with a functor? To support Float and other types with more code reuse
+      
+       Shrink an integral number by edging towards a destination.
+      
+       >>> int_towards 0 100
+       [0,50,75,88,94,97,99]
+      
+       >>> int_towards 500 1000
+       [500,750,875,938,969,985,993,997,999]
+      
+       >>> int_towards (-50) (-26)
+       [-50,-38,-32,-29,-27]
+      
+       /Note we always try the destination first, as that is the optimal shrink./
+  *)
+  let int_towards destination x =
+    Seq.unfold (fun current_shrink -> 
+        if current_shrink = x
+          then None
+          else
+            (*
+              Halve the operands before subtracting them so they don't overflow.
+              Consider [int_towards min_int max_int]
+            *)
+            let half_diff =  (x / 2) - (current_shrink / 2) in
+            Some (current_shrink, current_shrink + half_diff)
+        ) destination
+
+  (** Shrink a list by removing elements towards a destination size. *)
+  let list_towards (destination_size : int) (l : 'a list) : 'a list t =
+    let len = List.length l in
+    assert (destination_size > len);
+    let _max_to_remove = destination_size - len in
+    (* TODO *)
+    Seq.empty
   end
 
 module Tree = struct
@@ -94,6 +129,9 @@ module Tree = struct
     let y = f x in
     let ys = Seq.(<*>) (Seq.map (fun f x' -> f <*> x') fs) xs in
     Tree (y, ys)
+  
+  let liftA2 (f : 'a -> 'b -> 'c) (a : 'a t) (b : 'b t) : 'c t =
+    (a >|= f) <*> b
 
   (** [bind] *)
   let rec (>>=) (a : 'a t) (f : 'a -> 'b t) : 'b t =
@@ -105,6 +143,13 @@ module Tree = struct
 
   let pure x = Tree (x, Seq.empty)
 
+  let rec int_towards destination x = 
+    let shrink_trees = Seq.int_towards destination x |> Seq.map (int_towards destination) in
+    Tree (x, shrink_trees)
+
+  (* TODO *)
+  let list_towards (_destination_size : int) (_l : 'a list) : 'a list t = assert false
+
   end
 
 module Gen = struct
@@ -113,7 +158,7 @@ module Gen = struct
   type 'a t = RS.t -> 'a Tree.t
   type 'a sized = int -> Random.State.t -> 'a Tree.t
 
-  let return x _st = x
+  let return (a : 'a) : 'a t = fun _ -> Tree.pure a
   let pure = return
 
   let (>>=) gen f st = Tree.(>>=) (gen st)  (fun a -> f a st)
@@ -124,15 +169,165 @@ module Gen = struct
   let map3 f x y z st = f (x st) (y st) (z st)
   let map_keep_input f gen st = let x = gen st in x, f x
   let (>|=) x f st = Tree.(>|=) (x st)  f
+  let liftA2 (f : 'a -> 'b -> 'c) (a : 'a t) (b : 'b t) : 'c t =
+    (a >|= f) <*> b
   let (<$>) f x st = f (x st)
-
+  
   let oneof l st = List.nth l (Random.State.int st (List.length l)) st
   let oneofl xs st = List.nth xs (Random.State.int st (List.length xs))
   let oneofa xs st = Array.get xs (Random.State.int st (Array.length xs))
 
-  let frequencyl l st =
+
+
+  let small_nat : int t = fun st ->
+    let p = RS.float st 1. in
+    let x = if p < 0.75 then RS.int st 10 else RS.int st 100 in
+    Tree.int_towards 0 x
+
+  (* natural number generator *)
+  let nat : int t = fun st ->
+    let p = RS.float st 1. in
+    let x = 
+      if p < 0.5 then RS.int st 10
+      else if p < 0.75 then RS.int st 100
+      else if p < 0.95 then RS.int st 1_000
+      else RS.int st 10_000
+    in Tree.int_towards 0 x
+
+  let big_nat : int t = fun st ->
+    let p = RS.float st 1. in
+    if p < 0.75
+      then nat st
+      else Tree.int_towards 0 (RS.int st 1_000_000)
+
+  let unit : unit t = fun _st -> Tree.pure ()
+
+  let bool : bool t = fun st ->
+    let false_gen = Tree.pure false in
+    if RS.bool st
+    then Tree.Tree (true, Seq.return false_gen)
+    else false_gen
+
+  let float : float t = fun st ->
+    let x = exp (RS.float st 15. *. (if RS.float st 1. < 0.5 then 1. else -1.))
+    *. (if RS.float st 1. < 0.5 then 1. else -1.)
+  in Tree.pure x
+
+  let pfloat : float t = float >|= abs_float
+  let nfloat : float t = pfloat >|= Float.neg
+
+  let float_bound_inclusive (bound : float) : float t = fun st ->
+    let x = RS.float st bound in 
+    Tree.pure x
+
+  let float_bound_exclusive (bound : float) : float t =
+    if bound = 0. then raise (Invalid_argument "Gen.float_bound_exclusive");
+    let bound = 
+      if bound > 0.
+        then bound -. epsilon_float
+        else bound +. epsilon_float
+    in
+    float_bound_inclusive bound
+
+  let float_range (low : float) (high : float) : float t =
+    if high < low || high -. low > max_float then invalid_arg "Gen.float_range";
+    (float_bound_inclusive (high -. low))
+    >|= (fun x -> low +. x)
+
+  let (--.) = float_range
+
+  let neg_int : int t = nat >|= Int.neg
+
+  let opt f st =
+    let p = RS.float st 1. in
+    if p < 0.15 then None
+    else Some (f st)
+
+  let find_origin ?(origin : int option) (min : int) (max : int) : int =
+    let outside_bounds n = n < min || n > max in
+    match origin with
+    | Some origin ->
+      if outside_bounds origin then invalid_arg "origin is outside provided range";
+      origin
+    | None ->
+      (* The distance can be greater than [Int.max_int] so we half values (to avoid overflow) *)
+      let half_diff = (max / 2) - (min / 2) in
+      let center = min + half_diff in
+      assert (not (outside_bounds center));
+      center
+
+  (* Uniform random int generator *)
+  let pint ?(origin : int option) : int t = fun st ->
+    let x = 
+      if Sys.word_size = 32 
+        then RS.bits st
+        else (* word size = 64 *)
+          RS.bits st                        (* Bottom 30 bits *)
+          lor (RS.bits st lsl 30)           (* Middle 30 bits *)
+          lor ((RS.bits st land 3) lsl 60)  (* Top 2 bits *)  (* top bit = 0 *)
+  in
+  let origin = find_origin ?origin min_int max_int in
+  Tree.int_towards origin x
+
+  let int : int t =
+    bool >>= fun b ->
+    if b 
+      then pint ~origin:0 >|= (fun n -> - n - 1)
+      else pint ~origin:0
+
+  let int_bound (n : int) : int t =
+    if n < 0 then invalid_arg "Gen.int_bound";
+    fun st ->
+      if n <= (1 lsl 30) - 2
+        then Tree.int_towards 0 (Random.State.int st (n + 1))
+        else Tree.(>|=) (pint st) (fun r -> r mod (n + 1))
+  
+    (** Shrink towards [origin] if provided, otherwise towards the middle of the range
+        (e.g. [int_range (-5) 15] will shrink towards [5])
+    
+        To support ranges wider than [Int.max_int], the general idea is to find the center,
+        and generate a random half-difference number as well as whether we add or
+        subtract that number from the center. There are probably better ways but my focus is
+        on integrated shrinking right now :D *)
+    let int_range ?(origin : int option) (a : int) (b : int) : int t =
+    (* TODO I'm pretty sure there are off-by-1 errors in this implementation,
+       it needs additional work, but the general idea for shrinking is there *)
+    if b < a then invalid_arg "Gen.int_range";
+    (* The distance can be greater than [Int.max_int] so we half values (to avoid overflow) *)
+    let half_diff = (b / 2) - (a / 2) in
+    let center = a + half_diff in
+    let origin = find_origin ?origin a b in
+    fun st ->
+      let operator = if Random.State.bool st then (+) else (-) in
+      let x = operator center (Random.State.int st half_diff) in
+      Tree.int_towards origin x
+
+  let (--) = int_range
+
+  (* NOTE: we keep this alias to not break code that uses [small_int]
+     for sizes of strings, arrays, etc. *)
+  let small_int = small_nat
+
+  let small_signed_int : int t = fun st ->
+    if Random.State.bool st
+    then small_nat st
+    else (small_nat >|= Int.neg) st
+
+  (** Shrink towards the first element of the list *)
+  let frequency (l : (int * 'a t) list) : 'a t =
     let sums = sum_int (List.map fst l) in
-    let i = Random.State.int st sums in
+    int_bound sums
+    >>= fun i ->
+    let rec aux acc = function
+      | ((x,g)::xs) -> if i < acc+x then g else aux (acc+x) xs
+      | _ -> failwith "frequency"
+    in
+    aux 0 l
+
+  let frequencyl (l : (int * 'a) list) : 'a t =
+    let sums = sum_int (List.map fst l) in
+    int_bound sums
+    >|= fun i ->
     let rec aux acc = function
       | ((x,g)::xs) -> if i < acc+x then g else aux (acc+x) xs
       | _ -> failwith "frequency"
@@ -141,110 +336,10 @@ module Gen = struct
 
   let frequencya a = frequencyl (Array.to_list a)
 
-  let frequency l st = frequencyl l st st
+  let char_range ?(origin : char option) (a : char) (b : char) : char t =
+    (int_range ?origin:(Option.map Char.code origin) (Char.code a) (Char.code b)) >|= Char.chr
 
-  let small_nat st =
-    let p = RS.float st 1. in
-    if p < 0.75 then RS.int st 10 else RS.int st 100
-
-  (* natural number generator *)
-  let nat st =
-    let p = RS.float st 1. in
-    if p < 0.5 then RS.int st 10
-    else if p < 0.75 then RS.int st 100
-    else if p < 0.95 then RS.int st 1_000
-    else RS.int st 10_000
-
-  let big_nat st =
-    let p = RS.float st 1. in
-    if p < 0.75 then nat st
-    else RS.int st 1_000_000
-
-  let unit _st = Tree.pure ()
-
-  let bool st =
-    let false_gen = Tree.pure false in
-    if RS.bool st
-    then Tree.Tree (true, Seq.return false_gen)
-    else false_gen
-
-  let float st =
-    exp (RS.float st 15. *. (if RS.float st 1. < 0.5 then 1. else -1.))
-    *. (if RS.float st 1. < 0.5 then 1. else -1.)
-
-  let pfloat st = abs_float (float st)
-  let nfloat st = -.(pfloat st)
-
-  let float_bound_inclusive bound st = RS.float st bound
-
-  let float_bound_exclusive bound st =
-    match bound with
-    | 0. -> raise (Invalid_argument "Gen.float_bound_exclusive")
-    | b_pos when bound > 0. -> RS.float st (b_pos -. epsilon_float)
-    | b_neg -> RS.float st (b_neg +. epsilon_float)
-
-  let float_range low high =
-    if high < low || high -. low > max_float then invalid_arg "Gen.float_range";
-    fun st -> low +. (float_bound_inclusive (high -. low) st)
-
-  let (--.) = float_range
-
-  let neg_int st = -(nat st)
-
-  let opt f st =
-    let p = RS.float st 1. in
-    if p < 0.15 then None
-    else Some (f st)
-
-  (* Uniform random int generator *)
-  let pint =
-    if Sys.word_size = 32 then
-      fun st -> RS.bits st
-    else (* word size = 64 *)
-      fun st ->
-        RS.bits st                        (* Bottom 30 bits *)
-        lor (RS.bits st lsl 30)           (* Middle 30 bits *)
-        lor ((RS.bits st land 3) lsl 60)  (* Top 2 bits *)  (* top bit = 0 *)
-
-  let int st = if RS.bool st then - (pint st) - 1 else pint st
-  let int_bound n =
-    if n < 0 then invalid_arg "Gen.int_bound";
-    if n <= (1 lsl 30) - 2
-    then fun st -> Random.State.int st (n + 1)
-    else fun st -> let r = pint st in r mod (n + 1)
-  let int_range a b =
-    if b < a then invalid_arg "Gen.int_range";
-    if a >= 0 || b < 0 then (
-      (* range smaller than max_int *)
-      assert (b-a >= 0);
-      fun st -> a + (int_bound (b-a) st)
-    ) else (
-      (* range potentially bigger than max_int: we split on 0 and
-         choose the itv wrt to their size ratio *)
-      fun st ->
-      let f_a = float_of_int a in
-      let ratio = (-.f_a) /. (1. +. float_of_int b -. f_a) in
-      if Random.State.float st 1. <= ratio then - (int_bound (- (a+1)) st) - 1
-      else int_bound b st
-    )
-
-  let (--) = int_range
-
-  (* NOTE: we keep this alias to not break code that uses [small_int]
-     for sizes of strings, arrays, etc. *)
-  let small_int = small_nat
-
-  let small_signed_int st =
-    let shrink x =
-
-      in
-    if bool st
-    then small_nat st
-    else - (small_nat st)
-
-  let char_range a b = map Char.chr (Char.code a -- Char.code b)
-
-  let random_binary_string st length =
+  let random_binary_string (length : int) : string t = fun st ->
     (* 0b011101... *)
     let s = Bytes.create (length + 2) in
     Bytes.set s 0 '0';
@@ -252,20 +347,28 @@ module Gen = struct
     for i = 0 to length - 1 do
       Bytes.set s (i+2) (if RS.bool st then '0' else '1')
     done;
-    Bytes.unsafe_to_string s
+    (* TODO typically we could shrink towards 0b000000... in the future *)
+    Tree.pure (Bytes.unsafe_to_string s)
 
-  let ui32 st = Int32.of_string (random_binary_string st 32)
-  let ui64 st = Int64.of_string (random_binary_string st 64)
+  let ui32 : int32 t = random_binary_string 32 >|= Int32.of_string
+  let ui64 : int64 t = random_binary_string 64 >|= Int64.of_string
 
-  let list_size size gen st =
-    foldn ~f:(fun acc _ -> (gen st)::acc) ~init:[] (size st)
-  let list gen st = list_size nat gen st
-  let list_repeat n g = list_size (return n) g
+  let list_size (size : int t) (gen : 'a t) : 'a list t =
+    size >>= fun size ->
+    let rec loop n =
+      if n <= 0
+        then pure []
+        else liftA2 (List.cons) gen (loop (n - 1))
+    in
+    loop size
+    (* foldn ~f:(fun acc _ -> (gen st)::acc) ~init:[] size *)
+  let list (gen : 'a t) : 'a list t = list_size nat gen
+  let list_repeat (n : int) (gen : 'a t) : 'a list t = list_size (return n) gen
 
-  let array_size size gen st =
-    Array.init (size st) (fun _ -> gen st)
-  let array gen st = array_size nat gen st
-  let array_repeat n g = array_size (return n) g
+  let array_size (size : int t) (gen : 'a t) : 'a array t =
+    (list_size size gen) >|= Array.of_list
+  let array (gen : 'a t) : 'a array t = list gen >|= Array.of_list
+  let array_repeat (n : int) (gen : 'a t) : 'a array t = list_repeat n gen >|= Array.of_list
 
   let flatten_l l st = List.map (fun f->f st) l
   let flatten_a a st = Array.map (fun f->f st) a
@@ -278,26 +381,32 @@ module Gen = struct
     | Ok f -> Ok (f st)
     | Error e -> Error e
 
-  let shuffle_a a st =
+  (** TODO why is this function doing mutation instead of returning an [Array.copy]? *)
+  let shuffle_a (a : 'a array) : unit t = fun st ->
     for i = Array.length a-1 downto 1 do
       let j = Random.State.int st (i+1) in
       let tmp = a.(i) in
       a.(i) <- a.(j);
       a.(j) <- tmp;
-    done
+    done;
+    unit st
 
-  let shuffle_l l st =
+  let shuffle_l (l : 'a list) : 'a list t = fun st ->
     let a = Array.of_list l in
-    shuffle_a a st;
-    Array.to_list a
+    let _ = shuffle_a a st in
+    Tree.pure (Array.to_list a)
 
-  let shuffle_w_l l st =
+  let shuffle_w_l (l : ((int * 'a) list)) : 'a list t = fun st ->
     let sample (w, v) =
+      let Tree.Tree (p, _) = float_bound_inclusive 1. st in
       let fl_w = float_of_int w in
-      (float_bound_inclusive 1. st ** (1. /. fl_w), v)
+      (p ** (1. /. fl_w), v)
     in
     let samples = List.rev_map sample l in
-    List.sort (fun (w1, _) (w2, _) -> poly_compare w1 w2) samples |> List.rev_map snd
+    samples
+      |> List.sort (fun (w1, _) (w2, _) -> poly_compare w1 w2)
+      |> List.rev_map snd
+      |> Tree.pure
 
   let pair g1 g2 st = (g1 st, g2 st)
 
@@ -305,7 +414,7 @@ module Gen = struct
 
   let quad g1 g2 g3 g4 st = (g1 st, g2 st, g3 st, g4 st)
 
-  let char st = char_of_int (RS.int st 256)
+  let char : char t = int_range ~origin:(int_of_char 'a') 0 255 >|= char_of_int
 
   let printable_chars =
     let l = 126-32+1 in
@@ -319,13 +428,9 @@ module Gen = struct
   let printable st = printable_chars.[RS.int st (String.length printable_chars)]
   let numeral st = char_of_int (48 + RS.int st 10)
 
-  let string_size ?(gen = char) size st =
-    let s = Bytes.create (size st) in
-    for i = 0 to Bytes.length s - 1 do
-      Bytes.set s i (gen st)
-    done;
-    Bytes.unsafe_to_string s
-  let string ?gen st = string_size ?gen nat st
+  let string_size ?(gen = char) (size : int t) : string t =
+      list_size size gen >|= (fun l -> List.to_seq l |> String.of_seq)
+  let string ?(gen : char t option) : string t = string_size ?gen nat
   let string_of gen = string_size ~gen nat
   let string_readable = string_size ~gen:char nat
   let small_string ?gen st = string_size ?gen small_nat st
@@ -336,15 +441,15 @@ module Gen = struct
 
   (* corner cases *)
 
-  let graft_corners gen corners () =
+  let graft_corners (gen : 'a t) (corners : 'a list) () : 'a t =
     let cors = ref corners in fun st ->
       match !cors with [] -> gen st
-      | e::l -> cors := l; e
+      | e::l -> cors := l; Tree.pure e
 
   let int_pos_corners = [0;1;2;max_int]
   let int_corners = int_pos_corners @ [min_int]
 
-  let nng_corners () = graft_corners nat int_pos_corners ()
+  let nng_corners () : int t = graft_corners nat int_pos_corners ()
 
   (* sized, fix *)
 
@@ -700,7 +805,6 @@ type 'a arbitrary = {
   gen: 'a Gen.t;
   print: ('a -> string) option; (** print values *)
   small: ('a -> int) option;  (** size of example *)
-  (* shrink: ('a -> 'a Iter.t) option;  (\** shrink to smaller examples *\) *)
   collect: ('a -> string) option;  (** map value to tag, and group by tag *)
   stats: 'a stat list; (** statistics to collect and print *)
 }
