@@ -89,7 +89,10 @@ module Seq = struct
               Consider [int_towards min_int max_int]
             *)
           let half_diff =  (x / 2) - (current_shrink / 2) in
-          Some (current_shrink, current_shrink + half_diff)
+          Format.eprintf "unfold with current_shrink = %i and x = %i and half_diff = %i \n" current_shrink x half_diff;
+          if half_diff = 0
+             then None
+             else Some (current_shrink, current_shrink + half_diff)
       ) destination
 
   (** Shrink a list by removing elements towards a destination size. *)
