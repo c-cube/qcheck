@@ -75,7 +75,7 @@ module Seq = struct
       [500,750,875,938,969,985,993,997,999]
 
       >>> int_towards (-50) (-26)
-      [-50,-38,-32,-29,-27]
+      [-50,-38,-32,-29,-28,-27]
 
       /Note we always try the destination first, as that is the optimal shrink./
   *)
@@ -89,10 +89,10 @@ module Seq = struct
               Consider [int_towards min_int max_int]
             *)
           let half_diff =  (x / 2) - (current_shrink / 2) in
-          Format.eprintf "unfold with current_shrink = %i and x = %i and half_diff = %i \n" current_shrink x half_diff;
           if half_diff = 0
-             then None
-             else Some (current_shrink, current_shrink + half_diff)
+          (* [current_shrink] is the last valid shrink candidate, put [x] as next step to make sure we stop *)
+          then Some (current_shrink, x)
+          else Some (current_shrink, current_shrink + half_diff)
       ) destination
 
   (** Shrink a list by removing elements towards a destination size. *)
@@ -409,7 +409,6 @@ module Gen = struct
 
   let ui32 : int32 t = fun st ->
     let x = random_binary_string 32 st |> Int32.of_string in
-    (* TODO factor out with a functor for int/int32/int64/etc. *)
     let int32_towards_seq destination x =
       let open Int32 in
       Seq.unfold (fun current_shrink ->
@@ -421,7 +420,10 @@ module Gen = struct
                 Consider [int_towards min_int max_int]
               *)
             let half_diff =  sub (div x 2l) (div current_shrink 2l) in
-            Some (current_shrink, add current_shrink half_diff)
+            if half_diff = 0l
+            (* [current_shrink] is the last valid shrink candidate, put [x] as next step to make sure we stop *)
+            then Some (current_shrink, x)
+            else Some (current_shrink, add current_shrink half_diff)
         ) destination
     in
     let rec int32_towards destination x =
@@ -432,7 +434,6 @@ module Gen = struct
 
   let ui64 : int64 t = fun st ->
     let x = random_binary_string 64 st |> Int64.of_string in
-    (* TODO factor out with a functor for int/int32/int64/etc. *)
     let int64_towards_seq destination x =
       let open Int64 in
       Seq.unfold (fun current_shrink ->
@@ -444,7 +445,10 @@ module Gen = struct
                 Consider [int_towards min_int max_int]
               *)
             let half_diff =  sub (div x 2L) (div current_shrink 2L) in
-            Some (current_shrink, add current_shrink half_diff)
+            if half_diff = 0L
+            (* [current_shrink] is the last valid shrink candidate, put [x] as next step to make sure we stop *)
+            then Some (current_shrink, x)
+            else Some (current_shrink, add current_shrink half_diff)
         ) destination
     in
     let rec int64_towards destination x =
@@ -461,7 +465,7 @@ module Gen = struct
       else liftA2 (List.cons) gen (loop (n - 1))
     in
     loop size
-  (* foldn ~f:(fun acc _ -> (gen st)::acc) ~init:[] size *)
+
   let list (gen : 'a t) : 'a list t = list_size nat gen
 
   let list_repeat (n : int) (gen : 'a t) : 'a list t = list_size (return n) gen
