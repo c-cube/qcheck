@@ -957,8 +957,11 @@ let unit : unit arbitrary =
   make ~small:small1 ~print:(fun _ -> "()") Gen.unit
 
 let bool = make_scalar ~print:string_of_bool Gen.bool
+
 let float = make_scalar ~print:string_of_float Gen.float
+
 let pos_float = make_scalar ~print:string_of_float Gen.pfloat
+
 let neg_float = make_scalar ~print:string_of_float Gen.nfloat
 
 let float_bound_inclusive bound =
@@ -970,39 +973,57 @@ let float_bound_exclusive bound =
 let float_range low high = make_scalar ~print:string_of_float (Gen.float_range low high)
 
 let int = make_int Gen.int
+
 let int_bound n = make_int (Gen.int_bound n)
+
 let int_range a b = make_int (Gen.int_range a b)
+
 let (--) = int_range
+
 let pos_int = make_int Gen.pint
+
 let small_int = make_int Gen.small_int
+
 let small_nat = make_int Gen.small_nat
+
 let small_signed_int = make_int Gen.small_signed_int
+
 let small_int_corners () = make_int (Gen.nng_corners ())
+
 let neg_int = make_int Gen.neg_int
 
 let int32 =
   make ~print:(fun i -> Int32.to_string i ^ "l") ~small:small1 Gen.ui32
+
 let int64 =
   make ~print:(fun i -> Int64.to_string i ^ "L") ~small:small1 Gen.ui64
 
 let char = make_scalar ~print:(sprintf "%C") Gen.char
+
 let printable_char = make_scalar ~print:(sprintf "%C") Gen.printable
+
 let numeral_char = make_scalar ~print:(sprintf "%C") Gen.numeral
 
 let string_gen_of_size (size : int Gen.t) (gen : char Gen.t) : string arbitrary =
   make ~small:String.length ~print:(sprintf "%S") (Gen.string_size ~gen size)
+
 let string_gen (gen : char Gen.t) : string arbitrary =
   make ~small:String.length ~print:(sprintf "%S") (Gen.string ~gen)
 
 let string : string arbitrary = string_gen Gen.char
+
 let string_of_size size = string_gen_of_size size Gen.char
+
 let small_string = string_gen_of_size Gen.small_nat Gen.char
 
 let printable_string = string_gen Gen.printable
+
 let printable_string_of_size size = string_gen_of_size size Gen.printable
+
 let small_printable_string = string_gen_of_size Gen.small_nat Gen.printable
 
 let numeral_string = string_gen Gen.numeral
+
 let numeral_string_of_size size = string_gen_of_size size Gen.numeral
 
 let list_sum_ f l = List.fold_left (fun acc x-> f x+acc) 0 l
@@ -1014,7 +1035,9 @@ let mk_list a gen =
   make ~small ?print gen
 
 let list a = mk_list a (Gen.list a.gen)
+
 let list_of_size size a = mk_list a (Gen.list_size size a.gen)
+
 let small_list a = mk_list a (Gen.small_list a.gen)
 
 let array_sum_ f a = Array.fold_left (fun acc x -> f x+acc) 0 a
@@ -1074,10 +1097,14 @@ module Poly_tbl : sig
   type ('a, 'b) t
 
   val create: 'a Observable.t -> 'b arbitrary -> int -> ('a, 'b) t Gen.t
+
   val get : ('a, 'b) t -> 'a -> 'b option
+
   val size : ('b -> int) -> (_, 'b) t -> int
+
   (* val shrink1 : ('a, 'b) t Shrink.t
      val shrink2 : 'b Shrink.t -> ('a, 'b) t Shrink.t *)
+
   val print : (_,_) t Print.t
 end = struct
   type ('a, 'b) t = {
@@ -1192,6 +1219,7 @@ module Fn = struct
     Fun_tbl { fun_tbl=tbl; fun_arb=arb; fun_default=def; }
 
   let map_repr f repr = Fun_map (f,repr)
+
   let map_fun f (Fun (repr,_)) = make_ (map_repr f repr)
 
   (* let shrink_rep (r: _ fun_repr): _ Iter.t =
@@ -1268,6 +1296,7 @@ module Tuple = struct
     | Cons : 'a * 'b t -> ('a * 'b) t
 
   let nil = Nil
+
   let cons x tail = Cons (x,tail)
 
   type 'a obs =
@@ -1275,6 +1304,7 @@ module Tuple = struct
     | O_cons : 'a Observable.t * 'b obs -> ('a * 'b) obs
 
   let o_nil = O_nil
+
   let o_cons x tail = O_cons (x,tail)
 
   let rec hash
@@ -1472,11 +1502,15 @@ module Test = struct
   type t = | Test : 'a cell -> t
 
   let get_name {name; _} = name
+
   let set_name c name = c.name <- name
+
   let get_law {law; _} = law
+
   let get_arbitrary {arb; _} = arb
 
   let get_count {count; _ } = count
+
   let get_long_factor {long_factor; _} = long_factor
 
   let default_count = 100
