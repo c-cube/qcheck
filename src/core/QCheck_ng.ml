@@ -18,18 +18,6 @@ let rec foldn ~f ~init:acc i =
 
 let _is_some = function Some _ -> true | None -> false
 
-let _opt_map_or ~d ~f = function
-  | None -> d
-  | Some x -> f x
-
-let _opt_or a b = match a with
-  | None -> b
-  | Some x -> x
-
-let _opt_map ~f = function
-  | None -> None
-  | Some x -> Some (f x)
-
 let _opt_map_2 ~f a b = match a, b with
   | Some x, Some y -> Some (f x y)
   | _ -> None
@@ -60,31 +48,299 @@ let assume_fail () = raise FailedPrecondition
 
 let (==>) b1 b2 = if b1 then b2 else raise FailedPrecondition
 
+module Seq = struct
+
+  include Seq
+
+  (* The following functions are copied from https://github.com/ocaml/ocaml/blob/trunk/stdlib/seq.ml to support older OCaml versions. *)
+      
+  let rec unfold f u () =
+    match f u with
+    | None -> Nil
+    | Some (x, u') -> Cons (x, unfold f u')
+
+  let rec append seq1 seq2 () =
+    match seq1() with
+    | Nil -> seq2()
+    | Cons (x, next) -> Cons (x, append next seq2)
+
+  let cons x next () = Cons (x, next)
+
+  (* End of copy of old functions. *)
+
+      (** TODO Generalize with a functor? To support Float and other types with more code reuse
+      
+       Shrink an integral number by edging towards a destination.
+      
+       >>> int_towards 0 100
+       [0,50,75,88,94,97,99]
+      
+       >>> int_towards 500 1000
+       [500,750,875,938,969,985,993,997,999]
+      
+       >>> int_towards (-50) (-26)
+       [-50,-38,-32,-29,-27]
+      
+       /Note we always try the destination first, as that is the optimal shrink./
+  *)
+  let int_towards destination x =
+    unfold (fun current_shrink -> 
+        if current_shrink = x
+          then None
+          else
+            (*
+              Halve the operands before subtracting them so they don't overflow.
+              Consider [int_towards min_int max_int]
+            *)
+            let half_diff =  (x / 2) - (current_shrink / 2) in
+            Some (current_shrink, current_shrink + half_diff)
+        ) destination
+
+  (** Shrink a list by removing elements towards a destination size. *)
+  let list_towards (destination_size : int) (l : 'a list) : 'a list t =
+    let len = List.length l in
+    assert (destination_size > len);
+    let _max_to_remove = destination_size - len in
+    (* TODO *)
+    Seq.empty
+
+  let hd (l : 'a t) : 'a option =
+    match l () with
+      | Nil -> None
+      | Cons (hd, _) -> Some hd
+  end
+
+module Tree = struct
+  type 'a t = Tree of 'a * ('a t) Seq.t
+
+  (** [map] *)
+  let rec (>|=) (a : 'a t) (f : 'a -> 'b) : 'b t = 
+    let Tree (x, xs) = a in
+    let y = f x in
+    let ys = Seq.map (fun smaller_x -> smaller_x >|= f) xs in
+    Tree (y, ys)
+
+
+  (** [ap] *)
+  let rec (<*>) (f : ('a -> 'b) t) (a : 'a t) : 'b t =
+    let Tree (x0, xs) = a in
+    let Tree (f0, fs) = f in
+    let y = f0 x0 in
+    let ys = Seq.append (Seq.map (fun f' -> f' <*> a) fs) (Seq.map (fun x' -> f <*> x') xs) in
+    Tree (y, ys)
+
+  let liftA2 (f : 'a -> 'b -> 'c) (a : 'a t) (b : 'b t) : 'c t =
+    (a >|= f) <*> b
+
+  (** [bind] *)
+  let rec (>>=) (a : 'a t) (f : 'a -> 'b t) : 'b t =
+    let Tree (x, xs) = a in
+    let Tree (y, ys_of_x) = f x in
+    let ys_of_xs = Seq.map (fun smaller_x -> smaller_x >>= f) xs in
+    let ys = Seq.append ys_of_xs ys_of_x in
+    Tree (y, ys)
+
+  let pure x = Tree (x, Seq.empty)
+
+  let rec int_towards destination x = 
+    let shrink_trees = Seq.int_towards destination x |> Seq.map (int_towards destination) in
+    Tree (x, shrink_trees)
+
+  (* TODO *)
+  let list_towards (_destination_size : int) (_l : 'a list) : 'a list t = assert false
+
+  let rec opt (a : 'a t) : 'a option t =
+    let Tree (x, xs) = a in
+    let shrinks = Seq.cons (pure None) (Seq.map opt xs) in
+    Tree (Some x, shrinks)
+  end
+
 module Gen = struct
-  type 'a t = RS.t -> 'a
-  type 'a sized = int -> Random.State.t -> 'a
 
-  let return x _st = x
-  let pure = return
+  (* TODO maybe the type shoulde be changed to [RS.t -> (unit -> 'a) tree] or use laziness? To avoid eagerly evaluating shrinks during generation (see implem of [(>>=)] that requires evaluating to append Sequences). *)
+  type 'a t = RS.t -> 'a Tree.t
+  type 'a sized = int -> Random.State.t -> 'a Tree.t
 
-  let (>>=) gen f st =
-    f (gen st) st
+  let (>|=) x f st = Tree.(>|=) (x st)  f
+  let map f x = x >|= f
+  let pure (a : 'a) : 'a t = fun _ -> Tree.pure a
+  let (<*>) (f : ('a -> 'b) t) (x : 'a t) : 'b t = fun st -> Tree.(<*>) (f st)  (x st)
+  let liftA2 (f : 'a -> 'b -> 'c) (a : 'a t) (b : 'b t) : 'c t =
+    (a >|= f) <*> b
+  let liftA3 (f : 'a -> 'b -> 'c -> 'd) (a : 'a t) (b : 'b t) (c : 'c t) : 'd t =
+    (a >|= f) <*> b <*> c
+  let map2 = liftA2
+  let map3 = liftA3
 
-  let (<*>) f x st = f st (x st)
-  let map f x st = f (x st)
-  let map2 f x y st = f (x st) (y st)
-  let map3 f x y z st = f (x st) (y st) (z st)
+  let return = pure
+  let (>>=) (gen : 'a t) (f : 'a -> ('b t)) : 'b t = fun st ->  Tree.(>>=) (gen st)  (fun a -> f a st)
+
   let map_keep_input f gen st = let x = gen st in x, f x
-  let (>|=) x f st = f (x st)
   let (<$>) f x st = f (x st)
 
-  let oneof l st = List.nth l (Random.State.int st (List.length l)) st
-  let oneofl xs st = List.nth xs (Random.State.int st (List.length xs))
-  let oneofa xs st = Array.get xs (Random.State.int st (Array.length xs))
 
-  let frequencyl l st =
+
+
+  let small_nat : int t = fun st ->
+    let p = RS.float st 1. in
+    let x = if p < 0.75 then RS.int st 10 else RS.int st 100 in
+    Tree.int_towards 0 x
+
+  (* natural number generator *)
+  let nat : int t = fun st ->
+    let p = RS.float st 1. in
+    let x = 
+      if p < 0.5 then RS.int st 10
+      else if p < 0.75 then RS.int st 100
+      else if p < 0.95 then RS.int st 1_000
+      else RS.int st 10_000
+    in Tree.int_towards 0 x
+
+  let big_nat : int t = fun st ->
+    let p = RS.float st 1. in
+    if p < 0.75
+      then nat st
+      else Tree.int_towards 0 (RS.int st 1_000_000)
+
+  let unit : unit t = fun _st -> Tree.pure ()
+
+  let bool : bool t = fun st ->
+    let false_gen = Tree.pure false in
+    if RS.bool st
+    then Tree.Tree (true, Seq.return false_gen)
+    else false_gen
+
+  let float : float t = fun st ->
+    let x = exp (RS.float st 15. *. (if RS.float st 1. < 0.5 then 1. else -1.))
+    *. (if RS.float st 1. < 0.5 then 1. else -1.)
+  in Tree.pure x
+
+  let pfloat : float t = float >|= abs_float
+  let nfloat : float t = pfloat >|= Float.neg
+
+  let float_bound_inclusive (bound : float) : float t = fun st ->
+    let x = RS.float st bound in 
+    Tree.pure x
+
+  let float_bound_exclusive (bound : float) : float t =
+    if bound = 0. then raise (Invalid_argument "Gen.float_bound_exclusive");
+    let bound = 
+      if bound > 0.
+        then bound -. epsilon_float
+        else bound +. epsilon_float
+    in
+    float_bound_inclusive bound
+
+  let float_range (low : float) (high : float) : float t =
+    if high < low || high -. low > max_float then invalid_arg "Gen.float_range";
+    (float_bound_inclusive (high -. low))
+    >|= (fun x -> low +. x)
+
+  let (--.) = float_range
+
+  let neg_int : int t = nat >|= Int.neg
+
+  (** [opt gen] shrinks towards [None] then towards shrinks of [gen]. *)
+  let opt (gen : 'a t) : 'a option t = fun st ->
+    let p = RS.float st 1. in
+    if p < 0.15
+      then Tree.pure None
+      else Tree.opt (gen st)
+
+  let find_origin ?(origin : int option) (min : int) (max : int) : int =
+    let outside_bounds n = n < min || n > max in
+    match origin with
+    | Some origin ->
+      if outside_bounds origin then invalid_arg "origin is outside provided range";
+      origin
+    | None ->
+      (* The distance can be greater than [Int.max_int] so we half values (to avoid overflow) *)
+      let half_diff = (max / 2) - (min / 2) in
+      let center = min + half_diff in
+      assert (not (outside_bounds center));
+      center
+
+  (* Uniform random int generator *)
+  let pint ?(origin : int option) : int t = fun st ->
+    let x = 
+      if Sys.word_size = 32 
+        then RS.bits st
+        else (* word size = 64 *)
+          RS.bits st                        (* Bottom 30 bits *)
+          lor (RS.bits st lsl 30)           (* Middle 30 bits *)
+          lor ((RS.bits st land 3) lsl 60)  (* Top 2 bits *)  (* top bit = 0 *)
+  in
+  let origin = find_origin ?origin min_int max_int in
+  Tree.int_towards origin x
+
+  let int : int t =
+    bool >>= fun b ->
+    if b 
+      then pint ~origin:0 >|= (fun n -> - n - 1)
+      else pint ~origin:0
+
+  let int_bound (n : int) : int t =
+    if n < 0 then invalid_arg "Gen.int_bound";
+    fun st ->
+      if n <= (1 lsl 30) - 2
+        then Tree.int_towards 0 (Random.State.int st (n + 1))
+        else Tree.(>|=) (pint st) (fun r -> r mod (n + 1))
+  
+    (** Shrink towards [origin] if provided, otherwise towards the middle of the range
+        (e.g. [int_range (-5) 15] will shrink towards [5])
+    
+        To support ranges wider than [Int.max_int], the general idea is to find the center,
+        and generate a random half-difference number as well as whether we add or
+        subtract that number from the center. There are probably better ways but my focus is
+        on integrated shrinking right now :D *)
+    let int_range ?(origin : int option) (a : int) (b : int) : int t =
+    (* TODO I'm pretty sure there are off-by-1 errors in this implementation,
+       it needs additional work, but the general idea for shrinking is there *)
+    if b < a then invalid_arg "Gen.int_range";
+    (* The distance can be greater than [Int.max_int] so we half values (to avoid overflow) *)
+    let half_diff = (b / 2) - (a / 2) in
+    let center = a + half_diff in
+    let origin = find_origin ?origin a b in
+    fun st ->
+      let operator = if Random.State.bool st then (+) else (-) in
+      let x = operator center (Random.State.int st half_diff) in
+      Tree.int_towards origin x
+
+  let (--) = int_range
+
+  let oneof (l : 'a t list) : 'a t = 
+    int_range 0 (List.length l - 1) >>= List.nth l
+  
+  let oneofl (l : 'a list) : 'a t =
+    int_range 0 (List.length l - 1) >|= List.nth l
+  
+  let oneofa (a : 'a array) : 'a t =
+    int_range 0 (Array.length a - 1) >|= Array.get a
+
+  (* NOTE: we keep this alias to not break code that uses [small_int]
+     for sizes of strings, arrays, etc. *)
+  let small_int = small_nat
+
+  let small_signed_int : int t = fun st ->
+    if Random.State.bool st
+    then small_nat st
+    else (small_nat >|= Int.neg) st
+
+  (** Shrink towards the first element of the list *)
+  let frequency (l : (int * 'a t) list) : 'a t =
     let sums = sum_int (List.map fst l) in
-    let i = Random.State.int st sums in
+    int_bound sums
+    >>= fun i ->
+    let rec aux acc = function
+      | ((x,g)::xs) -> if i < acc+x then g else aux (acc+x) xs
+      | _ -> failwith "frequency"
+    in
+    aux 0 l
+
+  let frequencyl (l : (int * 'a) list) : 'a t =
+    let sums = sum_int (List.map fst l) in
+    int_bound sums
+    >|= fun i ->
     let rec aux acc = function
       | ((x,g)::xs) -> if i < acc+x then g else aux (acc+x) xs
       | _ -> failwith "frequency"
@@ -93,103 +349,10 @@ module Gen = struct
 
   let frequencya a = frequencyl (Array.to_list a)
 
-  let frequency l st = frequencyl l st st
+  let char_range ?(origin : char option) (a : char) (b : char) : char t =
+    (int_range ?origin:(Option.map Char.code origin) (Char.code a) (Char.code b)) >|= Char.chr
 
-  let small_nat st =
-    let p = RS.float st 1. in
-    if p < 0.75 then RS.int st 10 else RS.int st 100
-
-  (* natural number generator *)
-  let nat st =
-    let p = RS.float st 1. in
-    if p < 0.5 then RS.int st 10
-    else if p < 0.75 then RS.int st 100
-    else if p < 0.95 then RS.int st 1_000
-    else RS.int st 10_000
-
-  let big_nat st =
-    let p = RS.float st 1. in
-    if p < 0.75 then nat st
-    else RS.int st 1_000_000
-
-  let unit _st = ()
-
-  let bool st = RS.bool st
-
-  let float st =
-    exp (RS.float st 15. *. (if RS.float st 1. < 0.5 then 1. else -1.))
-    *. (if RS.float st 1. < 0.5 then 1. else -1.)
-
-  let pfloat st = abs_float (float st)
-  let nfloat st = -.(pfloat st)
-
-  let float_bound_inclusive bound st = RS.float st bound
-
-  let float_bound_exclusive bound st =
-    match bound with
-    | 0. -> raise (Invalid_argument "Gen.float_bound_exclusive")
-    | b_pos when bound > 0. -> RS.float st (b_pos -. epsilon_float)
-    | b_neg -> RS.float st (b_neg +. epsilon_float)
-
-  let float_range low high =
-    if high < low || high -. low > max_float then invalid_arg "Gen.float_range";
-    fun st -> low +. (float_bound_inclusive (high -. low) st)
-
-  let (--.) = float_range
-
-  let neg_int st = -(nat st)
-
-  let opt f st =
-    let p = RS.float st 1. in
-    if p < 0.15 then None
-    else Some (f st)
-
-  (* Uniform random int generator *)
-  let pint =
-    if Sys.word_size = 32 then
-      fun st -> RS.bits st
-    else (* word size = 64 *)
-      fun st ->
-        RS.bits st                        (* Bottom 30 bits *)
-        lor (RS.bits st lsl 30)           (* Middle 30 bits *)
-        lor ((RS.bits st land 3) lsl 60)  (* Top 2 bits *)  (* top bit = 0 *)
-
-  let int st = if RS.bool st then - (pint st) - 1 else pint st
-  let int_bound n =
-    if n < 0 then invalid_arg "Gen.int_bound";
-    if n <= (1 lsl 30) - 2
-    then fun st -> Random.State.int st (n + 1)
-    else fun st -> let r = pint st in r mod (n + 1)
-  let int_range a b =
-    if b < a then invalid_arg "Gen.int_range";
-    if a >= 0 || b < 0 then (
-      (* range smaller than max_int *)
-      assert (b-a >= 0);
-      fun st -> a + (int_bound (b-a) st)
-    ) else (
-      (* range potentially bigger than max_int: we split on 0 and
-         choose the itv wrt to their size ratio *)
-      fun st ->
-      let f_a = float_of_int a in
-      let ratio = (-.f_a) /. (1. +. float_of_int b -. f_a) in
-      if Random.State.float st 1. <= ratio then - (int_bound (- (a+1)) st) - 1
-      else int_bound b st
-    )
-
-  let (--) = int_range
-
-  (* NOTE: we keep this alias to not break code that uses [small_int]
-     for sizes of strings, arrays, etc. *)
-  let small_int = small_nat
-
-  let small_signed_int st =
-    if bool st
-    then small_nat st
-    else - (small_nat st)
-
-  let char_range a b = map Char.chr (Char.code a -- Char.code b)
-
-  let random_binary_string st length =
+  let random_binary_string (length : int) (st : Random.State.t) : string =
     (* 0b011101... *)
     let s = Bytes.create (length + 2) in
     Bytes.set s 0 '0';
@@ -199,18 +362,68 @@ module Gen = struct
     done;
     Bytes.unsafe_to_string s
 
-  let ui32 st = Int32.of_string (random_binary_string st 32)
-  let ui64 st = Int64.of_string (random_binary_string st 64)
+  let ui32 : int32 t = fun st ->
+    let x = random_binary_string 32 st |> Int32.of_string in
+    (* TODO factor out with a functor for int/int32/int64/etc. *)
+    let int32_towards_seq destination x =
+      let open Int32 in
+      Seq.unfold (fun current_shrink -> 
+          if current_shrink = x
+            then None
+            else
+              (*
+                Halve the operands before subtracting them so they don't overflow.
+                Consider [int_towards min_int max_int]
+              *)
+              let half_diff =  sub (div x 2l) (div current_shrink 2l) in
+              Some (current_shrink, add current_shrink half_diff)
+          ) destination
+            in
+    let rec int32_towards destination x = 
+      let shrink_trees = int32_towards_seq destination x |> Seq.map (int32_towards destination) in
+      Tree.Tree (x, shrink_trees)
+    in
+  int32_towards 0l x
 
-  let list_size size gen st =
-    foldn ~f:(fun acc _ -> (gen st)::acc) ~init:[] (size st)
-  let list gen st = list_size nat gen st
-  let list_repeat n g = list_size (return n) g
+  let ui64 : int64 t = fun st ->
+    let x = random_binary_string 64 st |> Int64.of_string in
+    (* TODO factor out with a functor for int/int32/int64/etc. *)
+    let int64_towards_seq destination x =
+      let open Int64 in
+      Seq.unfold (fun current_shrink -> 
+          if current_shrink = x
+            then None
+            else
+              (*
+                Halve the operands before subtracting them so they don't overflow.
+                Consider [int_towards min_int max_int]
+              *)
+              let half_diff =  sub (div x 2L) (div current_shrink 2L) in
+              Some (current_shrink, add current_shrink half_diff)
+          ) destination
+            in
+    let rec int64_towards destination x = 
+      let shrink_trees = int64_towards_seq destination x |> Seq.map (int64_towards destination) in
+      Tree.Tree (x, shrink_trees)
+    in
+  int64_towards 0L x
 
-  let array_size size gen st =
-    Array.init (size st) (fun _ -> gen st)
-  let array gen st = array_size nat gen st
-  let array_repeat n g = array_size (return n) g
+  let list_size (size : int t) (gen : 'a t) : 'a list t =
+    size >>= fun size ->
+    let rec loop n =
+      if n <= 0
+        then pure []
+        else liftA2 (List.cons) gen (loop (n - 1))
+    in
+    loop size
+    (* foldn ~f:(fun acc _ -> (gen st)::acc) ~init:[] size *)
+  let list (gen : 'a t) : 'a list t = list_size nat gen
+  let list_repeat (n : int) (gen : 'a t) : 'a list t = list_size (return n) gen
+
+  let array_size (size : int t) (gen : 'a t) : 'a array t =
+    (list_size size gen) >|= Array.of_list
+  let array (gen : 'a t) : 'a array t = list gen >|= Array.of_list
+  let array_repeat (n : int) (gen : 'a t) : 'a array t = list_repeat n gen >|= Array.of_list
 
   let flatten_l l st = List.map (fun f->f st) l
   let flatten_a a st = Array.map (fun f->f st) a
@@ -223,54 +436,63 @@ module Gen = struct
     | Ok f -> Ok (f st)
     | Error e -> Error e
 
-  let shuffle_a a st =
+  (** TODO why is this function doing mutation instead of returning an [Array.copy]? *)
+  let shuffle_a (a : 'a array) : unit t = fun st ->
     for i = Array.length a-1 downto 1 do
       let j = Random.State.int st (i+1) in
       let tmp = a.(i) in
       a.(i) <- a.(j);
       a.(j) <- tmp;
-    done
+    done;
+    unit st
 
-  let shuffle_l l st =
+  let shuffle_l (l : 'a list) : 'a list t = fun st ->
     let a = Array.of_list l in
-    shuffle_a a st;
-    Array.to_list a
+    let _ = shuffle_a a st in
+    Tree.pure (Array.to_list a)
 
-  let shuffle_w_l l st =
+  let shuffle_w_l (l : ((int * 'a) list)) : 'a list t = fun st ->
     let sample (w, v) =
+      let Tree.Tree (p, _) = float_bound_inclusive 1. st in
       let fl_w = float_of_int w in
-      (float_bound_inclusive 1. st ** (1. /. fl_w), v)
+      (p ** (1. /. fl_w), v)
     in
     let samples = List.rev_map sample l in
-    List.sort (fun (w1, _) (w2, _) -> poly_compare w1 w2) samples |> List.rev_map snd
+    samples
+      |> List.sort (fun (w1, _) (w2, _) -> poly_compare w1 w2)
+      |> List.rev_map snd
+      |> Tree.pure
 
-  let pair g1 g2 st = (g1 st, g2 st)
+  let pair (g1 : 'a t) (g2 : 'b t) : ('a * 'b) t = liftA2 (fun a b -> (a, b)) g1 g2
 
-  let triple g1 g2 g3 st = (g1 st, g2 st, g3 st)
+  let triple (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) : ('a * 'b * 'c) t = (g1 >|= (fun a b c -> (a, b, c))) <*> g2 <*> g3
 
-  let quad g1 g2 g3 g4 st = (g1 st, g2 st, g3 st, g4 st)
+  let quad (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) (g4 : 'd t) : ('a * 'b * 'c * 'd) t =
+    (g1 >|= (fun a b c d -> (a, b, c, d))) <*> g2 <*> g3 <*> g4
 
-  let char st = char_of_int (RS.int st 256)
+  let char : char t = int_range ~origin:(int_of_char 'a') 0 255 >|= char_of_int
 
   let printable_chars =
-    let l = 126-32+1 in
-    let s = Bytes.create l in
-    for i = 0 to l-2 do
-      Bytes.set s i (char_of_int (32+i))
-    done;
-    Bytes.set s (l-1) '\n';
-    Bytes.unsafe_to_string s
+    (* ' ' *)
+    let first_printable_char = 32 in
+    (* '~' *)
+    let last_printable_char = 126 in
+    let newline = '\n' in
+    let printable_chars = List.init (last_printable_char - first_printable_char) char_of_int in
+    newline :: printable_chars
 
-  let printable st = printable_chars.[RS.int st (String.length printable_chars)]
-  let numeral st = char_of_int (48 + RS.int st 10)
+  let printable : char t =
+  int_range ~origin:(int_of_char 'a') 0 (List.length printable_chars - 1)
+    >|= List.nth printable_chars
+  
+  let numeral : char t =
+    let zero = 48 in
+    let nine = 57 in
+    int_range ~origin:zero zero nine >|= char_of_int
 
-  let string_size ?(gen = char) size st =
-    let s = Bytes.create (size st) in
-    for i = 0 to Bytes.length s - 1 do
-      Bytes.set s i (gen st)
-    done;
-    Bytes.unsafe_to_string s
-  let string ?gen st = string_size ?gen nat st
+  let string_size ?(gen = char) (size : int t) : string t =
+      list_size size gen >|= (fun l -> List.to_seq l |> String.of_seq)
+  let string ?(gen : char t option) : string t = string_size ?gen nat
   let string_of gen = string_size ~gen nat
   let string_readable = string_size ~gen:char nat
   let small_string ?gen st = string_size ?gen small_nat st
@@ -281,15 +503,15 @@ module Gen = struct
 
   (* corner cases *)
 
-  let graft_corners gen corners () =
+  let graft_corners (gen : 'a t) (corners : 'a list) () : 'a t =
     let cors = ref corners in fun st ->
       match !cors with [] -> gen st
-      | e::l -> cors := l; e
+      | e::l -> cors := l; Tree.pure e
 
   let int_pos_corners = [0;1;2;max_int]
   let int_corners = int_pos_corners @ [min_int]
 
-  let nng_corners () = graft_corners nat int_pos_corners ()
+  let nng_corners () : int t = graft_corners nat int_pos_corners ()
 
   (* sized, fix *)
 
@@ -310,7 +532,7 @@ module Gen = struct
   include Qcheck_ops.Make(struct
       type nonrec 'a t = 'a t
       let (>|=) = (>|=)
-      let monoid_product a b = map2 (fun x y -> x,y) a b
+      let monoid_product a b = (a >|= (fun x y -> (x, y))) <*> b
       let (>>=) = (>>=)
     end)
 end
@@ -640,47 +862,45 @@ end
 type 'a stat = string * ('a -> int)
 (** A statistic on a distribution of values of type ['a] *)
 
+
 type 'a arbitrary = {
   gen: 'a Gen.t;
   print: ('a -> string) option; (** print values *)
   small: ('a -> int) option;  (** size of example *)
-  shrink: ('a -> 'a Iter.t) option;  (** shrink to smaller examples *)
   collect: ('a -> string) option;  (** map value to tag, and group by tag *)
   stats: 'a stat list; (** statistics to collect and print *)
 }
 
-let make ?print ?small ?shrink ?collect ?(stats=[]) gen = {
+let make ?print ?small  ?collect ?(stats=[]) gen = {
   gen;
   print;
   small;
-  shrink;
   collect;
   stats;
 }
 
 let set_small f o = {o with small=Some f}
 let set_print f o = {o with print=Some f}
-let set_shrink f o = {o with shrink=Some f}
 let set_collect f o = {o with collect=Some f}
 let set_stats s o = {o with stats=s}
 let add_stat s o = {o with stats=s :: o.stats}
 let set_gen g o = {o with gen=g}
 
-let add_shrink_invariant f o = match o.shrink with
-  | None -> o
-  | Some shr -> {o with shrink=Some (Shrink.filter f shr)}
+(* TODO let add_shrink_invariant f o = match o.shrink with
+ *   | None -> o
+ *   | Some shr -> {o with shrink=Some (Shrink.filter f shr)} *)
 
 let gen o = o.gen
 
 let small1 _ = 1
 
 let make_scalar ?print ?collect gen =
-  make ~shrink:Shrink.nil ~small:small1 ?print ?collect gen
+  make ~small:small1 ?print ?collect gen
 let make_int ?collect gen =
-  make ~shrink:Shrink.int ~small:small1 ~print:Print.int ?collect gen
+  make ~small:small1 ~print:Print.int ?collect gen
 
 let adapt_ o gen =
-  make ?print:o.print ?small:o.small ?shrink:o.shrink ?collect:o.collect gen
+  make ?print:o.print ?small:o.small ?collect:o.collect gen
 
 let choose l = match l with
   | [] -> raise (Invalid_argument "quickcheck.choose")
@@ -692,7 +912,7 @@ let choose l = match l with
           arb.gen st)
 
 let unit : unit arbitrary =
-  make ~small:small1 ~shrink:Shrink.nil ~print:(fun _ -> "()") Gen.unit
+  make ~small:small1 ~print:(fun _ -> "()") Gen.unit
 
 let bool = make_scalar ~print:string_of_bool Gen.bool
 let float = make_scalar ~print:string_of_float Gen.float
@@ -719,24 +939,20 @@ let small_int_corners () = make_int (Gen.nng_corners ())
 let neg_int = make_int Gen.neg_int
 
 let int32 =
-  make ~print:(fun i -> Int32.to_string i ^ "l") ~small:small1
-    ~shrink:Shrink.int32 Gen.ui32
+  make ~print:(fun i -> Int32.to_string i ^ "l") ~small:small1 Gen.ui32
 let int64 =
-  make ~print:(fun i -> Int64.to_string i ^ "L") ~small:small1
-    ~shrink:Shrink.int64 Gen.ui64
+  make ~print:(fun i -> Int64.to_string i ^ "L") ~small:small1 Gen.ui64
 
 let char = make_scalar ~print:(sprintf "%C") Gen.char
 let printable_char = make_scalar ~print:(sprintf "%C") Gen.printable
 let numeral_char = make_scalar ~print:(sprintf "%C") Gen.numeral
 
-let string_gen_of_size size gen =
-  make ~shrink:Shrink.string ~small:String.length
-    ~print:(sprintf "%S") (Gen.string_size ~gen size)
-let string_gen gen =
-  make ~shrink:Shrink.string ~small:String.length
-    ~print:(sprintf "%S") (Gen.string ~gen)
+let string_gen_of_size (size : int Gen.t) (gen : char Gen.t) : string arbitrary =
+  make ~small:String.length ~print:(sprintf "%S") (Gen.string_size ~gen size)
+let string_gen (gen : char Gen.t) : string arbitrary =
+  make ~small:String.length ~print:(sprintf "%S") (Gen.string ~gen)
 
-let string = string_gen Gen.char
+let string : string arbitrary = string_gen Gen.char
 let string_of_size size = string_gen_of_size size Gen.char
 let small_string = string_gen_of_size Gen.small_nat Gen.char
 
@@ -751,9 +967,9 @@ let list_sum_ f l = List.fold_left (fun acc x-> f x+acc) 0 l
 
 let mk_list a gen =
   (* small sums sub-sizes if present, otherwise just length *)
-  let small = _opt_map_or a.small ~f:list_sum_ ~d:List.length in
-  let print = _opt_map a.print ~f:Print.list in
-  make ~small ~shrink:(Shrink.list ?shrink:a.shrink) ?print gen
+  let small = Option.fold a.small ~some:list_sum_ ~none:List.length in
+  let print = Option.map Print.list a.print in
+  make ~small ?print gen
 
 let list a = mk_list a (Gen.list a.gen)
 let list_of_size size a = mk_list a (Gen.list_size size a.gen)
@@ -762,34 +978,29 @@ let small_list a = mk_list a (Gen.small_list a.gen)
 let array_sum_ f a = Array.fold_left (fun acc x -> f x+acc) 0 a
 
 let array a =
-  let small = _opt_map_or ~d:Array.length ~f:array_sum_ a.small in
+  let small = Option.fold ~none:Array.length ~some:array_sum_ a.small in
   make
     ~small
-    ~shrink:(Shrink.array ?shrink:a.shrink)
-    ?print:(_opt_map ~f:Print.array a.print)
+    ?print:(Option.map Print.array a.print)
     (Gen.array a.gen)
 
 let array_of_size size a =
-  let small = _opt_map_or ~d:Array.length ~f:array_sum_ a.small in
+  let small = Option.fold ~none:Array.length ~some:array_sum_ a.small in
   make
     ~small
-    ~shrink:(Shrink.array ?shrink:a.shrink)
-    ?print:(_opt_map ~f:Print.array a.print)
+    ?print:(Option.map Print.array a.print)
     (Gen.array_size size a.gen)
 
 let pair a b =
   make
     ?small:(_opt_map_2 ~f:(fun f g (x,y) -> f x+g y) a.small b.small)
     ?print:(_opt_map_2 ~f:Print.pair a.print b.print)
-    ~shrink:(Shrink.pair (_opt_or a.shrink Shrink.nil) (_opt_or b.shrink Shrink.nil))
     (Gen.pair a.gen b.gen)
 
 let triple a b c =
   make
     ?small:(_opt_map_3 ~f:(fun f g h (x,y,z) -> f x+g y+h z) a.small b.small c.small)
     ?print:(_opt_map_3 ~f:Print.triple a.print b.print c.print)
-    ~shrink:(Shrink.triple (_opt_or a.shrink Shrink.nil)
-      (_opt_or b.shrink Shrink.nil) (_opt_or c.shrink Shrink.nil))
     (Gen.triple a.gen b.gen c.gen)
 
 let quad a b c d =
@@ -797,35 +1008,28 @@ let quad a b c d =
     ?small:(_opt_map_4 ~f:(fun f g h i (x,y,z,w) ->
                              f x+g y+h z+i w) a.small b.small c.small d.small)
     ?print:(_opt_map_4 ~f:Print.quad a.print b.print c.print d.print)
-    ~shrink:(Shrink.quad (_opt_or a.shrink Shrink.nil)
-                   (_opt_or b.shrink Shrink.nil)
-       (_opt_or c.shrink Shrink.nil)
-       (_opt_or d.shrink Shrink.nil))
     (Gen.quad a.gen b.gen c.gen d.gen)
 
 let option a =
   let g = Gen.opt a.gen
-  and shrink = _opt_map a.shrink ~f:Shrink.option
   and small =
-    _opt_map_or a.small ~d:(function None -> 0 | Some _ -> 1)
-      ~f:(fun f o -> match o with None -> 0 | Some x -> f x)
+    Option.fold a.small ~none:(function None -> 0 | Some _ -> 1)
+      ~some:(fun f o -> match o with None -> 0 | Some x -> f x)
   in
   make
     ~small
-    ?shrink
-    ?print:(_opt_map ~f:Print.option a.print)
+    ?print:(Option.map Print.option a.print)
     g
 
-let map ?rev f a =
+let map ?print ?small ?collect (f : 'a -> 'b) (a : 'a arbitrary) =
   make
-    ?print:(_opt_map_2 rev a.print ~f:(fun r p x -> p (r x)))
-    ?small:(_opt_map_2 rev a.small ~f:(fun r s x -> s (r x)))
-    ?shrink:(_opt_map_2 rev a.shrink ~f:(fun r g x -> Iter.(g (r x) >|= f)))
-    ?collect:(_opt_map_2 rev a.collect ~f:(fun r f x -> f (r x)))
-    (fun st -> f (a.gen st))
+    ?print
+    ?small
+    ?collect
+    (Gen.map f a.gen)
 
 
-let fun1_unsafe : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary =
+(* TODO should we really keep it? let fun1_unsafe : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary =
   fun a1 a2 ->
     let magic_object = Obj.magic (object end) in
     let gen : ('a -> 'b) Gen.t = fun st ->
@@ -847,9 +1051,9 @@ let fun1_unsafe : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary =
     ) in
     make
       ?print:pp
-      gen
+      gen *)
 
-let fun2_unsafe gp1 gp2 gp3 = fun1_unsafe gp1 (fun1_unsafe gp2 gp3)
+(* let fun2_unsafe gp1 gp2 gp3 = fun1_unsafe gp1 (fun1_unsafe gp2 gp3) *)
 
 module Poly_tbl : sig
   type ('a, 'b) t
@@ -857,43 +1061,50 @@ module Poly_tbl : sig
   val create: 'a Observable.t -> 'b arbitrary -> int -> ('a, 'b) t Gen.t
   val get : ('a, 'b) t -> 'a -> 'b option
   val size : ('b -> int) -> (_, 'b) t -> int
-  val shrink1 : ('a, 'b) t Shrink.t
-  val shrink2 : 'b Shrink.t -> ('a, 'b) t Shrink.t
+  (* val shrink1 : ('a, 'b) t Shrink.t
+  val shrink2 : 'b Shrink.t -> ('a, 'b) t Shrink.t *)
   val print : (_,_) t Print.t
 end = struct
   type ('a, 'b) t = {
     get : 'a -> 'b option;
-    p_size: ('b->int) -> int;
-    p_shrink1: ('a, 'b) t Iter.t;
-    p_shrink2: 'b Shrink.t -> ('a, 'b) t Iter.t;
+    p_size: ('b -> int) -> int;
+    (* p_shrink1: ('a, 'b) t Iter.t;
+    p_shrink2: 'b Shrink.t -> ('a, 'b) t Iter.t; *)
     p_print: unit -> string;
   }
 
-  let create (type k)(type v) k v size st : (k,v) t =
+  (** TODO This is a bit trickier because the function entries are populated at runtime
+      while the shrinking tree must be provided statically and is not mutable ([Seq.t]),
+      only the inside tables are.
+
+      We could arguably create a shrinking sequence of fixed size (where the first element is
+      a function with no entries) and spread in best-effort entries. Not doing it for now. *)
+  let create (type k) (type v) (k : k Observable.t) (v : v arbitrary) (size : int) : (k, v) t Gen.t =
+  fun st ->
     let module T = Hashtbl.Make(struct
         type t = k
         let equal = k.Observable.eq
         let hash = k.Observable.hash
       end) in
-    let tbl_to_list tbl =
-      T.fold (fun k v l -> (k,v)::l) tbl []
-    and tbl_of_list l =
-      let tbl = T.create (max (List.length l) 8) in
-      List.iter (fun (k,v) -> T.add tbl k v) l;
-      tbl
-    in
+    (* let tbl_to_list tbl =
+     *   T.fold (fun k v l -> (k,v) :: l) tbl []
+     * and tbl_of_list l =
+     *   let tbl = T.create (max (List.length l) 8) in
+     *   List.iter (fun (k,v) -> T.add tbl k v) l;
+     *   tbl
+     * in *)
     (* make a table
        @param extend if true, extend table on the fly *)
-    let rec make ~extend tbl = {
-      get=(fun x ->
+    let (* rec *) make ~extend tbl = {
+      get = (fun x ->
         try Some (T.find tbl x)
         with Not_found ->
           if extend then (
-            let v = v.gen st in
+            let (Tree.Tree (v, _shrinks)) = v.gen st in
             T.add tbl x v;
             Some v
           ) else None);
-      p_print=(fun () -> match v.print with
+      p_print = (fun () -> match v.print with
         | None -> "<fun>"
         | Some pp_v ->
           let b = Buffer.create 64 in
@@ -903,7 +1114,7 @@ end = struct
                  (k.Observable.print key) (pp_v value))
             tbl;
         Buffer.contents b);
-      p_shrink1=(fun yield ->
+      (* p_shrink1=(fun yield ->
         Shrink.list (tbl_to_list tbl)
           (fun l ->
              yield (make ~extend:false (tbl_of_list l)))
@@ -917,14 +1128,14 @@ end = struct
                   let tbl' = T.copy tbl in
                   T.replace tbl' x y';
                   yield (make ~extend:false tbl')))
-          tbl);
+          tbl); *)
       p_size=(fun size_v -> T.fold (fun _ v n -> n + size_v v) tbl 0);
     } in
-    make ~extend:true (T.create size)
+    Tree.pure (make ~extend:true (T.create size))
 
   let get t x = t.get x
-  let shrink1 t = t.p_shrink1
-  let shrink2 p t = t.p_shrink2 p
+  (* let shrink1 t = t.p_shrink1
+  let shrink2 p t = t.p_shrink2 p *)
   let print t = t.p_print ()
   let size p t = t.p_size p
 end
@@ -968,26 +1179,26 @@ module Fn = struct
   let map_repr f repr = Fun_map (f,repr)
   let map_fun f (Fun (repr,_)) = make_ (map_repr f repr)
 
-  let shrink_rep (r: _ fun_repr): _ Iter.t =
-    let open Iter in
-    let rec aux
-      : type f. f fun_repr Shrink.t
-      = function
-        | Fun_tbl {fun_arb=a; fun_tbl=tbl; fun_default=def} ->
-          let sh_v = match a.shrink with None -> Shrink.nil | Some s->s in
-          (Poly_tbl.shrink1 tbl >|= fun tbl' -> mk_repr tbl' a def)
-          <+>
-            (sh_v def >|= fun def' -> mk_repr tbl a def')
-          <+>
-            (Poly_tbl.shrink2 sh_v tbl >|= fun tbl' -> mk_repr tbl' a def)
-        | Fun_map (g, r') ->
-          aux r' >|= map_repr g
-    in
-    aux r
-
-  let shrink (Fun (rep,_)) =
-    let open Iter in
-    shrink_rep rep >|= make_
+  (* let shrink_rep (r: _ fun_repr): _ Iter.t =
+   *   let open Iter in
+   *   let rec aux
+   *     : type f. f fun_repr Shrink.t
+   *     = function
+   *       | Fun_tbl {fun_arb=a; fun_tbl=tbl; fun_default=def} ->
+   *         let sh_v = match a.shrink with None -> Shrink.nil | Some s->s in
+   *         (Poly_tbl.shrink1 tbl >|= fun tbl' -> mk_repr tbl' a def)
+   *         <+>
+   *           (sh_v def >|= fun def' -> mk_repr tbl a def')
+   *         <+>
+   *           (Poly_tbl.shrink2 sh_v tbl >|= fun tbl' -> mk_repr tbl' a def)
+   *       | Fun_map (g, r') ->
+   *         aux r' >|= map_repr g
+   *   in
+   *   aux r
+   * 
+   * let shrink (Fun (rep,_)) =
+   *   let open Iter in
+   *   shrink_rep rep >|= make_ *)
 
   let rec size_rep
     : type f. f fun_repr -> int
@@ -1021,14 +1232,16 @@ module Fn = struct
 
   let gen_rep (a:_ Observable.t) (b:_ arbitrary): _ fun_repr Gen.t =
     fun st ->
-      mk_repr (Poly_tbl.create a b 8 st) b (b.gen st)
+      let Tree.Tree (default_value, _default_value_shrinks) = b.gen st in
+      let Tree.Tree (poly_tbl, _poly_tbl_shrinks) = Poly_tbl.create a b 8 st in
+      Tree.pure (mk_repr poly_tbl b default_value)
 
   let gen a b = Gen.map make_ (gen_rep a b)
 end
 
 let fun1 o ret =
   make
-    ~shrink:Fn.shrink
+    (* ~shrink:Fn.shrink *)
     ~print:Fn.print
     ~small:Fn.size
     (Fn.gen o ret)
@@ -1099,7 +1312,6 @@ end
 
 let fun_nary (o:_ Tuple.obs) ret : _ arbitrary =
   make
-    ~shrink:Fn.shrink
     ~print:Fn.print
     ~small:Fn.size
     (Tuple.gen o ret)
@@ -1107,21 +1319,18 @@ let fun_nary (o:_ Tuple.obs) ret : _ arbitrary =
 let fun2 o1 o2 ret =
   let open Tuple in
   map
-    ~rev:(Fn.map_fun (fun g (Cons (x, Cons (y,Nil))) -> g x y))
     (Fn.map_fun (fun g x y -> g (x @:: y @:: nil)))
     (fun_nary (o1 @-> o2 @-> o_nil) ret)
 
 let fun3 o1 o2 o3 ret =
   let open Tuple in
   map
-    ~rev:(Fn.map_fun (fun g (Cons (x, Cons (y, Cons (z,Nil)))) -> g x y z))
     (Fn.map_fun (fun g x y z -> g (x @:: y @:: z @:: nil)))
     (fun_nary (o1 @-> o2 @-> o3 @-> o_nil) ret)
 
 let fun4 o1 o2 o3 o4 ret =
   let open Tuple in
   map
-    ~rev:(Fn.map_fun (fun g (Cons (x, Cons (y, Cons (z,Cons (w,Nil))))) -> g x y z w))
     (Fn.map_fun (fun g x y z w -> g (x @:: y @:: z @:: w @:: nil)))
     (fun_nary (o1 @-> o2 @-> o3 @-> o4 @-> o_nil) ret)
 
@@ -1133,29 +1342,22 @@ let oneofa ?print ?collect xs = make ?print ?collect (Gen.oneofa xs)
 
 (** Given a list of generators, returns generator that randomly uses one of the generators
     from the list *)
-let oneof l =
-  let gens = List.map (fun a->a.gen) l in
-  let first = List.hd l in
-  let print = first.print
-  and small = first.small
-  and collect = first.collect
-  and shrink = first.shrink in
-  make ?print ?small ?collect ?shrink (Gen.oneof gens)
+let oneof (l : 'a arbitrary list) : 'a arbitrary =
+  let gens = List.map (fun a -> a.gen) l in
+  let {print; small; collect; _} = List.hd l in
+  make ?print ?small ?collect (Gen.oneof gens)
 
 (** Generator that always returns given value *)
-let always ?print x =
-  let gen _st = x in
-  make ?print gen
+let always ?print x = make ?print (Gen.pure x)
 
 (** like oneof, but with weights *)
-let frequency ?print ?small ?shrink ?collect l =
+let frequency ?print ?small ?collect (l : (int * 'a arbitrary) list) : 'a arbitrary =
   let first = snd (List.hd l) in
   let small = _opt_sum small first.small in
   let print = _opt_sum print first.print in
-  let shrink = _opt_sum shrink first.shrink in
   let collect = _opt_sum collect first.collect in
   let gens = List.map (fun (x,y) -> x, y.gen) l in
-  make ?print ?small ?shrink ?collect (Gen.frequency gens)
+  make ?print ?small ?collect (Gen.frequency gens)
 
 (** Given list of [(frequency,value)] pairs, returns value with probability proportional
     to given frequency *)
@@ -1165,7 +1367,8 @@ let frequencya ?print ?small l = make ?print ?small (Gen.frequencya l)
 let map_same_type f a =
   adapt_ a (fun st -> f (a.gen st))
 
-let map_keep_input ?print ?small f a =
+(* TODO I feel like this function is now useless
+  let map_keep_input ?print ?small f a =
   make
     ?print:(match print, a.print with
         | Some f1, Some f2 -> Some (Print.pair f2 f1)
@@ -1181,7 +1384,7 @@ let map_keep_input ?print ?small f a =
       | Some s ->
         let s' (x,_) = Iter.map (fun x->x, f x) (s x) in
         Some s')
-    Gen.(map_keep_input f a.gen)
+    Gen.(map_keep_input f a.gen) *)
 
 module TestResult = struct
   type 'a counter_ex = {
@@ -1352,7 +1555,7 @@ module Test = struct
     state.res.R.count <- state.res.R.count + 1;
     state.cur_count <- state.cur_count - 1
 
-  let new_input state =
+  let new_input_tree state =
     state.res.R.count_gen <- state.res.R.count_gen + 1;
     state.cur_max_gen <- state.cur_max_gen - 1;
     state.test.arb.gen state.rand
@@ -1400,35 +1603,35 @@ module Test = struct
 
   (* try to shrink counter-ex [i] into a smaller one. Returns
      shrinked value and number of steps *)
-  let shrink st (i:'a) (r:res_or_exn) m : 'a * res_or_exn * string list * int =
+  let shrink st (i_tree : 'a Tree.t) (r : res_or_exn) m : 'a * res_or_exn * string list * int =
     let is_err = match r with
-      | Shrink_exn _ -> true | _ -> false
-    in
-    let rec shrink_ st i r m ~steps =
+    | Shrink_exn _ -> true | _ -> false
+  in
+  let rec shrink_ st i_tree r m ~steps =
+      let Tree.Tree (i, shrinks) = i_tree in
       st.handler st.test.name st.test (Shrunk (steps, i));
-      match st.test.arb.shrink with
+      let count = ref 0 in
+      let i' = Seq.filter_map
+        (fun x_tree ->
+          let Tree.Tree (x, _) = x_tree in
+          try
+            incr count;
+            st.handler st.test.name st.test (Shrinking (steps, !count, x));
+            begin match run_law st.test.law x with
+              | Run_fail m when not is_err -> Some (x_tree, Shrink_fail, m)
+              | _ -> None
+            end
+          with
+            | FailedPrecondition | No_example_found _ -> None
+            | e when is_err -> Some (x_tree, Shrink_exn e, []) (* fail test (by error) *)
+        ) shrinks
+        |> Seq.hd
+      in
+      match i' with
       | None -> i, r, m, steps
-      | Some f ->
-        let count = ref 0 in
-        let i' = Iter.find_map
-          (fun x ->
-            try
-              incr count;
-              st.handler st.test.name st.test (Shrinking (steps, !count, x));
-              begin match run_law st.test.law x with
-                | Run_fail m when not is_err -> Some (x, Shrink_fail, m)
-                | _ -> None
-              end
-            with
-              | FailedPrecondition | No_example_found _ -> None
-              | e when is_err -> Some (x, Shrink_exn e, []) (* fail test (by error) *)
-          ) (f i)
-        in
-        match i' with
-        | None -> i, r, m, steps
-        | Some (i',r',m') -> shrink_ st i' r' m' ~steps:(steps+1) (* shrink further *)
+      | Some (i_tree',r',m') -> shrink_ st i_tree' r' m' ~steps:(steps + 1) (* shrink further *)
     in
-    shrink_ ~steps:0 st i r m
+    shrink_ ~steps:0 st i_tree r m
 
   type 'a check_result =
     | CR_continue
@@ -1471,9 +1674,9 @@ module Test = struct
     if is_done state then state.res
     else (
       state.handler state.test.name state.test Generating;
-      match new_input state with
-      | i ->
-        check_state_input state i
+      match new_input_tree state with
+      | i_tree ->
+        check_state_input state i_tree
       | exception e ->
         (* turn it into an error *)
         let bt = Printexc.get_backtrace() in
@@ -1485,7 +1688,8 @@ module Test = struct
         state.res.R.state <- R.Failed_other {msg};
         state.res
     )
-  and check_state_input state input =
+  and check_state_input state input_tree =
+      let Tree.Tree (input, _) = input_tree in
       state.handler state.test.name state.test (Collecting input);
       state.res.R.instances <- input :: state.res.R.instances;
       collect state input;
@@ -1500,7 +1704,7 @@ module Test = struct
               state.step state.test.name state.test input Success;
               CR_continue
             | Run_fail msg_l ->
-              handle_fail state input msg_l
+              handle_fail state input_tree msg_l
           end
         with
         | FailedPrecondition | No_example_found _ ->
@@ -1508,7 +1712,7 @@ module Test = struct
           CR_continue
         | e ->
           let bt = Printexc.get_backtrace () in
-          handle_exn state input e bt
+          handle_exn state input_tree e bt
       in
       match res with
         | CR_continue -> check_state state
