@@ -109,6 +109,11 @@ end
 module Tree = struct
   type 'a t = Tree of 'a * ('a t) Seq.t
 
+  let node (tree : 'a t) : 'a =
+    let Tree (node, _) = tree in node
+
+  let children (tree : 'a t) : ('a t) Seq.t =
+    let Tree (_, children) = tree in children
   (** [map] *)
   let rec (>|=) (a : 'a t) (f : 'a -> 'b) : 'b t =
     let Tree (x, xs) = a in
@@ -149,6 +154,11 @@ module Tree = struct
     let Tree (x, xs) = a in
     let shrinks = Seq.cons (pure None) (Seq.map opt xs) in
     Tree (Some x, shrinks)
+
+  let rec add_shrink_invariant (p : 'a -> bool) (a : 'a t) : 'a t =
+    let Tree (x, xs) = a in
+    let xs' = Seq.filter_map (fun (Tree (x', _) as t) -> if p x' then Some (add_shrink_invariant p t) else None) xs in
+    Tree (x, xs')
 end
 
 module Gen = struct
@@ -158,21 +168,28 @@ module Gen = struct
   type 'a sized = int -> Random.State.t -> 'a Tree.t
 
   let (>|=) x f st = Tree.(>|=) (x st)  f
+
   let map f x = x >|= f
+
+  let (<$>) = map
+
   let pure (a : 'a) : 'a t = fun _ -> Tree.pure a
+
   let (<*>) (f : ('a -> 'b) t) (x : 'a t) : 'b t = fun st -> Tree.(<*>) (f st)  (x st)
+
   let liftA2 (f : 'a -> 'b -> 'c) (a : 'a t) (b : 'b t) : 'c t =
     (a >|= f) <*> b
+
   let liftA3 (f : 'a -> 'b -> 'c -> 'd) (a : 'a t) (b : 'b t) (c : 'c t) : 'd t =
     (a >|= f) <*> b <*> c
+
   let map2 = liftA2
+
   let map3 = liftA3
 
   let return = pure
-  let (>>=) (gen : 'a t) (f : 'a -> ('b t)) : 'b t = fun st ->  Tree.(>>=) (gen st)  (fun a -> f a st)
 
-  let map_keep_input f gen st = let x = gen st in x, f x
-  let (<$>) f x st = f (x st)
+  let (>>=) (gen : 'a t) (f : 'a -> ('b t)) : 'b t = fun st ->  Tree.(>>=) (gen st)  (fun a -> f a st)
 
   let small_nat : int t = fun st ->
     let p = RS.float st 1. in
@@ -182,7 +199,7 @@ module Gen = struct
   (* natural number generator *)
   let nat : int t = fun st ->
     let p = RS.float st 1. in
-    let x = 
+    let x =
       if p < 0.5 then RS.int st 10
       else if p < 0.75 then RS.int st 100
       else if p < 0.95 then RS.int st 1_000
@@ -209,6 +226,7 @@ module Gen = struct
     in Tree.pure x
 
   let pfloat : float t = float >|= abs_float
+
   let nfloat : float t = pfloat >|= Float.neg
 
   let float_bound_inclusive (bound : float) : float t = fun st ->
@@ -268,7 +286,7 @@ module Gen = struct
 
   let int : int t =
     bool >>= fun b ->
-    if b 
+    if b
     then pint ~origin:0 >|= (fun n -> - n - 1)
     else pint ~origin:0
 
@@ -342,8 +360,8 @@ module Gen = struct
 
   let frequencya a = frequencyl (Array.to_list a)
 
-  let char_range ?(origin : char option) (a : char) (b : char) : char t =
-    (int_range ?origin:(Option.map Char.code origin) (Char.code a) (Char.code b)) >|= Char.chr
+  let char_range ?(origin : char = 'a') (a : char) (b : char) : char t =
+    (int_range ~origin:(Char.code origin) (Char.code a) (Char.code b)) >|= Char.chr
 
   let random_binary_string (length : int) (st : Random.State.t) : string =
     (* 0b011101... *)
@@ -411,23 +429,33 @@ module Gen = struct
     loop size
   (* foldn ~f:(fun acc _ -> (gen st)::acc) ~init:[] size *)
   let list (gen : 'a t) : 'a list t = list_size nat gen
+
   let list_repeat (n : int) (gen : 'a t) : 'a list t = list_size (return n) gen
 
   let array_size (size : int t) (gen : 'a t) : 'a array t =
     (list_size size gen) >|= Array.of_list
+
   let array (gen : 'a t) : 'a array t = list gen >|= Array.of_list
+
   let array_repeat (n : int) (gen : 'a t) : 'a array t = list_repeat n gen >|= Array.of_list
 
-  let flatten_l l st = List.map (fun f->f st) l
-  let flatten_a a st = Array.map (fun f->f st) a
-  let flatten_opt o st =
+  let rec flatten_l (l : 'a t list) : 'a list t =
+    match l with
+    | [] -> pure []
+    | gen :: gens -> liftA2 List.cons gen (flatten_l gens)
+
+  let flatten_a (a : 'a t array) : 'a array t =
+    Array.to_list a |> flatten_l >|= Array.of_list
+
+  let flatten_opt (o : 'a t option) : 'a option t =
     match o with
-    | None -> None
-    | Some f -> Some (f st)
-  let flatten_res r st =
-    match r with
-    | Ok f -> Ok (f st)
-    | Error e -> Error e
+    | None -> pure None
+    | Some gen -> opt gen
+
+  let flatten_res (res : ('a t, 'e) result) : ('a, 'e) result t =
+    match res with
+    | Ok gen -> gen >|= Result.ok
+    | Error e -> pure (Error e)
 
   (** TODO why is this function doing mutation instead of returning an [Array.copy]? *)
   let shuffle_a (a : 'a array) : unit t = fun st ->
@@ -485,14 +513,21 @@ module Gen = struct
 
   let string_size ?(gen = char) (size : int t) : string t =
     list_size size gen >|= (fun l -> List.to_seq l |> String.of_seq)
+
   let string ?(gen : char t option) : string t = string_size ?gen nat
+
   let string_of gen = string_size ~gen nat
+
   let string_readable = string_size ~gen:char nat
+
   let small_string ?gen st = string_size ?gen small_nat st
+
   let small_list gen = list_size small_nat gen
+
   let small_array gen = array_size small_nat gen
 
-  let join g st = (g st) st
+  let join (gen : 'a t t) : 'a t =
+    gen >>= Fun.id
 
   (* corner cases *)
 
@@ -502,25 +537,32 @@ module Gen = struct
                      | e::l -> cors := l; Tree.pure e
 
   let int_pos_corners = [0;1;2;max_int]
+
   let int_corners = int_pos_corners @ [min_int]
 
   let nng_corners () : int t = graft_corners nat int_pos_corners ()
 
   (* sized, fix *)
 
-  let sized_size s f st = f (s st) st
-  let sized f = sized_size nat f
+  let sized_size (size : int t) (gen : 'a sized) : 'a t =
+    size >>= gen
+
+  let sized (gen : 'a sized) : 'a t = sized_size nat gen
 
   let fix f =
     let rec f' n st = f f' n st in
     f'
 
-  let generate ?(rand=Random.State.make_self_init()) ~n g =
-    list_repeat n g rand
+  let generate ?(rand=Random.State.make_self_init()) ~(n : int) (gen : 'a t) : 'a list =
+    list_repeat n gen rand |> Tree.node
 
-  let generate1 ?(rand=Random.State.make_self_init()) g = g rand
+  let generate1 ?(rand=Random.State.make_self_init()) (gen : 'a t) =
+    gen rand |> Tree.node
 
   let delay f st = f () st
+
+  let add_shrink_invariant (p : 'a -> bool) (gen : 'a t) : 'a t =
+    fun st -> gen st |> Tree.add_shrink_invariant p
 
   include Qcheck_ops.Make(struct
       type nonrec 'a t = 'a t
@@ -879,9 +921,8 @@ let set_stats s o = {o with stats=s}
 let add_stat s o = {o with stats=s :: o.stats}
 let set_gen g o = {o with gen=g}
 
-(* TODO let add_shrink_invariant f o = match o.shrink with
- *   | None -> o
- *   | Some shr -> {o with shrink=Some (Shrink.filter f shr)} *)
+let add_shrink_invariant (p : 'a -> bool) (arb : 'a arbitrary) : 'a arbitrary =
+  {arb with gen = Gen.add_shrink_invariant p arb.gen}
 
 let gen o = o.gen
 
@@ -1020,33 +1061,6 @@ let map ?print ?small ?collect (f : 'a -> 'b) (a : 'a arbitrary) =
     ?small
     ?collect
     (Gen.map f a.gen)
-
-
-(* TODO should we really keep it? let fun1_unsafe : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary =
-   fun a1 a2 ->
-    let magic_object = Obj.magic (object end) in
-    let gen : ('a -> 'b) Gen.t = fun st ->
-      let h = Hashtbl.create 10 in
-      fun x ->
-        if x == magic_object then
-          Obj.magic h
-        else
-          try Hashtbl.find h x
-          with Not_found ->
-            let b = a2.gen st in
-            Hashtbl.add h x b;
-            b in
-    let pp : (('a -> 'b) -> string) option = _opt_map_2 a1.print a2.print ~f:(fun p1 p2 f ->
-      let h : ('a, 'b) Hashtbl.t = Obj.magic (f magic_object) in
-      let b = Buffer.create 20 in
-      Hashtbl.iter (fun key value -> Printf.bprintf b "%s -> %s; " (p1 key) (p2 value)) h;
-      "{" ^ Buffer.contents b ^ "}"
-    ) in
-    make
-      ?print:pp
-      gen *)
-
-(* let fun2_unsafe gp1 gp2 gp3 = fun1_unsafe gp1 (fun1_unsafe gp2 gp3) *)
 
 module Poly_tbl : sig
   type ('a, 'b) t
@@ -1331,6 +1345,7 @@ let fun4 o1 o2 o3 o4 ret =
 
 (** given a list, returns generator that picks at random from list *)
 let oneofl ?print ?collect xs = make ?print ?collect (Gen.oneofl xs)
+
 let oneofa ?print ?collect xs = make ?print ?collect (Gen.oneofa xs)
 
 (** Given a list of generators, returns generator that randomly uses one of the generators
@@ -1355,29 +1370,11 @@ let frequency ?print ?small ?collect (l : (int * 'a arbitrary) list) : 'a arbitr
 (** Given list of [(frequency,value)] pairs, returns value with probability proportional
     to given frequency *)
 let frequencyl ?print ?small l = make ?print ?small (Gen.frequencyl l)
+
 let frequencya ?print ?small l = make ?print ?small (Gen.frequencya l)
 
-let map_same_type f a =
-  adapt_ a (fun st -> f (a.gen st))
-
-(* TODO I feel like this function is now useless
-   let map_keep_input ?print ?small f a =
-   make
-    ?print:(match print, a.print with
-        | Some f1, Some f2 -> Some (Print.pair f2 f1)
-        | Some f, None -> Some (Print.comap snd f)
-        | None, Some f -> Some (Print.comap fst f)
-        | None, None -> None)
-    ?small:(match small, a.small with
-        | Some f, _ -> Some (fun (_,y) -> f y)
-        | None, Some f -> Some (fun (x,_) -> f x)
-        | None, None -> None)
-    ?shrink:(match a.shrink with
-      | None -> None
-      | Some s ->
-        let s' (x,_) = Iter.map (fun x->x, f x) (s x) in
-        Some s')
-    Gen.(map_keep_input f a.gen) *)
+let map_same_type (f : 'a -> 'a) (arb : 'a arbitrary) : 'a arbitrary =
+  {arb with gen = Gen.map f arb.gen}
 
 module TestResult = struct
   type 'a counter_ex = {
@@ -1931,12 +1928,12 @@ module Test = struct
   let check_exn ?long ?rand (Test cell) = check_cell_exn ?long ?rand cell
 end
 
-let find_example ?(name="<example>") ?count ~f g : _ Gen.t =
+let find_example ?(name : string = "<example>") ?(count : int option) ~(f : 'a -> bool) (gen : 'a Gen.t) : 'a Gen.t =
   (* the random generator of examples satisfying [f]. To do that we
      test the property [fun x -> not (f x)]; any counter-example *)
   let gen st =
     let cell =
-      let arb = make g in
+      let arb = make gen in
       Test.make_cell ~max_fail:1 ?count arb (fun x -> not (f x))
     in
     let res = Test.check_cell ~rand:st cell in
@@ -1946,7 +1943,7 @@ let find_example ?(name="<example>") ?count ~f g : _ Gen.t =
       | TestResult.Failed {instances=[]} -> assert false
       | TestResult.Failed {instances=failed::_} ->
         (* found counter-example! *)
-        failed.TestResult.instance
+        Tree.pure failed.TestResult.instance
       | TestResult.Failed_other {msg=_} ->
         raise (No_example_found name)
 
@@ -1954,6 +1951,6 @@ let find_example ?(name="<example>") ?count ~f g : _ Gen.t =
   in
   gen
 
-let find_example_gen ?rand ?name ?count ~f g =
-  let g = find_example ?name ?count ~f g in
+let find_example_gen ?(rand : Random.State.t option) ?(name : string option) ?(count : int option) ~(f : 'a -> bool) (gen : 'a Gen.t) : 'a =
+  let g = find_example ?name ?count ~f gen in
   Gen.generate1 ?rand g
