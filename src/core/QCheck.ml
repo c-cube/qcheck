@@ -52,15 +52,21 @@ module Seq = struct
 
   include Seq
 
-  (* Implementation copied from Stdlib as it was only added in OCaml 4.11 *)
-  (* let rec append seq1 seq2 () =
-    let open Seq in
-    match seq1 () with
-    | Nil -> seq2 ()
-    | Cons (x, next) -> Cons (x, append next seq2) *)
+  (* The following functions are copied from https://github.com/ocaml/ocaml/blob/trunk/stdlib/seq.ml to support older OCaml versions. *)
+      
+  let rec unfold f u () =
+    match f u with
+    | None -> Nil
+    | Some (x, u') -> Cons (x, unfold f u')
 
-  let (<*>) (fs : ('a -> 'b) Seq.t) (xs : 'a Seq.t) : 'b Seq.t =
-    Seq.flat_map (fun f -> Seq.map (fun x -> f x) xs) fs 
+  let rec append seq1 seq2 () =
+    match seq1() with
+    | Nil -> seq2()
+    | Cons (x, next) -> Cons (x, append next seq2)
+
+  let cons x next () = Cons (x, next)
+
+  (* End of copy of old functions. *)
 
       (** TODO Generalize with a functor? To support Float and other types with more code reuse
       
@@ -78,7 +84,7 @@ module Seq = struct
        /Note we always try the destination first, as that is the optimal shrink./
   *)
   let int_towards destination x =
-    Seq.unfold (fun current_shrink -> 
+    unfold (fun current_shrink -> 
         if current_shrink = x
           then None
           else
@@ -98,7 +104,7 @@ module Seq = struct
     (* TODO *)
     Seq.empty
 
-  let hd (l : 'a Seq.t) : 'a option =
+  let hd (l : 'a t) : 'a option =
     match l () with
       | Nil -> None
       | Cons (hd, _) -> Some hd
@@ -117,12 +123,12 @@ module Tree = struct
 
   (** [ap] *)
   let rec (<*>) (f : ('a -> 'b) t) (a : 'a t) : 'b t =
-    let Tree (x, xs) = a in
-    let Tree (f, fs) = f in
-    let y = f x in
-    let ys = Seq.(<*>) (Seq.map (fun f x' -> f <*> x') fs) xs in
+    let Tree (x0, xs) = a in
+    let Tree (f0, fs) = f in
+    let y = f0 x0 in
+    let ys = Seq.append (Seq.map (fun f' -> f' <*> a) fs) (Seq.map (fun x' -> f <*> x') xs) in
     Tree (y, ys)
-  
+
   let liftA2 (f : 'a -> 'b -> 'c) (a : 'a t) (b : 'b t) : 'c t =
     (a >|= f) <*> b
 
