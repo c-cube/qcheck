@@ -262,7 +262,7 @@ module Gen = struct
     let outside_bounds n = n < min || n > max in
     match origin with
     | Some origin ->
-      if outside_bounds origin then invalid_arg "origin is outside provided range";
+      if outside_bounds origin then invalid_arg (Format.asprintf "find_origin: origin %i is outside provided range %i - %i" origin min max);
       origin
     | None ->
       (* The distance can be greater than [Int.max_int] so we half values (to avoid overflow) *)
