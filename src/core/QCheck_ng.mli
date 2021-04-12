@@ -442,6 +442,10 @@ module Gen : sig
   val generate1 : ?rand:Random.State.t -> 'a t -> 'a
   (** [generate1 g] generates one instance of [g]. *)
 
+  val generate_print : ?rand:Random.State.t -> 'a t -> (Format.formatter -> 'a -> unit) -> string
+  (** [generate_print ?rand gen pp] generates a random value using [gen] and prints it as well as
+      its shrinks. *)
+
   include Qcheck_ops.S with type 'a t_let := 'a t
   (** @since 0.15 *)
 end

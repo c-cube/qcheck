@@ -114,13 +114,44 @@ module Tree = struct
 
   let children (tree : 'a t) : ('a t) Seq.t =
     let Tree (_, children) = tree in children
+
+  let rec pp (inner_pp : Format.formatter -> 'a -> unit) (ppf : Format.formatter) (t : 'a t) : unit =
+    let open Format in
+    let Tree (x, xs) = t in
+    let wrapper_box inner =
+      pp_open_vbox ppf 0;
+      pp_print_string ppf "Tree(";
+      pp_print_break ppf 0 2;
+      inner ();
+      pp_print_string ppf ")";
+      pp_close_box ppf ()
+    in
+    let inner () =
+      pp_open_vbox ppf 0;
+      pp_print_string ppf "Node(";
+      pp_print_break ppf 0 2;
+      inner_pp ppf x;
+      pp_print_string ppf "),";
+      pp_print_break ppf 1 0;
+      pp_print_string ppf "Shrinks(";
+      pp_print_list
+        ~pp_sep:(fun ppf () -> pp_print_string ppf ","; pp_print_space ppf ())
+        (pp inner_pp)
+        ppf
+        (List.of_seq xs);
+      pp_print_string ppf ")";
+      pp_close_box ppf ()
+
+    in
+    wrapper_box inner
+
+
   (** [map] *)
   let rec (>|=) (a : 'a t) (f : 'a -> 'b) : 'b t =
     let Tree (x, xs) = a in
     let y = f x in
     let ys = Seq.map (fun smaller_x -> smaller_x >|= f) xs in
     Tree (y, ys)
-
 
   (** [ap] *)
   let rec (<*>) (f : ('a -> 'b) t) (a : 'a t) : 'b t =
@@ -564,8 +595,11 @@ module Gen = struct
   let generate ?(rand=Random.State.make_self_init()) ~(n : int) (gen : 'a t) : 'a list =
     list_repeat n gen rand |> Tree.node
 
-  let generate1 ?(rand=Random.State.make_self_init()) (gen : 'a t) =
+  let generate1 ?(rand=Random.State.make_self_init()) (gen : 'a t) : 'a =
     gen rand |> Tree.node
+
+  let generate_print ?(rand=Random.State.make_self_init()) (gen : 'a t) (pp : Format.formatter -> 'a -> unit) : string =
+    gen rand |> Format.asprintf "%a" (Tree.pp pp)
 
   let delay f st = f () st
 
