@@ -493,17 +493,25 @@ module Gen = struct
 
   let char : char t = int_range ~origin:(int_of_char 'a') 0 255 >|= char_of_int
 
+  (** The first characters are the usual lower case alphabetical letters to help shrinking. *)
   let printable_chars =
+    (* Left and right inclusive *)
+    let range min max = List.init (max - min) (fun i -> char_of_int (i + min)) in
+    let a = 97 in
+    let z = 122 in
+    let lower_alphabet = range a z in
     (* ' ' *)
     let first_printable_char = 32 in
+    let before_lower_alphabet = range first_printable_char (a - 1) in
     (* '~' *)
     let last_printable_char = 126 in
-    let newline = '\n' in
-    let printable_chars = List.init (last_printable_char - first_printable_char) char_of_int in
-    newline :: printable_chars
+    let after_lower_alphabet = range (z + 1) last_printable_char in
+    let newline = ['\n'] in
+    (* Put alphabet first for shrinking *)
+    List.flatten [lower_alphabet; before_lower_alphabet; after_lower_alphabet; newline]
 
   let printable : char t =
-    int_range ~origin:(int_of_char 'a') 0 (List.length printable_chars - 1)
+    int_range ~origin:0 0 (List.length printable_chars - 1)
     >|= List.nth printable_chars
 
   let numeral : char t =
