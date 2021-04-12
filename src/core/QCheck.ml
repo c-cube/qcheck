@@ -1029,7 +1029,7 @@ let map ?print ?small ?collect (f : 'a -> 'b) (a : 'a arbitrary) =
     (Gen.map f a.gen)
 
 
-(* TODO should we really keep it?let fun1_unsafe : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary =
+(* TODO should we really keep it? let fun1_unsafe : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary =
   fun a1 a2 ->
     let magic_object = Obj.magic (object end) in
     let gen : ('a -> 'b) Gen.t = fun st ->
@@ -1073,7 +1073,13 @@ end = struct
     p_print: unit -> string;
   }
 
-  let create (type k) (type v) (k : k Observable.t) (v : v arbitrary) (size : int) : (k, v) t Gen.t = 
+  (** TODO This is a bit trickier because the function entries are populated at runtime
+      while the shrinking tree must be provided statically and is not mutable ([Seq.t]),
+      only the inside tables are.
+
+      We could arguably create a shrinking sequence of fixed size (where the first element is
+      a function with no entries) and spread in best-effort entries. Not doing it for now. *)
+  let create (type k) (type v) (k : k Observable.t) (v : v arbitrary) (size : int) : (k, v) t Gen.t =
   fun st ->
     let module T = Hashtbl.Make(struct
         type t = k
@@ -1081,20 +1087,20 @@ end = struct
         let hash = k.Observable.hash
       end) in
     (* let tbl_to_list tbl =
-      T.fold (fun k v l -> (k,v)::l) tbl []
-    and tbl_of_list l =
-      let tbl = T.create (max (List.length l) 8) in
-      List.iter (fun (k,v) -> T.add tbl k v) l;
-      tbl
-    in *)
+     *   T.fold (fun k v l -> (k,v) :: l) tbl []
+     * and tbl_of_list l =
+     *   let tbl = T.create (max (List.length l) 8) in
+     *   List.iter (fun (k,v) -> T.add tbl k v) l;
+     *   tbl
+     * in *)
     (* make a table
        @param extend if true, extend table on the fly *)
-    let rec make ~extend tbl = {
+    let (* rec *) make ~extend tbl = {
       get = (fun x ->
         try Some (T.find tbl x)
         with Not_found ->
           if extend then (
-            let v = v.gen st in
+            let (Tree.Tree (v, _shrinks)) = v.gen st in
             T.add tbl x v;
             Some v
           ) else None);
@@ -1103,8 +1109,7 @@ end = struct
         | Some pp_v ->
           let b = Buffer.create 64 in
           T.iter
-            (fun key value_tree ->
-              let Tree.Tree (value, _shrinks) = value_tree in
+            (fun key value ->
                Printf.bprintf b "%s -> %s; "
                  (k.Observable.print key) (pp_v value))
             tbl;
@@ -1126,7 +1131,7 @@ end = struct
           tbl); *)
       p_size=(fun size_v -> T.fold (fun _ v n -> n + size_v v) tbl 0);
     } in
-    make ~extend:true (T.create size)
+    Tree.pure (make ~extend:true (T.create size))
 
   let get t x = t.get x
   (* let shrink1 t = t.p_shrink1
@@ -1174,26 +1179,26 @@ module Fn = struct
   let map_repr f repr = Fun_map (f,repr)
   let map_fun f (Fun (repr,_)) = make_ (map_repr f repr)
 
-  let shrink_rep (r: _ fun_repr): _ Iter.t =
-    let open Iter in
-    let rec aux
-      : type f. f fun_repr Shrink.t
-      = function
-        | Fun_tbl {fun_arb=a; fun_tbl=tbl; fun_default=def} ->
-          let sh_v = match a.shrink with None -> Shrink.nil | Some s->s in
-          (Poly_tbl.shrink1 tbl >|= fun tbl' -> mk_repr tbl' a def)
-          <+>
-            (sh_v def >|= fun def' -> mk_repr tbl a def')
-          <+>
-            (Poly_tbl.shrink2 sh_v tbl >|= fun tbl' -> mk_repr tbl' a def)
-        | Fun_map (g, r') ->
-          aux r' >|= map_repr g
-    in
-    aux r
-
-  let shrink (Fun (rep,_)) =
-    let open Iter in
-    shrink_rep rep >|= make_
+  (* let shrink_rep (r: _ fun_repr): _ Iter.t =
+   *   let open Iter in
+   *   let rec aux
+   *     : type f. f fun_repr Shrink.t
+   *     = function
+   *       | Fun_tbl {fun_arb=a; fun_tbl=tbl; fun_default=def} ->
+   *         let sh_v = match a.shrink with None -> Shrink.nil | Some s->s in
+   *         (Poly_tbl.shrink1 tbl >|= fun tbl' -> mk_repr tbl' a def)
+   *         <+>
+   *           (sh_v def >|= fun def' -> mk_repr tbl a def')
+   *         <+>
+   *           (Poly_tbl.shrink2 sh_v tbl >|= fun tbl' -> mk_repr tbl' a def)
+   *       | Fun_map (g, r') ->
+   *         aux r' >|= map_repr g
+   *   in
+   *   aux r
+   * 
+   * let shrink (Fun (rep,_)) =
+   *   let open Iter in
+   *   shrink_rep rep >|= make_ *)
 
   let rec size_rep
     : type f. f fun_repr -> int
@@ -1227,14 +1232,16 @@ module Fn = struct
 
   let gen_rep (a:_ Observable.t) (b:_ arbitrary): _ fun_repr Gen.t =
     fun st ->
-      mk_repr (Poly_tbl.create a b 8 st) b (b.gen st)
+      let Tree.Tree (default_value, _default_value_shrinks) = b.gen st in
+      let Tree.Tree (poly_tbl, _poly_tbl_shrinks) = Poly_tbl.create a b 8 st in
+      Tree.pure (mk_repr poly_tbl b default_value)
 
   let gen a b = Gen.map make_ (gen_rep a b)
 end
 
 let fun1 o ret =
   make
-    ~shrink:Fn.shrink
+    (* ~shrink:Fn.shrink *)
     ~print:Fn.print
     ~small:Fn.size
     (Fn.gen o ret)
@@ -1305,7 +1312,6 @@ end
 
 let fun_nary (o:_ Tuple.obs) ret : _ arbitrary =
   make
-    ~shrink:Fn.shrink
     ~print:Fn.print
     ~small:Fn.size
     (Tuple.gen o ret)
@@ -1313,21 +1319,18 @@ let fun_nary (o:_ Tuple.obs) ret : _ arbitrary =
 let fun2 o1 o2 ret =
   let open Tuple in
   map
-    ~rev:(Fn.map_fun (fun g (Cons (x, Cons (y,Nil))) -> g x y))
     (Fn.map_fun (fun g x y -> g (x @:: y @:: nil)))
     (fun_nary (o1 @-> o2 @-> o_nil) ret)
 
 let fun3 o1 o2 o3 ret =
   let open Tuple in
   map
-    ~rev:(Fn.map_fun (fun g (Cons (x, Cons (y, Cons (z,Nil)))) -> g x y z))
     (Fn.map_fun (fun g x y z -> g (x @:: y @:: z @:: nil)))
     (fun_nary (o1 @-> o2 @-> o3 @-> o_nil) ret)
 
 let fun4 o1 o2 o3 o4 ret =
   let open Tuple in
   map
-    ~rev:(Fn.map_fun (fun g (Cons (x, Cons (y, Cons (z,Cons (w,Nil))))) -> g x y z w))
     (Fn.map_fun (fun g x y z w -> g (x @:: y @:: z @:: w @:: nil)))
     (fun_nary (o1 @-> o2 @-> o3 @-> o4 @-> o_nil) ret)
 
