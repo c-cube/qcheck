@@ -495,15 +495,15 @@ module Gen = struct
     | Ok gen -> gen >|= Result.ok
     | Error e -> pure (Error e)
 
-  (** TODO why is this function doing mutation instead of returning an [Array.copy]? *)
-  let shuffle_a (a : 'a array) : unit t = fun st ->
+  let shuffle_a (a : 'a array) : 'a array t = fun st ->
+    let a = Array.copy a in
     for i = Array.length a-1 downto 1 do
       let j = Random.State.int st (i+1) in
       let tmp = a.(i) in
       a.(i) <- a.(j);
       a.(j) <- tmp;
     done;
-    unit st
+    Tree.pure a
 
   let shuffle_l (l : 'a list) : 'a list t = fun st ->
     let a = Array.of_list l in

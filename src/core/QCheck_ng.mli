@@ -184,8 +184,8 @@ module Gen : sig
   (** Constructs a generator that selects among a given array of values.
       Each of the array entries are chosen based on a positive integer weight. *)
 
-  val shuffle_a : 'a array -> unit t
-  (** Shuffles the array in place. *)
+  val shuffle_a : 'a array -> 'a array t
+  (** Returns a copy of the array with its elements shuffled. *)
 
   val shuffle_l : 'a list -> 'a list t
   (** Creates a generator of shuffled lists. *)
