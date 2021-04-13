@@ -64,6 +64,10 @@ module Seq = struct
 
   (* End of copy of old functions. *)
 
+  let is_empty (seq : _ t) : bool = match seq () with
+    | Nil -> true
+    | _ -> false
+
   (** TODO Generalize with a functor? To support Float and other types with more code reuse
 
       Shrink an integral number by edging towards a destination.
@@ -122,28 +126,37 @@ module Tree = struct
     let open Format in
     let Tree (x, xs) = t in
     let wrapper_box inner =
-      pp_open_vbox ppf 0;
+      pp_open_vbox ppf 2;
       pp_print_string ppf "Tree(";
-      pp_print_break ppf 0 2;
+      pp_print_break ppf 0 0;
       inner ();
-      pp_print_string ppf ")";
-      pp_close_box ppf ()
+      pp_close_box ppf ();
+      pp_print_break ppf 0 0;
+      pp_print_string ppf ")"
     in
     let inner () =
-      pp_open_vbox ppf 0;
+      pp_open_vbox ppf 2;
       pp_print_string ppf "Node(";
-      pp_print_break ppf 0 2;
+      pp_print_break ppf 0 0;
       inner_pp ppf x;
+      pp_close_box ppf ();
+      pp_print_break ppf 0 0;
       pp_print_string ppf "),";
       pp_print_break ppf 1 0;
+      pp_open_vbox ppf 2;
       pp_print_string ppf "Shrinks(";
-      pp_print_list
-        ~pp_sep:(fun ppf () -> pp_print_string ppf ","; pp_print_space ppf ())
-        (pp inner_pp)
-        ppf
-        (List.of_seq xs);
-      pp_print_string ppf ")";
-      pp_close_box ppf ()
+      (if Seq.is_empty xs
+       then pp_close_box ppf ()
+       else
+         (pp_print_break ppf 0 0;
+          pp_print_list
+            ~pp_sep:(fun ppf () -> pp_print_string ppf ","; pp_print_space ppf ())
+            (pp inner_pp)
+            ppf
+            (List.of_seq xs);
+          pp_close_box ppf ();
+          pp_print_break ppf 0 0));
+      pp_print_string ppf ")"
 
     in
     wrapper_box inner
