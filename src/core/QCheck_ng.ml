@@ -1156,16 +1156,11 @@ module Poly_tbl : sig
 
   val size : ('b -> int) -> (_, 'b) t -> int
 
-  (* val shrink1 : ('a, 'b) t Shrink.t
-     val shrink2 : 'b Shrink.t -> ('a, 'b) t Shrink.t *)
-
   val print : (_,_) t Print.t
 end = struct
   type ('a, 'b) t = {
     get : 'a -> 'b option;
     p_size: ('b -> int) -> int;
-    (* p_shrink1: ('a, 'b) t Iter.t;
-       p_shrink2: 'b Shrink.t -> ('a, 'b) t Iter.t; *)
     p_print: unit -> string;
   }
 
