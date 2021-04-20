@@ -99,14 +99,6 @@ module Seq = struct
           else Some (current_shrink, current_shrink + half_diff)
       ) destination
 
-  (** Shrink a list by removing elements towards a destination size. *)
-  let list_towards (destination_size : int) (l : 'a list) : 'a list t =
-    let len = List.length l in
-    assert (destination_size > len);
-    let _max_to_remove = destination_size - len in
-    (* TODO *)
-    Seq.empty
-
   let hd (l : 'a t) : 'a option =
     match l () with
     | Nil -> None
@@ -161,41 +153,43 @@ module Tree = struct
     in
     wrapper_box inner
 
-
-  (** [map] *)
-  let rec (>|=) (a : 'a t) (f : 'a -> 'b) : 'b t =
+  let rec map (f : 'a -> 'b) (a : 'a t) : 'b t =
     let Tree (x, xs) = a in
     let y = f x in
-    let ys = Seq.map (fun smaller_x -> smaller_x >|= f) xs in
+    let ys = Seq.map (fun smaller_x -> map f smaller_x) xs in
     Tree (y, ys)
 
-  (** [ap] *)
-  let rec (<*>) (f : ('a -> 'b) t) (a : 'a t) : 'b t =
+  (** [map] *)
+  let (>|=) (a : 'a t) (f : 'a -> 'b) : 'b t = map f a
+
+  let rec ap (f : ('a -> 'b) t) (a : 'a t) : 'b t =
     let Tree (x0, xs) = a in
     let Tree (f0, fs) = f in
     let y = f0 x0 in
-    let ys = Seq.append (Seq.map (fun f' -> f' <*> a) fs) (Seq.map (fun x' -> f <*> x') xs) in
+    let ys = Seq.append (Seq.map (fun f' -> ap f' a) fs) (Seq.map (fun x' -> ap f x') xs) in
     Tree (y, ys)
+
+  (** [ap] *)
+  let (<*>) (f : ('a -> 'b) t) (a : 'a t) : 'b t = ap f a
 
   let liftA2 (f : 'a -> 'b -> 'c) (a : 'a t) (b : 'b t) : 'c t =
     (a >|= f) <*> b
 
-  (** [bind] *)
-  let rec (>>=) (a : 'a t) (f : 'a -> 'b t) : 'b t =
+  let rec bind (a : 'a t) (f : 'a -> 'b t) : 'b t =
     let Tree (x, xs) = a in
     let Tree (y, ys_of_x) = f x in
-    let ys_of_xs = Seq.map (fun smaller_x -> smaller_x >>= f) xs in
+    let ys_of_xs = Seq.map (fun smaller_x -> bind smaller_x f) xs in
     let ys = Seq.append ys_of_xs ys_of_x in
     Tree (y, ys)
+
+  (** [bind] *)
+  let (>>=) (a : 'a t) (f : 'a -> 'b t) : 'b t = bind a f
 
   let pure x = Tree (x, Seq.empty)
 
   let rec int_towards destination x =
     let shrink_trees = Seq.int_towards destination x |> Seq.map (int_towards destination) in
     Tree (x, shrink_trees)
-
-  (* TODO *)
-  let list_towards (_destination_size : int) (_l : 'a list) : 'a list t = assert false
 
   let rec opt (a : 'a t) : 'a option t =
     let Tree (x, xs) = a in
@@ -210,19 +204,21 @@ end
 
 module Gen = struct
 
-  (* TODO maybe the type shoulde be changed to [RS.t -> (unit -> 'a) tree] or use laziness? To avoid eagerly evaluating shrinks during generation (see implem of [(>>=)] that requires evaluating to append Sequences). *)
+  (* TODO maybe the type should be changed to [RS.t -> (unit -> 'a) tree] or use laziness? To avoid eagerly evaluating shrinks during generation (see implem of [(>>=)] that requires evaluating to append Sequences). *)
   type 'a t = RS.t -> 'a Tree.t
   type 'a sized = int -> Random.State.t -> 'a Tree.t
 
-  let (>|=) x f st = Tree.(>|=) (x st)  f
+  let map f x st = Tree.map f (x st)
 
-  let map f x = x >|= f
+  let (>|=) x f = map f x
 
   let (<$>) = map
 
   let pure (a : 'a) : 'a t = fun _ -> Tree.pure a
 
-  let (<*>) (f : ('a -> 'b) t) (x : 'a t) : 'b t = fun st -> Tree.(<*>) (f st)  (x st)
+  let ap (f : ('a -> 'b) t) (x : 'a t) : 'b t = fun st -> Tree.ap (f st)  (x st)
+
+  let (<*>) f x = ap f x
 
   let liftA2 (f : 'a -> 'b -> 'c) (a : 'a t) (b : 'b t) : 'c t =
     (a >|= f) <*> b
@@ -236,7 +232,9 @@ module Gen = struct
 
   let return = pure
 
-  let (>>=) (gen : 'a t) (f : 'a -> ('b t)) : 'b t = fun st ->  Tree.(>>=) (gen st)  (fun a -> f a st)
+  let bind (gen : 'a t) (f : 'a -> ('b t)) : 'b t = fun st ->  Tree.(>>=) (gen st)  (fun a -> f a st)
+
+  let (>>=) = bind
 
   let small_nat : int t = fun st ->
     let p = RS.float st 1. in
@@ -352,19 +350,29 @@ module Gen = struct
       subtract that number from the center. There are probably better ways but my focus is
       on integrated shrinking right now :D *)
   let int_range ?(origin : int option) (a : int) (b : int) : int t =
-    (* TODO I'm pretty sure there are off-by-1 errors in this implementation,
-       it needs additional work, but the general idea for shrinking is there *)
-    if b < a then invalid_arg "Gen.int_range";
-    (* The distance can be greater than [Int.max_int] so we half values (to avoid overflow) *)
-    let half_diff = (b / 2) - (a / 2) in
-    let center = a + half_diff in
-    let origin = find_origin ?origin a b in
+    if b < a then invalid_arg "Gen.int_range: high < low";
+    let origin = Option.fold ~none:a ~some:(fun origin ->
+        if origin < a
+        then invalid_arg "Gen.int_range: origin < low"
+        else if origin > b then invalid_arg "Gen.int_range: origin > high"
+        else origin) origin in
     fun st ->
-      let operator = if Random.State.bool st then (+) else (-) in
-      let x = operator center (Random.State.int st half_diff) in
-      Tree.int_towards origin x
+      let Tree.Tree(n, _shrinks) = if a >= 0 || b < 0 then (
+          (* range smaller than max_int *)
+          assert (b-a >= 0);
+          Tree.map (fun n -> a + n) (int_bound (b - a) st)
+        ) else (
+          (* range potentially bigger than max_int: we split on 0 and
+             choose the itv wrt to their size ratio *)
+          let f_a = float_of_int a in
+          let ratio = (-.f_a) /. (1. +. float_of_int b -. f_a) in
+          if Random.State.float st 1. <= ratio
+          then Tree.map (fun n -> - n - 1) (int_bound (- (a+1)) st)
+          else int_bound b st
+        ) in
+      Tree.int_towards origin (a + n)
 
-  let (--) = int_range
+  let (--) low high = int_range ~origin:low low high
 
   let oneof (l : 'a t list) : 'a t =
     int_range 0 (List.length l - 1) >>= List.nth l
@@ -407,8 +415,8 @@ module Gen = struct
 
   let frequencya a = frequencyl (Array.to_list a)
 
-  let char_range ?(origin : char = 'a') (a : char) (b : char) : char t =
-    (int_range ~origin:(Char.code origin) (Char.code a) (Char.code b)) >|= Char.chr
+  let char_range ?(origin : char option) (a : char) (b : char) : char t =
+    (int_range ~origin:(Char.code (Option.value ~default:a origin)) (Char.code a) (Char.code b)) >|= Char.chr
 
   let random_binary_string (length : int) (st : Random.State.t) : string =
     (* 0b011101... *)
@@ -481,7 +489,7 @@ module Gen = struct
 
   let list (gen : 'a t) : 'a list t = list_size nat gen
 
-  let list_repeat (n : int) (gen : 'a t) : 'a list t = list_size (return n) gen
+  let list_repeat (n : int) (gen : 'a t) : 'a list t = list_size (pure n) gen
 
   let array_size (size : int t) (gen : 'a t) : 'a array t =
     (list_size size gen) >|= Array.of_list

@@ -4,7 +4,7 @@ copyright (c) 2013-2017, Guillaume Bury, Simon Cruanes, Vincent Hugot, Jan Midtg
 all rights reserved.
 *)
 
-(** {1 Quickcheck inspired property-based testing} *)
+(** {1 QuickCheck-inspired property-based testing} *)
 
 (** The library takes inspiration from Haskell's QuickCheck library. The
     rough idea is that the programmer describes invariants that values of
@@ -16,7 +16,7 @@ all rights reserved.
 
     - {! 'a arbitrary} is used to describe how to generate random values,
       shrink them (make counter-examples as small as possible), print
-      them, etc. Auxiliary modules such as {!Gen}, {!Print}, and {!Shrink}
+      them, etc. Auxiliary modules such as {!Gen} and {!Print}
       can be used along with {!make} to build one's own arbitrary instances.
 
     - {!Test} is used to describe a single test, that is, a property of
@@ -125,36 +125,28 @@ val assume_fail : unit -> 'a
 (** {2 Generate Random Values} *)
 module Gen : sig
   type 'a t
-  (** A random generator for values of type 'a. *)
+  (** A random generator for values of type ['a]. *)
 
   type 'a sized = int -> 'a t
   (** Random generator with a size bound. *)
 
-  val return : 'a -> 'a t
-  (** Create a constant generator. *)
+  (** {3 Composing generators} *)
 
   val pure : 'a -> 'a t
-  (** Synonym for {!return}
-      @since 0.8 *)
+  (** [pure a] creates a generator that always returns [a].
 
-  val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
-  (** Monadic bind for writing dependent generators. First generates an ['a] and then
-      passes it to the given function, to generate a ['b]. *)
+      Does not shrink.
 
-  val (<*>) : ('a -> 'b) t -> 'a t -> 'b t
-  (** Infix operator for composing a function generator and an argument generator
-      into a result generator. *)
+      @since 0.8*)
+
+  val return : 'a -> 'a t
+  (** Synonym for {!pure} *)
 
   val map : ('a -> 'b) -> 'a t -> 'b t
-  (** [map f g] transforms a generator [g] by applying [f] to each generated element. *)
+  (** [map f gen] transforms a generator [gen] by applying [f] to each generated element.
 
-  val map2 : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
-  (** [map2 f g1 g2] transforms two generators [g1] and [g2] by applying [f] to each
-      pair of generated elements. *)
-
-  val map3 : ('a -> 'b -> 'c -> 'd) -> 'a t -> 'b t -> 'c t -> 'd t
-  (** [map3 f g1 g2 g3] transforms three generators [g1], [g2], and [g3] by applying [f]
-      to each triple of generated elements. *)
+      Shrinks of [map f gen] are the shrinks of [gen] with [f] applied to them.
+  *)
 
   val (>|=) : 'a t -> ('a -> 'b) -> 'b t
   (** An infix synonym for {!map}. *)
@@ -163,26 +155,84 @@ module Gen : sig
   (** An infix synonym for {!map}
       @since 0.13 *)
 
+  val map2 : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
+  (** [map2 f gen1 gen2] transforms two generators [gen1] and [gen2] by applying [f] to each
+      pair of generated elements.
+
+      Shrinks on [gen1] and then [gen2].
+  *)
+
+  val map3 : ('a -> 'b -> 'c -> 'd) -> 'a t -> 'b t -> 'c t -> 'd t
+  (** [map3 f gen1 gen2 gen3] transforms three generators [gen1], [gen2], and [gen3] by applying [f]
+      to each triple of generated elements.
+
+      Shrinks on [gen1], then [gen2], and then [gen3].
+  *)
+
+  val ap : ('a -> 'b) t -> 'a t -> 'b t
+  (** [ap fgen gen] composes a function generator and an argument generator
+      into a result generator.
+
+      Shrinks on [fgen] and then [gen].
+  *)
+
+  val (<*>) : ('a -> 'b) t -> 'a t -> 'b t
+  (** Synonym for {!ap} *)
+
+  val bind : 'a t -> ('a -> 'b t) -> 'b t
+  (** Monadic bind for writing dependent generators.
+
+      [bind gen f] first generates a value of type ['a] with [gen] and then
+      passes it to [f] to generate a value of type ['b].
+
+      Shrinks on [gen] and then on the resulting generator.
+  *)
+
+  val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
+  (** Synonym for {!bind} *)
+
+  (** {3 Choosing elements} *)
+
   val oneof : 'a t list -> 'a t
-  (** Constructs a generator that selects among a given list of generators. *)
+  (** [oneof l] constructs a generator that selects among the given list of generators [l].
+
+      Shrinks towards the first generator of the list.
+  *)
 
   val oneofl : 'a list -> 'a t
-  (** Constructs a generator that selects among a given list of values. *)
+  (** [oneofl l] constructs a generator that selects among the given list of values [l].
+
+      Shrinks towards the first element of the list.
+  *)
 
   val oneofa : 'a array -> 'a t
-  (** Constructs a generator that selects among a given array of values. *)
+  (** [oneofa a] constructs a generator that selects among the given array of values [a].
+
+      Shrinks towards the first element of the array.
+  *)
 
   val frequency : (int * 'a t) list -> 'a t
   (** Constructs a generator that selects among a given list of generators.
-      Each of the given generators are chosen based on a positive integer weight. *)
+      Each of the given generators are chosen based on a positive integer weight.
+
+      Shrinks towards the first element of the list.
+  *)
 
   val frequencyl : (int * 'a) list -> 'a t
   (** Constructs a generator that selects among a given list of values.
-      Each of the given values are chosen based on a positive integer weight. *)
+      Each of the given values are chosen based on a positive integer weight.
+
+      Shrinks towards the first element of the list.
+  *)
 
   val frequencya : (int * 'a) array -> 'a t
   (** Constructs a generator that selects among a given array of values.
-      Each of the array entries are chosen based on a positive integer weight. *)
+      Each of the array entries are chosen based on a positive integer weight.
+
+      Shrinks towards the first element of the array.
+  *)
+
+  (** {3 Shuffling elements} *)
 
   val shuffle_a : 'a array -> 'a array t
   (** Returns a copy of the array with its elements shuffled. *)
@@ -204,210 +254,389 @@ module Gen : sig
       @since 0.11
   *)
 
-  val unit : unit t (** The unit generator. *)
+  (** {3 Primitive generators} *)
 
-  val bool : bool t (** The boolean generator. *)
+  val unit : unit t
+  (** The unit generator.
 
-  val float : float t   (** Generates floating point numbers. *)
+      Does not shrink.
+  *)
 
-  val pfloat : float t (** Generates positive floating point numbers (0. included). *)
+  val bool : bool t
+  (** The boolean generator.
 
-  val nfloat : float t (** Generates negative floating point numbers. (-0. included) *)
+      Shrinks towards [false].
+  *)
+
+  val float : float t
+  (** Generates floating point numbers.
+
+      Does not shrink.
+  *)
+
+  val pfloat : float t
+  (** Generates positive floating point numbers ([0.] included).
+
+      Does not shrink.
+  *)
+
+  val nfloat : float t
+  (** Generates negative floating point numbers. ([-0.] included).
+
+      Does not shrink.
+  *)
 
   val float_bound_inclusive : float -> float t
-  (** [float_bound_inclusive bound] returns a random floating-point number between 0 and
+  (** [float_bound_inclusive bound] returns a random floating-point number between [0.] and
       [bound] (inclusive).  If [bound] is negative, the result is negative or zero.  If
-      [bound] is 0, the result is 0.
+      [bound] is [0.], the result is [0.].
+
+      Does not shrink.
+
       @since 0.11 *)
 
   val float_bound_exclusive : float -> float t
-  (** [float_bound_exclusive bound] returns a random floating-point number between 0 and
+  (** [float_bound_exclusive bound] returns a random floating-point number between [0.] and
       [bound] (exclusive).  If [bound] is negative, the result is negative or zero.
+
+      Does not shrink.
+
       @raise Invalid_argument if [bound] is zero.
+
       @since 0.11 *)
 
   val float_range : float -> float -> float t
   (** [float_range low high] generates floating-point numbers within [low] and [high] (inclusive)
       @raise Invalid_argument if [high < low] or if the range is larger than [max_float].
+
+      Does not shrink.
+
       @since 0.11 *)
 
   val (--.) : float -> float -> float t
-  (** Synonym for [float_range]
+  (** Synonym for [float_range].
+
       @since 0.11 *)
 
-  val nat : int t (** Generates small natural numbers. *)
+  val nat : int t
+  (** Generates small natural numbers.
+
+      Shrinks towards [0].
+  *)
 
   val big_nat : int t
   (** Generates natural numbers, possibly large.
+
+      Shrinks towards [0].
+
       @since 0.10 *)
 
+  val small_nat : int t
+  (** Small integers (< [100]).
+
+      Shrinks towards [0].
+
+      @since 0.5.1 *)
+
   val neg_int : int t
-  (** Generates non-strictly negative integers (0 included). *)
+  (** Generates non-strictly negative integers ([0] included).
+
+      Shrinks towards [0].
+  *)
 
   val pint : ?origin : int -> int t
-  (** Generates non-strictly positive integers uniformly (0 included).
+  (** Generates non-strictly positive integers uniformly ([0] included).
 
       Shrinks towards [origin] if specified, otherwise towards [0]. *)
 
-  val int : int t (** Generates integers uniformly. *)
+  val int : int t
+  (** Generates integers uniformly.
 
-  val small_nat : int t
-  (** Small integers (< 100)
-      @since 0.5.1 *)
+      Shrinks towards [0].
+  *)
 
   val small_int : int t
   (** Small UNSIGNED integers, for retrocompatibility.
+
+      Shrinks towards [0].
+
       @deprecated use {!small_nat}. *)
 
   val small_signed_int : int t
   (** Small SIGNED integers, based on {!small_nat}.
+
+      Shrinks towards [0].
+
       @since 0.5.2 *)
 
   val int_bound : int -> int t
-  (** Uniform integer generator producing integers within [0... bound].
-      For [bound < 2^{30} - 1] uses [Random.State.int] for integer generation.
+  (** Uniform integer generator producing integers within [0..bound].
+      For [bound < 2^{30} - 1] uses {!Random.State.int} for integer generation.
+
+      Shrinks towards [0].
+
       @raise Invalid_argument if the argument is negative. *)
 
   val int_range : ?origin:int -> int -> int -> int t
-  (** Uniform integer generator producing integers within [low,high].
+  (** [int_range ?origin low high] is an uniform integer generator producing integers within [low..high].
 
-      @raise Invalid_argument if [low > high].
+      Shrinks towards [origin] if specified, otherwise towards [low]
+      (e.g. [int_range (-5) 15] will shrink towards [-5]).
 
-      Shrinks towards [origin] if specified, otherwise towards the center
-      of the range (e.g. [int_range (-5) 15] will shrink towards [5]). *)
+      @raise Invalid_argument if any of the following holds:
+      - [low > high]
+      - [origin < low]
+      - [origin > high]
+  *)
 
   val graft_corners : 'a t -> 'a list -> unit -> 'a t
   (** [graft_corners gen l ()] makes a new generator that enumerates
       the corner cases in [l] and then behaves like [g].
+
+      Does not shrink if the test fails on a grafted value.
+      Shrinks towards [gen] otherwise.
+
       @since 0.6 *)
 
   val int_pos_corners : int list
   (** Non-negative corner cases for int.
+
       @since 0.6 *)
 
   val int_corners : int list
   (** All corner cases for int.
+
       @since 0.6 *)
 
-  val (--) : ?origin:int -> int -> int -> int t (** Synonym to {!int_range}. *)
+  val (--) : int -> int -> int t
+  (** [a -- b] is an alias for [int_range ~origin:a a b]. See {!int_range} for more information.
 
-  val ui32 : int32 t (** Generates (unsigned) [int32] values. *)
+      Shrinks towards [a].
+  *)
 
-  val ui64 : int64 t (** Generates (unsigned) [int64] values. *)
+  val ui32 : int32 t
+  (** Generates (unsigned) [int32] values.
+
+      Shrinks towards [0l].
+  *)
+
+  val ui64 : int64 t
+  (** Generates (unsigned) [int64] values.
+
+      Shrinks towards [0L].
+  *)
+
+  (** {3 Lists, arrays and option generators} *)
 
   val list : 'a t -> 'a list t
-  (** Builds a list generator from an element generator. List size is generated by {!nat}. *)
+  (** Builds a list generator from an element generator. List size is generated by {!nat}.
+
+      Shrinks on the number of elements first, then on elements.
+  *)
+
+  val small_list : 'a t -> 'a list t
+  (** Generates lists of small size (see {!small_nat}).
+
+      @since 0.5.3 *)
 
   val list_size : int t -> 'a t -> 'a list t
-  (** Builds a list generator from a (non-negative) size generator and an element generator. *)
+  (** Builds a list generator from a (non-negative) size generator and an element generator.
+
+      Shrinks on the number of elements first, then on elements.
+  *)
 
   val list_repeat : int -> 'a t -> 'a list t
-  (** [list_repeat i g] builds a list generator from exactly [i] elements generated by [g]. *)
+  (** [list_repeat i g] builds a list generator from exactly [i] elements generated by [g].
+
+      Shrinks on elements only.
+  *)
 
   val array : 'a t -> 'a array t
-  (** Builds an array generator from an element generator. Array size is generated by {!nat}. *)
+  (** Builds an array generator from an element generator. Array size is generated by {!nat}.
+
+      Shrinks on the number of elements first, then on elements.
+  *)
 
   val array_size : int t -> 'a t -> 'a array t
-  (** Builds an array generator from a (non-negative) size generator and an element generator. *)
+  (** Builds an array generator from a (non-negative) size generator and an element generator.
+
+      Shrinks on the number of elements first, then on elements.
+  *)
+
+  val small_array : 'a t -> 'a array t
+  (** Generates arrays of small size (see {!small_nat}).
+
+      Shrinks on the number of elements first, then on elements.
+
+      @since 0.10 *)
 
   val array_repeat : int -> 'a t -> 'a array t
-  (** [array_repeat i g] builds an array generator from exactly [i] elements generated by [g]. *)
+  (** [array_repeat i g] builds an array generator from exactly [i] elements generated by [g].
 
-  val opt : 'a t -> 'a option t (** An option generator. *)
+      Shrinks on elements only.
+  *)
 
-  val pair : 'a t -> 'b t -> ('a * 'b) t (** Generates pairs. *)
+  val opt : 'a t -> 'a option t
+  (** [opt gen] is an option generator.
 
-  val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t (** Generates triples. *)
+      Shrinks towards {!None} then towards shrinks of [gen].
+  *)
+
+  (** {3 Combining generators together} *)
+
+  val pair : 'a t -> 'b t -> ('a * 'b) t
+  (** [pair gen1 gen2] generates pairs.
+
+      Shrinks on [gen1] and then [gen2].
+  *)
+
+  val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
+  (** [triple gen1 gen2 gen3] generates triples.
+
+      Shrinks on [gen1], then [gen2] and then [gen3].
+  *)
 
   val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
-  (** Generates quadruples.
-      @since 0.5.1 *)
+  (** [quad gen1 gen2 gen3 gen4] generates quadruples.
+
+      Shrinks on [gen1], then [gen2], then [gen3] and then [gen4].
+
+      @since 0.5.1
+  *)
+
+  (** {3 Strings and characters} *)
 
   val char : char t
-  (** Generates characters upto character code 255. *)
+  (** Generates characters in the [0..255] range.
 
-  val printable : char t (** Generates printable characters. *)
+      Shrinks towards ['a'].
+  *)
 
-  val numeral : char t (** Generates numeral characters. *)
+  val printable : char t
+  (** Generates printable characters.
+
+      Shrinks towards ['a'].
+  *)
+
+  val numeral : char t
+  (** Generates numeral characters ['0'..'9'].
+
+      Shrinks towards ['0'].
+  *)
 
   val char_range : ?origin:char -> char -> char -> char t
-  (** Generates chars between the two bounds, inclusive.
-      Example: [char_range 'a' 'z'] for all lower case ascii letters.
+  (** [char_range ?origin low high] generates chars between [low] and [high], inclusive.
+      Example: [char_range 'a' 'z'] for all lower case ASCII letters.
+
+      Shrinks towards [origin] if specified, otherwise towards [low].
 
       @raise Invalid_argument if [low > high].
-
-      Shrinks towards [origin] if specified, otherwise towards ['a'].
 
       @since 0.13 *)
 
   val string_size : ?gen:char t -> int t -> string t
   (** Builds a string generator from a (non-negative) size generator.
-      Accepts an optional character generator (the default is {!char}). *)
+      Accepts an optional character generator (the default is {!char}).
+
+      Shrinks on the number of characters first, then on the characters.
+  *)
 
   val string : ?gen:char t -> string t
   (** Builds a string generator. String size is generated by {!nat}.
       Accepts an optional character generator (the default is {!char}).
       See also {!string_of} and {!string_readable} for versions without
-      optional parameters. *)
+      optional parameters.
+
+      Shrinks on the number of characters first, then on the characters.
+  *)
 
   val string_of : char t -> string t
   (** Builds a string generator using the given character generator.
+
+      Shrinks on the number of characters first, then on the characters.
+
       @since 0.11 *)
 
   val string_readable : string t
   (** Builds a string generator using the {!char} character generator.
+
+      Shrinks on the number of characters first, then on the characters.
+
       @since 0.11 *)
 
   val small_string : ?gen:char t -> string t
-  (** Builds a string generator, length is {!small_nat}
-      Accepts an optional character generator (the default is {!char}). *)
+  (** Builds a string generator, length is {!small_nat}.
+      Accepts an optional character generator (the default is {!char}).
 
-  val small_list : 'a t -> 'a list t
-  (** Generates lists of small size (see {!small_nat}).
-      @since 0.5.3 *)
+      Shrinks on the number of characters first, then on the characters.
+  *)
+
+  (** {3 Convert a structure of generator to a generator of structure} *)
 
   val flatten_l : 'a t list -> 'a list t
-  (** Generate a list of elements from individual generators
+  (** Generate a list of elements from individual generators.
+
+      Shrinks on the elements of the list, in the list order.
+
       @since 0.13 *)
 
   val flatten_a : 'a t array -> 'a array t
-  (** Generate an array of elements from individual generators
+  (** Generate an array of elements from individual generators.
+
+      Shrinks on the elements of the array, in the array order.
+
       @since 0.13 *)
 
   val flatten_opt : 'a t option -> 'a option t
-  (** Generate an option from an optional generator
+  (** Generate an option from an optional generator.
+
+      Shrinks towards {!None} then shrinks on the value.
+
       @since 0.13 *)
 
   val flatten_res : ('a t, 'e) result -> ('a,'e) result t
-  (** Generate a result from [Ok g], an error from [Error e]
+  (** Generate a result from [Ok gen], an error from [Error e].
+
+      Shrinks on [gen] if [Ok gen].
+      Does not shrink if [Error e].
+
       @since 0.13 *)
 
-  val small_array : 'a t -> 'a array t
-  (** Generates arrays of small size (see {!small_nat}).
-      @since 0.10 *)
-
   val join : 'a t t -> 'a t
-  (** Collapses a generator of generators to simply a generator.
+  (** Collapses a generator of generators to a generator.
+
+      Shrinks on the generated generators.
+
       @since 0.5 *)
+
+  (** {3 Influencing the size of generated values} *)
 
   val sized : 'a sized -> 'a t
   (** Creates a generator from a size-bounded generator by first
-      generating a size using {!nat} and passing the result to the size-bounded generator. *)
+      generating a size using {!nat} and passing the result to the size-bounded generator.
+
+      Shrinks on the size first, then on the generator.
+  *)
 
   val sized_size : int t -> 'a sized -> 'a t
   (** Creates a generator from a size-bounded generator by first
       generating a size using the integer generator and passing the result
       to the size-bounded generator.
+
+      Shrinks on the size first, then on the generator.
+
       @since 0.5 *)
 
-  val fix : (('a -> 'b t) -> ('a -> 'b t)) -> 'a -> 'b t
+  (** {3 Recursive data structures} *)
+
+  val fix : (('a -> 'b t) -> 'a -> 'b t) -> 'a -> 'b t
   (** Parametrized fixpoint combinator for generating recursive values.
 
-      The fixpoint is parametrized over an arbitrary state ('a), and the
+      The fixpoint is parametrized over an arbitrary state ['a], and the
       fixpoint computation may change the value of this state in the recursive
       calls.
 
-      In particular, this can be used for size-bounded generators ('a is int).
+      In particular, this can be used for size-bounded generators (with ['a] as [int]).
       The passed size-parameter should decrease to ensure termination. *)
 
   (** Example:
@@ -428,6 +657,7 @@ module Gen : sig
 
       ]}
 
+      [fix f] shrinks on the generators returned by [f].
   *)
 
   val delay : (unit -> 'a t) -> 'a t
@@ -436,11 +666,13 @@ module Gen : sig
       in a generator.
       @since 0.17 *)
 
+  (** {3 Observing generated values} *)
+
   val generate : ?rand:Random.State.t -> n:int -> 'a t -> 'a list
-  (** [generate ~n g] generates [n] instances of [g]. *)
+  (** [generate ~n gen] generates [n] instances of [gen]. *)
 
   val generate1 : ?rand:Random.State.t -> 'a t -> 'a
-  (** [generate1 g] generates one instance of [g]. *)
+  (** [generate1 gen] generates one instance of [gen]. *)
 
   val generate_print : ?rand:Random.State.t -> 'a t -> (Format.formatter -> 'a -> unit) -> string
   (** [generate_print ?rand gen pp] generates a random value using [gen] and prints it as well as
@@ -456,7 +688,6 @@ end
 module Print : sig
   type 'a t = 'a -> string
   (** Printer for values of type ['a]. *)
-
 
   val unit : unit t (** @since 0.6 *)
 
@@ -1122,15 +1353,15 @@ val array_of_size : int Gen.t -> 'a arbitrary -> 'a array arbitrary
 
 val pair : 'a arbitrary -> 'b arbitrary -> ('a * 'b) arbitrary
 (** Combines two generators into a generator of pairs.
-    Order of elements can matter (w.r.t shrinking, see {!Shrink.pair}) *)
+    Order of elements can matter (w.r.t shrinking, see {!Gen.pair}) *)
 
 val triple : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> ('a * 'b * 'c) arbitrary
 (** Combines three generators into a generator of 3-tuples.
-    Order matters for shrinking, see {!Shrink.pair} and the likes *)
+    Order matters for shrinking, see {!Gen.pair} and the likes *)
 
 val quad : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> 'd arbitrary -> ('a * 'b * 'c * 'd) arbitrary
 (** Combines four generators into a generator of 4-tuples.
-    Order matters for shrinking, see {!Shrink.pair} and the likes *)
+    Order matters for shrinking, see {!Gen.pair} and the likes *)
 
 val option : 'a arbitrary -> 'a option arbitrary
 (** Choose between returning Some random value, or None. *)
