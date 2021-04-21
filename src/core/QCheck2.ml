@@ -68,36 +68,40 @@ module Seq = struct
     | Nil -> true
     | _ -> false
 
-  (** TODO Generalize with a functor? To support Float and other types with more code reuse
+  (** Take at most [n] values. *)
+  let rec take (n : int) (seq : _ t) : _ t = fun () -> match (n, seq ()) with
+    | (0, _) | (_, Nil) -> Nil
+    | (n, Cons (a, rest)) -> Cons (a, take (n - 1) rest)
 
-      Shrink an integral number by edging towards a destination.
-
-      >>> int_towards 0 100
-      [0,50,75,88,94,97,99]
-
-      >>> int_towards 500 1000
-      [500,750,875,938,969,985,993,997,999]
-
-      >>> int_towards (-50) (-26)
-      [-50,-38,-32,-29,-28,-27]
-
-      /Note we always try the destination first, as that is the optimal shrink./
-  *)
-  let int_towards destination x =
+  let number_towards ~(equal : 'a -> 'a -> bool) ~(div : 'a -> 'a -> 'a) ~(add : 'a -> 'a -> 'a) ~(sub : 'a -> 'a -> 'a) ~(of_int : int -> 'a) ~(destination : 'a) (x : 'a) : 'a t =
     unfold (fun current_shrink ->
-        if current_shrink = x
+        if equal current_shrink x
         then None
         else
             (*
               Halve the operands before subtracting them so they don't overflow.
-              Consider [int_towards min_int max_int]
+              Consider [number_towards min_int max_int]
             *)
-          let half_diff =  (x / 2) - (current_shrink / 2) in
-          if half_diff = 0
+          let half_diff =  sub (div x (of_int 2)) (div current_shrink (of_int 2)) in
+          if half_diff = of_int 0
           (* [current_shrink] is the last valid shrink candidate, put [x] as next step to make sure we stop *)
           then Some (current_shrink, x)
-          else Some (current_shrink, current_shrink + half_diff)
+          else Some (current_shrink, add current_shrink half_diff)
       ) destination
+
+  let int_towards destination x =
+    Int.(number_towards ~equal ~div ~add ~sub ~of_int:Fun.id) ~destination x
+
+  let int32_towards destination x =
+    Int32.(number_towards ~equal ~div ~add ~sub ~of_int) ~destination x
+
+  let int64_towards destination x =
+    Int64.(number_towards ~equal ~div ~add ~sub ~of_int) ~destination x
+
+  (** Arbitrarily limit to 15 elements as dividing a [float] by 2 doesn't converge quickly
+      towards the destination. *)
+  let float_towards destination x =
+    Float.(number_towards ~equal ~div ~add ~sub ~of_int) ~destination x |> take 15
 
   let hd (l : 'a t) : 'a option =
     match l () with
@@ -279,15 +283,15 @@ module Gen = struct
   let float : float t = fun st ->
     let x = exp (RS.float st 15. *. (if RS.float st 1. < 0.5 then 1. else -1.))
             *. (if RS.float st 1. < 0.5 then 1. else -1.)
-    in Tree.pure x
+    in Tree.make_primitive (Seq.float_towards 0.) x
 
   let pfloat : float t = float >|= abs_float
 
   let nfloat : float t = pfloat >|= Float.neg
 
   let float_bound_inclusive (bound : float) : float t = fun st ->
-    let x = RS.float st bound in 
-    Tree.pure x
+    let x = RS.float st bound in
+    Tree.make_primitive (Seq.float_towards 0.) x
 
   let float_bound_exclusive (bound : float) : float t =
     if bound = 0. then raise (Invalid_argument "Gen.float_bound_exclusive");
@@ -339,6 +343,16 @@ module Gen = struct
     in
     let origin = find_origin ?origin min_int max_int in
     Tree.make_primitive (Seq.int_towards origin) x
+
+  let number_towards = Seq.number_towards
+
+  let int_towards = Seq.int_towards
+
+  let int64_towards = Seq.int64_towards
+
+  let int32_towards = Seq.int32_towards
+
+  let float_towards = Seq.float_towards
 
   let int : int t =
     bool >>= fun b ->

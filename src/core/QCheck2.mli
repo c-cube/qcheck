@@ -300,19 +300,19 @@ module Gen : sig
   val float : float t
   (** Generates floating point numbers.
 
-      Does not shrink.
+      Shrinks towards [0.].
   *)
 
   val pfloat : float t
   (** Generates positive floating point numbers ([0.] included).
 
-      Does not shrink.
+      Shrinks towards [0.].
   *)
 
   val nfloat : float t
   (** Generates negative floating point numbers. ([-0.] included).
 
-      Does not shrink.
+      Shrinks towards [-0.].
   *)
 
   val float_bound_inclusive : float -> float t
@@ -320,7 +320,7 @@ module Gen : sig
       [bound] (inclusive).  If [bound] is negative, the result is negative or zero.  If
       [bound] is [0.], the result is [0.].
 
-      Does not shrink.
+      Shrinks towards [0.].
 
       @since 0.11 *)
 
@@ -328,22 +328,30 @@ module Gen : sig
   (** [float_bound_exclusive bound] returns a random floating-point number between [0.] and
       [bound] (exclusive).  If [bound] is negative, the result is negative or zero.
 
-      Does not shrink.
+      Shrinks towards [0.].
 
-      @raise Invalid_argument if [bound] is zero.
+      @raise Invalid_argument if [bound] is [0.].
 
       @since 0.11 *)
 
-  val float_range : float -> float -> float t
-  (** [float_range low high] generates floating-point numbers within [low] and [high] (inclusive)
-      @raise Invalid_argument if [high < low] or if the range is larger than [max_float].
+  val float_range : ?origin : float -> float -> float -> float t
+  (** [float_range ?origin low high] generates floating-point numbers within [low] and [high] (inclusive).
 
-      Does not shrink.
+      Shrinks towards [origin] if specified, otherwise towards [low]
+      (e.g. [float_range 4.2 7.8] will shrink towards [4.2]).
+
+      @raise Invalid_argument if any of the following holds:
+      - [low > high]
+      - [high -. low > max_float]
+      - [origin < low]
+      - [origin > high]
 
       @since 0.11 *)
 
   val (--.) : float -> float -> float t
-  (** Synonym for [float_range].
+  (** [a --. b] is an alias for [float_range ~origin:a a b]. See {!float_range} for more information.
+
+      Shrinks towards [a].
 
       @since 0.11 *)
 
@@ -377,6 +385,33 @@ module Gen : sig
   (** Generates non-strictly positive integers uniformly ([0] included).
 
       Shrinks towards [origin] if specified, otherwise towards [0]. *)
+
+  val number_towards : equal : ('a -> 'a -> bool) -> div : ('a -> 'a -> 'a) -> add : ('a -> 'a -> 'a) -> sub : ('a -> 'a -> 'a) -> of_int : (int -> 'a) -> destination : 'a -> 'a -> 'a Seq.t
+  (** Shrink a number by edging towards a destination.
+
+      The destination is always the first value for optimal shrinking.
+
+      {[
+        let int64_towards_list destination x = List.of_seq @@ Int64.(Gen.number_towards ~equal ~div ~add ~sub ~of_int) ~destination x
+
+        let () =
+          assert (int64_towards_list 0L 100L = [0L; 50L; 75L; 88L; 94L; 97L; 99L]);
+          assert (int64_towards_list 500L 1000L = [500L; 750L; 875L; 938L; 969L; 985L; 993L; 997L; 999L]);
+          assert (int64_towards_list (-50L) (-26L) = [-50L; -38L; -32L; -29L; -28L; -27L])
+      ]}
+  *)
+
+  val int_towards : int -> int -> int Seq.t
+  (** {!number_towards} specialized to {!int}. *)
+
+  val int32_towards : int32 -> int32 -> int32 Seq.t
+  (** {!number_towards} specialized to {!int32}. *)
+
+  val int64_towards : int64 -> int64 -> int64 Seq.t
+  (** {!number_towards} specialized to {!int64}. *)
+
+  val float_towards : float -> float -> float Seq.t
+  (** {!number_towards} specialized to {!float}. *)
 
   val int : int t
   (** Generates integers uniformly.
