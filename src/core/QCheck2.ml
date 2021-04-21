@@ -986,20 +986,17 @@ type 'a stat = string * ('a -> int)
 type 'a arbitrary = {
   gen: 'a Gen.t;
   print: ('a -> string) option; (** print values *)
-  small: ('a -> int) option;  (** size of example *)
   collect: ('a -> string) option;  (** map value to tag, and group by tag *)
   stats: 'a stat list; (** statistics to collect and print *)
 }
 
-let make ?print ?small  ?collect ?(stats=[]) gen = {
+let make ?print ?collect ?(stats=[]) gen = {
   gen;
   print;
-  small;
   collect;
   stats;
 }
 
-let set_small f o = {o with small=Some f}
 let set_print f o = {o with print=Some f}
 let set_collect f o = {o with collect=Some f}
 let set_stats s o = {o with stats=s}
@@ -1011,15 +1008,13 @@ let add_shrink_invariant (p : 'a -> bool) (arb : 'a arbitrary) : 'a arbitrary =
 
 let gen o = o.gen
 
-let small1 _ = 1
-
 let make_scalar ?print ?collect gen =
-  make ~small:small1 ?print ?collect gen
+  make ?print ?collect gen
 let make_int ?collect gen =
-  make ~small:small1 ~print:Print.int ?collect gen
+  make ~print:Print.int ?collect gen
 
 let adapt_ o gen =
-  make ?print:o.print ?small:o.small ?collect:o.collect gen
+  make ?print:o.print ?collect:o.collect gen
 
 let choose l = match l with
   | [] -> raise (Invalid_argument "quickcheck.choose")
@@ -1031,7 +1026,7 @@ let choose l = match l with
          arb.gen st)
 
 let unit : unit arbitrary =
-  make ~small:small1 ~print:(fun _ -> "()") Gen.unit
+  make ~print:(fun _ -> "()") Gen.unit
 
 let bool = make_scalar ~print:string_of_bool Gen.bool
 
@@ -1070,10 +1065,10 @@ let small_int_corners () = make_int (Gen.nng_corners ())
 let neg_int = make_int Gen.neg_int
 
 let int32 =
-  make ~print:(fun i -> Int32.to_string i ^ "l") ~small:small1 Gen.ui32
+  make ~print:(fun i -> Int32.to_string i ^ "l") Gen.ui32
 
 let int64 =
-  make ~print:(fun i -> Int64.to_string i ^ "L") ~small:small1 Gen.ui64
+  make ~print:(fun i -> Int64.to_string i ^ "L") Gen.ui64
 
 let char = make_scalar ~print:(sprintf "%C") Gen.char
 
@@ -1082,10 +1077,10 @@ let printable_char = make_scalar ~print:(sprintf "%C") Gen.printable
 let numeral_char = make_scalar ~print:(sprintf "%C") Gen.numeral
 
 let string_gen_of_size (size : int Gen.t) (gen : char Gen.t) : string arbitrary =
-  make ~small:String.length ~print:(sprintf "%S") (Gen.string_size ~gen size)
+  make ~print:(sprintf "%S") (Gen.string_size ~gen size)
 
 let string_gen (gen : char Gen.t) : string arbitrary =
-  make ~small:String.length ~print:(sprintf "%S") (Gen.string ~gen)
+  make ~print:(sprintf "%S") (Gen.string ~gen)
 
 let string : string arbitrary = string_gen Gen.char
 
@@ -1106,10 +1101,8 @@ let numeral_string_of_size size = string_gen_of_size size Gen.numeral
 let list_sum_ f l = List.fold_left (fun acc x-> f x+acc) 0 l
 
 let mk_list a gen =
-  (* small sums sub-sizes if present, otherwise just length *)
-  let small = Option.fold a.small ~some:list_sum_ ~none:List.length in
   let print = Option.map Print.list a.print in
-  make ~small ?print gen
+  make ?print gen
 
 let list a = mk_list a (Gen.list a.gen)
 
@@ -1120,53 +1113,39 @@ let small_list a = mk_list a (Gen.small_list a.gen)
 let array_sum_ f a = Array.fold_left (fun acc x -> f x+acc) 0 a
 
 let array a =
-  let small = Option.fold ~none:Array.length ~some:array_sum_ a.small in
   make
-    ~small
     ?print:(Option.map Print.array a.print)
     (Gen.array a.gen)
 
 let array_of_size size a =
-  let small = Option.fold ~none:Array.length ~some:array_sum_ a.small in
   make
-    ~small
     ?print:(Option.map Print.array a.print)
     (Gen.array_size size a.gen)
 
 let pair a b =
   make
-    ?small:(_opt_map_2 ~f:(fun f g (x,y) -> f x+g y) a.small b.small)
     ?print:(_opt_map_2 ~f:Print.pair a.print b.print)
     (Gen.pair a.gen b.gen)
 
 let triple a b c =
   make
-    ?small:(_opt_map_3 ~f:(fun f g h (x,y,z) -> f x+g y+h z) a.small b.small c.small)
     ?print:(_opt_map_3 ~f:Print.triple a.print b.print c.print)
     (Gen.triple a.gen b.gen c.gen)
 
 let quad a b c d =
   make
-    ?small:(_opt_map_4 ~f:(fun f g h i (x,y,z,w) ->
-        f x+g y+h z+i w) a.small b.small c.small d.small)
     ?print:(_opt_map_4 ~f:Print.quad a.print b.print c.print d.print)
     (Gen.quad a.gen b.gen c.gen d.gen)
 
 let option a =
-  let g = Gen.opt a.gen
-  and small =
-    Option.fold a.small ~none:(function None -> 0 | Some _ -> 1)
-      ~some:(fun f o -> match o with None -> 0 | Some x -> f x)
-  in
+  let g = Gen.opt a.gen in
   make
-    ~small
     ?print:(Option.map Print.option a.print)
     g
 
-let map ?print ?small ?collect (f : 'a -> 'b) (a : 'a arbitrary) =
+let map ?print ?collect (f : 'a -> 'b) (a : 'a arbitrary) =
   make
     ?print
-    ?small
     ?collect
     (Gen.map f a.gen)
 
@@ -1315,16 +1294,6 @@ module Fn = struct
    *   let open Iter in
    *   shrink_rep rep >|= make_ *)
 
-  let rec size_rep
-    : type f. f fun_repr -> int
-    = function
-      | Fun_map (_, r') -> size_rep r'
-      | Fun_tbl r ->
-        let size_v x = match r.fun_arb.small with None -> 0 | Some f -> f x in
-        Poly_tbl.size size_v r.fun_tbl + size_v r.fun_default
-
-  let size (Fun (rep,_)) = size_rep rep
-
   let print_rep r =
     let buf = Buffer.create 32 in
     let rec aux
@@ -1358,7 +1327,6 @@ let fun1 o ret =
   make
     (* ~shrink:Fn.shrink *)
     ~print:Fn.print
-    ~small:Fn.size
     (Fn.gen o ret)
 
 module Tuple = struct
@@ -1430,7 +1398,6 @@ end
 let fun_nary (o:_ Tuple.obs) ret : _ arbitrary =
   make
     ~print:Fn.print
-    ~small:Fn.size
     (Tuple.gen o ret)
 
 let fun2 o1 o2 ret =
@@ -1462,26 +1429,25 @@ let oneofa ?print ?collect xs = make ?print ?collect (Gen.oneofa xs)
     from the list *)
 let oneof (l : 'a arbitrary list) : 'a arbitrary =
   let gens = List.map (fun a -> a.gen) l in
-  let {print; small; collect; _} = List.hd l in
-  make ?print ?small ?collect (Gen.oneof gens)
+  let {print; collect; _} = List.hd l in
+  make ?print ?collect (Gen.oneof gens)
 
 (** Generator that always returns given value *)
 let always ?print x = make ?print (Gen.pure x)
 
 (** like oneof, but with weights *)
-let frequency ?print ?small ?collect (l : (int * 'a arbitrary) list) : 'a arbitrary =
+let frequency ?print ?collect (l : (int * 'a arbitrary) list) : 'a arbitrary =
   let first = snd (List.hd l) in
-  let small = _opt_sum small first.small in
   let print = _opt_sum print first.print in
   let collect = _opt_sum collect first.collect in
   let gens = List.map (fun (x,y) -> x, y.gen) l in
-  make ?print ?small ?collect (Gen.frequency gens)
+  make ?print ?collect (Gen.frequency gens)
 
 (** Given list of [(frequency,value)] pairs, returns value with probability proportional
     to given frequency *)
-let frequencyl ?print ?small l = make ?print ?small (Gen.frequencyl l)
+let frequencyl ?print l = make ?print (Gen.frequencyl l)
 
-let frequencya ?print ?small l = make ?print ?small (Gen.frequencya l)
+let frequencya ?print l = make ?print (Gen.frequencya l)
 
 let map_same_type (f : 'a -> 'a) (arb : 'a arbitrary) : 'a arbitrary =
   {arb with gen = Gen.map f arb.gen}
@@ -1522,28 +1488,14 @@ module TestResult = struct
   }
 
   (* indicate failure on the given [instance] *)
-  let fail ~msg_l ~small ~steps:shrink_steps res instance =
+  let fail ~msg_l ~steps:shrink_steps res instance =
     let c_ex = {instance; shrink_steps; msg_l; } in
     match res.state with
     | Success -> res.state <- Failed {instances=[ c_ex ]}
     | Error _
     | Failed_other _ -> ()
     | Failed {instances=[]} -> assert false
-    | Failed {instances=((c_ex'::_) as l)} ->
-      match small with
-      | Some small ->
-        (* all counter-examples in [l] have same size according to [small],
-           so we just compare to the first one, and we enforce
-           the invariant *)
-        begin match poly_compare (small instance) (small c_ex'.instance) with
-          | 0 -> res.state <- Failed {instances=c_ex :: l} (* same size: add [c_ex] to [l] *)
-          | n when n<0 -> res.state <- Failed {instances=[c_ex]} (* drop [l] *)
-          | _ -> () (* drop [c_ex], not small enough *)
-        end
-      | _ ->
-        (* no [small] function, keep all counter-examples *)
-        res.state <-
-          Failed {instances=c_ex :: l}
+    | Failed {instances=l} -> res.state <- Failed {instances=c_ex :: l}
 
   let error ~msg_l ~steps res instance exn backtrace =
     res.state <- Error {instance={instance; shrink_steps=steps; msg_l; }; exn; backtrace}
@@ -1595,10 +1547,9 @@ module Test = struct
 
   let make_cell ?(if_assumptions_fail=default_if_assumptions_fail)
       ?(count=default_count) ?(long_factor=1) ?max_gen
-      ?(max_fail=1) ?small ?(name=fresh_name()) arb law
+      ?(max_fail=1) ?(name=fresh_name()) arb law
     =
     let max_gen = match max_gen with None -> count + 200 | Some x->x in
-    let arb = match small with None -> arb | Some f -> set_small f arb in
     {
       law;
       arb;
@@ -1610,8 +1561,8 @@ module Test = struct
       if_assumptions_fail;
     }
 
-  let make ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law =
-    Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law)
+  let make ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?name arb law =
+    Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?name arb law)
 
   (** {6 Running the test} *)
 
@@ -1764,10 +1715,8 @@ module Test = struct
     decr_count state;
     state.step state.test.name state.test input Failure;
     state.cur_max_fail <- state.cur_max_fail - 1;
-    R.fail ~small:state.test.arb.small state.res ~steps ~msg_l input;
-    if Option.is_some state.test.arb.small && state.cur_max_fail > 0
-    then CR_continue
-    else CR_yield state.res
+    R.fail state.res ~steps ~msg_l input;
+    CR_yield state.res
 
   (* [check_state state] applies [state.test] repeatedly ([iter] times)
       on output of [test.rand], and if [state.test] ever returns false,

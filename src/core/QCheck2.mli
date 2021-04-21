@@ -973,7 +973,6 @@ type 'a stat = string * ('a -> int)
 type 'a arbitrary = private {
   gen: 'a Gen.t;
   print: ('a -> string) option; (** print values *)
-  small: ('a -> int) option;  (** size of example *)
   collect: ('a -> string) option;  (** map value to tag, and group by tag *)
   stats: 'a stat list; (** statistics to collect and print *)
 }
@@ -989,7 +988,6 @@ type 'a arbitrary = private {
 
 val make :
   ?print:'a Print.t ->
-  ?small:('a -> int) ->
   ?collect:('a -> string) ->
   ?stats:'a stat list ->
   'a Gen.t -> 'a arbitrary
@@ -1000,7 +998,6 @@ val make :
 *)
 
 val set_print : 'a Print.t -> 'a arbitrary -> 'a arbitrary
-val set_small : ('a -> int) -> 'a arbitrary -> 'a arbitrary
 val set_collect : ('a -> string) -> 'a arbitrary -> 'a arbitrary
 val set_stats : 'a stat list -> 'a arbitrary -> 'a arbitrary (** @since 0.6 *)
 
@@ -1107,7 +1104,7 @@ module Test : sig
   val make_cell :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
-    ?small:('a -> int) -> ?name:string -> 'a arbitrary -> ('a -> bool) ->
+    ?name:string -> 'a arbitrary -> ('a -> bool) ->
     'a cell
   (** [make_cell arb prop] builds a test that checks property [prop] on instances
       of the generator [arb].
@@ -1121,10 +1118,6 @@ module Test : sig
         preconditions (should be >= count).
       @param max_fail maximum number of failures before we stop generating
         inputs. This is useful if shrinking takes too much time.
-      @param small kept for compatibility reasons; if provided, replaces
-        the field [arbitrary.small].
-        If there is no shrinking function but there is a [small]
-        function, only the smallest failures will be printed.
       @param if_assumptions_fail the minimum
         fraction of tests that must satisfy the precondition for a success
         to be considered valid.
@@ -1154,7 +1147,7 @@ module Test : sig
   val make :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
-    ?small:('a -> int) -> ?name:string -> 'a arbitrary -> ('a -> bool) -> t
+    ?name:string -> 'a arbitrary -> ('a -> bool) -> t
   (** [make arb prop] builds a test that checks property [prop] on instances
       of the generator [arb].
       See {!make_cell} for a description of the parameters.
@@ -1562,21 +1555,18 @@ val oneof : 'a arbitrary list -> 'a arbitrary
 val always : ?print:'a Print.t -> 'a -> 'a arbitrary
 (** Always return the same element. *)
 
-val frequency : ?print:'a Print.t -> ?small:('a -> int) ->
-  ?collect:('a -> string) ->
+val frequency : ?print:'a Print.t -> ?collect:('a -> string) ->
   (int * 'a arbitrary) list -> 'a arbitrary
 (** Similar to {!oneof} but with frequencies. *)
 
-val frequencyl : ?print:'a Print.t -> ?small:('a -> int) ->
-  (int * 'a) list -> 'a arbitrary
+val frequencyl : ?print:'a Print.t -> (int * 'a) list -> 'a arbitrary
 (** Same as {!oneofl}, but each element is paired with its frequency in
     the probability distribution (the higher, the more likely). *)
 
-val frequencya : ?print:'a Print.t -> ?small:('a -> int) ->
-  (int * 'a) array -> 'a arbitrary
+val frequencya : ?print:'a Print.t -> (int * 'a) array -> 'a arbitrary
 (** Same as {!frequencyl}, but with an array. *)
 
-val map : ?print:'b Print.t -> ?small:('b -> int) -> ?collect:('b -> string) -> ('a -> 'b) -> 'a arbitrary -> 'b arbitrary
+val map : ?print:'b Print.t -> ?collect:('b -> string) -> ('a -> 'b) -> 'a arbitrary -> 'b arbitrary
 (** [map f a] returns a new arbitrary instance that generates values using
     [a#gen] and then transforms them through [f].
 *)
