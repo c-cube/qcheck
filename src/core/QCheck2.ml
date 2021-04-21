@@ -251,6 +251,11 @@ module Gen = struct
   let make_primitive (f : Random.State.t -> 'a) (shrink : 'a -> 'a Seq.t) : 'a t = fun st ->
     Tree.make_primitive shrink (f st)
 
+  let parse_origin (loc : string) (pp : Format.formatter -> 'a -> unit) ~(origin : 'a) ~(low : 'a) ~(high : 'a) : 'a =
+    if origin < low then invalid_arg Format.(asprintf "%s: origin value %a is lower than low value %a" loc pp origin pp low)
+    else if origin > high then invalid_arg Format.(asprintf "%s: origin value %a is greater than high value %a" loc pp origin pp high)
+    else origin
+
   let small_nat : int t = fun st ->
     let p = RS.float st 1. in
     let x = if p < 0.75 then RS.int st 10 else RS.int st 100 in
@@ -289,25 +294,31 @@ module Gen = struct
 
   let nfloat : float t = pfloat >|= Float.neg
 
-  let float_bound_inclusive (bound : float) : float t = fun st ->
+  let float_bound_inclusive ?(origin : float = 0.) (bound : float) : float t = fun st ->
+    let (low, high) = Float.min_max_num 0. bound in
+    let origin = parse_origin "Gen.float_bound_inclusive" Format.pp_print_float ~origin ~low ~high in
     let x = RS.float st bound in
-    Tree.make_primitive (Seq.float_towards 0.) x
+    Tree.make_primitive (Seq.float_towards origin) x
 
-  let float_bound_exclusive (bound : float) : float t =
-    if bound = 0. then raise (Invalid_argument "Gen.float_bound_exclusive");
+  let float_bound_exclusive ?(origin : float = 0.) (bound : float) : float t =
+    let (low, high) = Float.min_max_num 0. bound in
+    let origin = parse_origin "Gen.float_bound_exclusive" Format.pp_print_float ~origin ~low ~high in
+    if bound = 0. then invalid_arg "Gen.float_bound_exclusive";
     let bound =
       if bound > 0.
       then bound -. epsilon_float
       else bound +. epsilon_float
     in
-    float_bound_inclusive bound
+    float_bound_inclusive ~origin bound
 
-  let float_range (low : float) (high : float) : float t =
-    if high < low || high -. low > max_float then invalid_arg "Gen.float_range";
-    (float_bound_inclusive (high -. low))
+  let float_range ?(origin : float option) (low : float) (high : float) : float t =
+    if high < low then invalid_arg "Gen.float_range: high < low"
+    else if high -. low > max_float then invalid_arg "Gen.float_range: high -. low > max_float";
+    let origin = parse_origin "Gen.float_range" Format.pp_print_float ~origin:(Option.value ~default:low origin) ~low ~high in
+    (float_bound_inclusive ~origin (high -. low))
     >|= (fun x -> low +. x)
 
-  let (--.) = float_range
+  let (--.) low high = float_range ~origin:low low high
 
   let neg_int : int t = nat >|= Int.neg
 
@@ -318,21 +329,9 @@ module Gen = struct
     then Tree.pure None
     else Tree.opt (gen st)
 
-  let find_origin ?(origin : int option) (min : int) (max : int) : int =
-    let outside_bounds n = n < min || n > max in
-    match origin with
-    | Some origin ->
-      if outside_bounds origin then invalid_arg (Format.asprintf "find_origin: origin %i is outside provided range %i - %i" origin min max);
-      origin
-    | None ->
-      (* The distance can be greater than [Int.max_int] so we half values (to avoid overflow) *)
-      let half_diff = (max / 2) - (min / 2) in
-      let center = min + half_diff in
-      assert (not (outside_bounds center));
-      center
-
   (* Uniform random int generator *)
-  let pint ?(origin : int option) : int t = fun st ->
+  let pint ?(origin : int = 0) : int t = fun st ->
+    let origin = parse_origin "Gen.pint" Format.pp_print_int ~origin ~low:min_int ~high:max_int in
     let x =
       if Sys.word_size = 32
       then RS.bits st
@@ -341,7 +340,6 @@ module Gen = struct
         lor (RS.bits st lsl 30)           (* Middle 30 bits *)
         lor ((RS.bits st land 3) lsl 60)  (* Top 2 bits *)  (* top bit = 0 *)
     in
-    let origin = find_origin ?origin min_int max_int in
     Tree.make_primitive (Seq.int_towards origin) x
 
   let number_towards = Seq.number_towards

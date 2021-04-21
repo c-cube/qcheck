@@ -123,7 +123,7 @@ val assume_fail : unit -> 'a
 *)
 
 module Tree : sig
-(** This module stores types and functions related to a generated value and its successive shrinks. *)
+  (** This module stores types and functions related to a generated value and its successive shrinks. *)
 
   type 'a t
   (** A tree of random generated values, where the root contains the value used for the test,
@@ -315,20 +315,20 @@ module Gen : sig
       Shrinks towards [-0.].
   *)
 
-  val float_bound_inclusive : float -> float t
-  (** [float_bound_inclusive bound] returns a random floating-point number between [0.] and
-      [bound] (inclusive).  If [bound] is negative, the result is negative or zero.  If
+  val float_bound_inclusive : ?origin : float -> float -> float t
+  (** [float_bound_inclusive ?origin bound] returns a random floating-point number between [0.] and
+      [bound] (inclusive). If [bound] is negative, the result is negative or zero.  If
       [bound] is [0.], the result is [0.].
 
-      Shrinks towards [0.].
+      Shrinks towards [origin] if given, otherwise towards [0.].
 
       @since 0.11 *)
 
-  val float_bound_exclusive : float -> float t
-  (** [float_bound_exclusive bound] returns a random floating-point number between [0.] and
+  val float_bound_exclusive : ?origin : float -> float -> float t
+  (** [float_bound_exclusive origin bound] returns a random floating-point number between [0.] and
       [bound] (exclusive).  If [bound] is negative, the result is negative or zero.
 
-      Shrinks towards [0.].
+      Shrinks towards [origin] if given, otherwise towards [0.].
 
       @raise Invalid_argument if [bound] is [0.].
 
