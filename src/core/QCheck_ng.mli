@@ -122,6 +122,35 @@ val assume_fail : unit -> 'a
     @since 0.5.1
 *)
 
+module Tree : sig
+(** This module stores types and functions related to a generated value and its successive shrinks. *)
+
+  type 'a t
+  (** A tree of random generated values, where the root contains the value used for the test,
+      and the sub-trees contain shrunk values (as trees, to be able to shrink several times a value)
+      used if the test fails. *)
+
+  val root : 'a t -> 'a
+  (** Get the root value of a tree of generated values. *)
+
+  val shrinks : 'a t -> 'a t list
+  (** Get the sub-trees of a tree of generated values. *)
+
+  val pp : ?depth : int -> (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
+  (** [pp ?depth pp_a ppf tree] will pretty-print the tree of generated values [tree] using the
+      pretty-print formatter [ppf]. Values of type ['a] will be printed using the given
+      pretty-printer [pp_a].
+
+      As a tree [t] can be potentially huge when fully evaluated, you can control the maximum
+      depth the printer goes with [depth].
+      - [None] means "everything"
+      - [0] means "only the root"
+      - [1] means "the root and its direct shrinks"
+      - [2] means "the root, its direct shrinks, and the shrinks of its shrinks"
+      - etc.
+  *)
+end
+
 (** {2 Generate Random Values} *)
 module Gen : sig
   type 'a t
@@ -674,9 +703,8 @@ module Gen : sig
   val generate1 : ?rand:Random.State.t -> 'a t -> 'a
   (** [generate1 gen] generates one instance of [gen]. *)
 
-  val generate_print : ?rand:Random.State.t -> 'a t -> (Format.formatter -> 'a -> unit) -> string
-  (** [generate_print ?rand gen pp] generates a random value using [gen] and prints it as well as
-      its shrinks. *)
+  val generate_tree : ?rand:Random.State.t -> 'a t -> 'a Tree.t
+  (** [generate_tree ?rand gen] generates a random value and its shrinks using [gen]. *)
 
   include Qcheck_ops.S with type 'a t_let := 'a t
   (** @since 0.15 *)

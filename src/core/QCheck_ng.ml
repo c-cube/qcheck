@@ -111,10 +111,14 @@ module Tree = struct
   let node (tree : 'a t) : 'a =
     let Tree (node, _) = tree in node
 
+  let root = node
+
   let children (tree : 'a t) : ('a t) Seq.t =
     let Tree (_, children) = tree in children
 
-  let rec pp (inner_pp : Format.formatter -> 'a -> unit) (ppf : Format.formatter) (t : 'a t) : unit =
+  let shrinks t = children t |> List.of_seq
+
+  let rec pp ?(depth : int option) (inner_pp : Format.formatter -> 'a -> unit) (ppf : Format.formatter) (t : 'a t) : unit =
     let open Format in
     let Tree (x, xs) = t in
     let wrapper_box inner =
@@ -137,17 +141,21 @@ module Tree = struct
       pp_print_break ppf 1 0;
       pp_open_vbox ppf 2;
       pp_print_string ppf "Shrinks(";
-      (if Seq.is_empty xs
-       then pp_close_box ppf ()
-       else
-         (pp_print_break ppf 0 0;
-          pp_print_list
-            ~pp_sep:(fun ppf () -> pp_print_string ppf ","; pp_print_space ppf ())
-            (pp inner_pp)
-            ppf
-            (List.of_seq xs);
-          pp_close_box ppf ();
-          pp_print_break ppf 0 0));
+
+      if Option.fold depth ~none:false ~some:(fun depth -> depth <= 0) then (
+        pp_print_string ppf "<max depth reached>";
+        pp_close_box ppf ())
+      else if Seq.is_empty xs then pp_close_box ppf ()
+      else
+        (pp_print_break ppf 0 0;
+         pp_print_list
+           ~pp_sep:(fun ppf () -> pp_print_string ppf ","; pp_print_space ppf ())
+           (pp ?depth:(Option.map pred depth) inner_pp)
+           ppf
+           (List.of_seq xs);
+         pp_close_box ppf ();
+         pp_print_break ppf 0 0);
+
       pp_print_string ppf ")"
 
     in
@@ -159,8 +167,8 @@ module Tree = struct
     let ys = Seq.map (fun smaller_x -> map f smaller_x) xs in
     Tree (y, ys)
 
-  (** [map] *)
-  let (>|=) (a : 'a t) (f : 'a -> 'b) : 'b t = map f a
+  (** Note that parameter order is reversed. *)
+  let (>|=) a f = map f a
 
   let rec ap (f : ('a -> 'b) t) (a : 'a t) : 'b t =
     let Tree (x0, xs) = a in
@@ -169,8 +177,7 @@ module Tree = struct
     let ys = Seq.append (Seq.map (fun f' -> ap f' a) fs) (Seq.map (fun x' -> ap f x') xs) in
     Tree (y, ys)
 
-  (** [ap] *)
-  let (<*>) (f : ('a -> 'b) t) (a : 'a t) : 'b t = ap f a
+  let (<*>) = ap
 
   let liftA2 (f : 'a -> 'b -> 'c) (a : 'a t) (b : 'b t) : 'c t =
     (a >|= f) <*> b
@@ -182,8 +189,7 @@ module Tree = struct
     let ys = Seq.append ys_of_xs ys_of_x in
     Tree (y, ys)
 
-  (** [bind] *)
-  let (>>=) (a : 'a t) (f : 'a -> 'b t) : 'b t = bind a f
+  let (>>=) = bind
 
   let pure x = Tree (x, Seq.empty)
 
@@ -204,12 +210,14 @@ end
 
 module Gen = struct
 
-  (* TODO maybe the type should be changed to [RS.t -> (unit -> 'a) tree] or use laziness? To avoid eagerly evaluating shrinks during generation (see implem of [(>>=)] that requires evaluating to append Sequences). *)
+  (* Maybe the type should be changed to [RS.t -> (unit -> 'a) tree] or use laziness? To avoid eagerly evaluating shrinks during generation (see implem of [(>>=)] that requires evaluating to append Sequences). *)
   type 'a t = RS.t -> 'a Tree.t
+
   type 'a sized = int -> Random.State.t -> 'a Tree.t
 
   let map f x st = Tree.map f (x st)
 
+  (** Note that parameter order is reversed. *)
   let (>|=) x f = map f x
 
   let (<$>) = map
@@ -218,7 +226,7 @@ module Gen = struct
 
   let ap (f : ('a -> 'b) t) (x : 'a t) : 'b t = fun st -> Tree.ap (f st)  (x st)
 
-  let (<*>) f x = ap f x
+  let (<*>) = ap
 
   let liftA2 (f : 'a -> 'b -> 'c) (a : 'a t) (b : 'b t) : 'c t =
     (a >|= f) <*> b
@@ -232,7 +240,7 @@ module Gen = struct
 
   let return = pure
 
-  let bind (gen : 'a t) (f : 'a -> ('b t)) : 'b t = fun st ->  Tree.(>>=) (gen st)  (fun a -> f a st)
+  let bind (gen : 'a t) (f : 'a -> ('b t)) : 'b t = fun st -> Tree.bind (gen st) (fun a -> f a st)
 
   let (>>=) = bind
 
@@ -241,7 +249,7 @@ module Gen = struct
     let x = if p < 0.75 then RS.int st 10 else RS.int st 100 in
     Tree.int_towards 0 x
 
-  (* natural number generator *)
+  (** Natural number generator *)
   let nat : int t = fun st ->
     let p = RS.float st 1. in
     let x =
@@ -340,7 +348,7 @@ module Gen = struct
     fun st ->
       if n <= (1 lsl 30) - 2
       then Tree.int_towards 0 (Random.State.int st (n + 1))
-      else Tree.(>|=) (pint st) (fun r -> r mod (n + 1))
+      else Tree.map (fun r -> r mod (n + 1)) (pint st)
 
   (** Shrink towards [origin] if provided, otherwise towards the middle of the range
       (e.g. [int_range (-5) 15] will shrink towards [5])
@@ -626,8 +634,8 @@ module Gen = struct
   let generate1 ?(rand=Random.State.make_self_init()) (gen : 'a t) : 'a =
     gen rand |> Tree.node
 
-  let generate_print ?(rand=Random.State.make_self_init()) (gen : 'a t) (pp : Format.formatter -> 'a -> unit) : string =
-    gen rand |> Format.asprintf "%a" (Tree.pp pp)
+  let generate_tree ?(rand=Random.State.make_self_init()) (gen : 'a t) : 'a Tree.t =
+    gen rand
 
   let delay f st = f () st
 
