@@ -458,11 +458,7 @@ module Gen = struct
             else Some (current_shrink, add current_shrink half_diff)
         ) destination
     in
-    let rec int32_towards destination x =
-      let shrink_trees = int32_towards_seq destination x |> Seq.map (int32_towards destination) in
-      Tree.Tree (x, shrink_trees)
-    in
-    int32_towards 0l x
+    Tree.make_primitive (int32_towards_seq 0l) x
 
   let ui64 : int64 t = fun st ->
     let x = random_binary_string 64 st |> Int64.of_string in
@@ -483,11 +479,7 @@ module Gen = struct
             else Some (current_shrink, add current_shrink half_diff)
         ) destination
     in
-    let rec int64_towards destination x =
-      let shrink_trees = int64_towards_seq destination x |> Seq.map (int64_towards destination) in
-      Tree.Tree (x, shrink_trees)
-    in
-    int64_towards 0L x
+    Tree.make_primitive (int64_towards_seq 0L) x
 
   let list_size (size : int t) (gen : 'a t) : 'a list t =
     size >>= fun size ->
