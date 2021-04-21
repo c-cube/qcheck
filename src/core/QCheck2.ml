@@ -193,8 +193,8 @@ module Tree = struct
 
   let pure x = Tree (x, Seq.empty)
 
-  let rec int_towards destination x =
-    let shrink_trees = Seq.int_towards destination x |> Seq.map (int_towards destination) in
+  let rec make_primitive (shrink : 'a -> 'a Seq.t) (x : 'a) : 'a t =
+    let shrink_trees = shrink x |> Seq.map (make_primitive shrink) in
     Tree (x, shrink_trees)
 
   let rec opt (a : 'a t) : 'a option t =
@@ -244,10 +244,13 @@ module Gen = struct
 
   let (>>=) = bind
 
+  let make_primitive (f : Random.State.t -> 'a) (shrink : 'a -> 'a Seq.t) : 'a t = fun st ->
+    Tree.make_primitive shrink (f st)
+
   let small_nat : int t = fun st ->
     let p = RS.float st 1. in
     let x = if p < 0.75 then RS.int st 10 else RS.int st 100 in
-    Tree.int_towards 0 x
+    Tree.make_primitive (Seq.int_towards 0) x
 
   (** Natural number generator *)
   let nat : int t = fun st ->
@@ -257,13 +260,13 @@ module Gen = struct
       else if p < 0.75 then RS.int st 100
       else if p < 0.95 then RS.int st 1_000
       else RS.int st 10_000
-    in Tree.int_towards 0 x
+    in Tree.make_primitive (Seq.int_towards 0) x
 
   let big_nat : int t = fun st ->
     let p = RS.float st 1. in
     if p < 0.75
     then nat st
-    else Tree.int_towards 0 (RS.int st 1_000_000)
+    else Tree.make_primitive (Seq.int_towards 0) (RS.int st 1_000_000)
 
   let unit : unit t = fun _st -> Tree.pure ()
 
@@ -326,7 +329,7 @@ module Gen = struct
 
   (* Uniform random int generator *)
   let pint ?(origin : int option) : int t = fun st ->
-    let x = 
+    let x =
       if Sys.word_size = 32
       then RS.bits st
       else (* word size = 64 *)
@@ -335,7 +338,7 @@ module Gen = struct
         lor ((RS.bits st land 3) lsl 60)  (* Top 2 bits *)  (* top bit = 0 *)
     in
     let origin = find_origin ?origin min_int max_int in
-    Tree.int_towards origin x
+    Tree.make_primitive (Seq.int_towards origin) x
 
   let int : int t =
     bool >>= fun b ->
@@ -347,7 +350,7 @@ module Gen = struct
     if n < 0 then invalid_arg "Gen.int_bound";
     fun st ->
       if n <= (1 lsl 30) - 2
-      then Tree.int_towards 0 (Random.State.int st (n + 1))
+      then Tree.make_primitive (Seq.int_towards 0) (Random.State.int st (n + 1))
       else Tree.map (fun r -> r mod (n + 1)) (pint st)
 
   (** Shrink towards [origin] if provided, otherwise towards the middle of the range
@@ -378,7 +381,7 @@ module Gen = struct
           then Tree.map (fun n -> - n - 1) (int_bound (- (a+1)) st)
           else int_bound b st
         ) in
-      Tree.int_towards origin (a + n)
+      Tree.make_primitive (Seq.int_towards origin) (a + n)
 
   let (--) low high = int_range ~origin:low low high
 

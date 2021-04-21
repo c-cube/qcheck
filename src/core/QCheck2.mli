@@ -455,6 +455,25 @@ module Gen : sig
       Shrinks towards [0L].
   *)
 
+  val make_primitive : (Random.State.t -> 'a) -> ('a -> 'a Seq.t) -> 'a t
+  (** [make_primitive f shrink] creates a generator from a function [f] that creates
+      a random value (this function should only use the given {!Random.State.t} to generate random things)
+      and a function [shrink] that, given a value [a], returns a lazy list of
+      "smaller" values (used when a test fails).
+
+      This lower-level function is meant to build generators for "primitive" types that can neither be
+      built with other primitive generators nor through composition, or to have more control on the
+      shrinking steps.
+
+      [shrink] must obey the following rules (for your own definition of "small"):
+      - [shrink a = Seq.empty] when [a] is the smallest possible value
+      - [shrink a] must return values strictly smaller than [a], ideally from smallest to largest (for
+        faster shrinking)
+      - [let rec loop a = match shrink a () with | Nil -> () | Cons (smaller_a, _) -> loop smaller_a]
+        must end for all values [a] of type ['a] (i.e. there must not be an infinite number of shrinking
+        steps).
+  *)
+
   (** {3 Lists, arrays and option generators} *)
 
   val list : 'a t -> 'a list t
