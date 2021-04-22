@@ -7,74 +7,74 @@ all rights reserved.
 (** {1 Quickcheck inspired property-based testing} *)
 
 (** The library takes inspiration from Haskell's QuickCheck library. The
-rough idea is that the programmer describes invariants that values of
-a certain type need to satisfy ("properties"), as functions from this type
-to bool. She also needs to describe how to generate random values of the type,
-so that the property is tried and checked on a number of random instances.
+    rough idea is that the programmer describes invariants that values of
+    a certain type need to satisfy ("properties"), as functions from this type
+    to bool. She also needs to describe how to generate random values of the type,
+    so that the property is tried and checked on a number of random instances.
 
-This explains the organization of this module:
+    This explains the organization of this module:
 
-- {! 'a arbitrary} is used to describe how to generate random values,
-  shrink them (make counter-examples as small as possible), print
-  them, etc. Auxiliary modules such as {!Gen}, {!Print}, and {!Shrink}
-  can be used along with {!make} to build one's own arbitrary instances.
+    - {! 'a arbitrary} is used to describe how to generate random values,
+      shrink them (make counter-examples as small as possible), print
+      them, etc. Auxiliary modules such as {!Gen}, {!Print}, and {!Shrink}
+      can be used along with {!make} to build one's own arbitrary instances.
 
-- {!Test} is used to describe a single test, that is, a property of
-  type ['a -> bool] combined with an ['a arbitrary] that is used to generate
-  the test cases for this property. Optional parameters
-  allow to specify the random generator state, number of instances to generate
-  and test, etc.
-
-
-Examples:
-
-  - List.rev is involutive:
-
-{[
-
-let test =
-  QCheck.(Test.make ~count:1000
-   (list int) (fun l -> List.rev (List.rev l) = l));;
-
-QCheck.Test.check_exn test;;
-]}
-
-  - Not all lists are sorted (false property that will fail. The 15 smallest
-    counter-example lists will be printed):
-
-{[
-let test = QCheck.(
-  Test.make
-    ~count:10_000 ~max_fail:3
-    (list small_nat)
-    (fun l -> l = List.sort compare l));;
-QCheck.Test.check_exn test;;
-]}
+    - {!Test} is used to describe a single test, that is, a property of
+      type ['a -> bool] combined with an ['a arbitrary] that is used to generate
+      the test cases for this property. Optional parameters
+      allow to specify the random generator state, number of instances to generate
+      and test, etc.
 
 
-  - generate 20 random trees using {! Gen.fix} :
+    Examples:
 
-{[
-type tree = Leaf of int | Node of tree * tree
+    - List.rev is involutive:
 
-let leaf x = Leaf x
-let node x y = Node (x,y)
+    {[
 
-let g = QCheck.Gen.(sized @@ fix
-  (fun self n -> match n with
-    | 0 -> map leaf nat
-    | n ->
-      frequency
-        [1, map leaf nat;
-         2, map2 node (self (n/2)) (self (n/2))]
-    ))
+      let test =
+        QCheck.(Test.make ~count:1000
+                  (list int) (fun l -> List.rev (List.rev l) = l));;
 
-Gen.generate ~n:20 g;;
-]}
+      QCheck.Test.check_exn test;;
+    ]}
 
-More complex and powerful combinators can be found in Gabriel Scherer's
-{!Generator} module. Its documentation can be found
-{{:http://gasche.github.io/random-generator/doc/Generator.html } here}.
+    - Not all lists are sorted (false property that will fail. The 15 smallest
+      counter-example lists will be printed):
+
+    {[
+      let test = QCheck.(
+          Test.make
+            ~count:10_000 ~max_fail:3
+            (list small_nat)
+            (fun l -> l = List.sort compare l));;
+      QCheck.Test.check_exn test;;
+    ]}
+
+
+    - generate 20 random trees using {! Gen.fix} :
+
+    {[
+      type tree = Leaf of int | Node of tree * tree
+
+      let leaf x = Leaf x
+      let node x y = Node (x,y)
+
+      let g = QCheck.Gen.(sized @@ fix
+                            (fun self n -> match n with
+                               | 0 -> map leaf nat
+                               | n ->
+                                 frequency
+                                   [1, map leaf nat;
+                                    2, map2 node (self (n/2)) (self (n/2))]
+                            ))
+
+          Gen.generate ~n:20 g;;
+    ]}
+
+    More complex and powerful combinators can be found in Gabriel Scherer's
+    {!Generator} module. Its documentation can be found
+    {{:http://gasche.github.io/random-generator/doc/Generator.html } here}.
 *)
 
 val (==>) : bool -> bool -> bool
@@ -100,8 +100,8 @@ val assume : bool -> unit
     Example:
     {[
       Test.make (list int) (fun l ->
-        assume (l <> []);
-        List.hd l :: List.tl l = l)
+          assume (l <> []);
+          List.hd l :: List.tl l = l)
     ]}
 
     @since 0.5.1
@@ -115,8 +115,8 @@ val assume_fail : unit -> 'a
     Example:
     {[
       Test.make (list int) (function
-        | [] -> assume_fail ()
-        | _::_ as l -> List.hd l :: List.tl l = l)
+          | [] -> assume_fail ()
+          | _::_ as l -> List.hd l :: List.tl l = l)
     ]}
 
     @since 0.5.1
@@ -403,22 +403,22 @@ module Gen : sig
       The passed size-parameter should decrease to ensure termination. *)
 
   (** Example:
-  {[
-  type tree = Leaf of int | Node of tree * tree
+      {[
+        type tree = Leaf of int | Node of tree * tree
 
-  let leaf x = Leaf x
-  let node x y = Node (x,y)
+        let leaf x = Leaf x
+        let node x y = Node (x,y)
 
-  let g = QCheck.Gen.(sized @@ fix
-    (fun self n -> match n with
-      | 0 -> map leaf nat
-      | n ->
-        frequency
-          [1, map leaf nat;
-           2, map2 node (self (n/2)) (self (n/2))]
-      ))
+        let g = QCheck.Gen.(sized @@ fix
+                              (fun self n -> match n with
+                                 | 0 -> map leaf nat
+                                 | n ->
+                                   frequency
+                                     [1, map leaf nat;
+                                      2, map2 node (self (n/2)) (self (n/2))]
+                              ))
 
-  ]}
+      ]}
 
   *)
 
@@ -826,6 +826,10 @@ module Test : sig
   (** Get the long factor of a cell.
       @since 0.5.3 *)
 
+  val get_if_assumptions_fail : _ cell -> ([`Fatal | `Warning] * float)
+  val get_max_gen : _ cell -> int
+  val get_max_fail : _ cell -> int
+
   type t = Test : 'a cell -> t
   (** Same as ['a cell], but masking the type parameter. This allows to
       put tests on different types in the same list of tests. *)
@@ -975,7 +979,7 @@ val find_example_gen :
 
 val choose : 'a arbitrary list -> 'a arbitrary
 (** Choose among the given list of generators. The list must not
-  be empty; if it is Invalid_argument is raised. *)
+    be empty; if it is Invalid_argument is raised. *)
 
 val unit : unit arbitrary
 (** Always generates [()], obviously. *)
@@ -1046,7 +1050,7 @@ val pos_int : int arbitrary
 
 val small_int_corners : unit -> int arbitrary
 (** As [small_int], but each newly created generator starts with
- a list of corner cases before falling back on random generation. *)
+    a list of corner cases before falling back on random generation. *)
 
 val neg_int : int arbitrary
 (** Negative int generator (0 included, see {!Gen.neg_int}).
@@ -1132,7 +1136,7 @@ val fun1_unsafe : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary
     The functions are always pure and total functions:
     - when given the same argument (as decided by Pervasives.(=)), it returns the same value
     - it never does side effects, like printing or never raise exceptions etc.
-    The functions generated are really printable.
+      The functions generated are really printable.
 
     renamed from {!fun1} since 0.6
 
@@ -1250,11 +1254,11 @@ val fun4 :
 (** @since 0.6 *)
 
 val oneofl : ?print:'a Print.t -> ?collect:('a -> string) ->
-             'a list -> 'a arbitrary
+  'a list -> 'a arbitrary
 (** Pick an element randomly in the list. *)
 
 val oneofa : ?print:'a Print.t -> ?collect:('a -> string) ->
-             'a array -> 'a arbitrary
+  'a array -> 'a arbitrary
 (** Pick an element randomly in the array. *)
 
 val oneof : 'a arbitrary list -> 'a arbitrary
@@ -1264,17 +1268,17 @@ val always : ?print:'a Print.t -> 'a -> 'a arbitrary
 (** Always return the same element. *)
 
 val frequency : ?print:'a Print.t -> ?small:('a -> int) ->
-                ?shrink:'a Shrink.t -> ?collect:('a -> string) ->
-                (int * 'a arbitrary) list -> 'a arbitrary
+  ?shrink:'a Shrink.t -> ?collect:('a -> string) ->
+  (int * 'a arbitrary) list -> 'a arbitrary
 (** Similar to {!oneof} but with frequencies. *)
 
 val frequencyl : ?print:'a Print.t -> ?small:('a -> int) ->
-                (int * 'a) list -> 'a arbitrary
+  (int * 'a) list -> 'a arbitrary
 (** Same as {!oneofl}, but each element is paired with its frequency in
     the probability distribution (the higher, the more likely). *)
 
 val frequencya : ?print:'a Print.t -> ?small:('a -> int) ->
-                (int * 'a) array -> 'a arbitrary
+  (int * 'a) array -> 'a arbitrary
 (** Same as {!frequencyl}, but with an array. *)
 
 val map : ?rev:('b -> 'a) -> ('a -> 'b) -> 'a arbitrary -> 'b arbitrary
@@ -1287,7 +1291,7 @@ val map : ?rev:('b -> 'a) -> ('a -> 'b) -> 'a arbitrary -> 'b arbitrary
 
 val map_same_type : ('a -> 'a) -> 'a arbitrary -> 'a arbitrary
 (** Specialization of [map] when the transformation preserves the type, which
-   makes shrinker, printer, etc. still relevant. *)
+    makes shrinker, printer, etc. still relevant. *)
 
 val map_keep_input :
   ?print:'b Print.t -> ?small:('b -> int) ->

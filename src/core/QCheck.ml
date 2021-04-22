@@ -1277,6 +1277,9 @@ module Test = struct
 
   let get_count {count; _ } = count
   let get_long_factor {long_factor; _} = long_factor
+  let get_max_fail {max_fail; _} = max_fail
+  let get_max_gen {max_gen; _} = max_gen
+  let get_if_assumptions_fail {if_assumptions_fail; _} = if_assumptions_fail
 
   let default_count = 100
 
