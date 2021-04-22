@@ -1006,7 +1006,9 @@ let set_gen g o = {o with gen=g}
 let add_shrink_invariant (p : 'a -> bool) (arb : 'a arbitrary) : 'a arbitrary =
   {arb with gen = Gen.add_shrink_invariant p arb.gen}
 
-let gen o = o.gen
+let get_gen o = o.gen
+
+let get_print o = o.print
 
 let make_scalar ?print ?collect gen =
   make ?print ?collect gen
@@ -1486,6 +1488,12 @@ module TestResult = struct
     mutable warnings: string list;
     mutable instances: 'a list;
   }
+
+  let get_count {count; _} = count
+
+  let get_count_gen {count_gen; _} = count_gen
+
+  let get_state {state; _} = state
 
   (* indicate failure on the given [instance] *)
   let fail ~msg_l ~steps:shrink_steps res instance =

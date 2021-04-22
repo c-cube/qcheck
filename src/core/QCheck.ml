@@ -670,7 +670,9 @@ let add_shrink_invariant f o = match o.shrink with
   | None -> o
   | Some shr -> {o with shrink=Some (Shrink.filter f shr)}
 
-let gen o = o.gen
+let get_gen o = o.gen
+let gen = get_gen
+let get_print o = o.print
 
 let small1 _ = 1
 
@@ -1217,6 +1219,10 @@ module TestResult = struct
     mutable warnings: string list;
     mutable instances: 'a list;
   }
+
+  let get_count {count; _} = count
+  let get_count_gen {count_gen; _} = count_gen
+  let get_state {state; _} = state
 
   (* indicate failure on the given [instance] *)
   let fail ~msg_l ~small ~steps:shrink_steps res instance =

@@ -700,6 +700,12 @@ val gen : 'a arbitrary -> 'a Gen.t
 (** Access the underlying random generator of this arbitrary object.
     @since 0.6 *)
 
+val get_gen : 'a arbitrary -> 'a Gen.t
+(** Access the underlying random generator of this arbitrary object.
+    @since 0.6 *)
+
+val get_print : 'a arbitrary -> 'a Print.t option
+
 (** {2 Tests}
 
     A test is a universal property of type [foo -> bool] for some type [foo],
@@ -752,6 +758,12 @@ module TestResult : sig
     (** List of instances used for this test, in no particular order.
         @since 0.9 *)
   }
+
+  val get_count : _ t -> int
+
+  val get_count_gen : _ t -> int
+
+  val get_state : 'a t -> 'a state
 
   val collect : _ t -> (string,int) Hashtbl.t option
   (** Obtain statistics

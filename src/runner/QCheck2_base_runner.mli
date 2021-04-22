@@ -4,4 +4,4 @@ copyright (c) 2013-2017, Guillaume Bury, Simon Cruanes, Vincent Hugot, Jan Midtg
 all rights reserved.
 *)
 
-include module type of QCheck_base_runner_internal.Make (QCheck)
+include module type of QCheck_base_runner_internal.Make (QCheck2)
