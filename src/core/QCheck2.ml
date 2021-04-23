@@ -248,8 +248,8 @@ module Gen = struct
 
   let (>>=) = bind
 
-  let make_primitive (f : Random.State.t -> 'a) (shrink : 'a -> 'a Seq.t) : 'a t = fun st ->
-    Tree.make_primitive shrink (f st)
+  let make_primitive ~(gen : Random.State.t -> 'a) ~(shrink : 'a -> 'a Seq.t) : 'a t = fun st ->
+    Tree.make_primitive shrink (gen st)
 
   let parse_origin (loc : string) (pp : Format.formatter -> 'a -> unit) ~(origin : 'a) ~(low : 'a) ~(high : 'a) : 'a =
     if origin < low then invalid_arg Format.(asprintf "%s: origin value %a is lower than low value %a" loc pp origin pp low)
@@ -2037,7 +2037,7 @@ let migrate_v1_arbitrary (arb : 'a QCheck.arbitrary) : 'a arbitrary =
       shrink_v1 x (fun next_shrink -> rev_shrinks := next_shrink :: !rev_shrinks) ;
       List.rev !rev_shrinks |> List.to_seq
   in
-  let gen = Gen.make_primitive gen_v1 shrink in
+  let gen = Gen.make_primitive ~gen:gen_v1 ~shrink in
   {print = print_v1; collect = collect_v1; stats = stats_v1; gen}
 
 let migrate_v1_cell (cell_v1 : 'a QCheck.Test.cell) : 'a Test.cell =

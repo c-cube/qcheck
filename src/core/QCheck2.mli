@@ -490,8 +490,8 @@ module Gen : sig
       Shrinks towards [0L].
   *)
 
-  val make_primitive : (Random.State.t -> 'a) -> ('a -> 'a Seq.t) -> 'a t
-  (** [make_primitive f shrink] creates a generator from a function [f] that creates
+  val make_primitive : gen : (Random.State.t -> 'a) -> shrink : ('a -> 'a Seq.t) -> 'a t
+  (** [make_primitive ~gen ~shrink] creates a generator from a function [gen] that creates
       a random value (this function should only use the given {!Random.State.t} to generate random things)
       and a function [shrink] that, given a value [a], returns a lazy list of
       "smaller" values (used when a test fails).
