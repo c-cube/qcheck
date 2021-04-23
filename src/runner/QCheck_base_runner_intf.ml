@@ -72,7 +72,7 @@ end
 module type QCHECK_BASE_RUNNER = sig
 
   module QCheck_common : QCHECK
-  (** Will be removed by destructive substitution with either {!QCheck} or {!QCheck2}. *)
+  (** Removed by destructive substitution with either {!QCheck} or {!QCheck2}. *)
 
   (** {1 Runners for Tests}
 
