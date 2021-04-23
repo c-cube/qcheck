@@ -4,7 +4,7 @@ copyright (c) 2013-2017, Guillaume Bury, Simon Cruanes, Vincent Hugot, Jan Midtg
 all rights reserved.
 *)
 
-module Make (QCheck : QCheck_base_runner_intf.QCHECK) = struct
+module Make (QCheck_common : QCheck_base_runner_intf.QCHECK) = struct
 
   module Color = struct
     let fpf = Printf.fprintf
@@ -122,17 +122,17 @@ module Make (QCheck : QCheck_base_runner_intf.QCHECK) = struct
        @param verbose if true, print statistics and details
        @param print_res if true, print the result on [out] *)
     let callback ~colors ~verbose ~print_res ~print name cell result =
-      let module R = QCheck.TestResult in
-      let module T = QCheck.Test in
+      let module R = QCheck_common.TestResult in
+      let module T = QCheck_common.Test in
       let arb = T.get_arbitrary cell in
       let reset_line = if colors then Color.reset_line else "\n" in
       if verbose then (
         print.info "%slaw %s: %d relevant cases (%d total)\n"
           reset_line name (R.get_count result) (R.get_count_gen result);
-        begin match QCheck.TestResult.collect result with
+        begin match QCheck_common.TestResult.collect result with
           | None -> ()
           | Some tbl ->
-            print_string (QCheck.Test.print_collect tbl)
+            print_string (QCheck_common.Test.print_collect tbl)
         end;
       );
       if print_res then (
@@ -199,10 +199,10 @@ module Make (QCheck : QCheck_base_runner_intf.QCHECK) = struct
   }
 
   type res =
-    | Res : 'a QCheck.Test.cell * 'a QCheck.TestResult.t -> res
+    | Res : 'a QCheck_common.Test.cell * 'a QCheck_common.TestResult.t -> res
 
   type handler = {
-    handler : 'a. 'a QCheck.Test.handler;
+    handler : 'a. 'a QCheck_common.Test.handler;
   }
 
   type handler_gen =
@@ -218,7 +218,7 @@ module Make (QCheck : QCheck_base_runner_intf.QCHECK) = struct
       size c.passed size c.expected t
 
   let debug_shrinking_counter_example cell out x =
-    match QCheck.Test.get_arbitrary cell |> QCheck.get_print with
+    match QCheck_common.Test.get_arbitrary cell |> QCheck_common.get_print with
     | None -> Printf.fprintf out "<no printer provided>"
     | Some print -> Printf.fprintf out "%s" (print x)
 
@@ -249,17 +249,17 @@ module Make (QCheck : QCheck_base_runner_intf.QCHECK) = struct
       ~size ~out ~verbose c =
     let handler name cell r =
       let st = function
-        | QCheck.Test.Generating    -> "generating"
-        | QCheck.Test.Collecting _  -> "collecting"
-        | QCheck.Test.Testing _     -> "   testing"
-        | QCheck.Test.Shrunk (i, _) ->
+        | QCheck_common.Test.Generating    -> "generating"
+        | QCheck_common.Test.Collecting _  -> "collecting"
+        | QCheck_common.Test.Testing _     -> "   testing"
+        | QCheck_common.Test.Shrunk (i, _) ->
           Printf.sprintf "shrinking: %4d" i
-        | QCheck.Test.Shrinking (i, j, _) ->
+        | QCheck_common.Test.Shrinking (i, j, _) ->
           Printf.sprintf "shrinking: %4d.%04d" i j
       in
       (* debug shrinking choices *)
       begin match r with
-        | QCheck.Test.Shrunk (i, x) ->
+        | QCheck_common.Test.Shrunk (i, x) ->
           debug_shrinking_choices
             ~colors ~debug_shrink ~debug_shrink_list name cell i x
         | _ ->
@@ -278,10 +278,10 @@ module Make (QCheck : QCheck_base_runner_intf.QCHECK) = struct
 
   let step ~colors ~size ~out ~verbose c name _ _ r =
     let aux = function
-      | QCheck.Test.Success -> c.passed <- c.passed + 1
-      | QCheck.Test.Failure -> c.failed <- c.failed + 1
-      | QCheck.Test.FalseAssumption -> ()
-      | QCheck.Test.Error _ -> c.errored <- c.errored + 1
+      | QCheck_common.Test.Success -> c.passed <- c.passed + 1
+      | QCheck_common.Test.Failure -> c.failed <- c.failed + 1
+      | QCheck_common.Test.FalseAssumption -> ()
+      | QCheck_common.Test.Error _ -> c.errored <- c.errored + 1
     in
     c.gen <- c.gen + 1;
     aux r;
@@ -293,7 +293,7 @@ module Make (QCheck : QCheck_base_runner_intf.QCHECK) = struct
     )
 
   let callback ~size ~out ~verbose ~colors c name _ r =
-    let pass = QCheck.TestResult.is_success r in
+    let pass = QCheck_common.TestResult.is_success r in
     let color = if pass then `Green else `Red in
     if verbose then (
       Printf.fprintf out "%s[%a] %a %s\n%!"
@@ -303,13 +303,13 @@ module Make (QCheck : QCheck_base_runner_intf.QCHECK) = struct
     )
 
   let print_inst arb x =
-    match QCheck.get_print arb with
+    match QCheck_common.get_print arb with
     | Some f -> f x
     | None -> "<no printer>"
 
   let expect long cell =
-    let count = QCheck.Test.get_count cell in
-    if long then QCheck.Test.get_long_factor cell * count else count
+    let count = QCheck_common.Test.get_count cell in
+    if long then QCheck_common.Test.get_long_factor cell * count else count
 
   let expect_size long cell =
     let rec aux n = if n < 10 then 1 else 1 + (aux (n / 10)) in
@@ -321,56 +321,56 @@ module Make (QCheck : QCheck_base_runner_intf.QCHECK) = struct
       Printf.fprintf out
         "\n+++ %a %s\n\nMessages for test %s:\n\n%!"
         (Color.pp_str_c ~colors `Blue) "Messages"
-        (String.make 68 '+') (QCheck.Test.get_name cell);
+        (String.make 68 '+') (QCheck_common.Test.get_name cell);
       List.iter (Printf.fprintf out "%s\n%!") l
     )
 
   let print_success ~colors out cell r =
-    begin match QCheck.TestResult.collect r with
+    begin match QCheck_common.TestResult.collect r with
       | None -> ()
       | Some tbl ->
         Printf.fprintf out
           "\n+++ %a %s\n\nCollect results for test %s:\n\n%s%!"
           (Color.pp_str_c ~colors `Blue) "Collect"
-          (String.make 68 '+') (QCheck.Test.get_name cell) (QCheck.Test.print_collect tbl)
+          (String.make 68 '+') (QCheck_common.Test.get_name cell) (QCheck_common.Test.print_collect tbl)
     end;
     List.iter (fun msg ->
         Printf.fprintf out
           "\n!!! %a %s\n\nWarning for test %s:\n\n%s%!"
           (Color.pp_str_c ~colors `Yellow) "Warning" (String.make 68 '!')
-          (QCheck.Test.get_name cell) msg)
-      (QCheck.TestResult.warnings r);
+          (QCheck_common.Test.get_name cell) msg)
+      (QCheck_common.TestResult.warnings r);
 
-    if QCheck.TestResult.stats r <> []  then
+    if QCheck_common.TestResult.stats r <> []  then
       Printf.fprintf out
         "\n+++ %a %s\n%!"
-        (Color.pp_str_c ~colors `Blue) ("Stats for " ^ QCheck.Test.get_name cell)
+        (Color.pp_str_c ~colors `Blue) ("Stats for " ^ QCheck_common.Test.get_name cell)
         (String.make 56 '+');
     List.iter
-      (fun st -> Printf.fprintf out "\n%s%!" (QCheck.Test.print_stat st))
-      (QCheck.TestResult.stats r);
+      (fun st -> Printf.fprintf out "\n%s%!" (QCheck_common.Test.print_stat st))
+      (QCheck_common.TestResult.stats r);
     ()
 
   let print_fail ~colors out cell c_ex =
     Printf.fprintf out "\n--- %a %s\n\n" (Color.pp_str_c ~colors `Red) "Failure" (String.make 68 '-');
     Printf.fprintf out "Test %s failed (%d shrink steps):\n\n%s\n%!"
-      (QCheck.Test.get_name cell) c_ex.QCheck.TestResult.shrink_steps
-      (print_inst (QCheck.Test.get_arbitrary cell) c_ex.QCheck.TestResult.instance);
-    print_messages ~colors out cell c_ex.QCheck.TestResult.msg_l
+      (QCheck_common.Test.get_name cell) c_ex.QCheck_common.TestResult.shrink_steps
+      (print_inst (QCheck_common.Test.get_arbitrary cell) c_ex.QCheck_common.TestResult.instance);
+    print_messages ~colors out cell c_ex.QCheck_common.TestResult.msg_l
 
   let print_fail_other ~colors out cell msg =
     Printf.fprintf out "\n--- %a %s\n\n" (Color.pp_str_c ~colors `Red) "Failure" (String.make 68 '-');
-    Printf.fprintf out "Test %s failed:\n\n%s\n%!" (QCheck.Test.get_name cell) msg
+    Printf.fprintf out "Test %s failed:\n\n%s\n%!" (QCheck_common.Test.get_name cell) msg
 
   let print_error ~colors out cell c_ex exn bt =
     Printf.fprintf out "\n=== %a %s\n\n" (Color.pp_str_c ~colors `Red) "Error" (String.make 70 '=');
     Printf.fprintf out "Test %s errored on (%d shrink steps):\n\n%s\n\nexception %s\n%s\n%!"
-      (QCheck.Test.get_name cell)
-      c_ex.QCheck.TestResult.shrink_steps
-      (print_inst (QCheck.Test.get_arbitrary cell) c_ex.QCheck.TestResult.instance)
+      (QCheck_common.Test.get_name cell)
+      c_ex.QCheck_common.TestResult.shrink_steps
+      (print_inst (QCheck_common.Test.get_arbitrary cell) c_ex.QCheck_common.TestResult.instance)
       (Printexc.to_string exn)
       bt;
-    print_messages ~colors out cell c_ex.QCheck.TestResult.msg_l
+    print_messages ~colors out cell c_ex.QCheck_common.TestResult.msg_l
 
   let run_tests
       ?(handler=default_handler)
@@ -378,8 +378,8 @@ module Make (QCheck : QCheck_base_runner_intf.QCHECK) = struct
       ?(debug_shrink=debug_shrink()) ?(debug_shrink_list=debug_shrink_list())
       ?(out=stdout) ?rand l =
     let rand = match rand with Some x -> x | None -> random_state_ ~colors () in
-    let module T = QCheck.Test in
-    let module R = QCheck.TestResult in
+    let module T = QCheck_common.Test in
+    let module R = QCheck_common.TestResult in
     let pp_color = Color.pp_str_c ~bold:true ~colors in
     let size = List.fold_left (fun acc (T.Test cell) ->
         max acc (expect_size long cell)) 4 l in
@@ -400,7 +400,7 @@ module Make (QCheck : QCheck_base_runner_intf.QCHECK) = struct
         Printf.fprintf out "%s[ ] %a %s%!"
           (if colors then Color.reset_line else "")
           (pp_counter ~size) c (T.get_name cell);
-      let r = QCheck.Test.check_cell ~long ~rand
+      let r = QCheck_common.Test.check_cell ~long ~rand
           ~handler:(handler ~colors ~debug_shrink ~debug_shrink_list
                       ~size ~out ~verbose c).handler
           ~step:(step ~colors ~size ~out ~verbose c)
