@@ -1263,484 +1263,499 @@ module TestResult = struct
 end
 
 module Test = struct
-  type 'a cell = {
-    count : int; (* number of tests to do *)
-    long_factor : int; (* multiplicative factor for long test count *)
-    max_gen : int; (* max number of instances to generate (>= count) *)
-    max_fail : int; (* max number of failures *)
-    law : 'a -> bool; (* the law to check *)
-    arb : 'a arbitrary; (* how to generate/print/shrink instances *)
-    if_assumptions_fail: [`Fatal | `Warning] * float;
-    mutable name : string; (* name of the law *)
-  }
+  (* type 'a cell = {
+   *   count : int; (\* number of tests to do *\)
+   *   long_factor : int; (\* multiplicative factor for long test count *\)
+   *   max_gen : int; (\* max number of instances to generate (>= count) *\)
+   *   max_fail : int; (\* max number of failures *\)
+   *   law : 'a -> bool; (\* the law to check *\)
+   *   arb : 'a arbitrary; (\* how to generate/print/shrink instances *\)
+   *   if_assumptions_fail: [`Fatal | `Warning] * float;
+   *   mutable name : string; (\* name of the law *\)
+   * }
+   * 
+   * type t = | Test : 'a cell -> t *)
 
-  type t = | Test : 'a cell -> t
+  (* let get_name {name; _} = name *)
+  let set_name = QCheck2.Test.set_name
+  (* let get_law {law; _} = law
+   * let get_arbitrary {arb; _} = arb *)
 
-  let get_name {name; _} = name
-  let set_name c name = c.name <- name
-  let get_law {law; _} = law
-  let get_arbitrary {arb; _} = arb
+  (* let get_count {count; _ } = count
+   * let get_long_factor {long_factor; _} = long_factor
+   * let get_max_fail {max_fail; _} = max_fail
+   * let get_max_gen {max_gen; _} = max_gen
+   * let get_if_assumptions_fail {if_assumptions_fail; _} = if_assumptions_fail *)
 
-  let get_count {count; _ } = count
-  let get_long_factor {long_factor; _} = long_factor
-  let get_max_fail {max_fail; _} = max_fail
-  let get_max_gen {max_gen; _} = max_gen
-  let get_if_assumptions_fail {if_assumptions_fail; _} = if_assumptions_fail
+  (* let default_count = 100
+   * 
+   * let fresh_name =
+   *   let r = ref 0 in
+   *   (fun () -> incr r; Printf.sprintf "anon_test_%d" !r)
+   * 
+   * let default_if_assumptions_fail = `Warning, 0.05 *)
 
-  let default_count = 100
+let migrate_v1_arbitrary (arb : 'a arbitrary) : 'a QCheck2.arbitrary =
+  let {gen = gen_v1; print; collect; stats; small = _small_v1; shrink = shrink_v1_opt} = arb in
+  (* Shrink in V1 was an iterator of a passed argument, v2 is a lazy list of the currently generated value.
+     So iterate over the generated value, accumulate in a mutable list, and voila! *)
+  let shrink = match shrink_v1_opt with
+    | None -> fun _ -> Seq.empty
+    | Some shrink_v1 -> fun x ->
+      let rev_shrinks = ref [] in
+      shrink_v1 x (fun next_shrink -> rev_shrinks := next_shrink :: !rev_shrinks) ;
+      List.rev !rev_shrinks |> List.to_seq
+  in
+  let gen = QCheck2.Gen.make_primitive ~gen:gen_v1 ~shrink in
+  QCheck2.make ?print ?collect ~stats gen
 
-  let fresh_name =
-    let r = ref 0 in
-    (fun () -> incr r; Printf.sprintf "anon_test_%d" !r)
+(* let migrate_v1_cell (cell_v1 : 'a QCheck.Test.cell) : 'a Test.cell =
+ *   let arb_v1 = QCheck.Test.get_arbitrary cell_v1 in
+ *   let law = QCheck.Test.get_law cell_v1 in
+ *   let if_assumptions_fail = QCheck.Test.get_if_assumptions_fail cell_v1 in
+ *   let count = QCheck.Test.get_count cell_v1 in
+ *   let long_factor = QCheck.Test.get_long_factor cell_v1 in
+ *   let max_gen = QCheck.Test.get_max_gen cell_v1 in
+ *   let max_fail = QCheck.Test.get_max_fail cell_v1 in
+ *   let name = QCheck.Test.get_name cell_v1 in
+ *   Test.make_cell ~if_assumptions_fail ~count ~long_factor ~max_gen ~max_fail ~name (migrate_v1_arbitrary arb_v1) law
+ * 
+ * let migrate_v1_test (test : QCheck.Test.t) : Test.t =
+ *   let QCheck.Test.Test v1_cell = test in
+ *   Test.Test (migrate_v1_cell v1_cell) *)
 
-  let default_if_assumptions_fail = `Warning, 0.05
-
-  let make_cell ?(if_assumptions_fail=default_if_assumptions_fail)
-      ?(count=default_count) ?(long_factor=1) ?max_gen
-  ?(max_fail=1) ?small ?(name=fresh_name()) arb law
+  let make_cell ?if_assumptions_fail
+      ?count ?long_factor ?max_gen
+  ?max_fail ?small:_removed_in_qcheck_2 ?name arb law
   =
-    let max_gen = match max_gen with None -> count + 200 | Some x->x in
-    let arb = match small with None -> arb | Some f -> set_small f arb in
-    {
-      law;
-      arb;
-      max_gen;
-      max_fail;
-      name;
-      count;
-      long_factor;
-      if_assumptions_fail;
-    }
+  let arb = migrate_v1_arbitrary arb in
+  QCheck2.Test.make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?name arb law
 
   let make ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law =
-    Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law)
+    QCheck2.Test.Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law)
 
   (** {6 Running the test} *)
 
-  module R = TestResult
-
-  (* Result of an instance run *)
-  type res =
-    | Success
-    | Failure
-    | FalseAssumption
-    | Error of exn * string
-
-  (* Step function, called after each instance test *)
-  type 'a step = string -> 'a cell -> 'a -> res -> unit
-
-  let step_nil_ _ _ _ _ = ()
-
-  (* Events of a test *)
-  type 'a event =
-    | Generating
-    | Collecting of 'a
-    | Testing of 'a
-    | Shrunk of int * 'a
-    | Shrinking of int * int * 'a
-
-  type 'a handler = string -> 'a cell -> 'a event -> unit
-
-  let handler_nil_ _ _ _ = ()
-
-  (* state required by {!check} to execute *)
-  type 'a state = {
-    test: 'a cell;
-    step: 'a step;
-    handler : 'a handler;
-    rand: Random.State.t;
-    mutable res: 'a TestResult.t;
-    mutable cur_count: int;  (** number of iterations remaining to do *)
-    mutable cur_max_gen: int; (** maximum number of generations allowed *)
-    mutable cur_max_fail: int; (** maximum number of counter-examples allowed *)
-  }
-
-  let is_done state = state.cur_count <= 0 || state.cur_max_gen <= 0
-
-  let decr_count state =
-    state.res.R.count <- state.res.R.count + 1;
-    state.cur_count <- state.cur_count - 1
-
-  let new_input state =
-    state.res.R.count_gen <- state.res.R.count_gen + 1;
-    state.cur_max_gen <- state.cur_max_gen - 1;
-    state.test.arb.gen state.rand
-
-  (* statistics on inputs *)
-  let collect st i = match st.test.arb.collect with
-    | None -> ()
-    | Some f ->
-        let key = f i in
-        let (lazy tbl) = st.res.R.collect_tbl in
-        let n = try Hashtbl.find tbl key with Not_found -> 0 in
-        Hashtbl.replace tbl key (n+1)
-
-  let update_stats st i =
-    List.iter
-      (fun ((_,f), tbl) ->
-         let key = f i in
-         let n = try Hashtbl.find tbl key with Not_found -> 0 in
-         Hashtbl.replace tbl key (n+1))
-      st.res.R.stats_tbl
-
-  type res_or_exn =
-    | Shrink_fail
-    | Shrink_exn of exn
-
-  (* triggered by user to fail with a message *)
-  exception User_fail of string
-
-  let fail_report m = raise (User_fail m)
-
-  let fail_reportf m =
-    let buf = Buffer.create 64 in
-    Format.kfprintf
-      (fun out -> Format.fprintf out "@?"; fail_report (Buffer.contents buf))
-      (Format.formatter_of_buffer buf) m
-
-  type 'a run_res =
-    | Run_ok
-    | Run_fail of string list
-
-  let run_law law x =
-    try
-      if law x then Run_ok else Run_fail []
-    with User_fail msg -> Run_fail [msg]
-
-  (* try to shrink counter-ex [i] into a smaller one. Returns
-     shrinked value and number of steps *)
-  let shrink st (i:'a) (r:res_or_exn) m : 'a * res_or_exn * string list * int =
-    let is_err = match r with
-      | Shrink_exn _ -> true | _ -> false
-    in
-    let rec shrink_ st i r m ~steps =
-      st.handler st.test.name st.test (Shrunk (steps, i));
-      match st.test.arb.shrink with
-      | None -> i, r, m, steps
-      | Some f ->
-        let count = ref 0 in
-        let i' = Iter.find_map
-          (fun x ->
-            try
-              incr count;
-              st.handler st.test.name st.test (Shrinking (steps, !count, x));
-              begin match run_law st.test.law x with
-                | Run_fail m when not is_err -> Some (x, Shrink_fail, m)
-                | _ -> None
-              end
-            with
-              | FailedPrecondition | No_example_found _ -> None
-              | e when is_err -> Some (x, Shrink_exn e, []) (* fail test (by error) *)
-          ) (f i)
-        in
-        match i' with
-        | None -> i, r, m, steps
-        | Some (i',r',m') -> shrink_ st i' r' m' ~steps:(steps+1) (* shrink further *)
-    in
-    shrink_ ~steps:0 st i r m
-
-  type 'a check_result =
-    | CR_continue
-    | CR_yield of 'a TestResult.t
-
-  (* test raised [e] on [input]; try to shrink then fail *)
-  let handle_exn state input e bt : _ check_result =
-    (* first, shrink
-       TODO: shall we shrink differently (i.e. expected only an error)? *)
-    let input, r, msg_l, steps = shrink state input (Shrink_exn e) [] in
-    (* recover exception of shrunk input *)
-    let e = match r with
-      | Shrink_fail -> e
-      | Shrink_exn e' -> e'
-    in
-    state.step state.test.name state.test input (Error (e, bt));
-    R.error state.res ~steps ~msg_l input e bt;
-    CR_yield state.res
-
-  (* test failed on [input], which means the law is wrong. Continue if
-     we should. *)
-  let handle_fail state input msg_l : _ check_result =
-    (* first, shrink *)
-    let input, _, msg_l, steps = shrink state input Shrink_fail msg_l in
-    (* fail *)
-    decr_count state;
-    state.step state.test.name state.test input Failure;
-    state.cur_max_fail <- state.cur_max_fail - 1;
-    R.fail ~small:state.test.arb.small state.res ~steps ~msg_l input;
-    if _is_some state.test.arb.small && state.cur_max_fail > 0
-    then CR_continue
-    else CR_yield state.res
-
-  (* [check_state state] applies [state.test] repeatedly ([iter] times)
-      on output of [test.rand], and if [state.test] ever returns false,
-      then the input that caused the failure is returned in [Failed].
-      If [func input] raises [FailedPrecondition] then  the input is discarded, unless
-         max_gen is 0. *)
-  let rec check_state state : _ R.t =
-    if is_done state then state.res
-    else (
-      state.handler state.test.name state.test Generating;
-      match new_input state with
-      | i ->
-        check_state_input state i
-      | exception e ->
-        (* turn it into an error *)
-        let bt = Printexc.get_backtrace() in
-        let msg =
-          Printf.sprintf
-            "ERROR: uncaught exception in generator for test %s after %d steps:\n%s\n%s"
-            state.test.name state.test.count (Printexc.to_string e) bt
-        in
-        state.res.R.state <- R.Failed_other {msg};
-        state.res
-    )
-  and check_state_input state input =
-      state.handler state.test.name state.test (Collecting input);
-      state.res.R.instances <- input :: state.res.R.instances;
-      collect state input;
-      update_stats state input;
-      let res =
-        try
-          state.handler state.test.name state.test (Testing input);
-          begin match run_law state.test.law input with
-            | Run_ok ->
-              (* one test ok *)
-              decr_count state;
-              state.step state.test.name state.test input Success;
-              CR_continue
-            | Run_fail msg_l ->
-              handle_fail state input msg_l
-          end
-        with
-        | FailedPrecondition | No_example_found _ ->
-          state.step state.test.name state.test input FalseAssumption;
-          CR_continue
-        | e ->
-          let bt = Printexc.get_backtrace () in
-          handle_exn state input e bt
-      in
-      match res with
-        | CR_continue -> check_state state
-        | CR_yield x -> x
-
-  type 'a callback = string -> 'a cell -> 'a TestResult.t -> unit
-
-  let callback_nil_ : _ callback = fun _ _ _ -> ()
-
-  (* check that there are sufficiently many tests which passed, to avoid
-     the case where they all passed by failed precondition *)
-  let check_if_assumptions target_count cell res : unit =
-    let percentage_of_count = float_of_int res.R.count /. float_of_int target_count in
-    let assm_flag, assm_frac = cell.if_assumptions_fail in
-    if R.is_success res && percentage_of_count < assm_frac then (
-      let msg =
-        format_of_string "%s: \
-         only %.1f%% tests (of %d) passed precondition for %S\n\n\
-         NOTE: it is likely that the precondition is too strong, or that \
-         the generator is buggy.\n%!"
-      in
-      match assm_flag with
-      | `Warning ->
-        let msg = Printf.sprintf
-          msg "WARNING"
-          (percentage_of_count *. 100.) cell.count cell.name in
-        res.R.warnings <- msg :: res.R.warnings
-      | `Fatal ->
-        (* turn it into an error *)
-        let msg = Printf.sprintf
-          msg "ERROR"
-          (percentage_of_count *. 100.) cell.count cell.name in
-        res.R.state <- R.Failed_other {msg}
-    )
-
-  (* main checking function *)
-  let check_cell ?(long=false) ?(call=callback_nil_)
-      ?(step=step_nil_) ?(handler=handler_nil_)
-      ?(rand=Random.State.make [| 0 |]) cell =
-    let factor = if long then cell.long_factor else 1 in
-    let target_count = factor*cell.count in
-    let state = {
-      test=cell; rand;
-      step; handler;
-      cur_count=target_count;
-      cur_max_gen=factor*cell.max_gen;
-      cur_max_fail=factor*cell.max_fail;
-      res = {R.
-        state=R.Success; count=0; count_gen=0;
-        collect_tbl=lazy (Hashtbl.create 10);
-        instances=[]; warnings=[];
-        stats_tbl= List.map (fun stat -> stat, Hashtbl.create 10) cell.arb.stats;
-      };
-    } in
-    let res = check_state state in
-    check_if_assumptions target_count cell res;
-    call cell.name cell res;
-    res
-
-  exception Test_fail of string * string list
-  exception Test_error of string * string * exn * string
-
-  (* print instance using [arb] *)
-  let print_instance arb i = match arb.print with
-    | None -> "<instance>"
-    | Some pp -> pp i
-
-  let print_c_ex arb c : string =
-    let buf = Buffer.create 64 in
-    begin
-      if c.R.shrink_steps > 0
-      then Printf.bprintf buf "%s (after %d shrink steps)"
-          (print_instance arb c.R.instance) c.R.shrink_steps
-      else Buffer.add_string buf (print_instance arb c.R.instance)
-    end;
-    List.iter
-      (fun msg ->
-         Buffer.add_char buf '\n';
-         Buffer.add_string buf msg;
-         Buffer.add_char buf '\n')
-      c.R.msg_l;
-    Buffer.contents buf
-
-  let pp_print_test_fail name out l =
-    let rec pp_list out = function
-      | [] -> ()
-      | [x] -> Format.fprintf out "%s@," x
-      | x :: y -> Format.fprintf out "%s@,%a" x pp_list y
-    in
-    Format.fprintf out "@[test `%s`@ failed on ≥ %d cases:@ @[<v>%a@]@]"
-      name (List.length l) pp_list l
-
-  let asprintf fmt =
-    let buf = Buffer.create 128 in
-    let out = Format.formatter_of_buffer buf in
-    Format.kfprintf (fun _ -> Buffer.contents buf) out fmt
-
-  let print_test_fail name l = asprintf "@[%a@]@?" (pp_print_test_fail name) l
-
-  let print_test_error name i e stack =
-    Format.sprintf "@[test `%s`@ raised exception `%s`@ on `%s`@,%s@]"
-      name (Printexc.to_string e) i stack
-
-  let print_collect c =
-    let out = Buffer.create 64 in
-    Hashtbl.iter
-      (fun case num -> Printf.bprintf out "%s: %d cases\n" case num) c;
-    Buffer.contents out
-
-  let stat_max_lines = 20 (* maximum number of lines for a histogram *)
-
-  let print_stat ((name,_), tbl) =
-    let avg = ref 0. in
-    let num = ref 0 in
-    let min_idx, max_idx =
-      Hashtbl.fold
-        (fun i res (m1,m2) ->
-           avg := !avg +. float_of_int (i * res);
-           num := !num + res;
-           min i m1, max i m2)
-        tbl (max_int,min_int)
-    in
-    (* compute average *)
-    if !num > 0 then (
-      avg := !avg /. float_of_int !num
-    );
-    (* compute std-dev: sqroot of sum of squared distance-to-average
-       https://en.wikipedia.org/wiki/Standard_deviation *)
-    let stddev =
-      Hashtbl.fold
-        (fun i res m -> m +. (float_of_int i -. !avg) ** 2. *. float_of_int res)
-        tbl 0.
-      |> (fun s -> if !num>0 then s /. float_of_int !num else s)
-      |> sqrt
-    in
-    (* compute median *)
-    let median = ref 0 in
-    let median_num = ref 0 in (* how many values have we seen yet? once >= !n/2 we set median *)
-    (Hashtbl.fold (fun i cnt acc -> (i,cnt)::acc) tbl [])
-    |> List.sort (fun (i,_) (j,_) -> poly_compare i j)
-    |> List.iter
-      (fun (i,cnt) ->
-         if !median_num < !num/2 then (
-           median_num := !median_num + cnt;
-           (* just went above median! *)
-           if !median_num >= !num/2 then
-             median := i));
-    (* group by buckets, if there are too many entries: *)
-    (* first compute histogram and bucket size *)
-    let hist_size, bucket_size =
-      let sample_width = Int64.(sub (of_int max_idx) (of_int min_idx)) in
-      if sample_width > Int64.of_int stat_max_lines
-      then stat_max_lines,
-        int_of_float (ceil (Int64.to_float sample_width /. float_of_int stat_max_lines))
-      else max_idx-min_idx, 1
-    in
-    let hist_size = if min_idx + bucket_size * hist_size <= max_idx then 1+hist_size else hist_size in
-    (* accumulate bucket counts *)
-    let max_val = ref 0 in (* max value after grouping by buckets *)
-    let bucket_count = Array.init hist_size (fun _ -> 0) in
-    Hashtbl.iter
-      (fun j count ->
-         let bucket = Int64.(to_int (div (sub (of_int j) (of_int min_idx)) (of_int bucket_size))) in
-         let new_count = bucket_count.(bucket) + count in
-         bucket_count.(bucket) <- new_count;
-         max_val := max !max_val new_count) tbl;
-    (* print entries of the table, sorted by increasing index *)
-    let out = Buffer.create 128 in
-    Printf.bprintf out "stats %s:\n" name;
-    Printf.bprintf out
-      "  num: %d, avg: %.2f, stddev: %.2f, median %d, min %d, max %d\n"
-      !num !avg stddev !median min_idx max_idx;
-    let indwidth =
-      max (String.length (Printf.sprintf "%d" min_idx))
-        (max (String.length (Printf.sprintf "%d" max_idx))
-           (String.length (Printf.sprintf "%d" (min_idx + bucket_size * hist_size)))) in
-    let labwidth = if bucket_size=1 then indwidth else 2+2*indwidth in
-    for i = 0 to hist_size - 1 do
-      let i' = min_idx + i * bucket_size in
-      let blabel =
-        if bucket_size=1
-        then Printf.sprintf "%*d" indwidth i'
-        else
-          let bucket_bound = i'+bucket_size-1 in
-          Printf.sprintf "%*d..%*d" indwidth i' indwidth (if bucket_bound < i' then max_int else bucket_bound) in
-      let bcount = bucket_count.(i) in
-      (* NOTE: keep in sync *)
-      let bar_len = bcount * 55 / !max_val in
-      Printf.bprintf out "  %*s: %-56s %10d\n" labwidth blabel (String.make bar_len '#') bcount
-    done;
-    Buffer.contents out
-
-  let () = Printexc.register_printer
-    (function
-      | Test_fail (name,l) -> Some (print_test_fail name l)
-      | Test_error (name,i,e,st) -> Some (print_test_error name i e st)
-      | User_fail s -> Some ("qcheck: user fail:\n" ^ s)
-      | _ -> None)
-
-  let print_fail arb name l =
-    print_test_fail name (List.map (print_c_ex arb) l)
-
-  let print_fail_other name ~msg =
-    print_test_fail name [msg]
-
-  let print_error ?(st="") arb name (i,e) =
-    print_test_error name (print_c_ex arb i) e st
-
-  let check_result cell res = match res.R.state with
-    | R.Success -> ()
-    | R.Error {instance; exn; backtrace} ->
-      raise (Test_error (cell.name, print_c_ex cell.arb instance, exn, backtrace))
-    | R.Failed {instances=l} ->
-      let l = List.map (print_c_ex cell.arb) l in
-      raise (Test_fail (cell.name, l))
-    | R.Failed_other {msg} ->
-      raise (Test_fail (cell.name, [msg]))
-
-  let check_cell_exn ?long ?call ?step ?rand cell =
-    let res = check_cell ?long ?call ?step ?rand cell in
-    check_result cell res
-
-  let check_exn ?long ?rand (Test cell) = check_cell_exn ?long ?rand cell
+  (* module R = TestResult
+   * 
+   * (\* Result of an instance run *\)
+   * type res =
+   *   | Success
+   *   | Failure
+   *   | FalseAssumption
+   *   | Error of exn * string
+   * 
+   * (\* Step function, called after each instance test *\)
+   * type 'a step = string -> 'a cell -> 'a -> res -> unit
+   * 
+   * let step_nil_ _ _ _ _ = ()
+   * 
+   * (\* Events of a test *\)
+   * type 'a event =
+   *   | Generating
+   *   | Collecting of 'a
+   *   | Testing of 'a
+   *   | Shrunk of int * 'a
+   *   | Shrinking of int * int * 'a
+   * 
+   * type 'a handler = string -> 'a cell -> 'a event -> unit
+   * 
+   * let handler_nil_ _ _ _ = ()
+   * 
+   * (\* state required by {!check} to execute *\)
+   * type 'a state = {
+   *   test: 'a cell;
+   *   step: 'a step;
+   *   handler : 'a handler;
+   *   rand: Random.State.t;
+   *   mutable res: 'a TestResult.t;
+   *   mutable cur_count: int;  (\** number of iterations remaining to do *\)
+   *   mutable cur_max_gen: int; (\** maximum number of generations allowed *\)
+   *   mutable cur_max_fail: int; (\** maximum number of counter-examples allowed *\)
+   * }
+   * 
+   * let is_done state = state.cur_count <= 0 || state.cur_max_gen <= 0
+   * 
+   * let decr_count state =
+   *   state.res.R.count <- state.res.R.count + 1;
+   *   state.cur_count <- state.cur_count - 1
+   * 
+   * let new_input state =
+   *   state.res.R.count_gen <- state.res.R.count_gen + 1;
+   *   state.cur_max_gen <- state.cur_max_gen - 1;
+   *   state.test.arb.gen state.rand
+   * 
+   * (\* statistics on inputs *\)
+   * let collect st i = match st.test.arb.collect with
+   *   | None -> ()
+   *   | Some f ->
+   *       let key = f i in
+   *       let (lazy tbl) = st.res.R.collect_tbl in
+   *       let n = try Hashtbl.find tbl key with Not_found -> 0 in
+   *       Hashtbl.replace tbl key (n+1)
+   * 
+   * let update_stats st i =
+   *   List.iter
+   *     (fun ((_,f), tbl) ->
+   *        let key = f i in
+   *        let n = try Hashtbl.find tbl key with Not_found -> 0 in
+   *        Hashtbl.replace tbl key (n+1))
+   *     st.res.R.stats_tbl
+   * 
+   * type res_or_exn =
+   *   | Shrink_fail
+   *   | Shrink_exn of exn
+   * 
+   * (\* triggered by user to fail with a message *\)
+   * exception User_fail of string
+  *)
+    let fail_report = QCheck2.Test.fail_report
+    
+    let fail_reportf = QCheck2.Test.fail_reportf
+    
+   (* type 'a run_res =
+   *   | Run_ok
+   *   | Run_fail of string list
+   * 
+   * let run_law law x =
+   *   try
+   *     if law x then Run_ok else Run_fail []
+   *   with User_fail msg -> Run_fail [msg]
+   * 
+   * (\* try to shrink counter-ex [i] into a smaller one. Returns
+   *    shrinked value and number of steps *\)
+   * let shrink st (i:'a) (r:res_or_exn) m : 'a * res_or_exn * string list * int =
+   *   let is_err = match r with
+   *     | Shrink_exn _ -> true | _ -> false
+   *   in
+   *   let rec shrink_ st i r m ~steps =
+   *     st.handler st.test.name st.test (Shrunk (steps, i));
+   *     match st.test.arb.shrink with
+   *     | None -> i, r, m, steps
+   *     | Some f ->
+   *       let count = ref 0 in
+   *       let i' = Iter.find_map
+   *         (fun x ->
+   *           try
+   *             incr count;
+   *             st.handler st.test.name st.test (Shrinking (steps, !count, x));
+   *             begin match run_law st.test.law x with
+   *               | Run_fail m when not is_err -> Some (x, Shrink_fail, m)
+   *               | _ -> None
+   *             end
+   *           with
+   *             | FailedPrecondition | No_example_found _ -> None
+   *             | e when is_err -> Some (x, Shrink_exn e, []) (\* fail test (by error) *\)
+   *         ) (f i)
+   *       in
+   *       match i' with
+   *       | None -> i, r, m, steps
+   *       | Some (i',r',m') -> shrink_ st i' r' m' ~steps:(steps+1) (\* shrink further *\)
+   *   in
+   *   shrink_ ~steps:0 st i r m
+   * 
+   * type 'a check_result =
+   *   | CR_continue
+   *   | CR_yield of 'a TestResult.t
+   * 
+   * (\* test raised [e] on [input]; try to shrink then fail *\)
+   * let handle_exn state input e bt : _ check_result =
+   *   (\* first, shrink
+   *      TODO: shall we shrink differently (i.e. expected only an error)? *\)
+   *   let input, r, msg_l, steps = shrink state input (Shrink_exn e) [] in
+   *   (\* recover exception of shrunk input *\)
+   *   let e = match r with
+   *     | Shrink_fail -> e
+   *     | Shrink_exn e' -> e'
+   *   in
+   *   state.step state.test.name state.test input (Error (e, bt));
+   *   R.error state.res ~steps ~msg_l input e bt;
+   *   CR_yield state.res
+   * 
+   * (\* test failed on [input], which means the law is wrong. Continue if
+   *    we should. *\)
+   * let handle_fail state input msg_l : _ check_result =
+   *   (\* first, shrink *\)
+   *   let input, _, msg_l, steps = shrink state input Shrink_fail msg_l in
+   *   (\* fail *\)
+   *   decr_count state;
+   *   state.step state.test.name state.test input Failure;
+   *   state.cur_max_fail <- state.cur_max_fail - 1;
+   *   R.fail ~small:state.test.arb.small state.res ~steps ~msg_l input;
+   *   if _is_some state.test.arb.small && state.cur_max_fail > 0
+   *   then CR_continue
+   *   else CR_yield state.res
+   * 
+   * (\* [check_state state] applies [state.test] repeatedly ([iter] times)
+   *     on output of [test.rand], and if [state.test] ever returns false,
+   *     then the input that caused the failure is returned in [Failed].
+   *     If [func input] raises [FailedPrecondition] then  the input is discarded, unless
+   *        max_gen is 0. *\)
+   * let rec check_state state : _ R.t =
+   *   if is_done state then state.res
+   *   else (
+   *     state.handler state.test.name state.test Generating;
+   *     match new_input state with
+   *     | i ->
+   *       check_state_input state i
+   *     | exception e ->
+   *       (\* turn it into an error *\)
+   *       let bt = Printexc.get_backtrace() in
+   *       let msg =
+   *         Printf.sprintf
+   *           "ERROR: uncaught exception in generator for test %s after %d steps:\n%s\n%s"
+   *           state.test.name state.test.count (Printexc.to_string e) bt
+   *       in
+   *       state.res.R.state <- R.Failed_other {msg};
+   *       state.res
+   *   )
+   * and check_state_input state input =
+   *     state.handler state.test.name state.test (Collecting input);
+   *     state.res.R.instances <- input :: state.res.R.instances;
+   *     collect state input;
+   *     update_stats state input;
+   *     let res =
+   *       try
+   *         state.handler state.test.name state.test (Testing input);
+   *         begin match run_law state.test.law input with
+   *           | Run_ok ->
+   *             (\* one test ok *\)
+   *             decr_count state;
+   *             state.step state.test.name state.test input Success;
+   *             CR_continue
+   *           | Run_fail msg_l ->
+   *             handle_fail state input msg_l
+   *         end
+   *       with
+   *       | FailedPrecondition | No_example_found _ ->
+   *         state.step state.test.name state.test input FalseAssumption;
+   *         CR_continue
+   *       | e ->
+   *         let bt = Printexc.get_backtrace () in
+   *         handle_exn state input e bt
+   *     in
+   *     match res with
+   *       | CR_continue -> check_state state
+   *       | CR_yield x -> x
+   * 
+   * type 'a callback = string -> 'a cell -> 'a TestResult.t -> unit
+   * 
+   * let callback_nil_ : _ callback = fun _ _ _ -> ()
+   * 
+   * (\* check that there are sufficiently many tests which passed, to avoid
+   *    the case where they all passed by failed precondition *\)
+   * let check_if_assumptions target_count cell res : unit =
+   *   let percentage_of_count = float_of_int res.R.count /. float_of_int target_count in
+   *   let assm_flag, assm_frac = cell.if_assumptions_fail in
+   *   if R.is_success res && percentage_of_count < assm_frac then (
+   *     let msg =
+   *       format_of_string "%s: \
+   *        only %.1f%% tests (of %d) passed precondition for %S\n\n\
+   *        NOTE: it is likely that the precondition is too strong, or that \
+   *        the generator is buggy.\n%!"
+   *     in
+   *     match assm_flag with
+   *     | `Warning ->
+   *       let msg = Printf.sprintf
+   *         msg "WARNING"
+   *         (percentage_of_count *. 100.) cell.count cell.name in
+   *       res.R.warnings <- msg :: res.R.warnings
+   *     | `Fatal ->
+   *       (\* turn it into an error *\)
+   *       let msg = Printf.sprintf
+   *         msg "ERROR"
+   *         (percentage_of_count *. 100.) cell.count cell.name in
+   *       res.R.state <- R.Failed_other {msg}
+   *   )
+   * 
+   * (\* main checking function *\)
+   * let check_cell ?(long=false) ?(call=callback_nil_)
+   *     ?(step=step_nil_) ?(handler=handler_nil_)
+   *     ?(rand=Random.State.make [| 0 |]) cell =
+   *   let factor = if long then cell.long_factor else 1 in
+   *   let target_count = factor*cell.count in
+   *   let state = {
+   *     test=cell; rand;
+   *     step; handler;
+   *     cur_count=target_count;
+   *     cur_max_gen=factor*cell.max_gen;
+   *     cur_max_fail=factor*cell.max_fail;
+   *     res = {R.
+   *       state=R.Success; count=0; count_gen=0;
+   *       collect_tbl=lazy (Hashtbl.create 10);
+   *       instances=[]; warnings=[];
+   *       stats_tbl= List.map (fun stat -> stat, Hashtbl.create 10) cell.arb.stats;
+   *     };
+   *   } in
+   *   let res = check_state state in
+   *   check_if_assumptions target_count cell res;
+   *   call cell.name cell res;
+   *   res
+   * 
+   * exception Test_fail of string * string list
+   * exception Test_error of string * string * exn * string
+   * 
+   * (\* print instance using [arb] *\)
+   * let print_instance arb i = match arb.print with
+   *   | None -> "<instance>"
+   *   | Some pp -> pp i
+   * 
+   * let print_c_ex arb c : string =
+   *   let buf = Buffer.create 64 in
+   *   begin
+   *     if c.R.shrink_steps > 0
+   *     then Printf.bprintf buf "%s (after %d shrink steps)"
+   *         (print_instance arb c.R.instance) c.R.shrink_steps
+   *     else Buffer.add_string buf (print_instance arb c.R.instance)
+   *   end;
+   *   List.iter
+   *     (fun msg ->
+   *        Buffer.add_char buf '\n';
+   *        Buffer.add_string buf msg;
+   *        Buffer.add_char buf '\n')
+   *     c.R.msg_l;
+   *   Buffer.contents buf
+   * 
+   * let pp_print_test_fail name out l =
+   *   let rec pp_list out = function
+   *     | [] -> ()
+   *     | [x] -> Format.fprintf out "%s@," x
+   *     | x :: y -> Format.fprintf out "%s@,%a" x pp_list y
+   *   in
+   *   Format.fprintf out "@[test `%s`@ failed on ≥ %d cases:@ @[<v>%a@]@]"
+   *     name (List.length l) pp_list l
+   * 
+   * let asprintf fmt =
+   *   let buf = Buffer.create 128 in
+   *   let out = Format.formatter_of_buffer buf in
+   *   Format.kfprintf (fun _ -> Buffer.contents buf) out fmt
+   * 
+   * let print_test_fail name l = asprintf "@[%a@]@?" (pp_print_test_fail name) l
+   * 
+   * let print_test_error name i e stack =
+   *   Format.sprintf "@[test `%s`@ raised exception `%s`@ on `%s`@,%s@]"
+   *     name (Printexc.to_string e) i stack
+   * 
+   * let print_collect c =
+   *   let out = Buffer.create 64 in
+   *   Hashtbl.iter
+   *     (fun case num -> Printf.bprintf out "%s: %d cases\n" case num) c;
+   *   Buffer.contents out
+   * 
+   * let stat_max_lines = 20 (\* maximum number of lines for a histogram *\)
+   * 
+   * let print_stat ((name,_), tbl) =
+   *   let avg = ref 0. in
+   *   let num = ref 0 in
+   *   let min_idx, max_idx =
+   *     Hashtbl.fold
+   *       (fun i res (m1,m2) ->
+   *          avg := !avg +. float_of_int (i * res);
+   *          num := !num + res;
+   *          min i m1, max i m2)
+   *       tbl (max_int,min_int)
+   *   in
+   *   (\* compute average *\)
+   *   if !num > 0 then (
+   *     avg := !avg /. float_of_int !num
+   *   );
+   *   (\* compute std-dev: sqroot of sum of squared distance-to-average
+   *      https://en.wikipedia.org/wiki/Standard_deviation *\)
+   *   let stddev =
+   *     Hashtbl.fold
+   *       (fun i res m -> m +. (float_of_int i -. !avg) ** 2. *. float_of_int res)
+   *       tbl 0.
+   *     |> (fun s -> if !num>0 then s /. float_of_int !num else s)
+   *     |> sqrt
+   *   in
+   *   (\* compute median *\)
+   *   let median = ref 0 in
+   *   let median_num = ref 0 in (\* how many values have we seen yet? once >= !n/2 we set median *\)
+   *   (Hashtbl.fold (fun i cnt acc -> (i,cnt)::acc) tbl [])
+   *   |> List.sort (fun (i,_) (j,_) -> poly_compare i j)
+   *   |> List.iter
+   *     (fun (i,cnt) ->
+   *        if !median_num < !num/2 then (
+   *          median_num := !median_num + cnt;
+   *          (\* just went above median! *\)
+   *          if !median_num >= !num/2 then
+   *            median := i));
+   *   (\* group by buckets, if there are too many entries: *\)
+   *   (\* first compute histogram and bucket size *\)
+   *   let hist_size, bucket_size =
+   *     let sample_width = Int64.(sub (of_int max_idx) (of_int min_idx)) in
+   *     if sample_width > Int64.of_int stat_max_lines
+   *     then stat_max_lines,
+   *       int_of_float (ceil (Int64.to_float sample_width /. float_of_int stat_max_lines))
+   *     else max_idx-min_idx, 1
+   *   in
+   *   let hist_size = if min_idx + bucket_size * hist_size <= max_idx then 1+hist_size else hist_size in
+   *   (\* accumulate bucket counts *\)
+   *   let max_val = ref 0 in (\* max value after grouping by buckets *\)
+   *   let bucket_count = Array.init hist_size (fun _ -> 0) in
+   *   Hashtbl.iter
+   *     (fun j count ->
+   *        let bucket = Int64.(to_int (div (sub (of_int j) (of_int min_idx)) (of_int bucket_size))) in
+   *        let new_count = bucket_count.(bucket) + count in
+   *        bucket_count.(bucket) <- new_count;
+   *        max_val := max !max_val new_count) tbl;
+   *   (\* print entries of the table, sorted by increasing index *\)
+   *   let out = Buffer.create 128 in
+   *   Printf.bprintf out "stats %s:\n" name;
+   *   Printf.bprintf out
+   *     "  num: %d, avg: %.2f, stddev: %.2f, median %d, min %d, max %d\n"
+   *     !num !avg stddev !median min_idx max_idx;
+   *   let indwidth =
+   *     max (String.length (Printf.sprintf "%d" min_idx))
+   *       (max (String.length (Printf.sprintf "%d" max_idx))
+   *          (String.length (Printf.sprintf "%d" (min_idx + bucket_size * hist_size)))) in
+   *   let labwidth = if bucket_size=1 then indwidth else 2+2*indwidth in
+   *   for i = 0 to hist_size - 1 do
+   *     let i' = min_idx + i * bucket_size in
+   *     let blabel =
+   *       if bucket_size=1
+   *       then Printf.sprintf "%*d" indwidth i'
+   *       else
+   *         let bucket_bound = i'+bucket_size-1 in
+   *         Printf.sprintf "%*d..%*d" indwidth i' indwidth (if bucket_bound < i' then max_int else bucket_bound) in
+   *     let bcount = bucket_count.(i) in
+   *     (\* NOTE: keep in sync *\)
+   *     let bar_len = bcount * 55 / !max_val in
+   *     Printf.bprintf out "  %*s: %-56s %10d\n" labwidth blabel (String.make bar_len '#') bcount
+   *   done;
+   *   Buffer.contents out
+   * 
+   * let () = Printexc.register_printer
+   *   (function
+   *     | Test_fail (name,l) -> Some (print_test_fail name l)
+   *     | Test_error (name,i,e,st) -> Some (print_test_error name i e st)
+   *     | User_fail s -> Some ("qcheck: user fail:\n" ^ s)
+   *     | _ -> None)
+   * 
+   * let print_fail arb name l =
+   *   print_test_fail name (List.map (print_c_ex arb) l)
+   * 
+   * let print_fail_other name ~msg =
+   *   print_test_fail name [msg]
+   * 
+   * let print_error ?(st="") arb name (i,e) =
+   *   print_test_error name (print_c_ex arb i) e st
+   * 
+   * let check_result cell res = match res.R.state with
+   *   | R.Success -> ()
+   *   | R.Error {instance; exn; backtrace} ->
+   *     raise (Test_error (cell.name, print_c_ex cell.arb instance, exn, backtrace))
+   *   | R.Failed {instances=l} ->
+   *     let l = List.map (print_c_ex cell.arb) l in
+   *     raise (Test_fail (cell.name, l))
+   *   | R.Failed_other {msg} ->
+   *     raise (Test_fail (cell.name, [msg]))
+   * 
+   * let check_cell_exn ?long ?call ?step ?rand cell =
+   *   let res = check_cell ?long ?call ?step ?rand cell in
+   *   check_result cell res
+   * 
+   * let check_exn ?long ?rand (Test cell) = check_cell_exn ?long ?rand cell *)
 end
 
 let find_example ?(name="<example>") ?count ~f g : _ Gen.t =
@@ -1751,15 +1766,15 @@ let find_example ?(name="<example>") ?count ~f g : _ Gen.t =
       let arb = make g in
       Test.make_cell ~max_fail:1 ?count arb (fun x -> not (f x))
     in
-    let res = Test.check_cell ~rand:st cell in
-    begin match res.TestResult.state with
-      | TestResult.Success -> raise (No_example_found name)
-      | TestResult.Error _ -> raise (No_example_found name)
-      | TestResult.Failed {instances=[]} -> assert false
-      | TestResult.Failed {instances=failed::_} ->
+    let res = QCheck2.Test.check_cell ~rand:st cell in
+    begin match res.QCheck2.TestResult.state with
+      | QCheck2.TestResult.Success -> raise (No_example_found name)
+      | QCheck2.TestResult.Error _ -> raise (No_example_found name)
+      | QCheck2.TestResult.Failed {instances=[]} -> assert false
+      | QCheck2.TestResult.Failed {instances=failed::_} ->
         (* found counter-example! *)
-        failed.TestResult.instance
-      | TestResult.Failed_other {msg=_} ->
+        failed.QCheck2.TestResult.instance
+      | QCheck2.TestResult.Failed_other {msg=_} ->
         raise (No_example_found name)
 
     end

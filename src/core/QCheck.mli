@@ -783,7 +783,7 @@ module TestResult : sig
 end
 
 module Test : sig
-  type 'a cell
+  (* type 'a cell *)
   (** A single property test *)
 
   val fail_report : string -> 'a
@@ -799,7 +799,7 @@ module Test : sig
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
     ?small:('a -> int) -> ?name:string -> 'a arbitrary -> ('a -> bool) ->
-    'a cell
+    'a QCheck2.Test.cell
   (** [make_cell arb prop] builds a test that checks property [prop] on instances
       of the generator [arb].
       @param name the name of the test.
@@ -825,31 +825,31 @@ module Test : sig
         (since 0.10)
   *)
 
-  val get_arbitrary : 'a cell -> 'a arbitrary
-  val get_law : 'a cell -> ('a -> bool)
-  val get_name : _ cell -> string
-  val set_name : _ cell -> string -> unit
+  (* val get_arbitrary : 'a cell -> 'a arbitrary
+   * val get_law : 'a cell -> ('a -> bool)
+   * val get_name : _ cell -> string *)
+  val set_name : _ QCheck2.Test.cell -> string -> unit
 
-  val get_count : _ cell -> int
+  (* val get_count : _ cell -> int *)
   (** Get the count of a cell.
       @since 0.5.3 *)
 
-  val get_long_factor : _ cell -> int
+  (* val get_long_factor : _ cell -> int *)
   (** Get the long factor of a cell.
       @since 0.5.3 *)
 
-  val get_if_assumptions_fail : _ cell -> ([`Fatal | `Warning] * float)
-  val get_max_gen : _ cell -> int
-  val get_max_fail : _ cell -> int
+  (* val get_if_assumptions_fail : _ cell -> ([`Fatal | `Warning] * float)
+   * val get_max_gen : _ cell -> int
+   * val get_max_fail : _ cell -> int *)
 
-  type t = Test : 'a cell -> t
+  (* type t = Test : 'a cell -> t *)
   (** Same as ['a cell], but masking the type parameter. This allows to
       put tests on different types in the same list of tests. *)
 
   val make :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
-    ?small:('a -> int) -> ?name:string -> 'a arbitrary -> ('a -> bool) -> t
+    ?small:('a -> int) -> ?name:string -> 'a arbitrary -> ('a -> bool) -> QCheck2.Test.t
   (** [make arb prop] builds a test that checks property [prop] on instances
       of the generator [arb].
       See {!make_cell} for a description of the parameters.
@@ -857,68 +857,68 @@ module Test : sig
 
   (** {3 Running the test} *)
 
-  exception Test_fail of string * string list
+  (* exception Test_fail of string * string list *)
   (** Exception raised when a test failed, with the list of counter-examples.
       [Test_fail (name, l)] means test [name] failed on elements of [l]. *)
 
-  exception Test_error of string * string * exn * string
+  (* exception Test_error of string * string * exn * string *)
   (** Exception raised when a test raised an exception [e], with
       the sample that triggered the exception.
       [Test_error (name, i, e, st)]
       means [name] failed on [i] with exception [e], and [st] is the
       stacktrace (if enabled) or an empty string. *)
 
-  val print_instance : 'a arbitrary -> 'a -> string
-  val print_c_ex : 'a arbitrary -> 'a TestResult.counter_ex -> string
-  val print_fail : 'a arbitrary -> string -> 'a TestResult.counter_ex list -> string
-  val print_fail_other : string -> msg:string -> string
-  val print_error : ?st:string -> 'a arbitrary -> string -> 'a TestResult.counter_ex * exn -> string
-  val print_test_fail : string -> string list -> string
-  val print_test_error : string -> string -> exn -> string -> string
-
-  val print_collect : (string,int) Hashtbl.t -> string
-  (** Print "collect" results.
-      @since 0.6 *)
-
-  val print_stat : ('a stat * (int,int) Hashtbl.t) -> string
-  (** Print statistics.
-      @since 0.6 *)
-
-  val check_result : 'a cell -> 'a TestResult.t -> unit
+  (* val print_instance : 'a arbitrary -> 'a -> string
+   * val print_c_ex : 'a arbitrary -> 'a TestResult.counter_ex -> string
+   * val print_fail : 'a arbitrary -> string -> 'a TestResult.counter_ex list -> string
+   * val print_fail_other : string -> msg:string -> string
+   * val print_error : ?st:string -> 'a arbitrary -> string -> 'a TestResult.counter_ex * exn -> string
+   * val print_test_fail : string -> string list -> string
+   * val print_test_error : string -> string -> exn -> string -> string
+   * 
+   * val print_collect : (string,int) Hashtbl.t -> string
+   * (\** Print "collect" results.
+   *     @since 0.6 *\)
+   * 
+   * val print_stat : ('a stat * (int,int) Hashtbl.t) -> string
+   * (\** Print statistics.
+   *     @since 0.6 *\)
+   * 
+   * val check_result : 'a cell -> 'a TestResult.t -> unit *)
   (** [check_result cell res] checks that [res] is [Ok _], and returns unit.
       Otherwise, it raises some exception.
       @raise Test_error if [res = Error _]
       @raise Test_error if [res = Failed _] *)
 
-  type res =
-    | Success
-    | Failure
-    | FalseAssumption
-    | Error of exn * string
-
-  type 'a event =
-    | Generating
-    | Collecting of 'a
-    | Testing of 'a
-    | Shrunk of int * 'a
-    | Shrinking of int * int * 'a
-
-  type 'a handler = string -> 'a cell -> 'a event -> unit
-  (** Handler executed after each event during testing of an instance. *)
-
-  type 'a step = string -> 'a cell -> 'a -> res -> unit
-  (** Callback executed after each instance of a test has been run.
-      The callback is given the instance tested, and the current results
-      of the test. *)
-
-  type 'a callback = string -> 'a cell -> 'a TestResult.t -> unit
-  (** Callback executed after each test has been run.
-      [f name cell res] means test [cell], named [name], gave [res]. *)
-
-  val check_cell :
-    ?long:bool -> ?call:'a callback ->
-    ?step:'a step -> ?handler:'a handler ->
-    ?rand:Random.State.t -> 'a cell -> 'a TestResult.t
+  (* type res =
+   *   | Success
+   *   | Failure
+   *   | FalseAssumption
+   *   | Error of exn * string
+   * 
+   * type 'a event =
+   *   | Generating
+   *   | Collecting of 'a
+   *   | Testing of 'a
+   *   | Shrunk of int * 'a
+   *   | Shrinking of int * int * 'a
+   * 
+   * type 'a handler = string -> 'a cell -> 'a event -> unit
+   * (\** Handler executed after each event during testing of an instance. *\)
+   * 
+   * type 'a step = string -> 'a cell -> 'a -> res -> unit
+   * (\** Callback executed after each instance of a test has been run.
+   *     The callback is given the instance tested, and the current results
+   *     of the test. *\)
+   * 
+   * type 'a callback = string -> 'a cell -> 'a TestResult.t -> unit
+   * (\** Callback executed after each test has been run.
+   *     [f name cell res] means test [cell], named [name], gave [res]. *\)
+   * 
+   * val check_cell :
+   *   ?long:bool -> ?call:'a callback ->
+   *   ?step:'a step -> ?handler:'a handler ->
+   *   ?rand:Random.State.t -> 'a cell -> 'a TestResult.t *)
   (** [check_cell ~long ~rand test] generates up to [count] random
       values of type ['a] using [arbitrary] and the random state [st]. The
       predicate [law] is called on them and if it returns [false] or raises an
@@ -931,14 +931,14 @@ module Test : sig
       @return the result of the test.
   *)
 
-  val check_cell_exn :
-    ?long:bool -> ?call:'a callback -> ?step:'a step ->
-    ?rand:Random.State.t -> 'a cell -> unit
-  (** Same as {!check_cell} but calls  {!check_result} on the result.
-      @raise Test_error if [res = Error _]
-      @raise Test_error if [res = Failed _] *)
-
-  val check_exn : ?long:bool -> ?rand:Random.State.t -> t -> unit
+  (* val check_cell_exn :
+   *   ?long:bool -> ?call:'a callback -> ?step:'a step ->
+   *   ?rand:Random.State.t -> 'a cell -> unit
+   * (\** Same as {!check_cell} but calls  {!check_result} on the result.
+   *     @raise Test_error if [res = Error _]
+   *     @raise Test_error if [res = Failed _] *\)
+   * 
+   * val check_exn : ?long:bool -> ?rand:Random.State.t -> t -> unit *)
   (** Checks the property against some test cases, and calls {!check_result},
       which might raise an exception in case of failure.
       @raise Test_error if [res = Error _]

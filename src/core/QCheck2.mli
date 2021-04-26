@@ -1586,20 +1586,20 @@ val map_same_type : ('a -> 'a) -> 'a arbitrary -> 'a arbitrary
 
 (** {2 Migration} *)
 
-val migrate_v1_arbitrary : 'a QCheck.arbitrary -> 'a arbitrary
-(** [migrate_v1_arbitrary arb_v1] migrates a {!QCheck} arbitrary to QCheck2.
-
-    @deprecated use {!arbitrary} directly instead.
-*)
-
-val migrate_v1_cell : 'a QCheck.Test.cell -> 'a Test.cell
-(** [migrate_v1_cell cell_v1] migrates a {!QCheck} cell to QCheck2.
-
-    @deprecated use {!Test.make_cell} directly instead.
-*)
-
-val migrate_v1_test : QCheck.Test.t -> Test.t
-(** [migrate_v1_test test_v1] migrates a {!QCheck} test to QCheck2.
-
-    @deprecated use {!Test.make} directly instead.
-*)
+(* val migrate_v1_arbitrary : 'a QCheck.arbitrary -> 'a arbitrary
+ * (\** [migrate_v1_arbitrary arb_v1] migrates a {!QCheck} arbitrary to QCheck2.
+ * 
+ *     @deprecated use {!arbitrary} directly instead.
+ * *\)
+ * 
+ * val migrate_v1_cell : 'a QCheck.Test.cell -> 'a Test.cell
+ * (\** [migrate_v1_cell cell_v1] migrates a {!QCheck} cell to QCheck2.
+ * 
+ *     @deprecated use {!Test.make_cell} directly instead.
+ * *\)
+ * 
+ * val migrate_v1_test : QCheck.Test.t -> Test.t
+ * (\** [migrate_v1_test test_v1] migrates a {!QCheck} test to QCheck2.
+ * 
+ *     @deprecated use {!Test.make} directly instead.
+ * *\) *)

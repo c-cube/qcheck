@@ -2026,31 +2026,31 @@ let find_example_gen ?(rand : Random.State.t option) ?(name : string option) ?(c
   let g = find_example ?name ?count ~f gen in
   Gen.generate1 ?rand g
 
-let migrate_v1_arbitrary (arb : 'a QCheck.arbitrary) : 'a arbitrary =
-  let {QCheck.gen = gen_v1; print = print_v1; collect = collect_v1; stats = stats_v1; small = _small_v1; shrink = shrink_v1_opt} = arb in
-  (* Shrink in V1 was an iterator of a passed argument, v2 is a lazy list of the currently generated value.
-     So iterate over the generated value, accumulate in a mutable list, and voila! *)
-  let shrink = match shrink_v1_opt with
-    | None -> fun _ -> Seq.empty
-    | Some shrink_v1 -> fun x ->
-      let rev_shrinks = ref [] in
-      shrink_v1 x (fun next_shrink -> rev_shrinks := next_shrink :: !rev_shrinks) ;
-      List.rev !rev_shrinks |> List.to_seq
-  in
-  let gen = Gen.make_primitive ~gen:gen_v1 ~shrink in
-  {print = print_v1; collect = collect_v1; stats = stats_v1; gen}
-
-let migrate_v1_cell (cell_v1 : 'a QCheck.Test.cell) : 'a Test.cell =
-  let arb_v1 = QCheck.Test.get_arbitrary cell_v1 in
-  let law = QCheck.Test.get_law cell_v1 in
-  let if_assumptions_fail = QCheck.Test.get_if_assumptions_fail cell_v1 in
-  let count = QCheck.Test.get_count cell_v1 in
-  let long_factor = QCheck.Test.get_long_factor cell_v1 in
-  let max_gen = QCheck.Test.get_max_gen cell_v1 in
-  let max_fail = QCheck.Test.get_max_fail cell_v1 in
-  let name = QCheck.Test.get_name cell_v1 in
-  Test.make_cell ~if_assumptions_fail ~count ~long_factor ~max_gen ~max_fail ~name (migrate_v1_arbitrary arb_v1) law
-
-let migrate_v1_test (test : QCheck.Test.t) : Test.t =
-  let QCheck.Test.Test v1_cell = test in
-  Test.Test (migrate_v1_cell v1_cell)
+(* let migrate_v1_arbitrary (arb : 'a QCheck.arbitrary) : 'a arbitrary =
+ *   let {QCheck.gen = gen_v1; print = print_v1; collect = collect_v1; stats = stats_v1; small = _small_v1; shrink = shrink_v1_opt} = arb in
+ *   (\* Shrink in V1 was an iterator of a passed argument, v2 is a lazy list of the currently generated value.
+ *      So iterate over the generated value, accumulate in a mutable list, and voila! *\)
+ *   let shrink = match shrink_v1_opt with
+ *     | None -> fun _ -> Seq.empty
+ *     | Some shrink_v1 -> fun x ->
+ *       let rev_shrinks = ref [] in
+ *       shrink_v1 x (fun next_shrink -> rev_shrinks := next_shrink :: !rev_shrinks) ;
+ *       List.rev !rev_shrinks |> List.to_seq
+ *   in
+ *   let gen = Gen.make_primitive ~gen:gen_v1 ~shrink in
+ *   {print = print_v1; collect = collect_v1; stats = stats_v1; gen}
+ * 
+ * let migrate_v1_cell (cell_v1 : 'a QCheck.Test.cell) : 'a Test.cell =
+ *   let arb_v1 = QCheck.Test.get_arbitrary cell_v1 in
+ *   let law = QCheck.Test.get_law cell_v1 in
+ *   let if_assumptions_fail = QCheck.Test.get_if_assumptions_fail cell_v1 in
+ *   let count = QCheck.Test.get_count cell_v1 in
+ *   let long_factor = QCheck.Test.get_long_factor cell_v1 in
+ *   let max_gen = QCheck.Test.get_max_gen cell_v1 in
+ *   let max_fail = QCheck.Test.get_max_fail cell_v1 in
+ *   let name = QCheck.Test.get_name cell_v1 in
+ *   Test.make_cell ~if_assumptions_fail ~count ~long_factor ~max_gen ~max_fail ~name (migrate_v1_arbitrary arb_v1) law
+ * 
+ * let migrate_v1_test (test : QCheck.Test.t) : Test.t =
+ *   let QCheck.Test.Test v1_cell = test in
+ *   Test.Test (migrate_v1_cell v1_cell) *)
