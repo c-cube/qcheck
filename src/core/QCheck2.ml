@@ -370,8 +370,7 @@ module Gen = struct
 
       To support ranges wider than [Int.max_int], the general idea is to find the center,
       and generate a random half-difference number as well as whether we add or
-      subtract that number from the center. There are probably better ways but my focus is
-      on integrated shrinking right now :D *)
+      subtract that number from the center. *)
   let int_range ?(origin : int option) (a : int) (b : int) : int t =
     if b < a then invalid_arg "Gen.int_range: high < low";
     let origin = Option.fold ~none:a ~some:(fun origin ->
@@ -393,7 +392,7 @@ module Gen = struct
           then Tree.map (fun n -> - n - 1) (int_bound (- (a+1)) st)
           else int_bound b st
         ) in
-      Tree.make_primitive (Seq.int_towards origin) (a + n)
+      Tree.make_primitive (Seq.int_towards origin) n
 
   let (--) low high = int_range ~origin:low low high
 
