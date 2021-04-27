@@ -417,24 +417,20 @@ module Gen = struct
 
   (** Shrink towards the first element of the list *)
   let frequency (l : (int * 'a t) list) : 'a t =
+    if l = [] then failwith "QCheck2.frequency called with an empty list";
     let sums = sum_int (List.map fst l) in
-    int_bound sums
+    if sums < 1 then failwith "QCheck2.frequency called with weight sum < 1";
+    int_bound (sums - 1)
     >>= fun i ->
     let rec aux acc = function
       | ((x,g)::xs) -> if i < acc+x then g else aux (acc+x) xs
-      | _ -> failwith "frequency"
+      | _ -> failwith "QCheck2.frequency crashed for an unknown reason"
     in
     aux 0 l
 
   let frequencyl (l : (int * 'a) list) : 'a t =
-    let sums = sum_int (List.map fst l) in
-    int_bound sums
-    >|= fun i ->
-    let rec aux acc = function
-      | ((x,g)::xs) -> if i < acc+x then g else aux (acc+x) xs
-      | _ -> failwith "frequency"
-    in
-    aux 0 l
+    List.map (fun (weight, value) -> (weight, pure value)) l
+    |> frequency
 
   let frequencya a = frequencyl (Array.to_list a)
 
@@ -1743,7 +1739,7 @@ module Test = struct
         let bt = Printexc.get_backtrace() in
         let msg =
           Printf.sprintf
-            "ERROR: uncaught exception in generator for test %s after %d steps:\n%s\n%s"
+            "ERROR: uncaught exception in generator for test %s after %d steps:\nException: %s\nBacktrace: %s"
             state.test.name state.test.count (Printexc.to_string e) bt
         in
         state.res.R.state <- R.Failed_other {msg};
