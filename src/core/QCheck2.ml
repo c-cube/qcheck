@@ -448,45 +448,11 @@ module Gen = struct
 
   let ui32 : int32 t = fun st ->
     let x = random_binary_string 32 st |> Int32.of_string in
-    let int32_towards_seq destination x =
-      let open Int32 in
-      Seq.unfold (fun current_shrink ->
-          if current_shrink = x
-          then None
-          else
-              (*
-                Halve the operands before subtracting them so they don't overflow.
-                Consider [int_towards min_int max_int]
-              *)
-            let half_diff =  sub (div x 2l) (div current_shrink 2l) in
-            if half_diff = 0l
-            (* [current_shrink] is the last valid shrink candidate, put [x] as next step to make sure we stop *)
-            then Some (current_shrink, x)
-            else Some (current_shrink, add current_shrink half_diff)
-        ) destination
-    in
-    Tree.make_primitive (int32_towards_seq 0l) x
+    Tree.make_primitive (int32_towards 0l) x
 
   let ui64 : int64 t = fun st ->
     let x = random_binary_string 64 st |> Int64.of_string in
-    let int64_towards_seq destination x =
-      let open Int64 in
-      Seq.unfold (fun current_shrink ->
-          if current_shrink = x
-          then None
-          else
-              (*
-                Halve the operands before subtracting them so they don't overflow.
-                Consider [int_towards min_int max_int]
-              *)
-            let half_diff =  sub (div x 2L) (div current_shrink 2L) in
-            if half_diff = 0L
-            (* [current_shrink] is the last valid shrink candidate, put [x] as next step to make sure we stop *)
-            then Some (current_shrink, x)
-            else Some (current_shrink, add current_shrink half_diff)
-        ) destination
-    in
-    Tree.make_primitive (int64_towards_seq 0L) x
+    Tree.make_primitive (int64_towards 0L) x
 
   let list_size (size : int t) (gen : 'a t) : 'a list t =
     size >>= fun size ->
