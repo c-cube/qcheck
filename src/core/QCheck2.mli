@@ -174,7 +174,7 @@ module Gen : sig
   val map : ('a -> 'b) -> 'a t -> 'b t
   (** [map f gen] transforms a generator [gen] by applying [f] to each generated element.
 
-      Shrinks of [map f gen] are the shrinks of [gen] with [f] applied to them.
+      Shrinks towards the shrinks of [gen] with [f] applied to them.
   *)
 
   val (>|=) : 'a t -> ('a -> 'b) -> 'b t
@@ -182,6 +182,7 @@ module Gen : sig
 
   val (<$>) : ('a -> 'b) -> 'a t -> 'b t
   (** An infix synonym for {!map}
+
       @since 0.13 *)
 
   val map2 : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
@@ -220,69 +221,6 @@ module Gen : sig
   val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
   (** Synonym for {!bind} *)
 
-  (** {3 Choosing elements} *)
-
-  val oneof : 'a t list -> 'a t
-  (** [oneof l] constructs a generator that selects among the given list of generators [l].
-
-      Shrinks towards the first generator of the list.
-  *)
-
-  val oneofl : 'a list -> 'a t
-  (** [oneofl l] constructs a generator that selects among the given list of values [l].
-
-      Shrinks towards the first element of the list.
-  *)
-
-  val oneofa : 'a array -> 'a t
-  (** [oneofa a] constructs a generator that selects among the given array of values [a].
-
-      Shrinks towards the first element of the array.
-  *)
-
-  val frequency : (int * 'a t) list -> 'a t
-  (** Constructs a generator that selects among a given list of generators.
-      Each of the given generators are chosen based on a positive integer weight.
-
-      Shrinks towards the first element of the list.
-  *)
-
-  val frequencyl : (int * 'a) list -> 'a t
-  (** Constructs a generator that selects among a given list of values.
-      Each of the given values are chosen based on a positive integer weight.
-
-      Shrinks towards the first element of the list.
-  *)
-
-  val frequencya : (int * 'a) array -> 'a t
-  (** Constructs a generator that selects among a given array of values.
-      Each of the array entries are chosen based on a positive integer weight.
-
-      Shrinks towards the first element of the array.
-  *)
-
-  (** {3 Shuffling elements} *)
-
-  val shuffle_a : 'a array -> 'a array t
-  (** Returns a copy of the array with its elements shuffled. *)
-
-  val shuffle_l : 'a list -> 'a list t
-  (** Creates a generator of shuffled lists. *)
-
-  val shuffle_w_l : (int * 'a) list -> 'a list t
-  (** Creates a generator of weighted shuffled lists. A given list is shuffled on each
-      generation according to the weights of its elements. An element with a larger weight
-      is more likely to be at the front of the list than an element with a smaller weight.
-      If we want to pick random elements from the (head of) list but need to prioritize
-      some elements over others, this generator can be useful.
-
-      Example: given a weighted list [[1, "one"; 5, "five"; 10, "ten"]], the generator is
-      more likely to generate [["ten"; "five"; "one"]] or [["five"; "ten"; "one"]] than
-      [["one"; "ten"; "five"]] because "ten" and "five" have larger weights than "one".
-
-      @since 0.11
-  *)
-
   (** {3 Primitive generators} *)
 
   val unit : unit t
@@ -295,6 +233,91 @@ module Gen : sig
   (** The boolean generator.
 
       Shrinks towards [false].
+  *)
+
+  val int : int t
+  (** Generates integers uniformly.
+
+      Shrinks towards [0].
+  *)
+
+  val pint : ?origin : int -> int t
+  (** Generates non-strictly positive integers uniformly ([0] included).
+
+      Shrinks towards [origin] if specified, otherwise towards [0]. *)
+
+  val small_nat : int t
+  (** Small integers (< [100]).
+
+      Non-uniform: smaller numbers are more likely than bigger numbers.
+
+      Shrinks towards [0].
+
+      @since 0.5.1 *)
+
+  val nat : int t
+  (** Generates natural numbers (< [10_000]).
+
+      Non-uniform: smaller numbers are more likely than bigger numbers.
+
+      Shrinks towards [0].
+  *)
+
+  val big_nat : int t
+  (** Generates natural numbers, possibly large (< [1_000_000]).
+
+      Non-uniform: smaller numbers are more likely than bigger numbers.
+
+      Shrinks towards [0].
+
+      @since 0.10 *)
+
+  val neg_int : int t
+  (** Generates non-strictly negative integers ([0] included).
+
+      Non-uniform: smaller numbers (in absolute value) are more likely than bigger numbers.
+
+      Shrinks towards [0].
+  *)
+
+  val small_int : int t
+  (** Small UNSIGNED integers, for retrocompatibility.
+
+      Shrinks towards [0].
+
+      @deprecated use {!small_nat}. *)
+
+  val small_signed_int : int t
+  (** Small SIGNED integers, based on {!small_nat}.
+
+      Non-uniform: smaller numbers (in absolute value) are more likely than bigger numbers.
+
+      Shrinks towards [0].
+
+      @since 0.5.2 *)
+
+  val int32 : int32 t
+  (** Generates uniform {!int32} values.
+
+      Shrinks towards [0l].
+  *)
+
+  val ui32 : int32 t
+  (** Generates (unsigned) {!int32} values.
+
+      Shrinks towards [0l].
+  *)
+
+  val int64 : int64 t
+  (** Generates uniform {!int64} values.
+
+      Shrinks towards [0L].
+  *)
+
+  val ui64 : int64 t
+  (** Generates (unsigned) {!int64} values.
+
+      Shrinks towards [0L].
   *)
 
   val float : float t
@@ -314,280 +337,6 @@ module Gen : sig
 
       Shrinks towards [-0.].
   *)
-
-  val float_bound_inclusive : ?origin : float -> float -> float t
-  (** [float_bound_inclusive ?origin bound] returns a random floating-point number between [0.] and
-      [bound] (inclusive). If [bound] is negative, the result is negative or zero.  If
-      [bound] is [0.], the result is [0.].
-
-      Shrinks towards [origin] if given, otherwise towards [0.].
-
-      @since 0.11 *)
-
-  val float_bound_exclusive : ?origin : float -> float -> float t
-  (** [float_bound_exclusive origin bound] returns a random floating-point number between [0.] and
-      [bound] (exclusive).  If [bound] is negative, the result is negative or zero.
-
-      Shrinks towards [origin] if given, otherwise towards [0.].
-
-      @raise Invalid_argument if [bound] is [0.].
-
-      @since 0.11 *)
-
-  val float_range : ?origin : float -> float -> float -> float t
-  (** [float_range ?origin low high] generates floating-point numbers within [low] and [high] (inclusive).
-
-      Shrinks towards [origin] if specified, otherwise towards [low]
-      (e.g. [float_range 4.2 7.8] will shrink towards [4.2]).
-
-      @raise Invalid_argument if any of the following holds:
-      - [low > high]
-      - [high -. low > max_float]
-      - [origin < low]
-      - [origin > high]
-
-      @since 0.11 *)
-
-  val (--.) : float -> float -> float t
-  (** [a --. b] is an alias for [float_range ~origin:a a b]. See {!float_range} for more information.
-
-      Shrinks towards [a].
-
-      @since 0.11 *)
-
-  val nat : int t
-  (** Generates small natural numbers.
-
-      Shrinks towards [0].
-  *)
-
-  val big_nat : int t
-  (** Generates natural numbers, possibly large.
-
-      Shrinks towards [0].
-
-      @since 0.10 *)
-
-  val small_nat : int t
-  (** Small integers (< [100]).
-
-      Shrinks towards [0].
-
-      @since 0.5.1 *)
-
-  val neg_int : int t
-  (** Generates non-strictly negative integers ([0] included).
-
-      Shrinks towards [0].
-  *)
-
-  val pint : ?origin : int -> int t
-  (** Generates non-strictly positive integers uniformly ([0] included).
-
-      Shrinks towards [origin] if specified, otherwise towards [0]. *)
-
-  val number_towards : equal : ('a -> 'a -> bool) -> div : ('a -> 'a -> 'a) -> add : ('a -> 'a -> 'a) -> sub : ('a -> 'a -> 'a) -> of_int : (int -> 'a) -> destination : 'a -> 'a -> 'a Seq.t
-  (** Shrink a number by edging towards a destination.
-
-      The destination is always the first value for optimal shrinking.
-
-      {[
-        let int64_towards_list destination x = List.of_seq @@ Int64.(Gen.number_towards ~equal ~div ~add ~sub ~of_int) ~destination x
-
-        let () =
-          assert (int64_towards_list 0L 100L = [0L; 50L; 75L; 88L; 94L; 97L; 99L]);
-          assert (int64_towards_list 500L 1000L = [500L; 750L; 875L; 938L; 969L; 985L; 993L; 997L; 999L]);
-          assert (int64_towards_list (-50L) (-26L) = [-50L; -38L; -32L; -29L; -28L; -27L])
-      ]}
-  *)
-
-  val int_towards : int -> int -> int Seq.t
-  (** {!number_towards} specialized to {!int}. *)
-
-  val int32_towards : int32 -> int32 -> int32 Seq.t
-  (** {!number_towards} specialized to {!int32}. *)
-
-  val int64_towards : int64 -> int64 -> int64 Seq.t
-  (** {!number_towards} specialized to {!int64}. *)
-
-  val float_towards : float -> float -> float Seq.t
-  (** {!number_towards} specialized to {!float}. *)
-
-  val int : int t
-  (** Generates integers uniformly.
-
-      Shrinks towards [0].
-  *)
-
-  val small_int : int t
-  (** Small UNSIGNED integers, for retrocompatibility.
-
-      Shrinks towards [0].
-
-      @deprecated use {!small_nat}. *)
-
-  val small_signed_int : int t
-  (** Small SIGNED integers, based on {!small_nat}.
-
-      Shrinks towards [0].
-
-      @since 0.5.2 *)
-
-  val int_bound : int -> int t
-  (** Uniform integer generator producing integers within [0..bound].
-      For [bound < 2^{30} - 1] uses {!Random.State.int} for integer generation.
-
-      Shrinks towards [0].
-
-      @raise Invalid_argument if the argument is negative. *)
-
-  val int_range : ?origin:int -> int -> int -> int t
-  (** [int_range ?origin low high] is an uniform integer generator producing integers within [low..high].
-
-      Shrinks towards [origin] if specified, otherwise towards [low]
-      (e.g. [int_range (-5) 15] will shrink towards [-5]).
-
-      @raise Invalid_argument if any of the following holds:
-      - [low > high]
-      - [origin < low]
-      - [origin > high]
-  *)
-
-  val graft_corners : 'a t -> 'a list -> unit -> 'a t
-  (** [graft_corners gen l ()] makes a new generator that enumerates
-      the corner cases in [l] and then behaves like [g].
-
-      Does not shrink if the test fails on a grafted value.
-      Shrinks towards [gen] otherwise.
-
-      @since 0.6 *)
-
-  val int_pos_corners : int list
-  (** Non-negative corner cases for int.
-
-      @since 0.6 *)
-
-  val int_corners : int list
-  (** All corner cases for int.
-
-      @since 0.6 *)
-
-  val (--) : int -> int -> int t
-  (** [a -- b] is an alias for [int_range ~origin:a a b]. See {!int_range} for more information.
-
-      Shrinks towards [a].
-  *)
-
-  val ui32 : int32 t
-  (** Generates (unsigned) [int32] values.
-
-      Shrinks towards [0l].
-  *)
-
-  val ui64 : int64 t
-  (** Generates (unsigned) [int64] values.
-
-      Shrinks towards [0L].
-  *)
-
-  val make_primitive : gen : (Random.State.t -> 'a) -> shrink : ('a -> 'a Seq.t) -> 'a t
-  (** [make_primitive ~gen ~shrink] creates a generator from a function [gen] that creates
-      a random value (this function should only use the given {!Random.State.t} to generate random things)
-      and a function [shrink] that, given a value [a], returns a lazy list of
-      "smaller" values (used when a test fails).
-
-      This lower-level function is meant to build generators for "primitive" types that can neither be
-      built with other primitive generators nor through composition, or to have more control on the
-      shrinking steps.
-
-      [shrink] must obey the following rules (for your own definition of "small"):
-      - [shrink a = Seq.empty] when [a] is the smallest possible value
-      - [shrink a] must return values strictly smaller than [a], ideally from smallest to largest (for
-        faster shrinking)
-      - [let rec loop a = match shrink a () with | Nil -> () | Cons (smaller_a, _) -> loop smaller_a]
-        must end for all values [a] of type ['a] (i.e. there must not be an infinite number of shrinking
-        steps).
-  *)
-
-  (** {3 Lists, arrays and option generators} *)
-
-  val list : 'a t -> 'a list t
-  (** Builds a list generator from an element generator. List size is generated by {!nat}.
-
-      Shrinks on the number of elements first, then on elements.
-  *)
-
-  val small_list : 'a t -> 'a list t
-  (** Generates lists of small size (see {!small_nat}).
-
-      @since 0.5.3 *)
-
-  val list_size : int t -> 'a t -> 'a list t
-  (** Builds a list generator from a (non-negative) size generator and an element generator.
-
-      Shrinks on the number of elements first, then on elements.
-  *)
-
-  val list_repeat : int -> 'a t -> 'a list t
-  (** [list_repeat i g] builds a list generator from exactly [i] elements generated by [g].
-
-      Shrinks on elements only.
-  *)
-
-  val array : 'a t -> 'a array t
-  (** Builds an array generator from an element generator. Array size is generated by {!nat}.
-
-      Shrinks on the number of elements first, then on elements.
-  *)
-
-  val array_size : int t -> 'a t -> 'a array t
-  (** Builds an array generator from a (non-negative) size generator and an element generator.
-
-      Shrinks on the number of elements first, then on elements.
-  *)
-
-  val small_array : 'a t -> 'a array t
-  (** Generates arrays of small size (see {!small_nat}).
-
-      Shrinks on the number of elements first, then on elements.
-
-      @since 0.10 *)
-
-  val array_repeat : int -> 'a t -> 'a array t
-  (** [array_repeat i g] builds an array generator from exactly [i] elements generated by [g].
-
-      Shrinks on elements only.
-  *)
-
-  val opt : 'a t -> 'a option t
-  (** [opt gen] is an option generator.
-
-      Shrinks towards {!None} then towards shrinks of [gen].
-  *)
-
-  (** {3 Combining generators together} *)
-
-  val pair : 'a t -> 'b t -> ('a * 'b) t
-  (** [pair gen1 gen2] generates pairs.
-
-      Shrinks on [gen1] and then [gen2].
-  *)
-
-  val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
-  (** [triple gen1 gen2 gen3] generates triples.
-
-      Shrinks on [gen1], then [gen2] and then [gen3].
-  *)
-
-  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
-  (** [quad gen1 gen2 gen3 gen4] generates quadruples.
-
-      Shrinks on [gen1], then [gen2], then [gen3] and then [gen4].
-
-      @since 0.5.1
-  *)
-
-  (** {3 Strings and characters} *)
 
   val char : char t
   (** Generates characters in the [0..255] range.
@@ -652,6 +401,283 @@ module Gen : sig
       Accepts an optional character generator (the default is {!char}).
 
       Shrinks on the number of characters first, then on the characters.
+  *)
+
+  val make_primitive : gen : (Random.State.t -> 'a) -> shrink : ('a -> 'a Seq.t) -> 'a t
+  (** [make_primitive ~gen ~shrink] creates a generator from a function [gen] that creates
+      a random value (this function must only use the given {!Random.State.t} for randomness)
+      and a function [shrink] that, given a value [a], returns a lazy list of
+      "smaller" values (used when a test fails).
+
+      This lower-level function is meant to build generators for "primitive" types that can neither be
+      built with other primitive generators nor through composition, or to have more control on the
+      shrinking steps.
+
+      [shrink] must obey the following rules (for your own definition of "small"):
+      - [shrink a = Seq.empty] when [a] is the smallest possible value
+      - [shrink a] must return values strictly smaller than [a], ideally from smallest to largest (for
+        faster shrinking)
+      - [let rec loop a = match shrink a () with | Nil -> () | Cons (smaller_a, _) -> loop smaller_a]
+        must end for all values [a] of type ['a] (i.e. there must not be an infinite number of shrinking
+        steps).
+  *)
+
+  (** {3 Ranges} *)
+
+  val int_bound : int -> int t
+  (** Uniform integer generator producing integers within [0..bound].
+
+      Shrinks towards [0].
+
+      @raise Invalid_argument if the argument is negative. *)
+
+  val float_bound_inclusive : ?origin : float -> float -> float t
+  (** [float_bound_inclusive ?origin bound] returns a random floating-point number between [0.] and
+      [bound] (inclusive). If [bound] is negative, the result is negative or zero.  If
+      [bound] is [0.], the result is [0.].
+
+      Shrinks towards [origin] if given, otherwise towards [0.].
+
+      @since 0.11 *)
+
+  val float_bound_exclusive : ?origin : float -> float -> float t
+  (** [float_bound_exclusive origin bound] returns a random floating-point number between [0.] and
+      [bound] (exclusive).  If [bound] is negative, the result is negative or zero.
+
+      Shrinks towards [origin] if given, otherwise towards [0.].
+
+      @raise Invalid_argument if [bound] is [0.].
+
+      @since 0.11 *)
+
+  val int_range : ?origin:int -> int -> int -> int t
+  (** [int_range ?origin low high] is an uniform integer generator producing integers within [low..high] (inclusive).
+
+      Shrinks towards [origin] if specified, otherwise towards [low]
+      (e.g. [int_range (-5) 15] will shrink towards [-5]).
+
+      @raise Invalid_argument if any of the following holds:
+      - [low > high]
+      - [origin < low]
+      - [origin > high]
+  *)
+
+  val (--) : int -> int -> int t
+  (** [a -- b] is an alias for [int_range ~origin:a a b]. See {!int_range} for more information.
+
+      Shrinks towards [a].
+  *)
+
+  val float_range : ?origin : float -> float -> float -> float t
+  (** [float_range ?origin low high] generates floating-point numbers within [low] and [high] (inclusive).
+
+      Shrinks towards [origin] if specified, otherwise towards [low]
+      (e.g. [float_range 4.2 7.8] will shrink towards [4.2]).
+
+      @raise Invalid_argument if any of the following holds:
+      - [low > high]
+      - [high -. low > max_float]
+      - [origin < low]
+      - [origin > high]
+
+      @since 0.11 *)
+
+  val (--.) : float -> float -> float t
+  (** [a --. b] is an alias for [float_range ~origin:a a b]. See {!float_range} for more information.
+
+      Shrinks towards [a].
+
+      @since 0.11 *)
+
+  (** {3 Choosing elements} *)
+
+  val oneof : 'a t list -> 'a t
+  (** [oneof l] constructs a generator that selects among the given list of generators [l].
+
+      Shrinks towards the first generator of the list.
+  *)
+
+  val oneofl : 'a list -> 'a t
+  (** [oneofl l] constructs a generator that selects among the given list of values [l].
+
+      Shrinks towards the first element of the list.
+  *)
+
+  val oneofa : 'a array -> 'a t
+  (** [oneofa a] constructs a generator that selects among the given array of values [a].
+
+      Shrinks towards the first element of the array.
+  *)
+
+  val frequency : (int * 'a t) list -> 'a t
+  (** Constructs a generator that selects among a given list of generators.
+      Each of the given generators are chosen based on a positive integer weight.
+
+      Shrinks towards the first element of the list.
+  *)
+
+  val frequencyl : (int * 'a) list -> 'a t
+  (** Constructs a generator that selects among a given list of values.
+      Each of the given values are chosen based on a positive integer weight.
+
+      Shrinks towards the first element of the list.
+  *)
+
+  val frequencya : (int * 'a) array -> 'a t
+  (** Constructs a generator that selects among a given array of values.
+      Each of the array entries are chosen based on a positive integer weight.
+
+      Shrinks towards the first element of the array.
+  *)
+
+  (** {3 Shuffling elements} *)
+
+  val shuffle_a : 'a array -> 'a array t
+  (** Returns a copy of the array with its elements shuffled. *)
+
+  val shuffle_l : 'a list -> 'a list t
+  (** Creates a generator of shuffled lists. *)
+
+  val shuffle_w_l : (int * 'a) list -> 'a list t
+  (** Creates a generator of weighted shuffled lists. A given list is shuffled on each
+      generation according to the weights of its elements. An element with a larger weight
+      is more likely to be at the front of the list than an element with a smaller weight.
+      If we want to pick random elements from the (head of) list but need to prioritize
+      some elements over others, this generator can be useful.
+
+      Example: given a weighted list [[1, "one"; 5, "five"; 10, "ten"]], the generator is
+      more likely to generate [["ten"; "five"; "one"]] or [["five"; "ten"; "one"]] than
+      [["one"; "ten"; "five"]] because "ten" and "five" have larger weights than "one".
+
+      @since 0.11
+  *)
+
+  (** {3 Shrinkers} *)
+
+  val number_towards : equal : ('a -> 'a -> bool) -> div : ('a -> 'a -> 'a) -> add : ('a -> 'a -> 'a) -> sub : ('a -> 'a -> 'a) -> of_int : (int -> 'a) -> destination : 'a -> 'a -> 'a Seq.t
+  (** Shrink a number by edging towards a destination.
+
+      The destination is always the first value for optimal shrinking.
+
+      {[
+        let int64_towards_list destination x = List.of_seq @@ Int64.(Gen.number_towards ~equal ~div ~add ~sub ~of_int) ~destination x
+
+        let () =
+          assert (int64_towards_list 0L 100L = [0L; 50L; 75L; 88L; 94L; 97L; 99L]);
+          assert (int64_towards_list 500L 1000L = [500L; 750L; 875L; 938L; 969L; 985L; 993L; 997L; 999L]);
+          assert (int64_towards_list (-50L) (-26L) = [-50L; -38L; -32L; -29L; -28L; -27L])
+      ]}
+  *)
+
+  val int_towards : int -> int -> int Seq.t
+  (** {!number_towards} specialized to {!int}. *)
+
+  val int32_towards : int32 -> int32 -> int32 Seq.t
+  (** {!number_towards} specialized to {!int32}. *)
+
+  val int64_towards : int64 -> int64 -> int64 Seq.t
+  (** {!number_towards} specialized to {!int64}. *)
+
+  val float_towards : float -> float -> float Seq.t
+  (** {!number_towards} specialized to {!float}. *)
+
+  (** {3 Corner cases} *)
+
+  val graft_corners : 'a t -> 'a list -> unit -> 'a t
+  (** [graft_corners gen l ()] makes a new generator that enumerates
+      the corner cases in [l] and then behaves like [g].
+
+      Does not shrink if the test fails on a grafted value.
+      Shrinks towards [gen] otherwise.
+
+      @since 0.6 *)
+
+  val int_pos_corners : int list
+  (** Non-negative corner cases for int.
+
+      @since 0.6 *)
+
+  val int_corners : int list
+  (** All corner cases for int.
+
+      @since 0.6 *)
+
+  (** {3 Lists, arrays and option generators} *)
+
+  val list : 'a t -> 'a list t
+  (** Builds a list generator from an element generator. List size is generated by {!nat}.
+
+      Shrinks on the number of elements first, then on elements.
+  *)
+
+  val small_list : 'a t -> 'a list t
+  (** Generates lists of small size (see {!small_nat}).
+
+      @since 0.5.3 *)
+
+  val list_size : int t -> 'a t -> 'a list t
+  (** Builds a list generator from a (non-negative) size generator and an element generator.
+
+      Shrinks on the number of elements first, then on elements.
+  *)
+
+  val list_repeat : int -> 'a t -> 'a list t
+  (** [list_repeat i g] builds a list generator from exactly [i] elements generated by [g].
+
+      Shrinks on elements only.
+  *)
+
+  val array : 'a t -> 'a array t
+  (** Builds an array generator from an element generator. Array size is generated by {!nat}.
+
+      Shrinks on the number of elements first, then on elements.
+  *)
+
+  val array_size : int t -> 'a t -> 'a array t
+  (** Builds an array generator from a (non-negative) size generator and an element generator.
+
+      Shrinks on the number of elements first, then on elements.
+  *)
+
+  val small_array : 'a t -> 'a array t
+  (** Generates arrays of small size (see {!small_nat}).
+
+      Shrinks on the number of elements first, then on elements.
+
+      @since 0.10 *)
+
+  val array_repeat : int -> 'a t -> 'a array t
+  (** [array_repeat i g] builds an array generator from exactly [i] elements generated by [g].
+
+      Shrinks on elements only.
+  *)
+
+  val opt : 'a t -> 'a option t
+  (** [opt gen] is an option generator.
+
+      Shrinks towards {!None} then towards shrinks of [gen].
+  *)
+
+  (** {3 Combining generators} *)
+
+  val pair : 'a t -> 'b t -> ('a * 'b) t
+  (** [pair gen1 gen2] generates pairs.
+
+      Shrinks on [gen1] and then [gen2].
+  *)
+
+  val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
+  (** [triple gen1 gen2 gen3] generates triples.
+
+      Shrinks on [gen1], then [gen2] and then [gen3].
+  *)
+
+  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
+  (** [quad gen1 gen2 gen3 gen4] generates quadruples.
+
+      Shrinks on [gen1], then [gen2], then [gen3] and then [gen4].
+
+      @since 0.5.1
   *)
 
   (** {3 Convert a structure of generator to a generator of structure} *)

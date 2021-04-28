@@ -474,13 +474,19 @@ module Gen = struct
     done;
     Bytes.unsafe_to_string s
 
-  let ui32 : int32 t = fun st ->
+  let int32 : int32 t = fun st ->
     let x = random_binary_string 32 st |> Int32.of_string in
     Tree.make_primitive (int32_towards 0l) x
 
-  let ui64 : int64 t = fun st ->
+  (** TODO Not actually unsigned, fix in https://github.com/c-cube/qcheck/issues/105 *)
+  let ui32 : int32 t = int32
+
+  let int64 : int64 t = fun st ->
     let x = random_binary_string 64 st |> Int64.of_string in
     Tree.make_primitive (int64_towards 0L) x
+
+  (** TODO Not actually unsigned, fix in https://github.com/c-cube/qcheck/issues/105 *)
+  let ui64 : int64 t = int64
 
   let list_size (size : int t) (gen : 'a t) : 'a list t =
     size >>= fun size ->
@@ -633,7 +639,7 @@ module Gen = struct
   let generate_tree ?(rand=Random.State.make_self_init()) (gen : 'a t) : 'a Tree.t =
     gen rand
 
-  let delay f st = f () st
+  let delay (f : unit -> 'a t) : 'a t = fun st -> f () st
 
   let add_shrink_invariant (p : 'a -> bool) (gen : 'a t) : 'a t =
     fun st -> gen st |> Tree.add_shrink_invariant p
