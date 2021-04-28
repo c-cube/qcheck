@@ -4,17 +4,17 @@ copyright (c) 2013-2017, Guillaume Bury, Simon Cruanes, Vincent Hugot, Jan Midtg
 all rights reserved.
 *)
 
-(** {1 QuickCheck-inspired property-based testing} *)
+(** {1 QuickCheck-inspired property-based testing}
 
-(** The library takes inspiration from Haskell's QuickCheck library. The
+    The library takes inspiration from Haskell's QuickCheck library. The
     rough idea is that the programmer describes invariants that values of
     a certain type need to satisfy ("properties"), as functions from this type
-    to bool. She also needs to describe how to generate random values of the type,
+    to bool. They also need to describe how to generate random values of the type,
     so that the property is tried and checked on a number of random instances.
 
     This explains the organization of this module:
 
-    - {! 'a arbitrary} is used to describe how to generate random values,
+    - {!arbitrary} is used to describe how to generate random values,
       shrink them (make counter-examples as small as possible), print
       them, etc. Auxiliary modules such as {!Gen} and {!Print}
       can be used along with {!make} to build one's own arbitrary instances.
@@ -28,31 +28,40 @@ all rights reserved.
 
     Examples:
 
-    - List.rev is involutive:
+    - "{!List.rev} is involutive" (the test passes so [check_exn] returns [()]):
 
     {[
 
       let test =
-        QCheck.(Test.make ~count:1000
-                  (list int) (fun l -> List.rev (List.rev l) = l));;
+        QCheck2.(Test.make ~count:1000
+                   (list int) (fun l -> List.rev (List.rev l) = l));;
 
-      QCheck.Test.check_exn test;;
+      QCheck2.Test.check_exn test;;
     ]}
 
-    - Not all lists are sorted (false property that will fail. The 15 smallest
-      counter-example lists will be printed):
+    - "All lists are sorted" (false property that will fail):
+      {ul
+        {- QCheck tests this property on random lists and finds a counter-example}
+        {- QCheck then looks for the smallest counter-example possible (here [[1; 0]])
+           to help you find the problem (called "shrinking")}
+      }
 
     {[
-      let test = QCheck.(
+      let test = QCheck2.(
           Test.make
-            ~count:10_000 ~max_fail:3
+            ~name:"All lists are sorted"
+            ~count:10_000
             (list small_nat)
             (fun l -> l = List.sort compare l));;
-      QCheck.Test.check_exn test;;
+      QCheck2.Test.check_exn test;;
+
+      Exception:
+        test `All lists are sorted` failed on ≥ 1 cases:
+        [1; 0] (after 5 shrink steps)
     ]}
 
 
-    - generate 20 random trees using {! Gen.fix} :
+    - Generate 20 random trees using {! Gen.fix} :
 
     {[
       type tree = Leaf of int | Node of tree * tree
@@ -60,66 +69,18 @@ all rights reserved.
       let leaf x = Leaf x
       let node x y = Node (x,y)
 
-      let g = QCheck.Gen.(sized @@ fix
-                            (fun self n -> match n with
-                               | 0 -> map leaf nat
-                               | n ->
-                                 frequency
-                                   [1, map leaf nat;
-                                    2, map2 node (self (n/2)) (self (n/2))]
-                            ))
+      let tree_gen = QCheck2.Gen.(sized @@ fix
+                             (fun self n -> match n with
+                                | 0 -> map leaf nat
+                                | n ->
+                                  frequency
+                                    [1, map leaf nat;
+                                     2, map2 node (self (n/2)) (self (n/2))]
+                             ));;
 
-          Gen.generate ~n:20 g;;
+      QCheck2.Gen.generate ~n:20 tree_gen;;
     ]}
 
-    More complex and powerful combinators can be found in Gabriel Scherer's
-    {!Generator} module. Its documentation can be found
-    {{:http://gasche.github.io/random-generator/doc/Generator.html } here}.
-*)
-
-val (==>) : bool -> bool -> bool
-(** [b1 ==> b2] is the logical implication [b1 => b2]
-    ie [not b1 || b2] (except that it is strict and will interact
-    better with {!Test.check_exn} and the likes, because they will know
-    the precondition was not satisfied.).
-
-    {b WARNING}: this function should only be used in a property
-    (see {!Test.make}), because it raises a special exception in case of
-    failure of the first argument, to distinguish between failed test
-    and failed precondition. Because of OCaml's evaluation order,
-    both [b1] and [b2] are always evaluated; if [b2] should only be
-    evaluated when [b1] holds, see {!assume}.
-*)
-
-val assume : bool -> unit
-(** [assume cond] checks the precondition [cond], and does nothing
-    if [cond=true]. If [cond=false], it interrupts the current test.
-
-    {b WARNING} This function, like {!(==>)}, should only be used in
-    a test, not outside.
-    Example:
-    {[
-      Test.make (list int) (fun l ->
-          assume (l <> []);
-          List.hd l :: List.tl l = l)
-    ]}
-
-    @since 0.5.1
-*)
-
-val assume_fail : unit -> 'a
-(** [assume_fail ()] is like [assume false], but can take any type
-    since we know it always fails (like [assert false]).
-    This is useful to ignore some branches in [if] or [match].
-
-    Example:
-    {[
-      Test.make (list int) (function
-          | [] -> assume_fail ()
-          | _::_ as l -> List.hd l :: List.tl l = l)
-    ]}
-
-    @since 0.5.1
 *)
 
 module Tree : sig
@@ -151,7 +112,12 @@ module Tree : sig
   *)
 end
 
-(** {2 Generate Random Values} *)
+(** {2 Generate random values}
+
+    More complex and powerful combinators can be found in Gabriel Scherer's
+    {!Generator} module. Its documentation can be found
+    {{:http://gasche.github.io/random-generator/doc/Generator.html } here}.
+*)
 module Gen : sig
   type 'a t
   (** A random generator for values of type ['a]. *)
@@ -306,6 +272,8 @@ module Gen : sig
   (** Generates (unsigned) {!int32} values.
 
       Shrinks towards [0l].
+
+      @deprecated use {!val:int32} instead
   *)
 
   val int64 : int64 t
@@ -318,6 +286,8 @@ module Gen : sig
   (** Generates (unsigned) {!int64} values.
 
       Shrinks towards [0L].
+
+      @deprecated use {!val:int64} instead
   *)
 
   val float : float t
@@ -790,8 +760,6 @@ module Gen : sig
   (** @since 0.15 *)
 end
 
-(** {2 Pretty printing} *)
-
 (** {2 Show Values} *)
 module Print : sig
   type 'a t = 'a -> string
@@ -941,25 +909,46 @@ module Shrink : sig
   (** Similar to {!pair} *)
 end
 
-(** {2 Observe Values} *)
-
-(** Observables are usable as arguments for random functions.
-    The random function will observe its arguments in a way
-    that is determined from the observable instance.
-
-    Inspired from https://blogs.janestreet.com/quickcheck-for-core/
-    and Koen Claessen's "Shrinking and Showing functions".
-
-    @since 0.6
-*)
-
+(** Observables are random function {i arguments}. *)
 module Observable : sig
-  (** An observable for ['a], packing a printer and other things. *)
+  (**
+     While random functions don't need to generate {i values} of their arguments,
+     they need the abilities to:
+     - compare, using [equal] and [hash], so that the same argument always returns
+     the same generated value
+     - [print], in order to print the function implementation (bindings)
+     in case of test failure
+
+     Inspired by:
+     - Jane Street {{: https://blogs.janestreet.com/quickcheck-for-core/} Quickcheck for Core} blog post
+     - Koen Claessen's {{: https://www.youtube.com/watch?v=CH8UQJiv9Q4} Shrinking and Showing functions} paper
+
+     @since 0.6
+  *)
+
   type -'a t
+  (** An observable of ['a], packing a printer and other things. *)
+
+  val make :
+    ?eq:('a -> 'a -> bool) ->
+    ?hash:('a -> int) ->
+    'a Print.t ->
+    'a t
+  (** [make ?eq ?hash print] creates an observable of ['a].
+
+      If [eq] is [None], uses the standard polymorphic [(=)] function.
+
+      If [hash] is [None], uses a default hashing function.
+  *)
 
   val equal : 'a t -> 'a -> 'a -> bool
+  (** [equal o] returns the equality function of [o]. *)
+
   val hash : 'a t -> 'a -> int
+  (** [hash o] returns the hashing function of [o]. *)
+
   val print : 'a t -> 'a Print.t
+  (** [print o] returns the printing function of [o]. *)
 
   val unit : unit t
   val bool : bool t
@@ -967,12 +956,6 @@ module Observable : sig
   val float : float t
   val string : string t
   val char : char t
-
-  val make :
-    ?eq:('a -> 'a -> bool) ->
-    ?hash:('a -> int) ->
-    'a Print.t ->
-    'a t
 
   val map : ('a -> 'b) -> 'b t -> 'a t
 
@@ -988,7 +971,7 @@ end
 (** {2 Arbitrary}
 
     A value of type ['a arbitrary] glues together a random generator,
-    and optional functions for shrinking, printing, computing the size,
+    shrinking, and optional functions for printing, computing the size,
     etc. It is the "normal" way of describing how to generate
     values of a given type, to be then used in tests (see {!Test}). *)
 
@@ -1057,6 +1040,51 @@ val get_print : 'a arbitrary -> 'a Print.t option
     run one test simply.
     For more serious testing, it is better to create a testsuite
     and use {!QCheck_runner}.
+*)
+
+val (==>) : bool -> bool -> bool
+(** [b1 ==> b2] is the logical implication [b1 => b2]
+    ie [not b1 || b2] (except that it is strict and will interact
+    better with {!Test.check_exn} and the likes, because they will know
+    the precondition was not satisfied.).
+
+    {b WARNING}: this function should only be used in a property
+    (see {!Test.make}), because it raises a special exception in case of
+    failure of the first argument, to distinguish between failed test
+    and failed precondition. Because of OCaml's evaluation order,
+    both [b1] and [b2] are always evaluated; if [b2] should only be
+    evaluated when [b1] holds, see {!assume}.
+*)
+
+val assume : bool -> unit
+(** [assume cond] checks the precondition [cond], and does nothing
+    if [cond=true]. If [cond=false], it interrupts the current test.
+
+    {b WARNING} This function, like {!(==>)}, should only be used in
+    a test, not outside.
+    Example:
+    {[
+      Test.make (list int) (fun l ->
+          assume (l <> []);
+          List.hd l :: List.tl l = l)
+    ]}
+
+    @since 0.5.1
+*)
+
+val assume_fail : unit -> 'a
+(** [assume_fail ()] is like [assume false], but can take any type
+    since we know it always fails (like [assert false]).
+    This is useful to ignore some branches in [if] or [match].
+
+    Example:
+    {[
+      Test.make (list int) (function
+          | [] -> assume_fail ()
+          | _::_ as l -> List.hd l :: List.tl l = l)
+    ]}
+
+    @since 0.5.1
 *)
 
 (** Result of running a test *)
@@ -1609,23 +1637,3 @@ val map : ?print:'b Print.t -> ?collect:('b -> string) -> ('a -> 'b) -> 'a arbit
 val map_same_type : ('a -> 'a) -> 'a arbitrary -> 'a arbitrary
 (** Specialization of [map] when the transformation preserves the type, which
     makes printer, etc. still relevant. *)
-
-(** {2 Migration} *)
-
-(* val migrate_v1_arbitrary : 'a QCheck.arbitrary -> 'a arbitrary
- * (\** [migrate_v1_arbitrary arb_v1] migrates a {!QCheck} arbitrary to QCheck2.
- * 
- *     @deprecated use {!arbitrary} directly instead.
- * *\)
- * 
- * val migrate_v1_cell : 'a QCheck.Test.cell -> 'a Test.cell
- * (\** [migrate_v1_cell cell_v1] migrates a {!QCheck} cell to QCheck2.
- * 
- *     @deprecated use {!Test.make_cell} directly instead.
- * *\)
- * 
- * val migrate_v1_test : QCheck.Test.t -> Test.t
- * (\** [migrate_v1_test test_v1] migrates a {!QCheck} test to QCheck2.
- * 
- *     @deprecated use {!Test.make} directly instead.
- * *\) *)
