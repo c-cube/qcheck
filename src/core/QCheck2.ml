@@ -329,17 +329,45 @@ module Gen = struct
     then Tree.pure None
     else Tree.opt (gen st)
 
-  (* Uniform random int generator *)
+  (* Uniform positive random int generator.
+
+     We can't use {!Random.State.int} because the upper bound must be positive and is excluded,
+     so {!Int.max_int} would never be reached. We have to manipulate bits directly.
+
+     Note that the leftmost bit is used for negative numbers, so it must be [0].
+
+     {!Random.State.bits} only generates 30 bits, which is exactly enough on
+     32-bits architectures (i.e. {!Sys.int_size} = 31, i.e. 30 bits for positive numbers)
+     but not on 64-bits ones.
+
+     That's why for 64-bits, 3 30-bits segments are generated and shifted to craft a
+     62-bits number (i.e. {!Sys.int_size} = 63). The leftmost segment is masked to keep
+     only the last 2 bits.
+
+     The current implementation hard-codes 30/32/62/64 values, but technically we should
+     rely on {!Sys.int_size} to find the number of bits.
+
+     Note that we could also further generalize this function to merge it with [random_binary_string].
+     Technically this function is a special case of [random_binary_string] where the size is
+     {!Sys.int_size}.
+  *)
+  let pint_raw (st : RS.t) : int =
+    if Sys.word_size = 32
+    then RS.bits st
+    else (* word size = 64 *)
+      (* Bottom 30 bits *)
+      let right = RS.bits st in
+      (* Middle 30 bits *)
+      let middle = (RS.bits st lsl 30) in
+      (* Technically we could write [3] but this is clearer *)
+      let two_bits_mask = 0b11 in
+      (* Top 2 bits *)
+      let left = ((RS.bits st land two_bits_mask) lsl 60) in
+      left lor middle lor right
+
   let pint ?(origin : int = 0) : int t = fun st ->
-    let origin = parse_origin "Gen.pint" Format.pp_print_int ~origin ~low:min_int ~high:max_int in
-    let x =
-      if Sys.word_size = 32
-      then RS.bits st
-      else (* word size = 64 *)
-        RS.bits st                        (* Bottom 30 bits *)
-        lor (RS.bits st lsl 30)           (* Middle 30 bits *)
-        lor ((RS.bits st land 3) lsl 60)  (* Top 2 bits *)  (* top bit = 0 *)
-    in
+    let origin = parse_origin "Gen.pint" Format.pp_print_int ~origin ~low:0 ~high:max_int in
+    let x = pint_raw st in
     Tree.make_primitive (Seq.int_towards origin) x
 
   let number_towards = Seq.number_towards
