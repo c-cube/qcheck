@@ -112,15 +112,9 @@ end
 module Tree = struct
   type 'a t = Tree of 'a * ('a t) Seq.t
 
-  let node (tree : 'a t) : 'a =
-    let Tree (node, _) = tree in node
+  let root (Tree (root, _) : 'a t) : 'a = root
 
-  let root = node
-
-  let children (tree : 'a t) : ('a t) Seq.t =
-    let Tree (_, children) = tree in children
-
-  let shrinks t = children t |> List.of_seq
+  let children (Tree (_, children) : 'a t) : ('a t) Seq.t = children
 
   let rec pp ?(depth : int option) (inner_pp : Format.formatter -> 'a -> unit) (ppf : Format.formatter) (t : 'a t) : unit =
     let open Format in
@@ -631,10 +625,10 @@ module Gen = struct
     f'
 
   let generate ?(rand=Random.State.make_self_init()) ~(n : int) (gen : 'a t) : 'a list =
-    list_repeat n gen rand |> Tree.node
+    list_repeat n gen rand |> Tree.root
 
   let generate1 ?(rand=Random.State.make_self_init()) (gen : 'a t) : 'a =
-    gen rand |> Tree.node
+    gen rand |> Tree.root
 
   let generate_tree ?(rand=Random.State.make_self_init()) (gen : 'a t) : 'a Tree.t =
     gen rand

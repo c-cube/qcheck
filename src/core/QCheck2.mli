@@ -83,8 +83,13 @@ all rights reserved.
 
 *)
 
+(** A tree represents a generated value and its successive shrunk values. *)
 module Tree : sig
-  (** This module stores types and functions related to a generated value and its successive shrinks. *)
+  (** Conceptually a pseudo-randomly generated value is packaged with its shrunk values.
+      This coupling - called "integrated shrinking" - in a single type has a major benefit:
+      most generators get shrinking "for free" by composing from smaller generators, and shrinking
+      does not break invariants (e.g. shrinks of a positive number are always positive).
+  *)
 
   type 'a t
   (** A tree of random generated values, where the root contains the value used for the test,
@@ -92,13 +97,13 @@ module Tree : sig
       used if the test fails. *)
 
   val root : 'a t -> 'a
-  (** Get the root value of a tree of generated values. *)
+  (** [root tree] returns the root value of the tree of generated values [t]. *)
 
-  val shrinks : 'a t -> 'a t list
-  (** Get the sub-trees of a tree of generated values. *)
+  val children : 'a t -> 'a t Seq.t
+  (** [children tree] returns the direct sub-trees of the tree of generated values [t]. *)
 
   val pp : ?depth : int -> (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
-  (** [pp ?depth pp_a ppf tree] will pretty-print the tree of generated values [tree] using the
+  (** [pp ?depth pp_a ppf tree] pretty-prints the tree of generated values [tree] using the
       pretty-print formatter [ppf]. Values of type ['a] will be printed using the given
       pretty-printer [pp_a].
 
@@ -909,7 +914,7 @@ module Shrink : sig
   (** Similar to {!pair} *)
 end
 
-(** Observables are random function {i arguments}. *)
+(** An observable is a random function {i argument}. *)
 module Observable : sig
   (**
      While random functions don't need to generate {i values} of their arguments,
