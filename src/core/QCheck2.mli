@@ -708,9 +708,9 @@ module Gen : sig
       Part of the following documentation is greatly inspired by Gabriel Scherer's excellent
       {{:http://gasche.github.io/random-generator/doc/Generator.html } Generator} module documentation.
 
-      {3 Functor (in the Haskell sense of "mappable")}
+      {3 Functor}
 
-      [Gen.t] is a functor: it has a [map] function to transform a generator of ['a] into a generator of ['b],
+      [Gen.t] is a functor (in the Haskell sense of "mappable"): it has a [map] function to transform a generator of ['a] into a generator of ['b],
       given a simple function ['a -> 'b].
 
       {[
@@ -727,7 +727,7 @@ module Gen : sig
 
       {3 Applicative}
 
-      [Gen.t] is applicative: it has a [map2] function to apply a function of 2 arguments to 2 generators.
+      [Gen.t] is applicative: it has a [map2] function to apply a function of 2 (or more) arguments to 2 (or more) generators.
 
       Another equivalent way to look at it is that it has an [ap] function to apply a generator of
       functions to a generator of values. While at first sight this may look almost useless, it actually
@@ -752,7 +752,7 @@ module Gen : sig
       in parallel, then you can use an applicative function to combine those generators.
 
       Note that while [map2] and [map3] are provided, you can use functions with more than 3
-      arguments (and that is where the [(<*>)] operator alias really shines):
+      arguments (and that is where the [<*>] operator alias really shines):
 
       {[
         val complex_function : bool -> string -> int -> string -> int64 -> some_big_type
@@ -777,6 +777,39 @@ module Gen : sig
             <*> string_readable
             <*> int64)
       ]}
+
+      {3 Monad}
+
+      [Gen.t] is a monad: it has a [bind] function to return a {b generator} (not a value)
+      based on {b another generated value}.
+
+      As an example, imagine you want to create a generator of [(int, string) result] that is
+      an [Ok] 90% of the time and an [Error] 10% of the time. You can generate a number between
+      0 and 9 and and return a generator of [int] (warpped in an [Ok] using [map]) if the generated number is
+      lower than 9, otherwise return a generator of [string] (wrapped in an [Error] using [map]):
+      {[
+        let int_string_result : (int, string) result Gen.t =
+          Gen.(bind (int_range 0 9) (fun n ->
+            if n < 9 
+              then map Result.ok int
+              else map Result.error string_readable))
+
+        (* Alternative syntax with operators *)
+        let int_string_result : (int, string) result Gen.t =
+          Gen.(int_range 0 9 >>= fun n ->
+            if n < 9
+              then int >|= Result.ok
+              else string_readable >|= Result.error)
+      ]}
+
+      Note that this particular scenario can be simplified by using [frequency]:
+      {[
+        let int_string_result : (int, string) result Gen.t =
+          Gen.(frequency [
+            (9, int >|= Result.ok);
+            (1, string_readable >|= Result.error)])
+      ]}
+
   *)
 
   val map : ('a -> 'b) -> 'a t -> 'b t
