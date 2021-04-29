@@ -70,13 +70,13 @@ all rights reserved.
       let node x y = Node (x,y)
 
       let tree_gen = QCheck2.Gen.(sized @@ fix
-                             (fun self n -> match n with
-                                | 0 -> map leaf nat
-                                | n ->
-                                  frequency
-                                    [1, map leaf nat;
-                                     2, map2 node (self (n/2)) (self (n/2))]
-                             ));;
+                                    (fun self n -> match n with
+                                       | 0 -> map leaf nat
+                                       | n ->
+                                         frequency
+                                           [1, map leaf nat;
+                                            2, map2 node (self (n/2)) (self (n/2))]
+                                    ));;
 
       QCheck2.Gen.generate ~n:20 tree_gen;;
     ]}
@@ -117,82 +117,21 @@ module Tree : sig
   *)
 end
 
-(** {2 Generate random values}
-
-    More complex and powerful combinators can be found in Gabriel Scherer's
-    {!Generator} module. Its documentation can be found
-    {{:http://gasche.github.io/random-generator/doc/Generator.html } here}.
-*)
+(** A generator is responsible for generating pseudo-random values and provide shrinks (smaller
+    values) when a test fails. *)
 module Gen : sig
+  (** This module provides some of the most important features of QCheck:
+      - {{!section:primitive_generators} primitive generators}
+      - {{!section:composing_generators} generator compositions}
+  *)
+
   type 'a t
   (** A random generator for values of type ['a]. *)
 
   type 'a sized = int -> 'a t
   (** Random generator with a size bound. *)
 
-  (** {3 Composing generators} *)
-
-  val pure : 'a -> 'a t
-  (** [pure a] creates a generator that always returns [a].
-
-      Does not shrink.
-
-      @since 0.8*)
-
-  val return : 'a -> 'a t
-  (** Synonym for {!pure} *)
-
-  val map : ('a -> 'b) -> 'a t -> 'b t
-  (** [map f gen] transforms a generator [gen] by applying [f] to each generated element.
-
-      Shrinks towards the shrinks of [gen] with [f] applied to them.
-  *)
-
-  val (>|=) : 'a t -> ('a -> 'b) -> 'b t
-  (** An infix synonym for {!map}. *)
-
-  val (<$>) : ('a -> 'b) -> 'a t -> 'b t
-  (** An infix synonym for {!map}
-
-      @since 0.13 *)
-
-  val map2 : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
-  (** [map2 f gen1 gen2] transforms two generators [gen1] and [gen2] by applying [f] to each
-      pair of generated elements.
-
-      Shrinks on [gen1] and then [gen2].
-  *)
-
-  val map3 : ('a -> 'b -> 'c -> 'd) -> 'a t -> 'b t -> 'c t -> 'd t
-  (** [map3 f gen1 gen2 gen3] transforms three generators [gen1], [gen2], and [gen3] by applying [f]
-      to each triple of generated elements.
-
-      Shrinks on [gen1], then [gen2], and then [gen3].
-  *)
-
-  val ap : ('a -> 'b) t -> 'a t -> 'b t
-  (** [ap fgen gen] composes a function generator and an argument generator
-      into a result generator.
-
-      Shrinks on [fgen] and then [gen].
-  *)
-
-  val (<*>) : ('a -> 'b) t -> 'a t -> 'b t
-  (** Synonym for {!ap} *)
-
-  val bind : 'a t -> ('a -> 'b t) -> 'b t
-  (** Monadic bind for writing dependent generators.
-
-      [bind gen f] first generates a value of type ['a] with [gen] and then
-      passes it to [f] to generate a value of type ['b].
-
-      Shrinks on [gen] and then on the resulting generator.
-  *)
-
-  val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
-  (** Synonym for {!bind} *)
-
-  (** {3 Primitive generators} *)
+  (** {3:primitive_generators Primitive generators} *)
 
   val unit : unit t
   (** The unit generator.
@@ -377,6 +316,17 @@ module Gen : sig
 
       Shrinks on the number of characters first, then on the characters.
   *)
+
+  val pure : 'a -> 'a t
+  (** [pure a] creates a generator that always returns [a].
+
+      Does not shrink.
+
+      @since 0.8
+  *)
+
+  val return : 'a -> 'a t
+  (** Synonym for {!pure} *)
 
   val make_primitive : gen : (Random.State.t -> 'a) -> shrink : ('a -> 'a Seq.t) -> 'a t
   (** [make_primitive ~gen ~shrink] creates a generator from a function [gen] that creates
@@ -750,6 +700,135 @@ module Gen : sig
       in a generator.
       @since 0.17 *)
 
+  (** {2:composing_generators Composing generators}
+
+      QCheck generators compose well: it means one can easily craft generators for new values
+      or types from existing generators.
+
+      Part of the following documentation is greatly inspired by Gabriel Scherer's excellent
+      {{:http://gasche.github.io/random-generator/doc/Generator.html } Generator} module documentation.
+
+      {3 Functor (in the Haskell sense of "mappable")}
+
+      [Gen.t] is a functor: it has a [map] function to transform a generator of ['a] into a generator of ['b],
+      given a simple function ['a -> 'b].
+
+      {[
+        let even_gen : int Gen.t = Gen.map (fun n -> n * 2) Gen.int
+
+        let odd_gen : int Gen.t = Gen.map (fun n -> n * 2 + 1) Gen.int
+
+        let lower_case_string_gen : string Gen.t = Gen.map String.lowercase Gen.string_readable
+
+        type foo = Foo of string * int
+        let foo_gen : foo Gen.t =
+          Gen.map (fun (s, n) -> Foo (s, n)) Gen.(pair string_readable int)
+      ]}
+
+      {3 Applicative}
+
+      [Gen.t] is applicative: it has a [map2] function to apply a function of 2 arguments to 2 generators.
+
+      Another equivalent way to look at it is that it has an [ap] function to apply a generator of
+      functions to a generator of values. While at first sight this may look almost useless, it actually
+      permits a nice syntax (using the operator alias [<*>]) for functions of any number of arguments.
+
+      {[
+        (* Notice that this looks suspiciously like the [foo] example above:
+           this is no coincidence! [pair] is a special case of [map2] where
+           the function wraps arguments in a tuple. *)
+        type foo = Foo of string * int
+        let foo_gen : foo Gen.t =
+          Gen.map2 (fun s n -> Foo (s, n)) Gen.string_readable Gen.int
+
+        let string_prefixed_with_keyword_gen : string Gen.t =
+          Gen.map2 (fun prefix s -> prefix ^ s)
+            (Gen.oneofl ["foo"; "bar"; "baz"])
+            Gen.string_readable
+      ]}
+
+      Applicatives are useful when you need several random values to build a new generator,
+      {b and the values are unrelated}. A good rule of thumb is: if the values could be generated
+      in parallel, then you can use an applicative function to combine those generators.
+
+      Note that while [map2] and [map3] are provided, you can use functions with more than 3
+      arguments (and that is where the [(<*>)] operator alias really shines):
+
+      {[
+        val complex_function : bool -> string -> int -> string -> int64 -> some_big_type
+
+        (* Verbose version, using map3 and ap *)
+        let big_type_gen : some_big_type Gen.t = Gen.(
+            ap (
+              ap (
+                map3 complex_function
+                  bool
+                  string_readable
+                  int)
+                string_readable)
+              int64)
+
+        (* Sleeker syntax, using operators aliases for map and ap *)
+        let big_type_gen : some_big_type Gen.t = Gen.(
+            complex_function
+            <$> bool
+            <*> string_readable
+            <*> int
+            <*> string_readable
+            <*> int64)
+      ]}
+  *)
+
+  val map : ('a -> 'b) -> 'a t -> 'b t
+  (** [map f gen] transforms a generator [gen] by applying [f] to each generated element.
+
+      Shrinks towards the shrinks of [gen] with [f] applied to them.
+  *)
+
+  val (>|=) : 'a t -> ('a -> 'b) -> 'b t
+  (** An infix synonym for {!map}. *)
+
+  val (<$>) : ('a -> 'b) -> 'a t -> 'b t
+  (** An infix synonym for {!map}
+
+      @since 0.13 *)
+
+  val map2 : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
+  (** [map2 f gen1 gen2] transforms two generators [gen1] and [gen2] by applying [f] to each
+      pair of generated elements.
+
+      Shrinks on [gen1] and then [gen2].
+  *)
+
+  val map3 : ('a -> 'b -> 'c -> 'd) -> 'a t -> 'b t -> 'c t -> 'd t
+  (** [map3 f gen1 gen2 gen3] transforms three generators [gen1], [gen2], and [gen3] by applying [f]
+      to each triple of generated elements.
+
+      Shrinks on [gen1], then [gen2], and then [gen3].
+  *)
+
+  val ap : ('a -> 'b) t -> 'a t -> 'b t
+  (** [ap fgen gen] composes a function generator and an argument generator
+      into a result generator.
+
+      Shrinks on [fgen] and then [gen].
+  *)
+
+  val (<*>) : ('a -> 'b) t -> 'a t -> 'b t
+  (** Synonym for {!ap} *)
+
+  val bind : 'a t -> ('a -> 'b t) -> 'b t
+  (** Monadic bind for writing dependent generators.
+
+      [bind gen f] first generates a value of type ['a] with [gen] and then
+      passes it to [f] to generate a value of type ['b].
+
+      Shrinks on [gen] and then on the resulting generator.
+  *)
+
+  val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
+  (** Synonym for {!bind} *)
+
   (** {3 Observing generated values} *)
 
   val generate : ?rand:Random.State.t -> n:int -> 'a t -> 'a list
@@ -920,9 +999,9 @@ module Observable : sig
      While random functions don't need to generate {i values} of their arguments,
      they need the abilities to:
      - compare, using [equal] and [hash], so that the same argument always returns
-     the same generated value
+       the same generated value
      - [print], in order to print the function implementation (bindings)
-     in case of test failure
+       in case of test failure
 
      Inspired by:
      - Jane Street {{: https://blogs.janestreet.com/quickcheck-for-core/} Quickcheck for Core} blog post
