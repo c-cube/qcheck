@@ -951,21 +951,52 @@ module Observable : sig
   (** [print o] returns the printing function of [o]. *)
 
   val unit : unit t
-  val bool : bool t
-  val int : int t
-  val float : float t
-  val string : string t
-  val char : char t
+  (** [unit] is an observable of [unit]. *)
 
-  val map : ('a -> 'b) -> 'b t -> 'a t
+  val bool : bool t
+  (** [bool] is an observable of [bool]. *)
+
+  val int : int t
+  (** [int] is an observable of [int]. *)
+
+  val float : float t
+  (** [float] is an observable of [float]. *)
+
+  val string : string t
+  (** [string] is an observable of [string]. *)
+
+  val char : char t
+  (** [char] is an observable of [char]. *)
+
+  val map : ('b -> 'a) -> 'a t -> 'b t
+  (** [map f o] maps the function [f] on observable [o].
+
+      Note the reverse order of types in [f] which may be
+      conter-intuitive: indeed a function that consumes values of type
+      ['b] can be obtained by transforming a value of type ['b] to
+      ['a] using [f], and then by consuming this value of type ['a] using [o].
+  *)
 
   val option : 'a t -> 'a option t
+  (** [option o] wraps the observable [o] of ['a] into an observable of
+      ['a option]. *)
+
   val list : 'a t -> 'a list t
+  (** [list o] wraps the observable [o] of ['a] into an observable of
+      ['a list]. *)
+
   val array : 'a t -> 'a array t
+  (** [array o] wraps the observable [o] of ['a] into an observable of
+      ['a array]. *)
 
   val pair : 'a t -> 'b t -> ('a * 'b) t
+  (** [pair o1 o2] is an observable of pairs of [('a * 'b)]. *)
+
   val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
+  (** [triple o1 o2 o3] is an observable of triples of [('a * 'b * 'c)]. *)
+
   val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
+  (** [quad o1 o2 o3 o4] is an observable of quadruples of [('a * 'b * 'c * 'd)]. *)
 end
 
 (** {2 Arbitrary}
