@@ -216,7 +216,7 @@ let pp_counter ~size out c =
     size c.passed size c.expected t
 
 let debug_shrinking_counter_example cell out x =
-  match (QCheck2.Test.get_arbitrary cell).QCheck2.print with
+  match QCheck2.Test.get_arbitrary cell |> QCheck2.get_print with
   | None -> Printf.fprintf out "<no printer provided>"
   | Some print -> Printf.fprintf out "%s" (print x)
 
@@ -301,7 +301,7 @@ let callback ~size ~out ~verbose ~colors c name _ r =
   )
 
 let print_inst arb x =
-  match arb.QCheck2.print with
+  match QCheck2.get_print arb with
   | Some f -> f x
   | None -> "<no printer>"
 

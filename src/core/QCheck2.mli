@@ -347,8 +347,8 @@ module Gen : sig
         steps).
   *)
 
-  val filter : ('a -> bool) -> 'a t -> 'a t
-  (** [filter f gen] returns a generator similar to [gen] except all shrinks satisfy [f].
+  val add_shrink_invariant : ('a -> bool) -> 'a t -> 'a t
+  (** [add_shrink_invariant f gen] returns a generator similar to [gen] except all shrinks satisfy [f].
       This way it's easy to preserve invariants that are enforced by
       generators, when shrinking values
 
@@ -359,7 +359,6 @@ module Gen : sig
       incomplete case of {!Gen.t} being an Alternative (not implemented yet). For now we
       keep it and wait for users feedback (hence deprecation to raise attention).
   *)
-
 
   (** {3 Ranges} *)
 
@@ -774,26 +773,26 @@ module Gen : sig
       lower than 9, otherwise return a generator of [string] (wrapped in an [Error] using [map]):
       {[
         let int_string_result : (int, string) result Gen.t = Gen.(
-          bind (int_range 0 9) (fun n ->
-            if n < 9
-              then map Result.ok int
-              else map Result.error string_readable))
+            bind (int_range 0 9) (fun n ->
+                if n < 9
+                then map Result.ok int
+                else map Result.error string_readable))
 
         (* Alternative syntax with operators *)
         let int_string_result : (int, string) result Gen.t = Gen.(
-          int_range 0 9 >>= fun n ->
+            int_range 0 9 >>= fun n ->
             if n < 9
-              then int >|= Result.ok
-              else string_readable >|= Result.error)
+            then int >|= Result.ok
+            else string_readable >|= Result.error)
       ]}
 
       Note that this particular use case can be simplified by using [frequency]:
       {[
         let int_string_result : (int, string) result Gen.t = Gen.(
-          frequency [
-            (9, int >|= Result.ok);
-            (1, string_readable >|= Result.error)
-          ])
+            frequency [
+              (9, int >|= Result.ok);
+              (1, string_readable >|= Result.error)
+            ])
       ]}
 
   *)
@@ -929,20 +928,20 @@ end
 
 (** Shrinking helper functions. *)
 module Shrink : sig
-(** Shrinking is used to reduce the size of a counter-example. It tries
-    to make the counter-example smaller by decreasing it, or removing
-    elements, until the property to test holds again; then it returns the
-    smallest value that still made the test fail.
+  (** Shrinking is used to reduce the size of a counter-example. It tries
+      to make the counter-example smaller by decreasing it, or removing
+      elements, until the property to test holds again; then it returns the
+      smallest value that still made the test fail.
 
-    This is meant to help developers find a simpler counter-example to
-    ease investigation and find more easily the root cause (be it in the
-    tested code or in the test).
+      This is meant to help developers find a simpler counter-example to
+      ease investigation and find more easily the root cause (be it in the
+      tested code or in the test).
 
-    This module exposes helper functions that one can reuse in combination
-    with {!Gen.make_primitive} to craft custom primitive generators (not
-    by composing other generators). The vast majority of use cases will
-    probably not need this module.
-*)
+      This module exposes helper functions that one can reuse in combination
+      with {!Gen.make_primitive} to craft custom primitive generators (not
+      by composing other generators). The vast majority of use cases will
+      probably not need this module.
+  *)
 
   val number_towards : equal : ('a -> 'a -> bool) -> div : ('a -> 'a -> 'a) -> add : ('a -> 'a -> 'a) -> sub : ('a -> 'a -> 'a) -> of_int : (int -> 'a) -> destination : 'a -> 'a -> 'a Seq.t
   (** Shrink a number by edging towards a destination.
@@ -952,20 +951,20 @@ module Shrink : sig
       {[
         let int64_towards_list destination x = List.of_seq @@
           Int64.(Gen.number_towards
-            ~equal
-            ~div
-            ~add
-            ~sub
-            ~of_int)
+                   ~equal
+                   ~div
+                   ~add
+                   ~sub
+                   ~of_int)
             ~destination
             x
         in
         assert (int64_towards_list 0L 100L =
-          [0L; 50L; 75L; 88L; 94L; 97L; 99L]);
+                [0L; 50L; 75L; 88L; 94L; 97L; 99L]);
         assert (int64_towards_list 500L 1000L =
-          [500L; 750L; 875L; 938L; 969L; 985L; 993L; 997L; 999L]);
+                [500L; 750L; 875L; 938L; 969L; 985L; 993L; 997L; 999L]);
         assert (int64_towards_list (-50L) (-26L) =
-          [-50L; -38L; -32L; -29L; -28L; -27L])
+                [-50L; -38L; -32L; -29L; -28L; -27L])
       ]}
 
       This generic function is exposed to let users reuse this shrinking
@@ -1099,67 +1098,69 @@ module Observable : sig
   (** [quad o1 o2 o3 o4] is an observable of quadruples of [('a * 'b * 'c * 'd)]. *)
 end
 
-(** {2 Arbitrary}
+type 'a arbitrary
+(** A value of type ['a arbitrary] is a {!Gen.t} packaged with some optional features:
+    - [print] generated values to display counter-examples when a test fails
+    - [collect] values by tag, useful to display distribution of generated values
+    - [stats] to get some statistics about generated values
 
-    A value of type ['a arbitrary] glues together a random generator,
-    shrinking, and optional functions for printing, computing the size,
-    etc. It is the "normal" way of describing how to generate
-    values of a given type, to be then used in tests (see {!Test}). *)
+    ⚠️ The collect field is unstable and might be removed, or
+    moved into {!Test}.
+
+    Abstract since QCheck2.
+*)
 
 type 'a stat = string * ('a -> int)
 (** A statistic on a distribution of values of type ['a].
     The function {b MUST} return a positive integer. *)
-
-type 'a arbitrary = private {
-  gen: 'a Gen.t;
-  print: ('a -> string) option; (** print values *)
-  collect: ('a -> string) option;  (** map value to tag, and group by tag *)
-  stats: 'a stat list; (** statistics to collect and print *)
-}
-(** A value of type ['a arbitrary] is an object with a method for generating random
-    values of type ['a], and additional methods to compute the size of values,
-    print them, and possibly shrink them into smaller counter-examples.
-
-    {b NOTE} the collect field is unstable and might be removed, or
-    moved into {!Test}.
-
-    Made private since 0.8
-*)
 
 val make :
   ?print:'a Print.t ->
   ?collect:('a -> string) ->
   ?stats:'a stat list ->
   'a Gen.t -> 'a arbitrary
-(** Builder for [arbitrary]. Default is to only have a generator, but other
-    arguments can be added.
-    @param print printer for values (counter-examples)
-    @param collect for statistics
+(** [make ?print ?collect ?stats gen] builds an [arbitrary].
+
+    Only the generator is mandatory, all other arguments are optional.
+    That being said, we recommend setting at least the [print] parameter to
+    get better error messages in case of test failures.
+*)
+
+val set_gen : 'a Gen.t -> 'a arbitrary -> 'a arbitrary
+(** [set_gen gen arb] returns an arbitrary similar to [arb] where the generating function is [gen].
+
+    @since 0.7
 *)
 
 val set_print : 'a Print.t -> 'a arbitrary -> 'a arbitrary
+(** [set_print p arb] returns an arbitrary similar to [arb] where the printing function is [p]. *)
+
 val set_collect : ('a -> string) -> 'a arbitrary -> 'a arbitrary
-val set_stats : 'a stat list -> 'a arbitrary -> 'a arbitrary (** @since 0.6 *)
+(** [set_collect c arb] returns an arbitrary similar to [arb] where the collecting function is [c]. *)
 
-val add_shrink_invariant : ('a -> bool) -> 'a arbitrary -> 'a arbitrary
-(** Update shrinker by only keeping smaller values satisfying the
-    given invariant.
-    @since 0.8 *)
+val set_stats : 'a stat list -> 'a arbitrary -> 'a arbitrary
+(** [set_stats s arb] returns an arbitrary similar to [arb] where the statistics function is [s].
 
-val set_gen : 'a Gen.t -> 'a arbitrary -> 'a arbitrary
-(** Change the generator
-    @since 0.7 *)
+    @since 0.6
+*)
 
 val add_stat : 'a stat -> 'a arbitrary -> 'a arbitrary
-(** Add a statistic to the arbitrary instance.
+(** [add_stat s arb] adds the statistic [s] to the arbitrary instance [arb].
+
     @since 0.6 *)
 
 val get_gen : 'a arbitrary -> 'a Gen.t
-(** Access the underlying random generator of this arbitrary object.
+(** [get_gen arb] returns the underlying random generator of [arb].
+
     @since 0.6 *)
 
 val get_print : 'a arbitrary -> 'a Print.t option
-(** Access the underlying printer of this arbitrary object. *)
+(** [get_print arb] returns the underlying optional value printer of [arb]. *)
+
+val add_shrink_invariant : ('a -> bool) -> 'a arbitrary -> 'a arbitrary
+(** [add_shrink_invariant f arb] applies {!Gen.add_shrink_invariant} with [f] on the underlying generator of [arb].
+
+    @since 0.8 *)
 
 (** {2 Tests}
 
@@ -1457,11 +1458,13 @@ val find_example :
 (** [find_example ~f gen] uses [gen] to generate some values of type ['a],
     and checks them against [f]. If such a value is found, it is returned.
     Otherwise an exception is raised.
-    {b NOTE} this should only be used from within a property in {!Test.make}.
-    @param count number of attempts.
-    @param name description of the example to find (used in the exception).
-    @param f the property that the example must satisfy.
-    @raise No_example_found if no example is found within [count] tries.
+
+    ⚠️ This should only be used from within a property in {!Test.make}.
+
+    @param name Description of the example to find (used in test results/errors).
+    @param count Number of attempts.
+    @param f The property that the generated values must satisfy.
+    @raise No_example_found If no example is found within [count] tries.
     @since 0.6
 *)
 

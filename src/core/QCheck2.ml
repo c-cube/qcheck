@@ -259,9 +259,6 @@ module Gen = struct
   let make_primitive ~(gen : Random.State.t -> 'a) ~(shrink : 'a -> 'a Seq.t) : 'a t = fun st ->
     Tree.make_primitive shrink (gen st)
 
-  let filter (f : 'a -> bool) (gen : 'a t) : 'a t = fun st ->
-    gen st |> Tree.add_shrink_invariant f
-
   let parse_origin (loc : string) (pp : Format.formatter -> 'a -> unit) ~(origin : 'a) ~(low : 'a) ~(high : 'a) : 'a =
     if origin < low then invalid_arg Format.(asprintf "%s: origin value %a is lower than low value %a" loc pp origin pp low)
     else if origin > high then invalid_arg Format.(asprintf "%s: origin value %a is greater than high value %a" loc pp origin pp high)
@@ -850,9 +847,13 @@ let make ?print ?collect ?(stats=[]) gen = {
 }
 
 let set_print f o = {o with print=Some f}
+
 let set_collect f o = {o with collect=Some f}
+
 let set_stats s o = {o with stats=s}
+
 let add_stat s o = {o with stats=s :: o.stats}
+
 let set_gen g o = {o with gen=g}
 
 let add_shrink_invariant (p : 'a -> bool) (arb : 'a arbitrary) : 'a arbitrary =
@@ -918,11 +919,9 @@ let small_int_corners () = make_int (Gen.nng_corners ())
 
 let neg_int = make_int Gen.neg_int
 
-let int32 =
-  make ~print:(fun i -> Int32.to_string i ^ "l") Gen.int32
+let int32 = make ~print:(fun i -> Int32.to_string i ^ "l") Gen.int32
 
-let int64 =
-  make ~print:(fun i -> Int64.to_string i ^ "L") Gen.int64
+let int64 = make ~print:(fun i -> Int64.to_string i ^ "L") Gen.int64
 
 let char = make_scalar ~print:(sprintf "%C") Gen.char
 
