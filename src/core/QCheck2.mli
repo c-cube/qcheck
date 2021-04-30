@@ -347,6 +347,20 @@ module Gen : sig
         steps).
   *)
 
+  val filter : ('a -> bool) -> 'a t -> 'a t
+  (** [filter f gen] returns a generator similar to [gen] except all shrinks satisfy [f].
+      This way it's easy to preserve invariants that are enforced by
+      generators, when shrinking values
+
+      @since 0.8
+
+      @deprecated is this function still useful? I feel like it is either useless (invariants
+      should already be part of the shrinking logic, not be added later) or a special,
+      incomplete case of {!Gen.t} being an Alternative (not implemented yet). For now we
+      keep it and wait for users feedback (hence deprecation to raise attention).
+  *)
+
+
   (** {3 Ranges} *)
 
   val int_bound : int -> int t
@@ -476,35 +490,6 @@ module Gen : sig
 
       @since 0.11
   *)
-
-  (** {3 Shrinkers} *)
-
-  val number_towards : equal : ('a -> 'a -> bool) -> div : ('a -> 'a -> 'a) -> add : ('a -> 'a -> 'a) -> sub : ('a -> 'a -> 'a) -> of_int : (int -> 'a) -> destination : 'a -> 'a -> 'a Seq.t
-  (** Shrink a number by edging towards a destination.
-
-      The destination is always the first value for optimal shrinking.
-
-      {[
-        let int64_towards_list destination x = List.of_seq @@ Int64.(Gen.number_towards ~equal ~div ~add ~sub ~of_int) ~destination x
-
-        let () =
-          assert (int64_towards_list 0L 100L = [0L; 50L; 75L; 88L; 94L; 97L; 99L]);
-          assert (int64_towards_list 500L 1000L = [500L; 750L; 875L; 938L; 969L; 985L; 993L; 997L; 999L]);
-          assert (int64_towards_list (-50L) (-26L) = [-50L; -38L; -32L; -29L; -28L; -27L])
-      ]}
-  *)
-
-  val int_towards : int -> int -> int Seq.t
-  (** {!number_towards} specialized to {!int}. *)
-
-  val int32_towards : int32 -> int32 -> int32 Seq.t
-  (** {!number_towards} specialized to {!int32}. *)
-
-  val int64_towards : int64 -> int64 -> int64 Seq.t
-  (** {!number_towards} specialized to {!int64}. *)
-
-  val float_towards : float -> float -> float Seq.t
-  (** {!number_towards} specialized to {!float}. *)
 
   (** {3 Corner cases} *)
 
@@ -863,13 +848,18 @@ module Gen : sig
   val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
   (** Synonym for {!bind} *)
 
-  (** {3 Observing generated values} *)
+  (** {2 Debug generators}
+
+      These functions should not be used in tests: they are provided
+      for convenience to debug/investigate what values and shrinks a
+      generator produces.
+  *)
 
   val generate : ?rand:Random.State.t -> n:int -> 'a t -> 'a list
-  (** [generate ~n gen] generates [n] instances of [gen]. *)
+  (** [generate ~n gen] generates [n] values using [gen] (shrinks are discarded). *)
 
   val generate1 : ?rand:Random.State.t -> 'a t -> 'a
-  (** [generate1 gen] generates one instance of [gen]. *)
+  (** [generate1 gen] generates one instance of [gen] (shrinks are discarded). *)
 
   val generate_tree : ?rand:Random.State.t -> 'a t -> 'a Tree.t
   (** [generate_tree ?rand gen] generates a random value and its shrinks using [gen]. *)
@@ -954,77 +944,83 @@ module Iter : sig
   (** @since 0.15 *)
 end
 
-(** {2 Shrink Values}
-
-    Shrinking is used to reduce the size of a counter-example. It tries
+(** Shrinking helper functions. *)
+module Shrink : sig
+(** Shrinking is used to reduce the size of a counter-example. It tries
     to make the counter-example smaller by decreasing it, or removing
     elements, until the property to test holds again; then it returns the
-    smallest value that still made the test fail. *)
-module Shrink : sig
-  type 'a t = 'a -> 'a Iter.t
-  (** Given a counter-example, return an iterator on smaller versions
-      of the counter-example. *)
+    smallest value that still made the test fail.
 
-  val nil : 'a t
-  (** No shrink *)
+    This is meant to help developers find a simpler counter-example to
+    ease investigation and find more easily the root cause (be it in the
+    tested code or in the test).
 
-  val unit : unit t (** @since 0.6 *)
+    This module exposes helper functions that one can reuse in combination
+    with {!Gen.make_primitive} to craft custom primitive generators (not
+    by composing other generators). The vast majority of use cases will
+    probably not need this module.
+*)
 
-  val char : char t (** @since 0.6 *)
+  val number_towards : equal : ('a -> 'a -> bool) -> div : ('a -> 'a -> 'a) -> add : ('a -> 'a -> 'a) -> sub : ('a -> 'a -> 'a) -> of_int : (int -> 'a) -> destination : 'a -> 'a -> 'a Seq.t
+  (** Shrink a number by edging towards a destination.
 
-  val int : int t
+      The destination is always the first value for optimal shrinking.
 
-  val int32 : int32 t
-  (** @since 0.14 *)
+      {[
+        let int64_towards_list destination x = List.of_seq @@
+          Int64.(Gen.number_towards
+            ~equal
+            ~div
+            ~add
+            ~sub
+            ~of_int)
+            ~destination
+            x
+        in
+        assert (int64_towards_list 0L 100L =
+          [0L; 50L; 75L; 88L; 94L; 97L; 99L]);
+        assert (int64_towards_list 500L 1000L =
+          [500L; 750L; 875L; 938L; 969L; 985L; 993L; 997L; 999L]);
+        assert (int64_towards_list (-50L) (-26L) =
+          [-50L; -38L; -32L; -29L; -28L; -27L])
+      ]}
 
-  val int64 : int64 t
-  (** @since 0.14 *)
+      This generic function is exposed to let users reuse this shrinking
+      technique for their custom number types. More specialized, convenient
+      functions are provided below, e.g. {!int_towards}.
+  *)
 
-  val option : 'a t -> 'a option t
+  val int_towards : int -> int -> int Seq.t
+  (** {!number_towards} specialized to {!int}. *)
 
-  val string : string t
+  val int32_towards : int32 -> int32 -> int32 Seq.t
+  (** {!number_towards} specialized to {!int32}. *)
 
-  val filter : ('a -> bool) -> 'a t -> 'a t
-  (** [filter f shrink] shrinks values the same as [shrink], but
-      only keep smaller values that satisfy [f].
-      This way it's easy to preserve invariants that are enforced by
-      generators, when shrinking values
-      @since 0.8 *)
+  val int64_towards : int64 -> int64 -> int64 Seq.t
+  (** {!number_towards} specialized to {!int64}. *)
 
-  val int_aggressive : int t
-  (** Shrink integers by trying all smaller integers (can take a lot of time!)
+  val float_towards : float -> float -> float Seq.t
+  (** {!number_towards} specialized to {!float}.
+
+      There are various ways to shrink a float:
+      - try removing floating digits, i.e. towards integer values
+      - try to get as close as possible to the destination, no matter the number of digits
+      - a mix of both
+
+      This implementation, as it relies on the generic {!number_towards} function,
+      tries to get as close as possible to the destination, e.g. the last value of
+      [Gen.float_towards 50 100] may be [99.9969482421875] (or a similar value).
+  *)
+
+  val int_aggressive_towards : int -> int -> int Seq.t
+  (** [int_agressive_towards destination n] gives all integers from [destination] to [n] (excluded).
+
+      {b Be careful about time and memory} as the resulting list can be huge *)
+
+  val int_aggressive : int -> int Seq.t
+  (** @deprecated Use [int_aggressive_towards 0] instead.
       @since 0.7 *)
 
-  val list : ?shrink:'a t -> 'a list t
-  (** Try to shrink lists by removing one or more elements.
-      @param shrink if provided, will be used to also try to reduce
-      the elements of the list themselves (e.g. in an [int list]
-      one can try to decrease the integers). *)
-
-  val list_spine : 'a list t
-  (** Try to shrink lists by removing one or more elements.
-      @since 0.10 *)
-
-  val list_elems : 'a t -> 'a list t
-  (** Shrinks the elements of a list, without changing the list size.
-      @since 0.10 *)
-
-  val array : ?shrink:'a t -> 'a array t
-  (** Shrink an array.
-      @param shrink see {!list} *)
-
-  val pair : 'a t -> 'b t -> ('a * 'b) t
-  (** [pair a b] uses [a] to shrink the first element of tuples,
-      then tries to shrink the second element using [b].
-      It is often better, when generating tuples, to put the "simplest"
-      element first (atomic type rather than list, etc.) because it will be
-      shrunk earlier. In particular, putting functions last might help. *)
-
-  val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
-  (** Similar to {!pair} *)
-
-  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
-  (** Similar to {!pair} *)
 end
 
 (** An observable is a random function {i argument}. *)
