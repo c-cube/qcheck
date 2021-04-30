@@ -785,29 +785,30 @@ module Gen : sig
 
       As an example, imagine you want to create a generator of [(int, string) result] that is
       an [Ok] 90% of the time and an [Error] 10% of the time. You can generate a number between
-      0 and 9 and and return a generator of [int] (warpped in an [Ok] using [map]) if the generated number is
+      0 and 9 and return a generator of [int] (wrapped in an [Ok] using [map]) if the generated number is
       lower than 9, otherwise return a generator of [string] (wrapped in an [Error] using [map]):
       {[
-        let int_string_result : (int, string) result Gen.t =
-          Gen.(bind (int_range 0 9) (fun n ->
-            if n < 9 
+        let int_string_result : (int, string) result Gen.t = Gen.(
+          bind (int_range 0 9) (fun n ->
+            if n < 9
               then map Result.ok int
               else map Result.error string_readable))
 
         (* Alternative syntax with operators *)
-        let int_string_result : (int, string) result Gen.t =
-          Gen.(int_range 0 9 >>= fun n ->
+        let int_string_result : (int, string) result Gen.t = Gen.(
+          int_range 0 9 >>= fun n ->
             if n < 9
               then int >|= Result.ok
               else string_readable >|= Result.error)
       ]}
 
-      Note that this particular scenario can be simplified by using [frequency]:
+      Note that this particular use case can be simplified by using [frequency]:
       {[
-        let int_string_result : (int, string) result Gen.t =
-          Gen.(frequency [
+        let int_string_result : (int, string) result Gen.t = Gen.(
+          frequency [
             (9, int >|= Result.ok);
-            (1, string_readable >|= Result.error)])
+            (1, string_readable >|= Result.error)
+          ])
       ]}
 
   *)
