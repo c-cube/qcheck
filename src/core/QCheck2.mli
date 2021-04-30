@@ -868,43 +868,63 @@ module Gen : sig
   (** @since 0.15 *)
 end
 
-(** {2 Show Values} *)
+(** Printing functions and helpers, used to print generated values on
+    test failures. *)
 module Print : sig
+
   type 'a t = 'a -> string
   (** Printer for values of type ['a]. *)
 
-  val unit : unit t (** @since 0.6 *)
+  val unit : unit t
+  (** [unit] is a printer of unit.
 
-  val int : int t (** Integer printer. *)
+      @since 0.6
+  *)
 
-  val bool : bool t (** Boolean printer. *)
+  val int : int t
+  (** [int] is a printer of integer. *)
 
-  val float : float t (** Floating point number printer. *)
+  val bool : bool t
+  (** [bool] is a printer of boolean. *)
 
-  val char : char t (** Character printer. *)
+  val float : float t
+  (** [float] is a printer of float. *)
 
-  val string : string t (** String printer. *)
+  val char : char t
+  (** [char] is a printer of character. *)
 
-  val option : 'a t -> 'a option t (** Option printer. *)
+  val string : string t
+  (** [string] is a printer of string. *)
+
+  val option : 'a t -> 'a option t
+  (** [option p] is a printer of ['a option], using [p] if it is a [Some]. *)
 
   val pair : 'a t -> 'b t -> ('a*'b) t
-  (** Pair printer. Expects printers for each component. *)
+  (** [pair p1 p2] is a printer of pair. *)
 
   val triple : 'a t -> 'b t -> 'c t -> ('a*'b*'c) t
-  (** Triple (3-tuple) printer. Expects printers for each component. *)
+  (** [triple p1 p2 p3] is a printer of triple. *)
 
   val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a*'b*'c*'d) t
-  (** Quadruple (4-tuple) printer. Expects printers for each component. *)
+  (** [quad p1 p2 p3 p4] is a printer of quadruple. *)
 
   val list : 'a t -> 'a list t
-  (** List printer. Expects a printer for the list element type. *)
+  (** [list p] is a printer of list, using [p] for each element. *)
 
   val array : 'a t -> 'a array t
-  (** Array printer. Expects a printer for the array entry type. *)
+  (** [array p] is a printer of array, using [p] for each element. *)
 
-  val comap : ('a -> 'b) -> 'b t -> 'a t
-  (** [comap f p] maps [p], a printer of type ['b], to a printer of type ['a] by
-      first converting a printed value using [f : 'a -> 'b]. *)
+  val contramap : ('b -> 'a) -> 'a t -> 'b t
+  (** [contramap f p] transforms printer [p] into another using [f].
+
+      Note the reverse order of types in [f] which may be
+      conter-intuitive: indeed a function that {i prints} values of type
+      ['b] can be obtained by transforming a value of type ['b] to
+      ['a] using [f], and then by {i printing} this value of type ['a] using [p].
+  *)
+
+  val comap : ('b -> 'a) -> 'a t -> 'b t
+  (** @deprecated use {!contramap} instead. *)
 end
 
 (** {2 Iterators}
@@ -1082,14 +1102,17 @@ module Observable : sig
   val char : char t
   (** [char] is an observable of [char]. *)
 
-  val map : ('b -> 'a) -> 'a t -> 'b t
-  (** [map f o] maps the function [f] on observable [o].
+  val contramap : ('b -> 'a) -> 'a t -> 'b t
+  (** [contramap f o] maps the function [f] on observable [o].
 
       Note the reverse order of types in [f] which may be
-      conter-intuitive: indeed a function that consumes values of type
+      conter-intuitive: indeed a function that {i consumes} values of type
       ['b] can be obtained by transforming a value of type ['b] to
-      ['a] using [f], and then by consuming this value of type ['a] using [o].
+      ['a] using [f], and then by {i consuming} this value of type ['a] using [o].
   *)
+
+  val map : ('b -> 'a) -> 'a t -> 'b t
+  (** @deprecated use {!contramap} instead. *)
 
   val option : 'a t -> 'a option t
   (** [option o] wraps the observable [o] of ['a] into an observable of
