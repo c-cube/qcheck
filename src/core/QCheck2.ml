@@ -667,10 +667,15 @@ module Print = struct
   type 'a t = 'a -> string
 
   let unit _ = "()"
+
   let int = string_of_int
+
   let bool = string_of_bool
+
   let float = string_of_float
+
   let string s = s
+
   let char c = String.make 1 c
 
   let option f = function
@@ -678,7 +683,9 @@ module Print = struct
     | Some x -> "Some (" ^ f x ^ ")"
 
   let pair a b (x,y) = Printf.sprintf "(%s, %s)" (a x) (b y)
+
   let triple a b c (x,y,z) = Printf.sprintf "(%s, %s, %s)" (a x) (b y) (c z)
+
   let quad a b c d (x,y,z,w) =
     Printf.sprintf "(%s, %s, %s, %s)" (a x) (b y) (c z) (d w)
 
@@ -702,46 +709,9 @@ module Print = struct
     Buffer.add_string b "|]";
     Buffer.contents b
 
-  let comap f p x = p (f x)
-end
+  let contramap f p x = p (f x)
 
-module Iter = struct
-  type 'a t = ('a -> unit) -> unit
-  let empty _ = ()
-  let return x yield = yield x
-  let (<*>) a b yield = a (fun f -> b (fun x ->  yield (f x)))
-  let (>>=) a f yield = a (fun x -> f x yield)
-  let map f a yield = a (fun x -> yield (f x))
-  let map2 f a b yield = a (fun x -> b (fun y -> yield (f x y)))
-  let (>|=) a f = map f a
-  let append a b yield = a yield; b yield
-  let append_l l yield = List.iter (fun s->s yield) l
-  let flatten s yield = s (fun sub -> sub yield)
-  let filter f s yield = s (fun x -> if f x then yield x)
-  let (<+>) = append
-  let of_list l yield = List.iter yield l
-  let of_array a yield = Array.iter yield a
-  let pair a b yield = a (fun x -> b(fun y -> yield (x,y)))
-  let triple a b c yield = a (fun x -> b (fun y -> c (fun z -> yield (x,y,z))))
-  let quad a b c d yield =
-    a (fun x -> b (fun y -> c (fun z -> d (fun w -> yield (x,y,z,w)))))
-
-  exception Iter_exit
-  let find_map p iter =
-    let r = ref None in
-    (try iter (fun x -> match p x with Some _ as y -> r := y; raise Iter_exit | None -> ())
-     with Iter_exit -> ()
-    );
-    !r
-
-  let find p iter = find_map (fun x->if p x then Some x else None) iter
-
-  include Qcheck_ops.Make(struct
-      type nonrec 'a t = 'a t
-      let (>|=) = (>|=)
-      let monoid_product a b = map2 (fun x y -> x,y) a b
-      let (>>=) = (>>=)
-    end)
+  let comap = contramap
 end
 
 (** {2 Observe Values} *)
@@ -755,7 +725,9 @@ module Observable = struct
   }
 
   let hash o x = o.hash x
+
   let equal o x y = o.eq x y
+
   let print o x = o.print x
 
   let make ?(eq=(=)) ?(hash=Hashtbl.hash) print =
@@ -763,16 +735,24 @@ module Observable = struct
 
   module H = struct
     let combine a b = Hashtbl.seeded_hash a b
+
     let combine_f f s x = Hashtbl.seeded_hash s (f x)
+
     let int i = i land max_int
+
     let bool b = if b then 1 else 2
+
     let char x = Char.code x
+
     let string (x:string) = Hashtbl.hash x
+
     let opt f = function
       | None -> 42
       | Some x -> combine 43 (f x)
     let list f l = List.fold_left (combine_f f) 0x42 l
+
     let array f l = Array.fold_left (combine_f f) 0x42 l
+
     let pair f g (x,y) = combine (f x) (g y)
   end
 
@@ -780,10 +760,15 @@ module Observable = struct
     type 'a t = 'a -> 'a -> bool
 
     let int : int t = (=)
+
     let string : string t = (=)
+
     let bool : bool t = (=)
+
     let float : float t = (=)
+
     let unit () () = true
+
     let char : char t = (=)
 
     let rec list f l1 l2 = match l1, l2 with
@@ -810,10 +795,15 @@ module Observable = struct
   end
 
   let unit : unit t = make ~hash:(fun _ -> 1) ~eq:Eq.unit Print.unit
+
   let bool : bool t = make ~hash:H.bool ~eq:Eq.bool Print.bool
+
   let int : int t = make ~hash:H.int ~eq:Eq.int Print.int
+
   let float : float t = make ~eq:Eq.float Print.float
+
   let string = make ~hash:H.string ~eq:Eq.string Print.string
+
   let char = make ~hash:H.char ~eq:Eq.char Print.char
 
   let option p =
@@ -822,24 +812,28 @@ module Observable = struct
 
   let array p =
     make ~hash:(H.array p.hash) ~eq:(Eq.array p.eq) (Print.array p.print)
+
   let list p =
     make ~hash:(H.list p.hash) ~eq:(Eq.list p.eq) (Print.list p.print)
 
-  let map f p =
+  let contramap f p =
     make ~hash:(fun x -> p.hash (f x)) ~eq:(fun x y -> p.eq (f x)(f y))
       (fun x -> p.print (f x))
 
+  let map = contramap
+
   let pair a b =
     make ~hash:(H.pair a.hash b.hash) ~eq:(Eq.pair a.eq b.eq) (Print.pair a.print b.print)
+
   let triple a b c =
-    map (fun (x,y,z) -> x,(y,z)) (pair a (pair b c))
+    contramap (fun (x,y,z) -> x,(y,z)) (pair a (pair b c))
+
   let quad a b c d =
-    map (fun (x,y,z,u) -> x,(y,z,u)) (pair a (triple b c d))
+    contramap (fun (x,y,z,u) -> x,(y,z,u)) (pair a (triple b c d))
 end
 
 type 'a stat = string * ('a -> int)
 (** A statistic on a distribution of values of type ['a] *)
-
 
 type 'a arbitrary = {
   gen: 'a Gen.t;

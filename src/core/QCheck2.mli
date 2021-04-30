@@ -927,43 +927,6 @@ module Print : sig
   (** @deprecated use {!contramap} instead. *)
 end
 
-(** {2 Iterators}
-
-    Compatible with the library "sequence". An iterator [i] is simply
-    a function that accepts another function [f] (of type ['a -> unit])
-    and calls [f] on a sequence of elements [f x1; f x2; ...; f xn]. *)
-module Iter : sig
-  type 'a t = ('a -> unit) -> unit
-
-  val empty : 'a t
-  val return : 'a -> 'a t
-  val (<*>) : ('a -> 'b) t -> 'a t -> 'b t
-  val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
-  val map : ('a -> 'b) -> 'a t -> 'b t
-  val map2 : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
-  val (>|=) : 'a t -> ('a -> 'b) -> 'b t
-  val append : 'a t -> 'a t -> 'a t
-  val (<+>) : 'a t -> 'a t -> 'a t (** Synonym to {!append}. *)
-
-  val of_list : 'a list -> 'a t
-  val of_array : 'a array -> 'a t
-  val pair : 'a t -> 'b t -> ('a * 'b) t
-  val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
-  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
-  val find : ('a -> bool) -> 'a t -> 'a option
-
-  val filter : ('a -> bool) -> 'a t -> 'a t
-
-  val append_l : 'a t list -> 'a t
-  (** @since 0.8 *)
-
-  val flatten : 'a t t -> 'a t
-  (** @since 0.8 *)
-
-  include Qcheck_ops.S with type 'a t_let := 'a t
-  (** @since 0.15 *)
-end
-
 (** Shrinking helper functions. *)
 module Shrink : sig
 (** Shrinking is used to reduce the size of a counter-example. It tries
