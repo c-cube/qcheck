@@ -4,7 +4,12 @@ copyright (c) 2013-2017, Guillaume Bury, Simon Cruanes, Vincent Hugot, Jan Midtg
 all rights reserved.
 *)
 
-(** {1 QuickCheck-inspired property-based testing}
+(* Keep the following title alone in its documentation block as it is specially treated by Odoc: it doesn't appear
+in the Contents menu on the left. The next documentation block with all the actual
+content will appear. *)
+(** {1 QuickCheck-inspired property-based testing} *)
+
+(** {1 Introduction}
 
     This library takes inspiration from Haskell's QuickCheck library. The
     rough idea is that the programmer describes invariants that values of
@@ -25,8 +30,9 @@ all rights reserved.
       allow to specify the random generator state, number of instances to generate
       and test, etc.
 
+    💡 If you are migrating from QCheck, see the {{!section:migration_qcheck2} migration guide} below.
 
-    Examples:
+    {1 Examples}
 
     - "{!List.rev} is involutive" (the test passes so [check_exn] returns [()]):
 
@@ -346,6 +352,10 @@ module Gen : sig
       - [let rec loop a = match shrink a () with | Nil -> () | Cons (smaller_a, _) -> loop smaller_a]
         must end for all values [a] of type ['a] (i.e. there must not be an infinite number of shrinking
         steps).
+      
+      ⚠️ This is an unstable API as it partially exposes the implementation. In particular, the type of
+      [Random.State.t] may very well change in a future version, e.g. if QCheck switches to another
+      randomness library.
   *)
 
   val add_shrink_invariant : ('a -> bool) -> 'a t -> 'a t
@@ -1207,7 +1217,7 @@ val assume_fail : unit -> 'a
     @since 0.5.1
 *)
 
-(** {2 Tests}
+(** {1 Tests}
 
     A test is a universal property of type [foo -> bool] for some type [foo],
     with an object of type [foo arbitrary] used to generate, print, etc. values
@@ -1799,3 +1809,31 @@ val map : ?print:'b Print.t -> ?collect:('b -> string) -> ('a -> 'b) -> 'a arbit
 val map_same_type : ('a -> 'a) -> 'a arbitrary -> 'a arbitrary
 (** Specialization of [map] when the transformation preserves the type, which
     makes printer, etc. still relevant. *)
+
+(** {1:migration_qcheck2 Migration to QCheck2}
+
+    QCheck2 is a major release and as such, there are (as few as possible)
+    breaking changes, as well as functional changes you should be aware of.
+
+    {2 Minimal changes}
+
+    Most of your QCheck (v1) code should be able to compile and run the first time you upgrade
+    your QCheck version to a QCheck2-compatible version. However you may need to do the
+    following minimal changes:
+    - {!QCheck.Test.make} return type was changed to {!QCheck2.Test.t} to be able to run
+      both QCheck and QCheck2 tests together. This is transparent if you used type inference,
+      but if you explicitly used {!QCheck.Test.t} you will need to change it to {!QCheck2.Test.t}.
+
+    
+    {2 Recommended changes}
+    Now you want to actually start using the QCheck2 features (most importantly: free shrinking!).
+    To get started, change all your {!QCheck} references to {!QCheck2} and follow the compiler errors.
+    Below are the most common situations you may encounter:
+    - as shrinking is now integrated, several function arguments like [~shrink] or [~rev] have been removed: you
+      can remove such reverse functions, they will no longer be necessary.
+    - {!arbitrary} is no longer private, it is now abstract: if you used field access directly (e.g. [my_arb.print]), you
+      must now use getter functions, e.g. {!get_gen} or {!get_print}.
+    - {!Gen.t} is no longer public, it is now abstract: it is recommended to use
+      {{!section:Gen.composing_generators} generator composition} to make generators. {!Gen.make_primitive}
+      was added to create generators with finer control (in particular of shrinking).
+*)
