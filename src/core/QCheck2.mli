@@ -6,7 +6,7 @@ all rights reserved.
 
 (** {1 QuickCheck-inspired property-based testing}
 
-    The library takes inspiration from Haskell's QuickCheck library. The
+    This library takes inspiration from Haskell's QuickCheck library. The
     rough idea is that the programmer describes invariants that values of
     a certain type need to satisfy ("properties"), as functions from this type
     to bool. They also need to describe how to generate random values of the type,
@@ -53,6 +53,7 @@ all rights reserved.
             ~count:10_000
             (list small_nat)
             (fun l -> l = List.sort compare l));;
+
       QCheck2.Test.check_exn test;;
 
       Exception:
@@ -1162,38 +1163,11 @@ val add_shrink_invariant : ('a -> bool) -> 'a arbitrary -> 'a arbitrary
 
     @since 0.8 *)
 
-(** {2 Tests}
-
-    A test is a universal property of type [foo -> bool] for some type [foo],
-    with an object of type [foo arbitrary] used to generate, print, etc. values
-    of type [foo].
-
-    See {!Test.make} to build a test, and {!Test.check_exn} to
-    run one test simply.
-    For more serious testing, it is better to create a testsuite
-    and use {!QCheck_runner}.
-*)
-
-val (==>) : bool -> bool -> bool
-(** [b1 ==> b2] is the logical implication [b1 => b2]
-    ie [not b1 || b2] (except that it is strict and will interact
-    better with {!Test.check_exn} and the likes, because they will know
-    the precondition was not satisfied.).
-
-    {b WARNING}: this function should only be used in a property
-    (see {!Test.make}), because it raises a special exception in case of
-    failure of the first argument, to distinguish between failed test
-    and failed precondition. Because of OCaml's evaluation order,
-    both [b1] and [b2] are always evaluated; if [b2] should only be
-    evaluated when [b1] holds, see {!assume}.
-*)
-
 val assume : bool -> unit
 (** [assume cond] checks the precondition [cond], and does nothing
-    if [cond=true]. If [cond=false], it interrupts the current test.
+    if [cond=true]. If [cond=false], it interrupts the current test (but the test will not be failed).
 
-    {b WARNING} This function, like {!(==>)}, should only be used in
-    a test, not outside.
+    ⚠️ This function must only be used in a test, not outside.
     Example:
     {[
       Test.make (list int) (fun l ->
@@ -1202,6 +1176,20 @@ val assume : bool -> unit
     ]}
 
     @since 0.5.1
+*)
+
+val (==>) : bool -> bool -> bool
+(** [b1 ==> b2] is the logical implication [b1 => b2]
+    ie [not b1 || b2] (except that it is strict and will interact
+    better with {!Test.check_exn} and the likes, because they will know
+    the precondition was not satisfied.).
+
+    ⚠️ This function should only be used in a property
+    (see {!Test.make}), because it raises a special exception in case of
+    failure of the first argument, to distinguish between failed test
+    and failed precondition. Because of OCaml's evaluation order,
+    both [b1] and [b2] are always evaluated; if [b2] should only be
+    evaluated when [b1] holds, see {!assume}.
 *)
 
 val assume_fail : unit -> 'a
@@ -1219,35 +1207,53 @@ val assume_fail : unit -> 'a
     @since 0.5.1
 *)
 
+(** {2 Tests}
+
+    A test is a universal property of type [foo -> bool] for some type [foo],
+    with an object of type [foo arbitrary] used to generate, print, etc. values
+    of type [foo].
+
+    See {!Test.make} to build a test, and {!Test.check_exn} to
+    run one test simply.
+    For more serious testing, it is better to create a testsuite
+    and use {!QCheck_runner}.
+*)
+
 (** Result of running a test *)
 module TestResult : sig
   type 'a counter_ex = {
-    instance: 'a; (** The counter-example(s) *)
+    instance: 'a; (** The counter-example *)
 
-    shrink_steps: int; (** How many shrinking steps for this counterex *)
+    shrink_steps: int; (** How many shrinking steps for this counter-example *)
 
     msg_l: string list;
-    (** messages.
+    (** Messages of the test. Currently only populated by {!Test.fail_report} and {!Test.fail_reportf}.
         @since 0.7 *)
   }
-
-  type 'a failed_state = 'a counter_ex list
+  (** A counter-example when a test fails. *)
 
   (** Result state.
+
       changed in 0.10 (move to inline records, add Fail_other) *)
   type 'a state =
-    | Success
+    | Success (** If the test passed. *)
     | Failed of {
-        instances: 'a failed_state; (** Failed instance(s) *)
+        instances: 'a counter_ex list; (** Failed instance(s) *)
       }
+    (** If the test failed "normally", i.e. a test returned [false]. *)
     | Failed_other of {msg: string}
+    (** If the test failed for an unusual reason:
+        - an exception was raised by a generator
+        - too many assumptions failed and [Test.if_assumptions_fail] was set to [`Fatal]
+    *)
     | Error of {
-        instance: 'a counter_ex;
-        exn: exn;
-        backtrace: string;
-      } (** Error, backtrace, and instance that triggered it *)
+        instance: 'a counter_ex; (** Instance that triggered the exception in the test *)
+        exn: exn; (** The raised exception *)
+        backtrace: string; (** A best-effort backtrace of the exception *)
+      }
+    (** If the test failed "exceptionally" (an exception was raised by the test). *)
 
-  (* result returned by running a test *)
+  (* Result returned by running a test. *)
   type 'a t = private {
     mutable state : 'a state;
     mutable count: int;  (* Number of tests *)
@@ -1283,18 +1289,23 @@ module TestResult : sig
       @since 0.9 *)
 end
 
+(** A test is a pair of an arbitrary (to generate, shrink, print values) and a property that
+    all generated values must satisfy. *)
 module Test : sig
+  (** The main features of this module are:
+      - {!make} a test
+      - fail the test if a property does not hold (using either the {{!fail_report} simple} form or the {{!fail_reportf} rich} form)
+      - {!check_exn} a single test
+
+      Note that while {!check_exn} is provided for convenience to discover QCheck or to run a single test in {{: https://opam.ocaml.org/blog/about-utop/} utop}, to run QCheck tests in your project you probably want to opt for a more advanced runner, or convert
+      QCheck tests to your favorite test framework:
+      - {!QCheck_base_runner} for a QCheck-only runner (useful if you don't have or don't need another test framework)
+      - {!QCheck_alcotest} to convert to Alcotest framework
+      - {!QCheck_ounit} to convert to OUnit framework
+  *)
+
   type 'a cell
   (** A single property test *)
-
-  val fail_report : string -> 'a
-  (** Fail the test with some additional message that will
-      be reported.
-      @since 0.7 *)
-
-  val fail_reportf : ('a, Format.formatter, unit, 'b) format4 -> 'a
-  (** Format version of {!fail_report}
-      @since 0.7 *)
 
   val make_cell :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
@@ -1347,6 +1358,22 @@ module Test : sig
       of the generator [arb].
       See {!make_cell} for a description of the parameters.
   *)
+
+  val fail_report : string -> 'a
+  (** Fail the test with some additional message that will be reported.
+
+      @since 0.7 *)
+
+  val fail_reportf : ('a, Format.formatter, unit, 'b) format4 -> 'a
+  (** Format version of {!fail_report}.
+
+      Example:
+      {[
+        Test.fail_reportf
+          "Value N = %i should be greater than M = %i for Foo = %a" n m pp_foo foo
+      ]}
+
+      @since 0.7 *)
 
   (** {3 Running the test} *)
 
@@ -1448,6 +1475,7 @@ end
 *)
 
 exception No_example_found of string
+(** Raised by {!find_example} and {!find_example_gen} if no example was found. *)
 
 val find_example :
   ?name:string ->

@@ -863,8 +863,6 @@ let get_gen o = o.gen
 
 let get_print o = o.print
 
-let make_scalar ?print ?collect gen =
-  make ?print ?collect gen
 let make_int ?collect gen =
   make ~print:Print.int ?collect gen
 
@@ -883,21 +881,21 @@ let choose l = match l with
 let unit : unit arbitrary =
   make ~print:(fun _ -> "()") Gen.unit
 
-let bool = make_scalar ~print:string_of_bool Gen.bool
+let bool = make ~print:string_of_bool Gen.bool
 
-let float = make_scalar ~print:string_of_float Gen.float
+let float = make ~print:string_of_float Gen.float
 
-let pos_float = make_scalar ~print:string_of_float Gen.pfloat
+let pos_float = make ~print:string_of_float Gen.pfloat
 
-let neg_float = make_scalar ~print:string_of_float Gen.nfloat
+let neg_float = make ~print:string_of_float Gen.nfloat
 
 let float_bound_inclusive bound =
-  make_scalar ~print:string_of_float (Gen.float_bound_inclusive bound)
+  make ~print:string_of_float (Gen.float_bound_inclusive bound)
 
 let float_bound_exclusive bound =
-  make_scalar ~print:string_of_float (Gen.float_bound_exclusive bound)
+  make ~print:string_of_float (Gen.float_bound_exclusive bound)
 
-let float_range low high = make_scalar ~print:string_of_float (Gen.float_range low high)
+let float_range low high = make ~print:string_of_float (Gen.float_range low high)
 
 let int = make_int Gen.int
 
@@ -923,11 +921,11 @@ let int32 = make ~print:(fun i -> Int32.to_string i ^ "l") Gen.int32
 
 let int64 = make ~print:(fun i -> Int64.to_string i ^ "L") Gen.int64
 
-let char = make_scalar ~print:(sprintf "%C") Gen.char
+let char = make ~print:(sprintf "%C") Gen.char
 
-let printable_char = make_scalar ~print:(sprintf "%C") Gen.printable
+let printable_char = make ~print:(sprintf "%C") Gen.printable
 
-let numeral_char = make_scalar ~print:(sprintf "%C") Gen.numeral
+let numeral_char = make ~print:(sprintf "%C") Gen.numeral
 
 let string_gen_of_size (size : int Gen.t) (gen : char Gen.t) : string arbitrary =
   make ~print:(sprintf "%S") (Gen.string_size ~gen size)
@@ -1312,14 +1310,12 @@ module TestResult = struct
     msg_l: string list; (** messages. @since 0.7 *)
   }
 
-  type 'a failed_state = 'a counter_ex list
-
   (** Result state.
       changed in 0.10 (move to inline records) *)
   type 'a state =
     | Success
     | Failed of {
-        instances: 'a failed_state; (** Failed instance(s) *)
+        instances: 'a counter_ex list; (** Failed instance(s) *)
       }
     | Failed_other of {msg: string}
     | Error of {
