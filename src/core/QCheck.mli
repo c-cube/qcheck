@@ -446,6 +446,51 @@ module Gen : sig
 
   *)
 
+  val nat_split2 : int -> (int * int) t
+  (** [nat_split2 n] generates pairs [(n1, n2)] of natural numbers
+      with [n1 + n2 = n].
+
+      This is useful to split sizes to combine sized generators.
+
+      @raise Invalid_argument unless [n >= 2].
+
+      @since 0.18
+  *)
+
+  val pos_split2 : int -> (int * int) t
+  (** [nat_split2 n] generates pairs [(n1, n2)] of strictly positive
+      (nonzero) natural numbers with [n1 + n2 = n].
+
+      This is useful to split sizes to combine sized generators.
+
+      @since 0.18
+  *)
+
+  val nat_split : size:int -> int -> int array t
+  (** [nat_split2 ~size:k n] generates [k]-sized arrays [n1,n2,..nk]
+      of natural numbers in [[0;n]] with [n1 + n2 + ... + nk = n].
+
+      This is useful to split sizes to combine sized generators.
+
+      Complexity O(k log k).
+
+      @since 0.18
+  *)
+
+  val pos_split : size:int -> int -> int array t
+  (** [nat_split2 ~size:k n] generates [k]-sized arrays [n1,n2,..nk]
+      of strictly positive (non-zero) natural numbers with
+      [n1 + n2 + ... + nk = n].
+
+      This is useful to split sizes to combine sized generators.
+
+      Complexity O(k log k).
+
+      @raise Invalid_argument unless [k <= n].
+
+      @since 0.18
+  *)
+
   val delay : (unit -> 'a t) -> 'a t
   (** Delay execution of some code until the generator is actually called.
       This can be used to manually implement recursion or control flow

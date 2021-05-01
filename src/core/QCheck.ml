@@ -328,6 +328,36 @@ module Gen = struct
     let rec f' n st = f f' n st in
     f'
 
+  (* nat splitting *)
+
+  let nat_split2 n st =
+    if (n < 2) then invalid_arg "nat_split2";
+    let n1 = int_range 1 (n - 1) st in
+    (n1, n - n1)
+
+  let pos_split2 n st =
+    let n1 = int_range 0 n st in
+    (n1, n - n1)
+
+  let pos_split ~size:k n st =
+    if (k > n) then invalid_arg "nat_split";
+    (* To split n into n{0}+n{1}+..+n{k-1}, we draw distinct "boundaries"
+       b{-1}..b{k-1}, with b{-1}=0 and b{k-1} = n
+       and the k-1 intermediate boundaries b{0}..b{k-2}
+       chosen randomly distinct in [1;n-1].
+
+       Then each n{i} is defined as b{i}-b{i-1}. *)
+    let b = range_subset ~size:(k-1) 1 (n - 1) st in
+    Array.init k (fun i ->
+      if i = 0 then b.(0)
+      else if i = k-1 then n - b.(i-1)
+      else b.(i) - b.(i-1)
+    )
+
+  let nat_split ~size:k n st =
+    pos_split ~size:k (n+k) st
+    |> Array.map (fun v -> v - 1)
+
   let generate ?(rand=Random.State.make_self_init()) ~n g =
     list_repeat n g rand
 
