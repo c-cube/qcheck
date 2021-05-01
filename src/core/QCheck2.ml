@@ -863,20 +863,14 @@ let get_gen o = o.gen
 
 let get_print o = o.print
 
-let make_int ?collect gen =
-  make ~print:Print.int ?collect gen
+let make_int gen = make ~print:Print.int gen
 
-let adapt_ o gen =
-  make ?print:o.print ?collect:o.collect gen
-
-let choose l = match l with
-  | [] -> raise (Invalid_argument "quickcheck.choose")
+let choose l =
+  match l with
+  | [] -> raise (Invalid_argument "QCheck2.choose called with an empty list")
   | l ->
-    let a = Array.of_list l in
-    adapt_ a.(0)
-      (fun st ->
-         let arb = a.(RS.int st (Array.length a)) in
-         arb.gen st)
+    let gens = List.map get_gen l in
+    make (Gen.oneof gens)
 
 let unit : unit arbitrary =
   make ~print:(fun _ -> "()") Gen.unit
