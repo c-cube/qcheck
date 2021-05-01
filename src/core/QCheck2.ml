@@ -863,8 +863,6 @@ let get_gen o = o.gen
 
 let get_print o = o.print
 
-let make_int gen = make ~print:Print.int gen
-
 let choose l =
   match l with
   | [] -> raise (Invalid_argument "QCheck2.choose called with an empty list")
@@ -873,7 +871,7 @@ let choose l =
     make (Gen.oneof gens)
 
 let unit : unit arbitrary =
-  make ~print:(fun _ -> "()") Gen.unit
+  make ~print:Print.unit Gen.unit
 
 let bool = make ~print:string_of_bool Gen.bool
 
@@ -883,25 +881,27 @@ let pos_float = make ~print:string_of_float Gen.pfloat
 
 let neg_float = make ~print:string_of_float Gen.nfloat
 
-let float_bound_inclusive bound =
-  make ~print:string_of_float (Gen.float_bound_inclusive bound)
+let float_bound_inclusive ?origin bound =
+  make ~print:string_of_float (Gen.float_bound_inclusive ?origin bound)
 
-let float_bound_exclusive bound =
-  make ~print:string_of_float (Gen.float_bound_exclusive bound)
+let float_bound_exclusive ?origin bound =
+  make ~print:string_of_float (Gen.float_bound_exclusive ?origin bound)
 
-let float_range low high = make ~print:string_of_float (Gen.float_range low high)
+let float_range ?origin low high = make ~print:string_of_float (Gen.float_range ?origin low high)
+
+let make_int gen = make ~print:Print.int gen
 
 let int = make_int Gen.int
 
-let int_bound n = make_int (Gen.int_bound n)
-
-let int_range a b = make_int (Gen.int_range a b)
-
-let (--) = int_range
-
 let pos_int = make_int Gen.pint
 
-let small_int = make_int Gen.small_int
+let int_bound n = make_int (Gen.int_bound n)
+
+let int_range ?origin a b = make_int (Gen.int_range ?origin a b)
+
+let (--) a b = int_range ~origin:a a b
+
+let small_int = make_int Gen.small_nat
 
 let small_nat = make_int Gen.small_nat
 
