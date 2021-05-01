@@ -208,6 +208,30 @@ module Gen : sig
       @since 0.11
   *)
 
+  val range_subset : size:int -> int -> int -> int array t
+  (** [range_subset ~size:k low high] generates an array of length [k]
+      of sorted distinct integers in the range [low..high] (included).
+
+      Complexity O(k log k), drawing [k] random integers.
+
+      @raise Invalid_argument outside the valid region [0 <= k <= high-low+1].
+
+      @since 0.18
+  *)
+
+  val array_subset : int -> 'a array -> 'a array t
+  (** [array_subset k arr] generates a sub-array of [k] elements
+      at distinct positions in the input array [arr],
+      in the same order.
+
+      Complexity O(k log k), drawing [k] random integers.
+
+      @raise Invalid_argument outside the valid region
+      [0 <= size <= Array.length arr].
+
+      @since 0.18
+  *)
+
   val unit : unit t (** The unit generator. *)
 
   val bool : bool t (** The boolean generator. *)

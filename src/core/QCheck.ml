@@ -244,6 +244,34 @@ module Gen = struct
     let samples = List.rev_map sample l in
     List.sort (fun (w1, _) (w2, _) -> poly_compare w1 w2) samples |> List.rev_map snd
 
+  let range_subset ~size low high st =
+    if not (low <= high && size <= high - low + 1) then invalid_arg "Gen.range_subset";
+    (* The algorithm below is attributed to Floyd, see for example
+       https://eyalsch.wordpress.com/2010/04/01/random-sample/
+       https://math.stackexchange.com/questions/178690
+
+       Note: the code be made faster by checking membership in [arr]
+       directly instead of using an additional Set. None of our
+       dependencies implements dichotomic search, so using Set is
+       easier.
+    *)
+    let module ISet = Set.Make(Int) in
+    let s = ref ISet.empty in
+    let arr = Array.make size 0 in
+    for i = high - size to high do
+      let pos = int_range high i st in
+      let choice =
+        if ISet.mem pos !s then i else pos
+      in
+      arr.(i - low) <- choice;
+      s := ISet.add choice !s;
+    done;
+    arr
+
+  let array_subset size arr st =
+    range_subset ~size 0 (Array.length arr - 1) st
+    |> Array.map (fun i -> arr.(i))
+
   let pair g1 g2 st = (g1 st, g2 st)
 
   let triple g1 g2 g3 st = (g1 st, g2 st, g3 st)
