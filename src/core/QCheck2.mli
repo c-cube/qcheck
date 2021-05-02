@@ -886,8 +886,9 @@ module Gen : sig
   val generate_tree : ?rand:Random.State.t -> 'a t -> 'a Tree.t
   (** [generate_tree ?rand gen] generates a random value and its shrinks using [gen]. *)
 
+  (** {2 Let operators} *)
+
   include Qcheck_ops.S with type 'a t_let := 'a t
-  (** @since 0.15 *)
 end
 
 (** Printing functions and helpers, used to print generated values on

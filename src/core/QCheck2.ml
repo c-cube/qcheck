@@ -636,7 +636,7 @@ module Gen = struct
   include Qcheck_ops.Make(struct
       type nonrec 'a t = 'a t
       let (>|=) = (>|=)
-      let monoid_product a b = (a >|= (fun x y -> (x, y))) <*> b
+      let monoid_product a b = map2 (fun x y -> x,y) a b
       let (>>=) = (>>=)
     end)
 end
