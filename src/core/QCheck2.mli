@@ -108,6 +108,13 @@ module Tree : sig
   val children : 'a t -> 'a t Seq.t
   (** [children tree] returns the direct sub-trees of the tree of generated values [t]. *)
 
+  val make_unfold : ('t -> 'a * 't Seq.t) -> init:'t -> 'a t
+  (** [make_unfold f ~init] uses [f] on [init] to compute the root of the tree
+      and a list of sub-states of type ['t].
+      Each of theses sub-states is then lazily turned into a tree by
+      a recursive call to {!make_unfold}.
+  *)
+
   val pp : ?depth : int -> (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
   (** [pp ?depth pp_a ppf tree] pretty-prints the tree of generated values [tree] using the
       pretty-print formatter [ppf]. Values of type ['a] will be printed using the given

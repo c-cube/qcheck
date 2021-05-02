@@ -186,6 +186,10 @@ module Tree = struct
     let shrink_trees = shrink x |> Seq.map (make_primitive shrink) in
     Tree (x, shrink_trees)
 
+  let rec make_unfold (f: 't -> 'a * 't Seq.t) (t0: 't) : 'a t =
+    let root, subs = f t0 in
+    Tree (root, Seq.map (fun sub_t -> make_unfold f sub_t) subs)
+
   let rec opt (a : 'a t) : 'a option t =
     let Tree (x, xs) = a in
     let shrinks = Seq.cons (pure None) (Seq.map opt xs) in
