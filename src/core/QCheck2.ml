@@ -225,7 +225,7 @@ module Gen = struct
   (* Maybe the type should be changed to [RS.t -> (unit -> 'a) tree] or use laziness? To avoid eagerly evaluating shrinks during generation (see implem of [(>>=)] that requires evaluating to append Sequences). *)
   type 'a t = RS.t -> 'a Tree.t
 
-  type 'a sized = int -> Random.State.t -> 'a Tree.t
+  type 'a sized = int -> RS.t -> 'a Tree.t
 
   let map f x st = Tree.map f (x st)
 
@@ -256,7 +256,7 @@ module Gen = struct
 
   let (>>=) = bind
 
-  let make_primitive ~(gen : Random.State.t -> 'a) ~(shrink : 'a -> 'a Seq.t) : 'a t = fun st ->
+  let make_primitive ~(gen : RS.t -> 'a) ~(shrink : 'a -> 'a Seq.t) : 'a t = fun st ->
     Tree.make_primitive shrink (gen st)
 
   let parse_origin (loc : string) (pp : Format.formatter -> 'a -> unit) ~(origin : 'a) ~(low : 'a) ~(high : 'a) : 'a =
@@ -339,12 +339,12 @@ module Gen = struct
 
   (* Uniform positive random int generator.
 
-     We can't use {!Random.State.int} because the upper bound must be positive and is excluded,
+     We can't use {!RS.int} because the upper bound must be positive and is excluded,
      so {!Int.max_int} would never be reached. We have to manipulate bits directly.
 
      Note that the leftmost bit is used for negative numbers, so it must be [0].
 
-     {!Random.State.bits} only generates 30 bits, which is exactly enough on
+     {!RS.bits} only generates 30 bits, which is exactly enough on
      32-bits architectures (i.e. {!Sys.int_size} = 31, i.e. 30 bits for positive numbers)
      but not on 64-bits ones.
 
@@ -398,7 +398,7 @@ module Gen = struct
     if n < 0 then invalid_arg "Gen.int_bound";
     fun st ->
       if n <= (1 lsl 30) - 2
-      then Tree.make_primitive (Shrink.int_towards 0) (Random.State.int st (n + 1))
+      then Tree.make_primitive (Shrink.int_towards 0) (RS.int st (n + 1))
       else Tree.map (fun r -> r mod (n + 1)) (pint st)
 
   (** Shrink towards [origin] if provided, otherwise towards the middle of the range
@@ -424,7 +424,7 @@ module Gen = struct
              choose the itv wrt to their size ratio *)
           let f_a = float_of_int a in
           let ratio = (-.f_a) /. (1. +. float_of_int b -. f_a) in
-          if Random.State.float st 1. <= ratio
+          if RS.float st 1. <= ratio
           then Tree.map (fun n -> - n - 1) (int_bound (- (a+1)) st)
           else int_bound b st
         ) in
@@ -446,7 +446,7 @@ module Gen = struct
   let small_int = small_nat
 
   let small_signed_int : int t = fun st ->
-    if Random.State.bool st
+    if RS.bool st
     then small_nat st
     else (small_nat >|= Int.neg) st
 
@@ -472,7 +472,7 @@ module Gen = struct
   let char_range ?(origin : char option) (a : char) (b : char) : char t =
     (int_range ~origin:(Char.code (Option.value ~default:a origin)) (Char.code a) (Char.code b)) >|= Char.chr
 
-  let random_binary_string (length : int) (st : Random.State.t) : string =
+  let random_binary_string (length : int) (st : RS.t) : string =
     (* 0b011101... *)
     let s = Bytes.create (length + 2) in
     Bytes.set s 0 '0';
@@ -537,7 +537,7 @@ module Gen = struct
   let shuffle_a (a : 'a array) : 'a array t = fun st ->
     let a = Array.copy a in
     for i = Array.length a-1 downto 1 do
-      let j = Random.State.int st (i+1) in
+      let j = RS.int st (i+1) in
       let tmp = a.(i) in
       a.(i) <- a.(j);
       a.(j) <- tmp;
@@ -638,13 +638,13 @@ module Gen = struct
     let rec f' n st = f f' n st in
     f'
 
-  let generate ?(rand=Random.State.make_self_init()) ~(n : int) (gen : 'a t) : 'a list =
+  let generate ?(rand=RS.make_self_init()) ~(n : int) (gen : 'a t) : 'a list =
     list_repeat n gen rand |> Tree.root
 
-  let generate1 ?(rand=Random.State.make_self_init()) (gen : 'a t) : 'a =
+  let generate1 ?(rand=RS.make_self_init()) (gen : 'a t) : 'a =
     gen rand |> Tree.root
 
-  let generate_tree ?(rand=Random.State.make_self_init()) (gen : 'a t) : 'a Tree.t =
+  let generate_tree ?(rand=RS.make_self_init()) (gen : 'a t) : 'a Tree.t =
     gen rand
 
   let delay (f : unit -> 'a t) : 'a t = fun st -> f () st
@@ -1446,7 +1446,7 @@ module Test = struct
     test: 'a cell;
     step: 'a step;
     handler : 'a handler;
-    rand: Random.State.t;
+    rand: RS.t;
     mutable res: 'a TestResult.t;
     mutable cur_count: int;  (** number of iterations remaining to do *)
     mutable cur_max_gen: int; (** maximum number of generations allowed *)
@@ -1653,7 +1653,7 @@ module Test = struct
   (* main checking function *)
   let check_cell ?(long=false) ?(call=callback_nil_)
       ?(step=step_nil_) ?(handler=handler_nil_)
-      ?(rand=Random.State.make [| 0 |]) cell =
+      ?(rand=RS.make [| 0 |]) cell =
     let factor = if long then cell.long_factor else 1 in
     let target_count = factor*cell.count in
     let state = {
@@ -1863,6 +1863,6 @@ let find_example ?(name : string = "<example>") ?(count : int option) ~(f : 'a -
   in
   gen
 
-let find_example_gen ?(rand : Random.State.t option) ?(name : string option) ?(count : int option) ~(f : 'a -> bool) (gen : 'a Gen.t) : 'a =
+let find_example_gen ?(rand : RS.t option) ?(name : string option) ?(count : int option) ~(f : 'a -> bool) (gen : 'a Gen.t) : 'a =
   let g = find_example ?name ?count ~f gen in
   Gen.generate1 ?rand g
