@@ -959,21 +959,25 @@ module Shrink : sig
       probably not need this module.
   *)
 
-  val number_towards : equal : ('a -> 'a -> bool) -> div : ('a -> 'a -> 'a) -> add : ('a -> 'a -> 'a) -> sub : ('a -> 'a -> 'a) -> of_int : (int -> 'a) -> destination : 'a -> 'a -> 'a Seq.t
+  (** Util module representing a number type, used for ad hoc polymorphism of
+      some functions like {!number_towards}. *)
+  module type Number = sig
+    type t
+    val equal : t -> t -> bool
+    val div : t -> t -> t
+    val add : t -> t -> t
+    val sub : t -> t -> t
+    val of_int : int -> t
+  end
+
+  val number_towards : (module Number with type t = 'a) -> destination : 'a -> 'a -> 'a Seq.t
   (** Shrink a number by edging towards a destination.
 
       The destination is always the first value for optimal shrinking.
 
       {[
         let int64_towards_list destination x = List.of_seq @@
-          Int64.(Gen.number_towards
-                   ~equal
-                   ~div
-                   ~add
-                   ~sub
-                   ~of_int)
-            ~destination
-            x
+          Gen.number_towards (module Int64) ~destination x
         in
         assert (int64_towards_list 0L 100L =
                 [0L; 50L; 75L; 88L; 94L; 97L; 99L]);

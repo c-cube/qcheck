@@ -81,35 +81,48 @@ end
 
 module Shrink = struct
 
-  let number_towards ~(equal : 'a -> 'a -> bool) ~(div : 'a -> 'a -> 'a) ~(add : 'a -> 'a -> 'a) ~(sub : 'a -> 'a -> 'a) ~(of_int : int -> 'a) ~(destination : 'a) (x : 'a) : 'a Seq.t =
+  module type Number = sig
+    type t
+    val equal : t -> t -> bool
+    val div : t -> t -> t
+    val add : t -> t -> t
+    val sub : t -> t -> t
+    val of_int : int -> t
+  end
+
+  let number_towards (type a) (module Number : Number with type t = a) ~(destination : a) (x : a) : a Seq.t =
     Seq.unfold (fun current_shrink ->
-        if equal current_shrink x
+        if Number.equal current_shrink x
         then None
         else
             (*
               Halve the operands before subtracting them so they don't overflow.
               Consider [number_towards min_int max_int]
             *)
-          let half_diff =  sub (div x (of_int 2)) (div current_shrink (of_int 2)) in
-          if half_diff = of_int 0
+          let half_diff =  Number.sub (Number.div x (Number.of_int 2)) (Number.div current_shrink (Number.of_int 2)) in
+          if half_diff = Number.of_int 0
           (* [current_shrink] is the last valid shrink candidate, put [x] as next step to make sure we stop *)
           then Some (current_shrink, x)
-          else Some (current_shrink, add current_shrink half_diff)
+          else Some (current_shrink, Number.add current_shrink half_diff)
       ) destination
 
   let int_towards destination x =
-    Int.(number_towards ~equal ~div ~add ~sub ~of_int:Fun.id) ~destination x
+    let module Int : Number with type t = int = struct
+      include Int
+      let of_int = Fun.id
+    end in
+    number_towards (module Int) ~destination x
 
   let int32_towards destination x =
-    Int32.(number_towards ~equal ~div ~add ~sub ~of_int) ~destination x
+    number_towards (module Int32) ~destination x
 
   let int64_towards destination x =
-    Int64.(number_towards ~equal ~div ~add ~sub ~of_int) ~destination x
+    number_towards (module Int64) ~destination x
 
   (** Arbitrarily limit to 15 elements as dividing a [float] by 2 doesn't converge quickly
       towards the destination. *)
   let float_towards destination x =
-    Float.(number_towards ~equal ~div ~add ~sub ~of_int) ~destination x |> Seq.take 15
+    number_towards (module Float) ~destination x |> Seq.take 15
 
   let int_aggressive_towards (destination : int) (n : int) : int Seq.t =
     Seq.unfold (fun current ->
