@@ -7,7 +7,6 @@ all rights reserved.
 (** {1 Quickcheck inspired property-based testing} *)
 
 let poly_compare=compare
-open Printf
 
 module RS = Random.State
 
@@ -915,17 +914,17 @@ let int32 = make ~print:(fun i -> Int32.to_string i ^ "l") Gen.int32
 
 let int64 = make ~print:(fun i -> Int64.to_string i ^ "L") Gen.int64
 
-let char = make ~print:(sprintf "%C") Gen.char
+let char = make ~print:(Format.sprintf "%C") Gen.char
 
-let printable_char = make ~print:(sprintf "%C") Gen.printable
+let printable_char = make ~print:(Format.sprintf "%C") Gen.printable
 
-let numeral_char = make ~print:(sprintf "%C") Gen.numeral
+let numeral_char = make ~print:(Format.sprintf "%C") Gen.numeral
 
 let string_gen_of_size (size : int Gen.t) (gen : char Gen.t) : string arbitrary =
-  make ~print:(sprintf "%S") (Gen.string_size ~gen size)
+  make ~print:(Format.sprintf "%S") (Gen.string_size ~gen size)
 
 let string_gen (gen : char Gen.t) : string arbitrary =
-  make ~print:(sprintf "%S") (Gen.string ~gen)
+  make ~print:(Format.sprintf "%S") (Gen.string ~gen)
 
 let string : string arbitrary = string_gen Gen.char
 
@@ -1046,11 +1045,13 @@ end = struct
           | None -> "<fun>"
           | Some pp_v ->
             let b = Buffer.create 64 in
+            let to_b = Format.formatter_of_buffer b in
             T.iter
               (fun key value ->
-                 Printf.bprintf b "%s -> %s; "
+                 Format.fprintf to_b "%s -> %s; "
                    (k.Observable.print key) (pp_v value))
               tbl;
+            Format.pp_print_flush to_b ();
             Buffer.contents b);
       (* p_shrink1=(fun yield ->
          Shrink.list (tbl_to_list tbl)
