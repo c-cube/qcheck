@@ -1624,7 +1624,8 @@ module Test : sig
   *)
 
   type 'a cell
-  (** A single property test *)
+  (** A single property test on a value of type ['a]. A {!Test.t} wraps a [cell]
+      and hides its type parameter. *)
 
   val make_cell :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
