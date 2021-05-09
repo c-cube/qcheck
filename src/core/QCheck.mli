@@ -782,6 +782,10 @@ module TestResult : sig
       @since 0.9 *)
 end
 
+(** Module related to individual tests.
+     @since NEXT_RELEASE most of it moved to {!QCheck2}, and 
+     the type ['a cell] was made a private implementation detail.
+*)
 module Test : sig
   val fail_report : string -> 'a
   (** Fail the test with some additional message that will
