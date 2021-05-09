@@ -130,47 +130,24 @@ module Tree = struct
   let children (Tree (_, children) : 'a t) : ('a t) Seq.t = children
 
   let rec pp ?(depth : int option) (inner_pp : Format.formatter -> 'a -> unit) (ppf : Format.formatter) (t : 'a t) : unit =
-    let open Format in
     let Tree (x, xs) = t in
-    let wrapper_box inner =
-      pp_open_vbox ppf 2;
-      pp_print_string ppf "Tree(";
-      pp_print_break ppf 0 0;
-      inner ();
-      pp_close_box ppf ();
-      pp_print_break ppf 0 0;
-      pp_print_string ppf ")"
+    let wrapper_box ppf inner =
+      Format.fprintf ppf "@[<hv2>Tree(@,%a@]@,)" inner ()
     in
-    let inner () =
-      pp_open_vbox ppf 2;
-      pp_print_string ppf "Node(";
-      pp_print_break ppf 0 0;
-      inner_pp ppf x;
-      pp_close_box ppf ();
-      pp_print_break ppf 0 0;
-      pp_print_string ppf "),";
-      pp_print_break ppf 1 0;
-      pp_open_vbox ppf 2;
-      pp_print_string ppf "Shrinks(";
-
+    let inner ppf () =
+      Format.fprintf ppf "@[<hv2>Node(@,%a@]@,),@ @[<hv>Shrinks(" inner_pp x;
       if Option.fold depth ~none:false ~some:(fun depth -> depth <= 0) then (
-        pp_print_string ppf "<max depth reached>";
-        pp_close_box ppf ())
-      else if Seq.is_empty xs then pp_close_box ppf ()
-      else
-        (pp_print_break ppf 0 0;
-         pp_print_list
-           ~pp_sep:(fun ppf () -> pp_print_string ppf ","; pp_print_space ppf ())
-           (pp ?depth:(Option.map pred depth) inner_pp)
-           ppf
-           (List.of_seq xs);
-         pp_close_box ppf ();
-         pp_print_break ppf 0 0);
-
-      pp_print_string ppf ")"
-
+        Format.fprintf ppf "<max depth reached>@])")
+      else if Seq.is_empty xs then Format.fprintf ppf "@])"
+      else (
+        Format.fprintf ppf "@,%a@]@,)"
+          (Format.pp_print_list
+             ~pp_sep:(fun ppf () -> Format.fprintf ppf ",@ ")
+             (pp ?depth:(Option.map pred depth) inner_pp))
+          (List.of_seq xs);
+      )
     in
-    wrapper_box inner
+    wrapper_box ppf inner
 
   let rec map (f : 'a -> 'b) (a : 'a t) : 'b t =
     let Tree (x, xs) = a in
