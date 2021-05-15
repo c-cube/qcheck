@@ -208,6 +208,30 @@ module Gen : sig
       @since 0.11
   *)
 
+  val range_subset : size:int -> int -> int -> int array t
+  (** [range_subset ~size:k low high] generates an array of length [k]
+      of sorted distinct integers in the range [low..high] (included).
+
+      Complexity O(k log k), drawing [k] random integers.
+
+      @raise Invalid_argument outside the valid region [0 <= k <= high-low+1].
+
+      @since 0.18
+  *)
+
+  val array_subset : int -> 'a array -> 'a array t
+  (** [array_subset k arr] generates a sub-array of [k] elements
+      at distinct positions in the input array [arr],
+      in the same order.
+
+      Complexity O(k log k), drawing [k] random integers.
+
+      @raise Invalid_argument outside the valid region
+      [0 <= size <= Array.length arr].
+
+      @since 0.18
+  *)
+
   val unit : unit t (** The unit generator. *)
 
   val bool : bool t (** The boolean generator. *)
@@ -420,6 +444,51 @@ module Gen : sig
 
   ]}
 
+  *)
+
+  val nat_split2 : int -> (int * int) t
+  (** [nat_split2 n] generates pairs [(n1, n2)] of natural numbers
+      with [n1 + n2 = n].
+
+      This is useful to split sizes to combine sized generators.
+
+      @raise Invalid_argument unless [n >= 2].
+
+      @since 0.18
+  *)
+
+  val pos_split2 : int -> (int * int) t
+  (** [nat_split2 n] generates pairs [(n1, n2)] of strictly positive
+      (nonzero) natural numbers with [n1 + n2 = n].
+
+      This is useful to split sizes to combine sized generators.
+
+      @since 0.18
+  *)
+
+  val nat_split : size:int -> int -> int array t
+  (** [nat_split2 ~size:k n] generates [k]-sized arrays [n1,n2,..nk]
+      of natural numbers in [[0;n]] with [n1 + n2 + ... + nk = n].
+
+      This is useful to split sizes to combine sized generators.
+
+      Complexity O(k log k).
+
+      @since 0.18
+  *)
+
+  val pos_split : size:int -> int -> int array t
+  (** [nat_split2 ~size:k n] generates [k]-sized arrays [n1,n2,..nk]
+      of strictly positive (non-zero) natural numbers with
+      [n1 + n2 + ... + nk = n].
+
+      This is useful to split sizes to combine sized generators.
+
+      Complexity O(k log k).
+
+      @raise Invalid_argument unless [k <= n].
+
+      @since 0.18
   *)
 
   val delay : (unit -> 'a t) -> 'a t
