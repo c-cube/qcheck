@@ -345,7 +345,7 @@ module Gen : sig
       - [let rec loop a = match shrink a () with | Nil -> () | Cons (smaller_a, _) -> loop smaller_a]
         must end for all values [a] of type ['a] (i.e. there must not be an infinite number of shrinking
         steps).
-      
+
       ⚠️ This is an unstable API as it partially exposes the implementation. In particular, the type of
       [Random.State.t] may very well change in a future version, e.g. if QCheck switches to another
       randomness library.
@@ -376,8 +376,13 @@ module Gen : sig
   val int_range : ?origin:int -> int -> int -> int t
   (** [int_range ?origin low high] is an uniform integer generator producing integers within [low..high] (inclusive).
 
-      Shrinks towards [origin] if specified, otherwise towards [low]
-      (e.g. [int_range (-5) 15] will shrink towards [-5]).
+      Shrinks towards [origin] if specified, otherwise towards [0] (but always stays within the range).
+
+      Examples:
+      - [int_range ~origin:6 (-5) 15] will shrink towards [6]
+      - [int_range (-5) 15] will shrink towards [0]
+      - [int_range 8 20] will shrink towards [8] (closest to [0] within range)
+      - [int_range (-20) (-8)] will shrink towards [-8] (closest to [0] within range)
 
       @raise Invalid_argument if any of the following holds:
       - [low > high]
@@ -386,9 +391,7 @@ module Gen : sig
   *)
 
   val (--) : int -> int -> int t
-  (** [a -- b] is an alias for [int_range ~origin:a a b]. See {!int_range} for more information.
-
-      Shrinks towards [a].
+  (** [a -- b] is an alias for [int_range a b]. See {!int_range} for more information.
   *)
 
   val float_bound_inclusive : ?origin : float -> float -> float t
@@ -413,8 +416,13 @@ module Gen : sig
   val float_range : ?origin : float -> float -> float -> float t
   (** [float_range ?origin low high] generates floating-point numbers within [low] and [high] (inclusive).
 
-      Shrinks towards [origin] if specified, otherwise towards [low]
-      (e.g. [float_range 4.2 7.8] will shrink towards [4.2]).
+      Shrinks towards [origin] if specified, otherwise towards [0.] (but always stays within the range).
+
+      Examples:
+      - [float_range ~origin:6.2 (-5.8) 15.1] will shrink towards [6.2]
+      - [float_range (-5.8) 15.1] will shrink towards [0.]
+      - [float_range 8.5 20.1] will shrink towards [8.5] (closest to [0.] within range)
+      - [float_range (-20.1) (-8.5)] will shrink towards [-8.5] (closest to [0.] within range)
 
       @raise Invalid_argument if any of the following holds:
       - [low > high]
@@ -426,8 +434,6 @@ module Gen : sig
 
   val (--.) : float -> float -> float t
   (** [a --. b] is an alias for [float_range ~origin:a a b]. See {!float_range} for more information.
-
-      Shrinks towards [a].
 
       @since 0.11 *)
 
@@ -1190,21 +1196,21 @@ val bool : bool arbitrary
 (** Boolean generator. 
 
     Uniformly distributed.
-    
+
     Shrinks towards [false]. *)
 
 val int : int arbitrary
 (** Int generator.
 
     Uniformly distributed.
-    
+
     Shrinks towards [0]. *)
 
 val pos_int : int arbitrary
 (** Positive int generator ([0] included).
 
     Uniformly distributed.
-    
+
     Shrinks towards [origin] if specified, otherwise towards [0]. *)
 
 val small_nat : int arbitrary
@@ -1234,14 +1240,14 @@ val int32 : int32 arbitrary
 (** Int32 generator.
 
     Uniformly distributed.
-    
+
     Shrinks towards [0l]. *)
 
 val int64 : int64 arbitrary
 (** Int64 generator.
 
     Uniformly distributed.
-    
+
     Shrinks towards [0L]. *)
 
 val float : float arbitrary
@@ -1310,7 +1316,7 @@ val string_gen : char Gen.t -> string arbitrary
 val string : string arbitrary
 (** [string] generates strings with a distribution of length of {!Gen.nat}
     and distribution of characters of {!Gen.char}.
-    
+
     Shrinks on {!Gen.nat} first, then on {!Gen.char}. *)
 
 val small_string : string arbitrary
@@ -1319,37 +1325,37 @@ val small_string : string arbitrary
 val string_of_size : int Gen.t -> string arbitrary
 (** [string_of_size size] generates strings with a distribution of length of [size]
     and distribution of characters of {!Gen.char}.
-    
+
     Shrinks on [size] first, then on {!Gen.char}. *)
 
 val printable_string : string arbitrary
 (** [printable_string] generates strings with a distribution of length of {!Gen.nat}
     and distribution of characters of {!Gen.printable}.
-    
+
     Shrinks on {!Gen.nat} first, then on {!Gen.printable}. *)
 
 val printable_string_of_size : int Gen.t -> string arbitrary
 (** [printable_string_of_size size] generates strings with a distribution of length of [size]
     and distribution of characters of {!Gen.printable}.
-    
+
     Shrinks on [size] first, then on {!Gen.printable}. *)
 
 val small_printable_string : string arbitrary
 (** [small_printable_string] generates strings with a distribution of length of {!Gen.small_nat}
     and distribution of characters of {!Gen.printable}.
-    
+
     Shrinks on {!Gen.small_nat} first, then on {!Gen.printable}. *)
 
 val numeral_string : string arbitrary
 (** [numeral_string] generates strings with a distribution of length of {!Gen.nat}
     and distribution of characters of {!Gen.numeral}.
-    
+
     Shrinks on {!Gen.nat} first, then on {!Gen.numeral}. *)
 
 val numeral_string_of_size : int Gen.t -> string arbitrary
 (** [numeral_string_of_size size] generates strings with a distribution of length of [size]
     and distribution of characters of {!Gen.numeral}.
-    
+
     Shrinks on [size] first, then on {!Gen.numeral}. *)
 
 (** {2 Ranges} *)
@@ -1364,8 +1370,13 @@ val int_bound : int -> int arbitrary
 val int_range : ?origin:int -> int -> int -> int arbitrary
 (** [int_range ?origin low high] is an uniform integer generator producing integers within [low..high] (inclusive).
 
-    Shrinks towards [origin] if specified, otherwise towards [low]
-    (e.g. [int_range (-5) 15] will shrink towards [-5]).
+    Shrinks towards [origin] if specified, otherwise towards [0] (but always stays within the range).
+
+    Examples:
+    - [int_range ~origin:6 (-5) 15] will shrink towards [6]
+    - [int_range (-5) 15] will shrink towards [0]
+    - [int_range 8 20] will shrink towards [8] (closest to [0] within range)
+    - [int_range (-20) (-8)] will shrink towards [-8] (closest to [0] within range)
 
     @raise Invalid_argument if any of the following holds:
     - [low > high]
@@ -1373,9 +1384,7 @@ val int_range : ?origin:int -> int -> int -> int arbitrary
     - [origin > high] *)
 
 val (--) : int -> int -> int arbitrary
-(** [a -- b] is an alias for [int_range ~origin:a a b]. See {!int_range} for more information.
-
-    Shrinks towards [a]. *)
+(** [a -- b] is an alias for [int_range ~origin:a a b]. See {!int_range} for more information. *)
 
 val float_bound_inclusive : ?origin : float -> float -> float arbitrary
 (** [float_bound_inclusive ?origin bound] returns a random floating-point number between [0.] and
@@ -1399,8 +1408,13 @@ val float_bound_exclusive : ?origin : float -> float -> float arbitrary
 val float_range : ?origin : float -> float -> float -> float arbitrary
 (** [float_range ?origin low high] generates floating-point numbers within [low] and [high] (inclusive).
 
-    Shrinks towards [origin] if specified, otherwise towards [low]
-    (e.g. [float_range 4.2 7.8] will shrink towards [4.2]).
+    Shrinks towards [origin] if specified, otherwise towards [0.] (but always stays within the range).
+
+    Examples:
+    - [float_range ~origin:6.2 (-5.8) 15.1] will shrink towards [6.2]
+    - [float_range (-5.8) 15.1] will shrink towards [0.]
+    - [float_range 8.5 20.1] will shrink towards [8.5] (closest to [0.] within range)
+    - [float_range (-20.1) (-8.5)] will shrink towards [-8.5] (closest to [0.] within range)
 
     @raise Invalid_argument if any of the following holds:
     - [low > high]
@@ -1415,7 +1429,7 @@ val float_range : ?origin : float -> float -> float -> float arbitrary
 val choose : 'a arbitrary list -> 'a arbitrary
 (** Choose among the given list of generators. The list must not
     be empty; if it is Invalid_argument is raised.
-        
+
     Shrinks towards the first arbitrary of the list. *)
 
 (** {2 Lists, arrays and options} *)
@@ -1982,7 +1996,7 @@ val map_same_type : ('a -> 'a) -> 'a arbitrary -> 'a arbitrary
       both QCheck and QCheck2 tests together. This is transparent if you used type inference,
       but if you explicitly used {!QCheck.Test.t} you will need to change it to {!QCheck2.Test.t}.
 
-    
+
     {2 Recommended changes}
     Now you want to actually start using the QCheck2 features (most importantly: free shrinking!).
     To get started, change all your {!QCheck} references to {!QCheck2} and follow the compiler errors.

@@ -307,14 +307,19 @@ module Gen = struct
     in
     float_bound_inclusive ~origin bound
 
+  let pick_origin_within_range ~low ~high ~goal = if low > goal then low else if high < goal then high else goal
+
   let float_range ?(origin : float option) (low : float) (high : float) : float t =
     if high < low then invalid_arg "Gen.float_range: high < low"
     else if high -. low > max_float then invalid_arg "Gen.float_range: high -. low > max_float";
-    let origin = parse_origin "Gen.float_range" Format.pp_print_float ~origin:(Option.value ~default:low origin) ~low ~high in
+    let origin = parse_origin "Gen.float_range" Format.pp_print_float
+                   ~origin:(Option.value ~default:(pick_origin_within_range ~low ~high ~goal:0.) origin)
+                   ~low
+                   ~high in
     (float_bound_inclusive ~origin (high -. low))
     >|= (fun x -> low +. x)
 
-  let (--.) low high = float_range ~origin:low low high
+  let (--.) low high = float_range ?origin:None low high
 
   let neg_int : int t = nat >|= Int.neg
 
@@ -389,36 +394,37 @@ module Gen = struct
       then Tree.make_primitive (Shrink.int_towards 0) (RS.int st (n + 1))
       else Tree.map (fun r -> r mod (n + 1)) (pint st)
 
-  (** Shrink towards [origin] if provided, otherwise towards the middle of the range
-      (e.g. [int_range (-5) 15] will shrink towards [5])
-
-      To support ranges wider than [Int.max_int], the general idea is to find the center,
+  (** To support ranges wider than [Int.max_int], the general idea is to find the center,
       and generate a random half-difference number as well as whether we add or
       subtract that number from the center. *)
-  let int_range ?(origin : int option) (a : int) (b : int) : int t =
-    if b < a then invalid_arg "Gen.int_range: high < low";
-    let origin = Option.fold origin ~none:a ~some:(fun origin ->
-        if origin < a
-        then invalid_arg "Gen.int_range: origin < low"
-        else if origin > b then invalid_arg "Gen.int_range: origin > high"
-        else origin) in
+  let int_range ?(origin : int option) (low : int) (high : int) : int t =
+    if high < low then invalid_arg "Gen.int_range: high < low";
+    let origin =
+      Option.fold
+        origin
+        ~none:(pick_origin_within_range ~low ~high ~goal:0)
+        ~some:(fun origin ->
+          if origin < low
+          then invalid_arg "Gen.int_range: origin < low"
+          else if origin > high then invalid_arg "Gen.int_range: origin > high"
+          else origin) in
     fun st ->
-      let Tree.Tree(n, _shrinks) = if a >= 0 || b < 0 then (
+      let Tree.Tree(n, _shrinks) = if low >= 0 || high < 0 then (
           (* range smaller than max_int *)
-          assert (b-a >= 0);
-          Tree.map (fun n -> a + n) (int_bound (b - a) st)
+          Tree.map (fun n -> low + n) (int_bound (high - low) st)
         ) else (
           (* range potentially bigger than max_int: we split on 0 and
-             choose the itv wrt to their size ratio *)
-          let f_a = float_of_int a in
-          let ratio = (-.f_a) /. (1. +. float_of_int b -. f_a) in
+             choose the interval with regard to their size ratio *)
+          let f_low = float_of_int low in
+          let f_high = float_of_int high in
+          let ratio = (-.f_low) /. (1. +. f_high -. f_low) in
           if RS.float st 1. <= ratio
-          then Tree.map (fun n -> - n - 1) (int_bound (- (a+1)) st)
-          else int_bound b st
+          then Tree.map (fun n -> -n - 1) (int_bound (- (low + 1)) st)
+          else int_bound high st
         ) in
       Tree.make_primitive (Shrink.int_towards origin) n
 
-  let (--) low high = int_range ~origin:low low high
+  let (--) low high = int_range ?origin:None low high
 
   let oneof (l : 'a t list) : 'a t =
     int_range 0 (List.length l - 1) >>= List.nth l
