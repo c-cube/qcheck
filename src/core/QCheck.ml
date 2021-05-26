@@ -1271,10 +1271,11 @@ let migrate_v1_arbitrary (arb : 'a arbitrary) : 'a QCheck2.arbitrary =
      So iterate over the generated value, accumulate in a mutable list, and voila! *)
   let shrink = match shrink_v1_opt with
     | None -> fun _ -> Seq.empty
-    | Some shrink_v1 -> fun x ->
+    | Some shrink_v1 -> fun x () ->
       let rev_shrinks = ref [] in
       shrink_v1 x (fun next_shrink -> rev_shrinks := next_shrink :: !rev_shrinks) ;
-      List.rev !rev_shrinks |> List.to_seq
+      let unevaluated_seq = List.rev !rev_shrinks |> List.to_seq in
+      unevaluated_seq ()
   in
   let gen = QCheck2.Gen.make_primitive ~gen:gen_v1 ~shrink in
   QCheck2.make ?print ?collect ~stats gen
