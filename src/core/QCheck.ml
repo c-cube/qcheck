@@ -139,7 +139,7 @@ module Gen = struct
 
   let neg_int st = -(nat st)
 
-  let opt ?(ratio = 0.75) f st =
+  let opt ?(ratio = 0.85) f st =
     let p = RS.float st 1. in
     if p < (1.0 -. ratio) then None
     else Some (f st)
