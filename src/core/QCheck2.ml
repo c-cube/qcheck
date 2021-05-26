@@ -549,10 +549,10 @@ module Gen = struct
 
   let pair (g1 : 'a t) (g2 : 'b t) : ('a * 'b) t = liftA2 (fun a b -> (a, b)) g1 g2
 
-  let triple (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) : ('a * 'b * 'c) t = (g1 >|= (fun a b c -> (a, b, c))) <*> g2 <*> g3
+  let triple (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) : ('a * 'b * 'c) t = (fun a b c -> (a, b, c)) <$> g1 <*> g2 <*> g3
 
   let quad (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) (g4 : 'd t) : ('a * 'b * 'c * 'd) t =
-    (g1 >|= (fun a b c d -> (a, b, c, d))) <*> g2 <*> g3 <*> g4
+    (fun a b c d -> (a, b, c, d)) <$> g1 <*> g2 <*> g3 <*> g4
 
   let char : char t = int_range ~origin:(int_of_char 'a') 0 255 >|= char_of_int
 
