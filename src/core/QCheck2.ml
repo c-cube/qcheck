@@ -532,10 +532,8 @@ module Gen = struct
     done;
     Tree.pure a
 
-  let shuffle_l (l : 'a list) : 'a list t = fun st ->
-    let a = Array.of_list l in
-    let _ = shuffle_a a st in
-    Tree.pure (Array.to_list a)
+  let shuffle_l (l : 'a list) : 'a list t =
+    Array.of_list l |> shuffle_a >|= Array.to_list
 
   let shuffle_w_l (l : ((int * 'a) list)) : 'a list t = fun st ->
     let sample (w, v) =
