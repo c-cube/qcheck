@@ -397,11 +397,11 @@ module Gen = struct
       subtract that number from the center. *)
   let int_range ?(origin : int option) (a : int) (b : int) : int t =
     if b < a then invalid_arg "Gen.int_range: high < low";
-    let origin = Option.fold ~none:a ~some:(fun origin ->
+    let origin = Option.fold origin ~none:a ~some:(fun origin ->
         if origin < a
         then invalid_arg "Gen.int_range: origin < low"
         else if origin > b then invalid_arg "Gen.int_range: origin > high"
-        else origin) origin in
+        else origin) in
     fun st ->
       let Tree.Tree(n, _shrinks) = if a >= 0 || b < 0 then (
           (* range smaller than max_int *)
