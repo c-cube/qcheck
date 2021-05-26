@@ -139,9 +139,9 @@ module Gen = struct
 
   let neg_int st = -(nat st)
 
-  let opt f st =
+  let opt ?(ratio = 0.85) f st =
     let p = RS.float st 1. in
-    if p < 0.15 then None
+    if p < (1.0 -. ratio) then None
     else Some (f st)
 
   (* Uniform random int generator *)
@@ -861,8 +861,8 @@ let quad a b c d =
        (_opt_or d.shrink Shrink.nil))
     (Gen.quad a.gen b.gen c.gen d.gen)
 
-let option a =
-  let g = Gen.opt a.gen
+let option ?ratio a =
+  let g = Gen.opt ?ratio a.gen
   and shrink = _opt_map a.shrink ~f:Shrink.option
   and small =
     _opt_map_or a.small ~d:(function None -> 0 | Some _ -> 1)
