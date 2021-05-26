@@ -11,8 +11,8 @@ let test_gen_opt ~ratio =
 
 let test_gen_opt_default () =
   let nb = test_gen_opt ~ratio:None in
-  let b = nb > 700 && nb < 800 in
-  (check bool) "Gen.opt produces around 75% of Some" b true
+  let b = nb > 800 && nb < 900 in
+  (check bool) "Gen.opt produces around 85% of Some" b true
 
 let test_gen_opt_custom () =
   let nb = test_gen_opt ~ratio:(Some 0.5) in

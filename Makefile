@@ -5,7 +5,7 @@ build:
 	@dune build @install
 
 test:
-	@dune runtest --no-buffer
+	@dune runtest --no-buffer --force
 
 clean:
 	@dune clean
@@ -42,4 +42,4 @@ release: update_next_tag
 watch:
 	@dune build @all -w
 
-.PHONY: benchs tests examples update_next_tag watch release
+.PHONY: benchs test examples update_next_tag watch release
