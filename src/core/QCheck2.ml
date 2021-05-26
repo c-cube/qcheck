@@ -211,7 +211,6 @@ end
 
 module Gen = struct
 
-  (* Maybe the type should be changed to [RS.t -> (unit -> 'a) tree] or use laziness? To avoid eagerly evaluating shrinks during generation (see implem of [(>>=)] that requires evaluating to append Sequences). *)
   type 'a t = RS.t -> 'a Tree.t
 
   type 'a sized = int -> RS.t -> 'a Tree.t
@@ -283,8 +282,8 @@ module Gen = struct
     else false_gen
 
   let float : float t = fun st ->
-    let x = exp (RS.float st 15. *. (if RS.float st 1. < 0.5 then 1. else -1.))
-            *. (if RS.float st 1. < 0.5 then 1. else -1.)
+    let x = exp (RS.float st 15. *. (if RS.bool st then 1. else -1.))
+            *. (if RS.bool st then 1. else -1.)
     in Tree.make_primitive (Shrink.float_towards 0.) x
 
   let pfloat : float t = float >|= abs_float
