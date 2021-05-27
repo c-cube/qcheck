@@ -1356,6 +1356,7 @@ module TestResult = struct
 end
 
 module Test = struct
+
   type 'a cell = {
     count : int; (* number of tests to do *)
     long_factor : int; (* multiplicative factor for long test count *)
@@ -1363,6 +1364,7 @@ module Test = struct
     max_fail : int; (* max number of failures *)
     law : 'a -> bool; (* the law to check *)
     arb : 'a arbitrary; (* how to generate/print/shrink instances *)
+    qcheck1_shrink : ('a -> ('a -> unit) -> unit) option; (* QCheck1-backward-compatible shrinking *)
     if_assumptions_fail: [`Fatal | `Warning] * float;
     mutable name : string; (* name of the law *)
   }
@@ -1403,6 +1405,27 @@ module Test = struct
       count;
       long_factor;
       if_assumptions_fail;
+      qcheck1_shrink = None;
+    }
+
+  let make_cell_from_QCheck1 ?(if_assumptions_fail=default_if_assumptions_fail)
+      ?(count=default_count) ?(long_factor=1) ?max_gen
+      ?(max_fail=1) ?(name=fresh_name()) ~gen ?shrink ?print ?collect ~stats law
+    =
+    (* Make a "fake" QCheck2 arbitrary with no shrinking *)
+    let fake_gen = Gen.make_primitive ~gen ~shrink:(fun _ -> Seq.empty) in
+    let fake_arb = make fake_gen ?print ?collect ~stats in
+    let max_gen = match max_gen with None -> count + 200 | Some x->x in
+    {
+      law;
+      arb = fake_arb;
+      max_gen;
+      max_fail;
+      name;
+      count;
+      long_factor;
+      if_assumptions_fail;
+      qcheck1_shrink = shrink;
     }
 
   let make ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?name arb law =
@@ -1500,6 +1523,15 @@ module Test = struct
       if law x then Run_ok else Run_fail []
     with User_fail msg -> Run_fail [msg]
 
+  (* QCheck1-compatibility code *)
+  exception Iter_exit
+  let iter_find_map p iter =
+    let r = ref None in
+    (try iter (fun x -> match p x with Some _ as y -> r := y; raise Iter_exit | None -> ())
+     with Iter_exit -> ()
+    );
+    !r
+
   (* try to shrink counter-ex [i] into a smaller one. Returns
      shrinked value and number of steps *)
   let shrink st (i_tree : 'a Tree.t) (r : res_or_exn) m : 'a * res_or_exn * string list * int =
@@ -1510,7 +1542,24 @@ module Test = struct
       let Tree.Tree (i, shrinks) = i_tree in
       st.handler st.test.name st.test (Shrunk (steps, i));
       let count = ref 0 in
-      let i' = Seq.filter_map
+      let i' = match st.test.qcheck1_shrink with
+        | Some f -> (* QCheck1-compatibility, copied almost verbatim from QCheck.ml old code *)
+           iter_find_map
+             (fun x ->
+               (* let Tree.Tree (x, _) = x_tree in *)
+               try
+                 incr count;
+                 st.handler st.test.name st.test (Shrinking (steps, !count, x));
+                 begin match run_law st.test.law x with
+                 | Run_fail m when not is_err -> Some (Tree.pure x, Shrink_fail, m)
+                 | _ -> None
+                 end
+               with
+               | Failed_precondition | No_example_found _ -> None
+               | e when is_err -> Some (Tree.pure x, Shrink_exn e, []) (* fail test (by error) *)
+             ) (f i)
+        | None -> (* QCheck2 (or QCheck1 with a shrinkless tree): use the shrink tree *)
+        Seq.filter_map
           (fun x_tree ->
              let Tree.Tree (x, _) = x_tree in
              try

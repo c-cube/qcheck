@@ -1746,6 +1746,17 @@ module Test : sig
         (since 0.10)
   *)
 
+  val make_cell_from_QCheck1 :
+    ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
+    ?name:string -> gen:(Random.State.t -> 'a) -> ?shrink:('a -> ('a -> unit) -> unit) ->
+    ?print:('a -> string) -> ?collect:('a -> string) -> stats:'a stat list -> ('a -> bool) ->
+    'a cell
+  (** ⚠️ Do not use, this is exposed for internal reasons only. ⚠️ 
+
+      @deprecated Migrate to QCheck2 and use {!make_cell} instead.
+   *)
+
   val get_arbitrary : 'a cell -> 'a arbitrary
   val get_law : 'a cell -> ('a -> bool)
   val get_name : _ cell -> string

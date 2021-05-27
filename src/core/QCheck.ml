@@ -1264,27 +1264,12 @@ end
 module Test = struct
   let set_name = QCheck2.Test.set_name
 
-  let migrate_v1_arbitrary (arb : 'a arbitrary) : 'a QCheck2.arbitrary =
-    let {gen = gen_v1; print; collect; stats; small = _small_v1; shrink = shrink_v1_opt} = arb in
-    (* Shrink in V1 was an iterator of a passed argument, v2 is a lazy list of the currently generated value.
-       So iterate over the generated value, accumulate in a mutable list, and voila! *)
-    let shrink = match shrink_v1_opt with
-      | None -> fun _ -> Seq.empty
-      | Some shrink_v1 -> fun x () ->
-        let rev_shrinks = ref [] in
-        shrink_v1 x (fun next_shrink -> rev_shrinks := next_shrink :: !rev_shrinks) ;
-        let unevaluated_seq = List.rev !rev_shrinks |> List.to_seq in
-        unevaluated_seq ()
-    in
-    let gen = QCheck2.Gen.make_primitive ~gen:gen_v1 ~shrink in
-    QCheck2.make ?print ?collect ~stats gen
-
   let make_cell ?if_assumptions_fail
       ?count ?long_factor ?max_gen
   ?max_fail ?small:_removed_in_qcheck_2 ?name arb law
   =
-  let arb = migrate_v1_arbitrary arb in
-  QCheck2.Test.make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?name arb law
+  let {gen; shrink; print; collect; stats; _} = arb in
+  QCheck2.Test.make_cell_from_QCheck1 ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?name ~gen ?shrink ?print ?collect ~stats law
 
   let make ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law =
     QCheck2.Test.Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law)
