@@ -6,8 +6,3 @@
   (libraries unix bytes)
   (flags :standard -w +a-4-42-44-48-50-58-32-60@8 -safe-string)
   )
-
-(rule
-  (targets qcheck_ops.ml)
-  (deps)
-  (action (with-stdout-to %{targets} (run ./gen/gen_ops.exe))))

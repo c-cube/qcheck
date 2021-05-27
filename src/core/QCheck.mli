@@ -434,8 +434,13 @@ module Gen : sig
   val generate1 : ?rand:Random.State.t -> 'a t -> 'a
   (** [generate1 g] generates one instance of [g]. *)
 
-  include Qcheck_ops.S with type 'a t_let := 'a t
-  (** @since 0.15 *)
+  val ( let+ ) : 'a t -> ('a -> 'b) -> 'b t
+
+  val ( and+ ) : 'a t -> 'b t -> ('a * 'b) t
+
+  val ( let* ) : 'a t -> ('a -> 'b t) -> 'b t
+
+  val ( and* ) : 'a t -> 'b t -> ('a * 'b) t
 end
 
 (** {2 Pretty printing} *)
@@ -513,8 +518,13 @@ module Iter : sig
   val flatten : 'a t t -> 'a t
   (** @since 0.8 *)
 
-  include Qcheck_ops.S with type 'a t_let := 'a t
-  (** @since 0.15 *)
+  val ( let+ ) : 'a t -> ('a -> 'b) -> 'b t
+
+  val ( and+ ) : 'a t -> 'b t -> ('a * 'b) t
+
+  val ( let* ) : 'a t -> ('a -> 'b t) -> 'b t
+
+  val ( and* ) : 'a t -> 'b t -> ('a * 'b) t
 end
 
 (** {2 Shrink Values}

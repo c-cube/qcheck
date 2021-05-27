@@ -304,12 +304,13 @@ module Gen = struct
 
   let delay f st = f () st
 
-  include Qcheck_ops.Make(struct
-      type nonrec 'a t = 'a t
-      let (>|=) = (>|=)
-      let monoid_product a b = map2 (fun x y -> x,y) a b
-      let (>>=) = (>>=)
-    end)
+  let (let+) = (>|=)
+
+  let (and+) = pair
+
+  let (let*) = (>>=)
+
+  let (and*) = pair
 end
 
 module Print = struct
@@ -385,12 +386,13 @@ module Iter = struct
 
   let find p iter = find_map (fun x->if p x then Some x else None) iter
 
-  include Qcheck_ops.Make(struct
-      type nonrec 'a t = 'a t
-      let (>|=) = (>|=)
-      let monoid_product a b = map2 (fun x y -> x,y) a b
-      let (>>=) = (>>=)
-    end)
+  let (let+) = (>|=)
+
+  let (and+) = pair
+
+  let (let*) = (>>=)
+
+   let (and*) = pair
 end
 
 module Shrink = struct

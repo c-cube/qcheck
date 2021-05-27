@@ -644,12 +644,13 @@ module Gen = struct
   let add_shrink_invariant (p : 'a -> bool) (gen : 'a t) : 'a t =
     fun st -> gen st |> Tree.add_shrink_invariant p
 
-  include Qcheck_ops.Make(struct
-      type nonrec 'a t = 'a t
-      let (>|=) = (>|=)
-      let monoid_product a b = (a >|= (fun x y -> (x, y))) <*> b
-      let (>>=) = (>>=)
-    end)
+  let (let+) = (>|=)
+
+  let (and+) = pair
+
+  let (let*) = (>>=)
+
+  let (and*) = pair
 end
 
 module Print = struct
