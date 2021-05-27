@@ -48,17 +48,14 @@ let _opt_sum a b = match a, b with
 
 let sum_int = List.fold_left (+) 0
 
-exception FailedPrecondition
-(* raised if precondition is false *)
-
 exception No_example_found of string
 (* raised if an example failed to be found *)
 
-let assume b = if not b then raise FailedPrecondition
+let assume = QCheck2.assume
 
-let assume_fail () = raise FailedPrecondition
+let assume_fail = QCheck2.assume_fail
 
-let (==>) b1 b2 = if b1 then b2 else raise FailedPrecondition
+let (==>) = QCheck2.(==>)
 
 module Gen = struct
   type 'a t = RS.t -> 'a
