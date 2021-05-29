@@ -1935,8 +1935,8 @@ val find_example_gen :
     @since 0.6 *)
 
 type _ fun_repr
-(** Internal data for functions. A ['f fun_] is a function
-    of type ['f], fundamentally. *)
+(** Used by QCheck to shrink and print generated functions in case
+    of test failure. You cannot and should not use it yourself. *)
 
 (** A function packed with the data required to print/shrink it. See {!Fn}
     to see how to apply, print, etc. such a function.
@@ -1946,9 +1946,9 @@ type _ fun_repr
 
     For example:
     {[
-      QCheck.Test.make
-        QCheck.(pair (fun1 Observable.int bool) (small_list int))
-        (fun (Fun (_,f), l) -> l=(List.rev_map f l |> List.rev l))
+      QCheck2.(Test.make
+        pair (fun1 Observable.int bool) (small_list int))
+        (fun (Fun (_, f), l) -> l = (List.rev_map f l |> List.rev l))
     ]}
 *)
 type _ fun_ =
@@ -2089,7 +2089,7 @@ val map_same_type : ('a -> 'a) -> 'a arbitrary -> 'a arbitrary
     Below are the most common situations you may encounter:
     - as shrinking is now integrated, several function arguments like [~shrink] or [~rev] have been removed: you
       can remove such reverse functions, they will no longer be necessary.
-    - {!arbitrary} is no longer private, it is now abstract: if you used field access directly (e.g. [my_arb.print]), you
+    - {!type:arbitrary} is no longer private, it is now abstract: if you used field access directly (e.g. [my_arb.print]), you
       must now use getter functions, e.g. {!get_gen} or {!get_print}.
     - {!Gen.t} is no longer public, it is now abstract: it is recommended to use
       {{!section:Gen.composing_generators} generator composition} to make generators. {!Gen.make_primitive}

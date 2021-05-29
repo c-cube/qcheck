@@ -207,6 +207,11 @@ module Tree = struct
     let Tree (x, xs) = a in
     let xs' = Seq.filter_map (fun (Tree (x', _) as t) -> if p x' then Some (add_shrink_invariant p t) else None) xs in
     Tree (x, xs')
+
+  (** [applicative_take n trees] returns a tree of lists with at most the [n] first elements of the input list. *)
+  let rec applicative_take (n : int) (l : 'a t list) : 'a list t = match (n, l) with
+    | (0, _) | (_, []) -> pure []
+    | (n, (tree :: trees)) -> liftA2 List.cons tree (applicative_take (pred n) trees)
 end
 
 module Gen = struct
@@ -987,55 +992,56 @@ let map ?print ?collect (f : 'a -> 'b) (a : 'a arbitrary) =
     ?collect
     (Gen.map f a.gen)
 
+(** Internal module taking care of storing generated function bindings.
+
+    In essence, a generated function of type ['a -> 'b] is a map (table) where
+    keys are input values of type ['a] and values are output values of
+    type ['b], plus a default value of type ['b].
+
+    This module provides the "map of input/output" part.
+ *)
 module Poly_tbl : sig
-  type ('a, 'b) t
+  type ('key, 'value) t
 
-  val create: 'a Observable.t -> 'b arbitrary -> int -> ('a, 'b) t Gen.t
+  val create: 'key Observable.t -> 'value arbitrary -> int -> ('key, 'value) t Gen.t
 
-  val get : ('a, 'b) t -> 'a -> 'b option
+  val get : ('key, 'value) t -> 'key -> 'value option
 
-  val size : ('b -> int) -> (_, 'b) t -> int
+  val size : ('value -> int) -> ('key, 'value) t -> int
 
-  val print : (_,_) t Print.t
+  val print : ('key, 'value) t Print.t
 end = struct
-  type ('a, 'b) t = {
-    get : 'a -> 'b option;
-    p_size: ('b -> int) -> int;
+  type ('key, 'value) t = {
+    get : 'key -> 'value option; (** Don't be fooled by its name and signature: this function mutates the table during test execution by adding entries (key is the value on which the function is applied in the test, and the value is generated on the fly). *)
+    p_size: ('value -> int) -> int;
     p_print: unit -> string;
+    p_tree_bindings_rev : ('key * 'value Tree.t) list ref;
   }
 
-  (** TODO This is a bit trickier because the function entries are populated at runtime
-      while the shrinking tree must be provided statically and is not mutable ([Seq.t]),
-      only the inside tables are.
-
-      We could arguably create a shrinking sequence of fixed size (where the first element is
-      a function with no entries) and spread in best-effort entries. Not doing it for now. *)
-  let create (type k) (type v) (k : k Observable.t) (v : v arbitrary) (size : int) : (k, v) t Gen.t =
+  let create (type k) (type v) (k_obs : k Observable.t) (v_arb : v arbitrary) (size : int) : (k, v) t Gen.t =
     fun st ->
     let module T = Hashtbl.Make(struct
         type t = k
-        let equal = k.Observable.eq
-        let hash = k.Observable.hash
+        let equal = k_obs.Observable.eq
+        let hash = k_obs.Observable.hash
       end) in
-    (* let tbl_to_list tbl =
-     *   T.fold (fun k v l -> (k,v) :: l) tbl []
-     * and tbl_of_list l =
-     *   let tbl = T.create (max (List.length l) 8) in
-     *   List.iter (fun (k,v) -> T.add tbl k v) l;
-     *   tbl
-     * in *)
     (* make a table
-       @param extend if true, extend table on the fly *)
-    let (* rec *) make ~extend tbl = {
-      get = (fun x ->
-          try Some (T.find tbl x)
+       @param extend if [true], extend table [tbl] on the fly (during test execution, to "record" input values and generate an associated output value). [false] during shrinking (use the default value if the input value is not in the table). *)
+    let (* rec *) make ~extend tbl =
+      let initial_tree_bindings_rev = T.to_seq tbl |> List.of_seq |> List.rev_map (fun (k, v) -> k, Tree.pure v) in
+      let p_tree_bindings_rev = ref initial_tree_bindings_rev in
+      let get = (fun key ->
+          try Some (T.find tbl key)
           with Not_found ->
             if extend then (
-              let (Tree.Tree (v, _shrinks)) = v.gen st in
-              T.add tbl x v;
+              (* Generate a new value and "record" the binding for potential future display/shrinking *)
+              let value_tree = v_arb.gen st in
+              p_tree_bindings_rev := (key, value_tree) :: !p_tree_bindings_rev;
+              let v = Tree.root value_tree in
+              T.add tbl key v;
               Some v
-            ) else None);
-      p_print = (fun () -> match v.print with
+            ) else None) in
+      let p_print = (fun () -> match v_arb.print with
           | None -> "<fun>"
           | Some pp_v ->
             let b = Buffer.create 64 in
@@ -1043,47 +1049,56 @@ end = struct
             T.iter
               (fun key value ->
                  Format.fprintf to_b "%s -> %s; "
-                   (k.Observable.print key) (pp_v value))
+                   (k_obs.Observable.print key) (pp_v value))
               tbl;
             Format.pp_print_flush to_b ();
-            Buffer.contents b);
-      (* p_shrink1=(fun yield ->
-         Shrink.list (tbl_to_list tbl)
-          (fun l ->
-             yield (make ~extend:false (tbl_of_list l)))
-         );
-         p_shrink2=(fun shrink_val yield ->
-         (* shrink bindings one by one *)
-         T.iter
-          (fun x y ->
-             shrink_val y
-               (fun y' ->
-                  let tbl' = T.copy tbl in
-                  T.replace tbl' x y';
-                  yield (make ~extend:false tbl')))
-          tbl); *)
-      p_size=(fun size_v -> T.fold (fun _ v n -> n + size_v v) tbl 0);
-    } in
-    Tree.pure (make ~extend:true (T.create size))
+            Buffer.contents b) in
+      let p_size=(fun size_v -> T.fold (fun _ v n -> n + size_v v) tbl 0) in
+    {get; p_print; p_size; p_tree_bindings_rev}
+      in
+    let root_tbl = T.create size in
+    (* During initial running of the test, record bindings, hence [~extend:true]. *)
+    let root = make ~extend:true root_tbl in
+    (* Build the (lazy!) shrink tree of tables here *)
+    let shrinks : (k, v) t Tree.t Seq.t = fun () ->
+      (* This only gets evaluated *after* the test was run for [tbl], meaning it is correctly
+         populated with bindings recorded during the test already *)
+      let current_bindings : (k * v Tree.t) list = List.rev !(root.p_tree_bindings_rev) in
+      let take_at_most_tree : int Tree.t = Tree.make_primitive (Shrink.int_towards 0) (List.length current_bindings) in
+      let current_tree_bindings : (k * v) Tree.t list = List.map (fun (k, tree) -> Tree.map (fun v -> (k, v)) tree) current_bindings in
+      let shrunk_bindings_tree : (k * v) list Tree.t = Tree.bind take_at_most_tree (fun take_at_most -> Tree.applicative_take take_at_most current_tree_bindings) in
+      (* During shrinking, we don't want to record/add bindings, so [~extend:false]. *)
+      let shrunk_poly_tbl_tree : (k, v) t Tree.t = Tree.map (fun bindings -> List.to_seq bindings |> T.of_seq |> make ~extend:false) shrunk_bindings_tree in
+      (* [shrunk_poly_tbl_tree] is a bit misleading: its root *should* be the same as [root] but because of the required laziness
+         induced by the mutation of bindings, we don't use it, only graft its children to the original [root]. *)
+      Tree.children shrunk_poly_tbl_tree ()
+    in
+    Tree.Tree (root, shrinks)
 
   let get t x = t.get x
-  (* let shrink1 t = t.p_shrink1
-     let shrink2 p t = t.p_shrink2 p *)
   let print t = t.p_print ()
   let size p t = t.p_size p
 end
 
-(** Internal representation of functions *)
+(** Internal representation of functions, used for shrinking and printing (in case of error). *)
 type ('a, 'b) fun_repr_tbl = {
-  fun_tbl: ('a, 'b) Poly_tbl.t;
-  fun_arb: 'b arbitrary;
-  fun_default: 'b;
+  fun_tbl: ('a, 'b) Poly_tbl.t; (** Input-output bindings *)
+  fun_arb: 'b arbitrary; (** How to generate/print output values *)
+  fun_default: 'b; (** Default value for all inputs not explicitly mapped in {!fun_tbl} *)
 }
 
 type 'f fun_repr =
-  | Fun_tbl : ('a, 'ret) fun_repr_tbl -> ('a -> 'ret) fun_repr
-  | Fun_map : ('f1 -> 'f2) * 'f1 fun_repr -> 'f2 fun_repr
+  | Fun_tbl : ('a, 'ret) fun_repr_tbl -> ('a -> 'ret) fun_repr (** Input-output list of bindings *)
+  | Fun_map : ('f1 -> 'f2) * 'f1 fun_repr -> 'f2 fun_repr (** Mapped from another function (typically used for currying) *)
 
+(** A QCheck function, as in Koen Claessen's paper "Shrinking and showing functions".
+    Such a function is a pair of the function representation (used for shrinking and
+    printing the function) and a "real" function, which can be seen as an input-output
+    map + a default value for all other inputs.
+
+    - Test developers will only use the "real" function inside their tests (and ignore the function representation).
+    - During shrinking/printing, QCheck will ignore the "real" function and only use its representation.
+ *)
 type _ fun_ =
   | Fun : 'f fun_repr * 'f -> 'f fun_
 
@@ -1091,60 +1106,38 @@ type _ fun_ =
 module Fn = struct
   type 'a t = 'a fun_
 
-  let apply (Fun (_,f)) = f
+  let apply (Fun (_repr, real_function)) = real_function
 
-  let make_ (r:_ fun_repr) : _ fun_ =
-    let rec call
-      : type f. f fun_repr -> f
-      = fun r -> match r with
-        | Fun_tbl r ->
-          begin fun x -> match Poly_tbl.get r.fun_tbl x with
-            | None -> r.fun_default
-            | Some y -> y
-          end
-        | Fun_map (g, r') -> g (call r')
-    in
-    Fun (r, call r)
+  (** [function_of_repr repr] creates the "real" function (that will be used in tests)
+      from its representation. *)
+  let rec function_of_repr : type f. f fun_repr -> f = function
+    | Fun_tbl {fun_tbl; fun_default; _} ->
+       (fun x -> match Poly_tbl.get fun_tbl x with
+                      | None -> fun_default
+                      | Some y -> y)
+    | Fun_map (g, sub_repr) -> g (function_of_repr sub_repr)
+
+  let make_ (r : 'a fun_repr) : 'a fun_ = Fun (r, function_of_repr r)
 
   let mk_repr tbl arb def =
     Fun_tbl { fun_tbl=tbl; fun_arb=arb; fun_default=def; }
 
-  let map_repr f repr = Fun_map (f,repr)
+  let map_repr f repr = Fun_map (f, repr)
 
-  let map_fun f (Fun (repr,_)) = make_ (map_repr f repr)
+  let map_fun f (Fun (repr, _real_function)) = make_ (map_repr f repr)
 
-  (* let shrink_rep (r: _ fun_repr): _ Iter.t =
-   *   let open Iter in
-   *   let rec aux
-   *     : type f. f fun_repr Shrink.t
-   *     = function
-   *       | Fun_tbl {fun_arb=a; fun_tbl=tbl; fun_default=def} ->
-   *         let sh_v = match a.shrink with None -> Shrink.nil | Some s->s in
-   *         (Poly_tbl.shrink1 tbl >|= fun tbl' -> mk_repr tbl' a def)
-   *         <+>
-   *           (sh_v def >|= fun def' -> mk_repr tbl a def')
-   *         <+>
-   *           (Poly_tbl.shrink2 sh_v tbl >|= fun tbl' -> mk_repr tbl' a def)
-   *       | Fun_map (g, r') ->
-   *         aux r' >|= map_repr g
-   *   in
-   *   aux r
-   * 
-   * let shrink (Fun (rep,_)) =
-   *   let open Iter in
-   *   shrink_rep rep >|= make_ *)
-
-  let print_rep r =
+  (** [print_rep repr] returns a string representation of [repr]. *)
+  let print_repr r =
     let buf = Buffer.create 32 in
     let rec aux
       : type f. Buffer.t -> f fun_repr -> unit
       = fun buf r -> match r with
-        | Fun_map (_, r') -> aux buf r'
+        | Fun_map (_, sub_repr) -> aux buf sub_repr
         | Fun_tbl r ->
           Buffer.add_string buf (Poly_tbl.print r.fun_tbl);
           Printf.bprintf buf "_ -> %s" (match r.fun_arb.print with
               | None -> "<opaque>"
-              | Some s -> s r.fun_default
+              | Some print -> print r.fun_default
             );
     in
     Printf.bprintf buf "{";
@@ -1152,22 +1145,18 @@ module Fn = struct
     Printf.bprintf buf "}";
     Buffer.contents buf
 
-  let print (Fun (rep,_)) = print_rep rep
+  let print (Fun (repr, _real_function)) = print_repr repr
 
-  let gen_rep (a:_ Observable.t) (b:_ arbitrary): _ fun_repr Gen.t =
-    fun st ->
-    let Tree.Tree (default_value, _default_value_shrinks) = b.gen st in
-    let Tree.Tree (poly_tbl, _poly_tbl_shrinks) = Poly_tbl.create a b 8 st in
-    Tree.pure (mk_repr poly_tbl b default_value)
+  (** [gen_rep obs arb] creates a function generator. Input values are observed with [obs] and
+      output values are generated with [arb]. *)
+  let gen_rep (obs : 'a Observable.t) (arb : 'b arbitrary) : ('a -> 'b) fun_repr Gen.t =
+    Gen.liftA2 (fun default_value poly_tbl -> mk_repr poly_tbl arb default_value) arb.gen (Poly_tbl.create obs arb 8)
 
-  let gen a b = Gen.map make_ (gen_rep a b)
+  let gen (obs : 'a Observable.t) (arb : 'b arbitrary) : ('a -> 'b) t Gen.t =
+    Gen.map make_ (gen_rep obs arb)
 end
 
-let fun1 o ret =
-  make
-    (* ~shrink:Fn.shrink *)
-    ~print:Fn.print
-    (Fn.gen o ret)
+let fun1 obs arb = make ~print:Fn.print (Fn.gen obs arb)
 
 module Tuple = struct
   (** heterogeneous list (generic tuple) used to uncurry functions *)
