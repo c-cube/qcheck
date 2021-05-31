@@ -1027,7 +1027,7 @@ end = struct
       end) in
     (* make a table
        @param extend if [true], extend table [tbl] on the fly (during test execution, to "record" input values and generate an associated output value). [false] during shrinking (use the default value if the input value is not in the table). *)
-    let (* rec *) make ~extend tbl =
+    let make ~extend tbl =
       let initial_tree_bindings_rev = T.to_seq tbl |> List.of_seq |> List.rev_map (fun (k, v) -> k, Tree.pure v) in
       let p_tree_bindings_rev = ref initial_tree_bindings_rev in
       let get = (fun key ->
