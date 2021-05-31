@@ -1510,6 +1510,28 @@ val choose : 'a arbitrary list -> 'a arbitrary
 
     Shrinks towards the first arbitrary of the list. *)
 
+val oneofl : ?print:'a Print.t -> ?collect:('a -> string) ->
+             'a list -> 'a arbitrary
+(** Pick an element randomly in the list. *)
+
+val oneofa : ?print:'a Print.t -> ?collect:('a -> string) ->
+             'a array -> 'a arbitrary
+(** Pick an element randomly in the array. *)
+
+val oneof : 'a arbitrary list -> 'a arbitrary
+(** Pick a generator among the list, randomly. *)
+
+val frequency : ?print:'a Print.t -> ?collect:('a -> string) ->
+                (int * 'a arbitrary) list -> 'a arbitrary
+(** Similar to {!oneof} but with frequencies. *)
+
+val frequencyl : ?print:'a Print.t -> (int * 'a) list -> 'a arbitrary
+(** Same as {!oneofl}, but each element is paired with its frequency in
+    the probability distribution (the higher, the more likely). *)
+
+val frequencya : ?print:'a Print.t -> (int * 'a) array -> 'a arbitrary
+(** Same as {!frequencyl}, but with an array. *)
+
 (** {2 Lists, arrays and options} *)
 
 val small_list : 'a arbitrary -> 'a list arbitrary
@@ -1712,7 +1734,7 @@ module Fn : sig
       deconstructing as documented in {!fun_}. *)
 end
 
-(** {2 Combining arbitraries} *)
+(** {2 Composing arbitraries} *)
 
 val pair : 'a arbitrary -> 'b arbitrary -> ('a * 'b) arbitrary
 (** [pair arb1 arb2] generates pairs.
@@ -1731,6 +1753,18 @@ val quad : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> 'd arbitrary -> ('a *
 
     Shrinks on [arb1], then [arb2], then [arb3], and then [arb4].
 *)
+
+val always : ?print:'a Print.t -> 'a -> 'a arbitrary
+(** Always return the same element. *)
+
+val map : ?print:'b Print.t -> ?collect:('b -> string) -> ('a -> 'b) -> 'a arbitrary -> 'b arbitrary
+(** [map f a] returns a new arbitrary instance that generates values using
+    [a] and then transforms them through [f].
+ *)
+
+val map_same_type : ('a -> 'a) -> 'a arbitrary -> 'a arbitrary
+(** Specialization of [map] when the transformation preserves the type, which
+    makes printer, etc. still relevant. *)
 
 (** {2 Shrinking} *)
 
@@ -2099,40 +2133,6 @@ val find_example_gen :
     @param rand the random state to use to generate inputs.
     @raise No_example_found if no example was found within [count] tries.
     @since 0.6 *)
-
-val oneofl : ?print:'a Print.t -> ?collect:('a -> string) ->
-  'a list -> 'a arbitrary
-(** Pick an element randomly in the list. *)
-
-val oneofa : ?print:'a Print.t -> ?collect:('a -> string) ->
-  'a array -> 'a arbitrary
-(** Pick an element randomly in the array. *)
-
-val oneof : 'a arbitrary list -> 'a arbitrary
-(** Pick a generator among the list, randomly. *)
-
-val always : ?print:'a Print.t -> 'a -> 'a arbitrary
-(** Always return the same element. *)
-
-val frequency : ?print:'a Print.t -> ?collect:('a -> string) ->
-  (int * 'a arbitrary) list -> 'a arbitrary
-(** Similar to {!oneof} but with frequencies. *)
-
-val frequencyl : ?print:'a Print.t -> (int * 'a) list -> 'a arbitrary
-(** Same as {!oneofl}, but each element is paired with its frequency in
-    the probability distribution (the higher, the more likely). *)
-
-val frequencya : ?print:'a Print.t -> (int * 'a) array -> 'a arbitrary
-(** Same as {!frequencyl}, but with an array. *)
-
-val map : ?print:'b Print.t -> ?collect:('b -> string) -> ('a -> 'b) -> 'a arbitrary -> 'b arbitrary
-(** [map f a] returns a new arbitrary instance that generates values using
-    [a#gen] and then transforms them through [f].
-*)
-
-val map_same_type : ('a -> 'a) -> 'a arbitrary -> 'a arbitrary
-(** Specialization of [map] when the transformation preserves the type, which
-    makes printer, etc. still relevant. *)
 
 (** {1:migration_qcheck2 Migration to QCheck2}
 
