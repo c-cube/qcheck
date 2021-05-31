@@ -583,10 +583,13 @@ module Gen : sig
       Shrinks on elements only.
   *)
 
-  val opt : 'a t -> 'a option t
-  (** [opt gen] is an option generator.
+  val opt : ?ratio:float -> 'a t -> 'a option t
+  (** [opt gen] is an [option] generator that uses [gen] when generating [Some] values.
 
       Shrinks towards {!None} then towards shrinks of [gen].
+
+      @param ratio a float between [0.] and [1.] indicating the probability of a sample to be [Some _]
+      rather than [None] (value is [0.85]).
   *)
 
   (** {3 Combining generators} *)

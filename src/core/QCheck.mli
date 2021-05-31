@@ -337,7 +337,8 @@ module Gen : sig
   val opt : ?ratio:float -> 'a t -> 'a option t
   (**  An option generator, with optional ratio.
       @param ratio a float between [0.] and [1.] indicating the probability of a sample to be [Some _]
-      rather than [None]. This parameter is @since NEXT_RELEASE .
+      rather than [None].
+      @since NEXT_RELEASE ([?ratio] parameter)
   *)
 
   val pair : 'a t -> 'b t -> ('a * 'b) t (** Generates pairs. *)

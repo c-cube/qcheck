@@ -1,4 +1,4 @@
-open QCheck
+open QCheck2
 open Alcotest
 
 let test_gen_opt ~ratio =

@@ -329,9 +329,9 @@ module Gen = struct
   let neg_int : int t = nat >|= Int.neg
 
   (** [opt gen] shrinks towards [None] then towards shrinks of [gen]. *)
-  let opt (gen : 'a t) : 'a option t = fun st ->
+  let opt ?(ratio : float = 0.85) (gen : 'a t) : 'a option t = fun st ->
     let p = RS.float st 1. in
-    if p < 0.15
+    if p < (1. -. ratio)
     then Tree.pure None
     else Tree.opt (gen st)
 
