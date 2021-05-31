@@ -18,7 +18,7 @@ all rights reserved.
       ]
 
       let () =
-        let errcode = QCheck_runners.run_tests ~verbose:true testsuite in
+        let errcode = QCheck_base_runner.run_tests ~verbose:true testsuite in
         exit errcode
     ]}
     which will run the tests, and exit the program. The error code
