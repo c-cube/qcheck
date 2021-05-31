@@ -1549,6 +1549,169 @@ val option : 'a arbitrary -> 'a option arbitrary
     Shrinks towards {!None} then towards shrinks of [arb].
 *)
 
+(** {2 Functions}
+
+    QCheck also provides generators of functions.
+
+    All generated functions are pure:
+    - the same argument(s) will always return the same value
+    - there are no side effects
+
+    Using random functions is particularly useful to test higher-order
+    functions (i.e. functions that take functions as arguments).
+
+    Example: to test that transforming all elements of a list and then taking its head
+    is equivalent to taking the head and then transforming it:
+    {[
+    Test.make
+      (pair (list_of_size Gen.(1 -- 10) int) (fun1 Observable.int float))
+      (fun (l, Fun (_, f)) -> List.hd (List.map f l) = f (List.hd l))
+    ]}
+
+    This test generates random lists (between 1 and 10 elements) of integers and
+    random functions of type [int -> float] and checks the above property.
+ *)
+
+(** Utils on combining function arguments. *)
+module Tuple : sig
+  (** Heterogeneous tuple, used to pass any number of arguments to
+      a function. *)
+  type 'a t =
+    | Nil : unit t
+    | Cons : 'a * 'b t -> ('a * 'b) t
+
+  val nil : unit t
+  (** [nil] is {!Nil}. *)
+
+  val cons : 'a -> 'b t -> ('a * 'b) t
+  (** [cons] is {!Cons}. *)
+
+  type 'a obs
+  (** How to observe a {!t}.
+
+      See {!module:Observable} for more information on what
+      "observe" means in the QCheck. *)
+
+  val o_nil : unit obs
+  (** [o_nil] is the {!obs} equivalent of {!nil}. *)
+
+  val o_cons : 'a Observable.t -> 'b obs -> ('a * 'b) obs
+  (** [o_cons] is the {!obs} equivalent of {!cons}. *)
+
+  val observable : 'a obs -> 'a t Observable.t
+  (** [observable obs] returns the underlying observable of [obs]. *)
+
+  (** Infix {!module:Tuple} operators for convenience. *)
+  module Infix : sig
+    val (@::) : 'a -> 'b t -> ('a * 'b) t
+    (** Alias for {!cons}. *)
+
+    val (@->) : 'a Observable.t -> 'b obs -> ('a * 'b) obs
+    (** Alias for {!o_cons}. *)
+  end
+
+  include module type of Infix
+end
+
+type 'f fun_repr
+(** Used by QCheck to shrink and print generated functions of type ['f] in case
+    of test failure. You cannot and should not use it yourself. See {!fun_} for more information. *)
+
+(** A function packed with the data required to print/shrink it.
+
+    The idiomatic way to use any [fun_] arbitrary is to directly pattern match
+    on it to obtain the executable function.
+
+    For example (note the [Fun (_, f)] part):
+    {[
+      QCheck2.(Test.make
+        pair (fun1 Observable.int bool) (small_list int))
+        (fun (Fun (_, f), l) -> l = (List.rev_map f l |> List.rev l))
+    ]}
+
+    In this example [f] is a generated function of type [int -> bool].
+
+    The ignored part [_] of [Fun (_, f)] is useless to you, but is used by
+    QCheck during shrinking/printing in case of test failure.
+
+    See also {!Fn} for utils to print and apply such a function.
+*)
+type 'f fun_ = Fun of 'f fun_repr * 'f
+
+val fun1 : 'a Observable.t -> 'b arbitrary -> ('a -> 'b) fun_ arbitrary
+(** [fun1 obs arb] generates random functions that take an argument observable
+    via [obs] and map to random values generated with [arb].
+    To write functions with multiple arguments, it's better to use {!Tuple}
+    or {!Observable.pair} rather than applying {!fun_} several times
+    (shrinking will be faster).
+    @since 0.6 *)
+
+val fun2 :
+  'a Observable.t ->
+  'b Observable.t ->
+  'c arbitrary ->
+  ('a -> 'b -> 'c) fun_ arbitrary
+(** Specialized version of {!fun_nary} for functions of 2 arguments, for convenience.
+    @since 0.6 *)
+
+val fun3 :
+  'a Observable.t ->
+  'b Observable.t ->
+  'c Observable.t ->
+  'd arbitrary ->
+  ('a -> 'b -> 'c -> 'd) fun_ arbitrary
+(** Specialized version of {!fun_nary} for functions of 3 arguments, for convenience.
+    @since 0.6 *)
+
+val fun4 :
+  'a Observable.t ->
+  'b Observable.t ->
+  'c Observable.t ->
+  'd Observable.t ->
+  'e arbitrary ->
+  ('a -> 'b -> 'c -> 'd -> 'e) fun_ arbitrary
+(** Specialized version of {!fun_nary} for functions of 4 arguments, for convenience.
+    @since 0.6 *)
+
+val fun_nary : 'a Tuple.obs -> 'b arbitrary -> ('a Tuple.t -> 'b) fun_ arbitrary
+(** [fun_nary tuple_obs arb] generates random n-ary functions. Arguments are observed
+    using [tuple_obs] and return values are generated using [arb].
+
+    Example (the property is wrong as a random function may return [false], this is for
+    the sake of demonstrating the syntax):
+    {[
+      let module O = Observable in
+      Test.make
+        (fun_nary Tuple.(O.int @-> O.float @-> O.string @-> o_nil) bool)
+        (fun (Fun (_, f)) -> f Tuple.(42 @:: 17.98 @:: "foobar" @:: nil))
+    ]}
+
+    Note that this particular example can be simplified using {!fun3} directly:
+    {[
+      let module O = Observable in
+      Test.make
+        (fun3 O.int O.float O.string bool)
+        (fun (Fun (_, f)) -> f 42 17.98 "foobar")
+    ]}
+
+    @since 0.6 *)
+
+(** Utils on generated functions.
+    @since 0.6 *)
+module Fn : sig
+  val print : 'f fun_ Print.t
+  (** [print f] prints the implementation of generated function [f].
+
+      The implementation always contains a default case, represented as [_].
+
+      Note that printing a function {i before} it was called in the test may not print the full implementation.
+   *)
+
+  val apply : 'f fun_ -> 'f
+(** [apply f] returns the underlying function to be used in tests. This is an alias for
+      deconstructing as documented in {!fun_}. *)
+end
+
 (** {2 Combining arbitraries} *)
 
 val pair : 'a arbitrary -> 'b arbitrary -> ('a * 'b) arbitrary
@@ -1936,106 +2099,6 @@ val find_example_gen :
     @param rand the random state to use to generate inputs.
     @raise No_example_found if no example was found within [count] tries.
     @since 0.6 *)
-
-type _ fun_repr
-(** Used by QCheck to shrink and print generated functions in case
-    of test failure. You cannot and should not use it yourself. *)
-
-(** A function packed with the data required to print/shrink it. See {!Fn}
-    to see how to apply, print, etc. such a function.
-
-    One can also directly pattern match on it to obtain
-    the executable function.
-
-    For example:
-    {[
-      QCheck2.(Test.make
-        pair (fun1 Observable.int bool) (small_list int))
-        (fun (Fun (_, f), l) -> l = (List.rev_map f l |> List.rev l))
-    ]}
-*)
-type _ fun_ =
-  | Fun : 'f fun_repr * 'f -> 'f fun_
-
-(** Utils on functions
-    @since 0.6 *)
-module Fn : sig
-  type 'a t = 'a fun_
-
-  val print : _ t Print.t
-
-  val apply : 'f t -> 'f
-end
-
-val fun1 : 'a Observable.t -> 'b arbitrary -> ('a -> 'b) fun_ arbitrary
-(** [fun1 o ret] makes random functions that take an argument observable
-    via [o] and map to random values generated from [ret].
-    To write functions with multiple arguments, it's better to use {!Tuple}
-    or {!Observable.pair} rather than applying {!fun_} several times
-    (shrinking will be faster).
-    @since 0.6 *)
-
-module Tuple : sig
-  (** Heterogeneous tuple, used to pass any number of arguments to
-      a function. *)
-  type 'a t =
-    | Nil : unit t
-    | Cons : 'a * 'b t -> ('a * 'b) t
-
-  val nil : unit t
-  val cons : 'a -> 'b t -> ('a * 'b) t
-
-  (** How to observe a  {!'a t} *)
-  type 'a obs
-
-  val o_nil : unit obs
-  val o_cons : 'a Observable.t -> 'b obs -> ('a * 'b) obs
-
-  module Infix : sig
-    val (@::) : 'a -> 'b t -> ('a * 'b) t
-    (** Alias to {!cons}. *)
-
-    val (@->) : 'a Observable.t -> 'b obs -> ('a * 'b) obs
-    (** Alias to {!B_cons}. *)
-  end
-
-  include module type of Infix
-
-  val observable : 'a obs -> 'a t Observable.t
-end
-
-val fun_nary : 'a Tuple.obs -> 'b arbitrary -> ('a Tuple.t -> 'b) fun_ arbitrary
-(** [fun_nary] makes random n-ary functions.
-    Example:
-    {[
-      let module O = Observable in
-      fun_nary Tuple.(O.int @-> O.float @-> O.string @-> o_nil) bool)
-    ]}
-    @since 0.6 *)
-
-val fun2 :
-  'a Observable.t ->
-  'b Observable.t ->
-  'c arbitrary ->
-  ('a -> 'b -> 'c) fun_ arbitrary
-(** @since 0.6 *)
-
-val fun3 :
-  'a Observable.t ->
-  'b Observable.t ->
-  'c Observable.t ->
-  'd arbitrary ->
-  ('a -> 'b -> 'c -> 'd) fun_ arbitrary
-(** @since 0.6 *)
-
-val fun4 :
-  'a Observable.t ->
-  'b Observable.t ->
-  'c Observable.t ->
-  'd Observable.t ->
-  'e arbitrary ->
-  ('a -> 'b -> 'c -> 'd -> 'e) fun_ arbitrary
-(** @since 0.6 *)
 
 val oneofl : ?print:'a Print.t -> ?collect:('a -> string) ->
   'a list -> 'a arbitrary

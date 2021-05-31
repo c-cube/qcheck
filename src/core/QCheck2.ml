@@ -1099,13 +1099,10 @@ type 'f fun_repr =
     - Test developers will only use the "real" function inside their tests (and ignore the function representation).
     - During shrinking/printing, QCheck will ignore the "real" function and only use its representation.
  *)
-type _ fun_ =
-  | Fun : 'f fun_repr * 'f -> 'f fun_
+type 'f fun_ = Fun of 'f fun_repr * 'f
 
 (** Reifying functions *)
 module Fn = struct
-  type 'a t = 'a fun_
-
   let apply (Fun (_repr, real_function)) = real_function
 
   (** [function_of_repr repr] creates the "real" function (that will be used in tests)
@@ -1152,7 +1149,7 @@ module Fn = struct
   let gen_rep (obs : 'a Observable.t) (arb : 'b arbitrary) : ('a -> 'b) fun_repr Gen.t =
     Gen.liftA2 (fun default_value poly_tbl -> mk_repr poly_tbl arb default_value) arb.gen (Poly_tbl.create obs arb 8)
 
-  let gen (obs : 'a Observable.t) (arb : 'b arbitrary) : ('a -> 'b) t Gen.t =
+  let gen (obs : 'a Observable.t) (arb : 'b arbitrary) : ('a -> 'b) fun_ Gen.t =
     Gen.map make_ (gen_rep obs arb)
 end
 
