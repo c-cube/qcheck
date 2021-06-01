@@ -2154,7 +2154,6 @@ val find_example_gen :
       both QCheck and QCheck2 tests together. This is transparent if you used type inference,
       but if you explicitly used {!QCheck.Test.t} you will need to change it to {!QCheck2.Test.t}.
 
-
     {2 Recommended changes}
     Now you want to actually start using the QCheck2 features (most importantly: free shrinking!).
     To get started, change all your {!QCheck} references to {!QCheck2} and follow the compiler errors.
@@ -2163,6 +2162,8 @@ val find_example_gen :
       can remove such reverse functions, they will no longer be necessary.
     - {!type:arbitrary} is no longer private, it is now abstract: if you used field access directly (e.g. [my_arb.print]), you
       must now use getter functions, e.g. {!get_gen} or {!get_print}.
+    - accessor functions like {!QCheck.gen} have been renamed to consistent names like {!get_gen}.
+    - {!QCheck.map_keep_input} has been removed: you can use {!map} directly.
     - {!Gen.t} is no longer public, it is now abstract: it is recommended to use
       {{!section:Gen.composing_generators} generator composition} to make generators. {!Gen.make_primitive}
       was added to create generators with finer control (in particular of shrinking).
