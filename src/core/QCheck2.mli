@@ -1263,6 +1263,12 @@ val get_gen : 'a arbitrary -> 'a Gen.t
 val get_print : 'a arbitrary -> 'a Print.t option
 (** [get_print arb] returns the underlying optional value printer of [arb]. *)
 
+val get_collect : 'a arbitrary -> ('a -> string) option
+(** [get_collect arb] returns the underlying optional collecting function of [arb]. *)
+
+val get_stats : 'a arbitrary -> 'a stat list
+(** [get_stats arb] returns the underlying statistics functions of [arb]. *)
+
 (** {2 Primitive arbitraries} *)
 
 val unit : unit arbitrary
@@ -1271,7 +1277,7 @@ val unit : unit arbitrary
     Does not shrink. *)
 
 val bool : bool arbitrary
-(** Boolean generator. 
+(** Boolean generator.
 
     Uniformly distributed.
 

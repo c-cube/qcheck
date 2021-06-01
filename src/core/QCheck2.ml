@@ -861,6 +861,10 @@ let get_gen o = o.gen
 
 let get_print o = o.print
 
+let get_collect o = o.collect
+
+let get_stats o = o.stats
+
 let choose l =
   match l with
   | [] -> raise (Invalid_argument "QCheck2.choose called with an empty list")
