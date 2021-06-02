@@ -77,6 +77,9 @@ module Seq = struct
     match l () with
     | Nil -> None
     | Cons (hd, _) -> Some hd
+
+  (** Useful to improve [Seq] code perf when chaining functions *)
+  let apply (l : 'a t) : 'a node = l ()
 end
 
 module Shrink = struct
@@ -203,6 +206,10 @@ module Tree = struct
     let shrinks = Seq.cons (pure None) (Seq.map opt xs) in
     Tree (Some x, shrinks)
 
+  let rec sequence_list (l : 'a t list) : 'a list t = match l with
+    | [] -> pure []
+    | hd :: tl -> liftA2 List.cons hd (sequence_list tl)
+
   let rec add_shrink_invariant (p : 'a -> bool) (a : 'a t) : 'a t =
     let Tree (x, xs) = a in
     let xs' = Seq.filter_map (fun (Tree (x', _) as t) -> if p x' then Some (add_shrink_invariant p t) else None) xs in
@@ -248,6 +255,8 @@ module Gen = struct
   let bind (gen : 'a t) (f : 'a -> ('b t)) : 'b t = fun st -> Tree.bind (gen st) (fun a -> f a st)
 
   let (>>=) = bind
+
+  let sequence_list (l : 'a t list) : 'a list t = fun st -> List.map (fun gen -> gen st) l |> Tree.sequence_list
 
   let make_primitive ~(gen : RS.t -> 'a) ~(shrink : 'a -> 'a Seq.t) : 'a t = fun st ->
     Tree.make_primitive shrink (gen st)
@@ -565,7 +574,11 @@ module Gen = struct
   let quad (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) (g4 : 'd t) : ('a * 'b * 'c * 'd) t =
     (fun a b c d -> (a, b, c, d)) <$> g1 <*> g2 <*> g3 <*> g4
 
-  let char : char t = int_range ~origin:(int_of_char 'a') 0 255 >|= char_of_int
+  (** Don't reuse {!int_range} which is much less performant (many more checks because of the possible range and origins). As a [string] generator may call this hundreds or even thousands of times for a single value, it's worth optimizing. *)
+  let char : char t = fun st ->
+    let c = RS.int st 256 in
+    let shrink a = fun () -> Shrink.int_towards (int_of_char 'a') a |> Seq.apply in
+    Tree.map char_of_int (Tree.make_primitive shrink c)
 
   (** The first characters are the usual lower case alphabetical letters to help shrinking. *)
   let printable_chars =
@@ -593,8 +606,32 @@ module Gen = struct
     let nine = 57 in
     int_range ~origin:zero zero nine >|= char_of_int
 
+  let bytes_size ?(gen = char) (size : int t) : bytes t = fun st ->
+    let open Tree in
+    size st >>= fun size ->
+    (* Adding char shrinks to a mutable list is expensive: ~20-30% cost increase *)
+    (* Adding char shrinks to a mutable lazy list is less expensive: ~15% cost increase *)
+    let char_trees_rev = ref (fun () -> []) in
+    let bytes = Bytes.init size (fun _ ->
+                    let char_tree = gen st in
+                    char_trees_rev := (fun () -> char_tree :: ((!char_trees_rev) ()));
+                    (* Performance: return the root right now, the heavy processing of shrinks can wait until/if there is a need to shrink *)
+                    root char_tree) in
+    let shrink = fun () ->
+      let char_trees = List.rev ((!char_trees_rev) ()) in
+      let char_list_tree = sequence_list char_trees in
+      let bytes_tree = char_list_tree >|= (fun char_list ->
+          let bytes = Bytes.create size in
+          List.iteri (Bytes.set bytes) char_list ;
+          bytes) in
+      (* Technically [bytes_tree] is the whole tree, but for perf reasons we eagerly created the root above *)
+      children bytes_tree ()
+    in
+    Tree (bytes, shrink)
+
+
   let string_size ?(gen = char) (size : int t) : string t =
-    list_size size gen >|= (fun l -> List.to_seq l |> String.of_seq)
+    bytes_size ~gen size >|= Bytes.unsafe_to_string
 
   let string ?(gen : char t option) : string t = string_size ?gen nat
 
