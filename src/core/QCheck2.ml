@@ -1,6 +1,6 @@
 (*
 QCheck: Random testing for OCaml
-copyright (c) 2013-2017, Guillaume Bury, Simon Cruanes, Vincent Hugot, Jan Midtgaard
+copyright (c) 2013-2017, Guillaume Bury, Simon Cruanes, Vincent Hugot, Jan Midtgaard, Julien Debon
 all rights reserved.
 *)
 
@@ -98,17 +98,15 @@ module Shrink = struct
     Seq.unfold (fun current_shrink ->
         if Number.equal current_shrink x
         then None
-        else
-            (*
-              Halve the operands before subtracting them so they don't overflow.
-              Consider [number_towards min_int max_int]
-            *)
+        else (
+          (* Halve the operands before subtracting them so they don't overflow.
+             Consider [number_towards min_int max_int] *)
           let half_diff =  Number.sub (Number.div x (Number.of_int 2)) (Number.div current_shrink (Number.of_int 2)) in
           if half_diff = Number.of_int 0
           (* [current_shrink] is the last valid shrink candidate, put [x] as next step to make sure we stop *)
           then Some (current_shrink, x)
           else Some (current_shrink, Number.add current_shrink half_diff)
-      ) destination ()
+      )) destination ()
 
   let int_towards destination x = fun () ->
     let module Int : Number with type t = int = struct
@@ -450,15 +448,14 @@ module Gen = struct
           else int_bound high st
         ) in
       let shrink a = fun () ->
-        let origin =
-          Option.fold
-            origin
-            ~none:(pick_origin_within_range ~low ~high ~goal:0)
-            ~some:(fun origin ->
-              if origin < low
-              then invalid_arg "Gen.int_range: origin < low"
-              else if origin > high then invalid_arg "Gen.int_range: origin > high"
-              else origin) in
+        let origin = match origin with
+          | None -> pick_origin_within_range ~low ~high ~goal:0
+          | Some origin ->
+         if origin < low
+         then invalid_arg "Gen.int_range: origin < low"
+         else if origin > high then invalid_arg "Gen.int_range: origin > high"
+         else origin
+        in
         Shrink.int_towards origin a ()
       in
       Tree.make_primitive shrink n
@@ -492,7 +489,7 @@ module Gen = struct
     >>= fun i ->
     let rec aux acc = function
       | ((x, g) :: xs) -> if i < acc + x then g else aux (acc + x) xs
-      | _ -> failwith "QCheck2.frequency crashed for an unknown reason"
+      | _ -> assert false
     in
     aux 0 l
 
@@ -536,7 +533,7 @@ module Gen = struct
     let rec loop n =
       if n <= 0
       then pure []
-      else liftA2 (List.cons) gen (loop (n - 1))
+      else liftA2 List.cons gen (loop (n - 1))
     in
     loop size
 

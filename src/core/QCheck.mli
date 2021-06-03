@@ -844,6 +844,8 @@ module TestResult : sig
   }
 
   val get_count : _ t -> int
+  (** Get the count of a cell.
+     @since 0.5.3 *)
 
   val get_count_gen : _ t -> int
 

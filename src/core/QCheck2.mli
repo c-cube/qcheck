@@ -1,6 +1,6 @@
 (*
 QCheck: Random testing for OCaml
-copyright (c) 2013-2017, Guillaume Bury, Simon Cruanes, Vincent Hugot, Jan Midtgaard
+copyright (c) 2013-2017, Guillaume Bury, Simon Cruanes, Vincent Hugot, Jan Midtgaard, Julien Debon
 all rights reserved.
 *)
 
@@ -87,6 +87,7 @@ content will appear. *)
       QCheck2.Gen.generate ~n:20 tree_gen;;
     ]}
 
+    @since NEXT_RELEASE
 *)
 
 (** A tree represents a generated value and its successive shrunk values. *)
