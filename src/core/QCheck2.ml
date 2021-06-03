@@ -1373,13 +1373,15 @@ module TestResult = struct
     stats_tbl: ('a stat * (int, int) Hashtbl.t) list;
     mutable warnings: string list;
     mutable instances: 'a list;
+    (** List of instances used for this test, in no particular order.
+        @since 0.9 *)
   }
+
+  let get_state {state; _} = state
 
   let get_count {count; _} = count
 
   let get_count_gen {count_gen; _} = count_gen
-
-  let get_state {state; _} = state
 
   (* indicate failure on the given [instance] *)
   let fail ~msg_l ~steps:shrink_steps res instance =
@@ -1394,11 +1396,20 @@ module TestResult = struct
   let error ~msg_l ~steps res instance exn backtrace =
     res.state <- Error {instance={instance; shrink_steps=steps; msg_l; }; exn; backtrace}
 
-  let collect r =
+  let get_collect r =
     if Lazy.is_val r.collect_tbl then Some (Lazy.force r.collect_tbl) else None
 
-  let stats r = r.stats_tbl
-  let warnings r = r.warnings
+  let collect = get_collect
+
+  let get_stats r = r.stats_tbl
+
+  let stats = get_stats
+
+  let get_warnings r = r.warnings
+
+  let warnings = get_warnings
+
+  let get_instances r = r.instances
 
   let is_success r = match r.state with
     | Success -> true

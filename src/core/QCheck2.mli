@@ -1873,39 +1873,51 @@ module TestResult : sig
     (** If the test failed "exceptionally" (an exception was raised by the test). *)
 
   (* Result returned by running a test. *)
-  type 'a t = private {
-    mutable state : 'a state;
-    mutable count: int;  (* Number of tests *)
-    mutable count_gen: int; (* Number of generated cases *)
-    collect_tbl: (string, int) Hashtbl.t lazy_t;
-    stats_tbl: ('a stat * (int, int) Hashtbl.t) list; (** @since 0.6 *)
-    mutable warnings: string list;
-    mutable instances: 'a list;
-    (** List of instances used for this test, in no particular order.
-        @since 0.9 *)
-  }
-
-  val get_count : _ t -> int
-
-  val get_count_gen : _ t -> int
+  type 'a t
 
   val get_state : 'a t -> 'a state
+  (** [get_state t] returns the final state after a test execution. *)
 
-  val collect : _ t -> (string,int) Hashtbl.t option
-  (** Obtain statistics
-      @since 0.6 *)
+  val get_count : _ t -> int
+  (** [get_count t] returns the number of tests executed. *)
 
-  val stats : 'a t -> ('a stat * (int,int) Hashtbl.t) list
-  (** Obtain statistics
-      @since 0.6 *)
+  val get_count_gen : _ t -> int
+  (** [get_count_gen t] returns the number of generated cases. *)
 
-  val warnings : _ t -> string list
-  (** Obtain list of warnings
-      @since 0.10 *)
+  val get_collect : _ t -> (string,int) Hashtbl.t option
+  (** [get_collect t] returns the repartition of generated arbitrary instances.
+      @since NEXT_RELEASE *)
+
+  val get_stats : 'a t -> ('a stat * (int,int) Hashtbl.t) list
+  (** [get_stats t] returns the statistics captured by the arbitrary.
+      @since NEXT_RELEASE *)
+
+  val get_warnings : _ t -> string list
+  (** [get_warnings t] returns the list of warnings emitted during the test.
+      @since NEXT_RELEASE *)
+
+  val get_instances : 'a t -> 'a list
+  (** [get_instances t] returns the generated instances, with no guarantee on the order.
+      @since NEXT_RELEASE *)
 
   val is_success : _ t -> bool
   (** Returns true iff the state if [Success]
       @since 0.9 *)
+
+  val stats : 'a t -> ('a stat * (int,int) Hashtbl.t) list
+  (** Obtain statistics
+      @since 0.6
+      @deprecated use {!get_stats} instead *)
+
+  val warnings : _ t -> string list
+  (** Obtain list of warnings
+      @since 0.10
+      @deprecated use {!get_warnings} instead *)
+
+  val collect : _ t -> (string,int) Hashtbl.t option
+  (** Obtain statistics
+      @since 0.6
+      @deprecated use {!get_collect} instead *)
 end
 
 (** A test is a pair of an arbitrary (to generate, shrink, print values) and a property that

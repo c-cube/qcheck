@@ -1346,7 +1346,7 @@ let find_example ?(name="<example>") ?count ~f g : _ Gen.t =
       Test.make_cell ~max_fail:1 ?count arb (fun x -> not (f x))
     in
     let res = QCheck2.Test.check_cell ~rand:st cell in
-    begin match res.QCheck2.TestResult.state with
+    begin match QCheck2.TestResult.get_state res with
       | QCheck2.TestResult.Success -> raise (No_example_found name)
       | QCheck2.TestResult.Error _ -> raise (No_example_found name)
       | QCheck2.TestResult.Failed {instances=[]} -> assert false

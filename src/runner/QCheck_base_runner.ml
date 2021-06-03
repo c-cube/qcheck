@@ -126,7 +126,7 @@ module Raw = struct
     let reset_line = if colors then Color.reset_line else "\n" in
     if verbose then (
       print.info "%slaw %s: %d relevant cases (%d total)\n"
-        reset_line name result.R.count result.R.count_gen;
+        reset_line name (R.get_count result) (R.get_count_gen result);
       begin match QCheck2.TestResult.collect result with
         | None -> ()
         | Some tbl ->
@@ -135,7 +135,7 @@ module Raw = struct
     );
     if print_res then (
       (* even if [not verbose], print errors *)
-      match result.R.state with
+      match R.get_state result with
         | R.Success -> ()
         | R.Failed {instances=l} ->
           print.fail "%s%s\n" reset_line (T.print_fail arb name l);
@@ -409,8 +409,8 @@ let run_tests
   in
   let res = List.map aux_map l in
   let aux_fold (total, fail, error, warns) (Res (cell, r)) =
-    let warns = warns + List.length r.R.warnings in
-    let acc = match r.R.state with
+    let warns = warns + List.length (R.get_warnings r) in
+    let acc = match R.get_state r with
       | R.Success ->
         print_success ~colors out cell r;
         (total + 1, fail, error, warns)
