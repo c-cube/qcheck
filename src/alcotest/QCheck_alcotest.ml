@@ -1,6 +1,6 @@
 
-module Q = QCheck
-module T = QCheck.Test
+module Q = QCheck2
+module T = QCheck2.Test
 module Raw = QCheck_base_runner.Raw
 
 let seed_ = lazy (

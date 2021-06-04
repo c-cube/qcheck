@@ -6,26 +6,26 @@
 
 val to_ounit_test :
   ?verbose:bool -> ?long:bool -> ?rand:Random.State.t ->
-  QCheck.Test.t -> OUnit.test
+  QCheck2.Test.t -> OUnit.test
 (** [to_ounit_test ~rand t] wraps [t] into a OUnit test
     @param verbose used to print information on stdout (default: [verbose()])
     @param rand the random generator to use (default: [random_state ()]) *)
 
 val to_ounit_test_cell :
   ?verbose:bool -> ?long:bool -> ?rand:Random.State.t ->
-  _ QCheck.Test.cell -> OUnit.test
+  _ QCheck2.Test.cell -> OUnit.test
 (** Same as {!to_ounit_test} but with a polymorphic test cell *)
 
-val (>:::) : string -> QCheck.Test.t list -> OUnit.test
-(** Same as [OUnit.(>:::)] but with a list of QCheck tests *)
+val (>:::) : string -> QCheck2.Test.t list -> OUnit.test
+(** Same as [OUnit.(>:::)] but with a list of QCheck2 tests *)
 
-val to_ounit2_test : ?rand:Random.State.t -> QCheck.Test.t -> OUnit2.test
+val to_ounit2_test : ?rand:Random.State.t -> QCheck2.Test.t -> OUnit2.test
 (** [to_ounit2_test ?rand t] wraps [t] into a OUnit2 test
     @param rand the random generator to use (default: a static seed for reproducibility),
     can be overridden with "-seed" on the command-line
 *)
 
-val to_ounit2_test_list : ?rand:Random.State.t -> QCheck.Test.t list -> OUnit2.test list
+val to_ounit2_test_list : ?rand:Random.State.t -> QCheck2.Test.t list -> OUnit2.test list
 (** [to_ounit2_test_list ?rand t] like [to_ounit2_test] but for a list of tests *)
 
 (** {2 OUnit runners}

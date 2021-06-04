@@ -52,8 +52,8 @@ let default_rand () =
   (* random seed, for repeatability of tests *)
   Random.State.make [| 89809344; 994326685; 290180182 |]
 
-let to_ounit2_test ?(rand =default_rand()) (QCheck.Test.Test cell) =
-  let module T = QCheck.Test in
+let to_ounit2_test ?(rand =default_rand()) (QCheck2.Test.Test cell) =
+  let module T = QCheck2.Test in
   let name = T.get_name cell in
   let open OUnit2 in
   name >: test_case ~length:OUnitTest.Long (fun ctxt ->
@@ -82,7 +82,7 @@ let to_ounit2_test_list ?rand lst =
    possibly print errors and counter-examples *)
 let to_ounit_test_cell ?(verbose=verbose()) ?(long=long_tests())
     ?(rand=random_state()) cell =
-  let module T = QCheck.Test in
+  let module T = QCheck2.Test in
   let name = T.get_name cell in
   let run () =
     try
@@ -94,7 +94,7 @@ let to_ounit_test_cell ?(verbose=verbose()) ?(long=long_tests())
   in
   name >:: (fun () -> assert_bool name (run ()))
 
-let to_ounit_test ?verbose ?long ?rand (QCheck.Test.Test c) =
+let to_ounit_test ?verbose ?long ?rand (QCheck2.Test.Test c) =
   to_ounit_test_cell ?verbose ?long ?rand c
 
 let (>:::) name l =

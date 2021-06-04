@@ -6,7 +6,7 @@ all rights reserved.
 
 (** {1 Runners for Tests}
 
-    Once you built some tests using {!QCheck.Test.make}, you need to
+    Once you built some tests using {!QCheck2.Test.make}, you need to
     run the tests. This module contains several {b runners},
     which are designed to run every test and report the result.
 
@@ -18,7 +18,7 @@ all rights reserved.
       ]
 
       let () =
-        let errcode = QCheck_runners.run_tests ~verbose:true testsuite in
+        let errcode = QCheck_base_runner.run_tests ~verbose:true testsuite in
         exit errcode
     ]}
     which will run the tests, and exit the program. The error code
@@ -73,7 +73,7 @@ type counter = private {
     test cell. *)
 
 type handler = {
-  handler : 'a. 'a QCheck.Test.handler;
+  handler : 'a. 'a QCheck2.Test.handler;
 }
 (** A type to represent polymorphic-enough handlers for test cells. *)
 
@@ -96,14 +96,14 @@ val run_tests :
   ?debug_shrink:(out_channel option) ->
   ?debug_shrink_list:(string list) ->
   ?out:out_channel -> ?rand:Random.State.t ->
-  QCheck.Test.t list -> int
+  QCheck2.Test.t list -> int
 (** Run a suite of tests, and print its results. This is an heritage from
     the "qcheck" library.
     @return an error code, [0] if all tests passed, [1] otherwise.
     @param colors if true, colorful output
     @param verbose if true, prints more information about test cases *)
 
-val run_tests_main : ?argv:string array -> QCheck.Test.t list -> 'a
+val run_tests_main : ?argv:string array -> QCheck2.Test.t list -> 'a
 (** Can be used as the main function of a test file. Exits with a non-0 code
     if the tests fail. It refers to {!run_tests} for actually running tests
     after CLI options have been parsed.
@@ -190,7 +190,7 @@ module Raw : sig
     verbose:bool ->
     print_res:bool ->
     print:('a, 'b) printer ->
-    string -> 'c QCheck.Test.cell -> 'c QCheck.TestResult.t -> unit
+    string -> 'c QCheck2.Test.cell -> 'c QCheck2.TestResult.t -> unit
 
   type cli_args = {
     cli_verbose : bool;

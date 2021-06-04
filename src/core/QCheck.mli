@@ -7,74 +7,74 @@ all rights reserved.
 (** {1 Quickcheck inspired property-based testing} *)
 
 (** The library takes inspiration from Haskell's QuickCheck library. The
-rough idea is that the programmer describes invariants that values of
-a certain type need to satisfy ("properties"), as functions from this type
-to bool. She also needs to describe how to generate random values of the type,
-so that the property is tried and checked on a number of random instances.
+    rough idea is that the programmer describes invariants that values of
+    a certain type need to satisfy ("properties"), as functions from this type
+    to bool. She also needs to describe how to generate random values of the type,
+    so that the property is tried and checked on a number of random instances.
 
-This explains the organization of this module:
+    This explains the organization of this module:
 
-- {! 'a arbitrary} is used to describe how to generate random values,
-  shrink them (make counter-examples as small as possible), print
-  them, etc. Auxiliary modules such as {!Gen}, {!Print}, and {!Shrink}
-  can be used along with {!make} to build one's own arbitrary instances.
+    - {! 'a arbitrary} is used to describe how to generate random values,
+      shrink them (make counter-examples as small as possible), print
+      them, etc. Auxiliary modules such as {!Gen}, {!Print}, and {!Shrink}
+      can be used along with {!make} to build one's own arbitrary instances.
 
-- {!Test} is used to describe a single test, that is, a property of
-  type ['a -> bool] combined with an ['a arbitrary] that is used to generate
-  the test cases for this property. Optional parameters
-  allow to specify the random generator state, number of instances to generate
-  and test, etc.
-
-
-Examples:
-
-  - List.rev is involutive:
-
-{[
-
-let test =
-  QCheck.(Test.make ~count:1000
-   (list int) (fun l -> List.rev (List.rev l) = l));;
-
-QCheck.Test.check_exn test;;
-]}
-
-  - Not all lists are sorted (false property that will fail. The 15 smallest
-    counter-example lists will be printed):
-
-{[
-let test = QCheck.(
-  Test.make
-    ~count:10_000 ~max_fail:3
-    (list small_nat)
-    (fun l -> l = List.sort compare l));;
-QCheck.Test.check_exn test;;
-]}
+    - {!Test} is used to describe a single test, that is, a property of
+      type ['a -> bool] combined with an ['a arbitrary] that is used to generate
+      the test cases for this property. Optional parameters
+      allow to specify the random generator state, number of instances to generate
+      and test, etc.
 
 
-  - generate 20 random trees using {! Gen.fix} :
+    Examples:
 
-{[
-type tree = Leaf of int | Node of tree * tree
+    - List.rev is involutive:
 
-let leaf x = Leaf x
-let node x y = Node (x,y)
+    {[
 
-let g = QCheck.Gen.(sized @@ fix
-  (fun self n -> match n with
-    | 0 -> map leaf nat
-    | n ->
-      frequency
-        [1, map leaf nat;
-         2, map2 node (self (n/2)) (self (n/2))]
-    ))
+      let test =
+        QCheck.(Test.make ~count:1000
+                  (list int) (fun l -> List.rev (List.rev l) = l));;
 
-Gen.generate ~n:20 g;;
-]}
+      QCheck.Test.check_exn test;;
+    ]}
 
-More complex and powerful combinators can be found in Gabriel Scherer's
-{!Generator} module. Its documentation can be found
-{{:http://gasche.github.io/random-generator/doc/Generator.html } here}.
+    - Not all lists are sorted (false property that will fail. The 15 smallest
+      counter-example lists will be printed):
+
+    {[
+      let test = QCheck.(
+          Test.make
+            ~count:10_000 ~max_fail:3
+            (list small_nat)
+            (fun l -> l = List.sort compare l));;
+      QCheck.Test.check_exn test;;
+    ]}
+
+
+    - generate 20 random trees using {! Gen.fix} :
+
+    {[
+      type tree = Leaf of int | Node of tree * tree
+
+      let leaf x = Leaf x
+      let node x y = Node (x,y)
+
+      let g = QCheck.Gen.(sized @@ fix
+                            (fun self n -> match n with
+                               | 0 -> map leaf nat
+                               | n ->
+                                 frequency
+                                   [1, map leaf nat;
+                                    2, map2 node (self (n/2)) (self (n/2))]
+                            ))
+
+          Gen.generate ~n:20 g;;
+    ]}
+
+    More complex and powerful combinators can be found in Gabriel Scherer's
+    {!Generator} module. Its documentation can be found
+    {{:http://gasche.github.io/random-generator/doc/Generator.html } here}.
 *)
 
 val (==>) : bool -> bool -> bool
@@ -100,8 +100,8 @@ val assume : bool -> unit
     Example:
     {[
       Test.make (list int) (fun l ->
-        assume (l <> []);
-        List.hd l :: List.tl l = l)
+          assume (l <> []);
+          List.hd l :: List.tl l = l)
     ]}
 
     @since 0.5.1
@@ -115,8 +115,8 @@ val assume_fail : unit -> 'a
     Example:
     {[
       Test.make (list int) (function
-        | [] -> assume_fail ()
-        | _::_ as l -> List.hd l :: List.tl l = l)
+          | [] -> assume_fail ()
+          | _::_ as l -> List.hd l :: List.tl l = l)
     ]}
 
     @since 0.5.1
@@ -337,7 +337,8 @@ module Gen : sig
   val opt : ?ratio:float -> 'a t -> 'a option t
   (**  An option generator, with optional ratio.
       @param ratio a float between [0.] and [1.] indicating the probability of a sample to be [Some _]
-      rather than [None]. This parameter is @since NEXT_RELEASE .
+      rather than [None].
+      @since NEXT_RELEASE ([?ratio] parameter)
   *)
 
   val pair : 'a t -> 'b t -> ('a * 'b) t (** Generates pairs. *)
@@ -431,22 +432,22 @@ module Gen : sig
       The passed size-parameter should decrease to ensure termination. *)
 
   (** Example:
-  {[
-  type tree = Leaf of int | Node of tree * tree
+      {[
+        type tree = Leaf of int | Node of tree * tree
 
-  let leaf x = Leaf x
-  let node x y = Node (x,y)
+        let leaf x = Leaf x
+        let node x y = Node (x,y)
 
-  let g = QCheck.Gen.(sized @@ fix
-    (fun self n -> match n with
-      | 0 -> map leaf nat
-      | n ->
-        frequency
-          [1, map leaf nat;
-           2, map2 node (self (n/2)) (self (n/2))]
-      ))
+        let g = QCheck.Gen.(sized @@ fix
+                              (fun self n -> match n with
+                                 | 0 -> map leaf nat
+                                 | n ->
+                                   frequency
+                                     [1, map leaf nat;
+                                      2, map2 node (self (n/2)) (self (n/2))]
+                              ))
 
-  ]}
+      ]}
 
   *)
 
@@ -507,8 +508,13 @@ module Gen : sig
   val generate1 : ?rand:Random.State.t -> 'a t -> 'a
   (** [generate1 g] generates one instance of [g]. *)
 
-  include Qcheck_ops.S with type 'a t_let := 'a t
-  (** @since 0.15 *)
+  val ( let+ ) : 'a t -> ('a -> 'b) -> 'b t
+
+  val ( and+ ) : 'a t -> 'b t -> ('a * 'b) t
+
+  val ( let* ) : 'a t -> ('a -> 'b t) -> 'b t
+
+  val ( and* ) : 'a t -> 'b t -> ('a * 'b) t
 end
 
 (** {2 Pretty printing} *)
@@ -586,8 +592,13 @@ module Iter : sig
   val flatten : 'a t t -> 'a t
   (** @since 0.8 *)
 
-  include Qcheck_ops.S with type 'a t_let := 'a t
-  (** @since 0.15 *)
+  val ( let+ ) : 'a t -> ('a -> 'b) -> 'b t
+
+  val ( and+ ) : 'a t -> 'b t -> ('a * 'b) t
+
+  val ( let* ) : 'a t -> ('a -> 'b t) -> 'b t
+
+  val ( and* ) : 'a t -> 'b t -> ('a * 'b) t
 end
 
 (** {2 Shrink Values}
@@ -773,6 +784,12 @@ val gen : 'a arbitrary -> 'a Gen.t
 (** Access the underlying random generator of this arbitrary object.
     @since 0.6 *)
 
+val get_gen : 'a arbitrary -> 'a Gen.t
+(** Access the underlying random generator of this arbitrary object.
+    @since 0.6 *)
+
+val get_print : 'a arbitrary -> 'a Print.t option
+
 (** {2 Tests}
 
     A test is a universal property of type [foo -> bool] for some type [foo],
@@ -826,6 +843,14 @@ module TestResult : sig
         @since 0.9 *)
   }
 
+  val get_count : _ t -> int
+  (** Get the count of a cell.
+     @since 0.5.3 *)
+
+  val get_count_gen : _ t -> int
+
+  val get_state : 'a t -> 'a state
+
   val collect : _ t -> (string,int) Hashtbl.t option
   (** Obtain statistics
       @since 0.6 *)
@@ -843,10 +868,10 @@ module TestResult : sig
       @since 0.9 *)
 end
 
+(** Module related to individual tests.
+     @since NEXT_RELEASE most of it moved to {!QCheck2}, and the type ['a cell] was made a private implementation detail.
+*)
 module Test : sig
-  type 'a cell
-  (** A single property test *)
-
   val fail_report : string -> 'a
   (** Fail the test with some additional message that will
       be reported.
@@ -860,7 +885,7 @@ module Test : sig
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
     ?small:('a -> int) -> ?name:string -> 'a arbitrary -> ('a -> bool) ->
-    'a cell
+    'a QCheck2.Test.cell
   (** [make_cell arb prop] builds a test that checks property [prop] on instances
       of the generator [arb].
       @param name the name of the test.
@@ -886,120 +911,31 @@ module Test : sig
         (since 0.10)
   *)
 
-  val get_arbitrary : 'a cell -> 'a arbitrary
-  val get_law : 'a cell -> ('a -> bool)
-  val get_name : _ cell -> string
-  val set_name : _ cell -> string -> unit
+  val get_law : 'a QCheck2.Test.cell -> ('a -> bool)
+  (** @deprecated use {!QCheck2.Test.get_law} instead *)
+  val get_name : _ QCheck2.Test.cell -> string
+  (** @deprecated use {!QCheck2.Test.get_name} instead *)
+  val set_name : _ QCheck2.Test.cell -> string -> unit
+  (** @deprecated use {!QCheck2.Test.set_name} instead *)
 
-  val get_count : _ cell -> int
+  val get_count : _ QCheck2.Test.cell -> int
   (** Get the count of a cell.
+      @deprecated use {!QCheck2.Test.get_count} instead
       @since 0.5.3 *)
 
-  val get_long_factor : _ cell -> int
+  val get_long_factor : _ QCheck2.Test.cell -> int
   (** Get the long factor of a cell.
+      @deprecated use {!QCheck2.Test.get_long_factor} instead
       @since 0.5.3 *)
-
-  type t = Test : 'a cell -> t
-  (** Same as ['a cell], but masking the type parameter. This allows to
-      put tests on different types in the same list of tests. *)
 
   val make :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
-    ?small:('a -> int) -> ?name:string -> 'a arbitrary -> ('a -> bool) -> t
+    ?small:('a -> int) -> ?name:string -> 'a arbitrary -> ('a -> bool) -> QCheck2.Test.t
   (** [make arb prop] builds a test that checks property [prop] on instances
       of the generator [arb].
       See {!make_cell} for a description of the parameters.
   *)
-
-  (** {3 Running the test} *)
-
-  exception Test_fail of string * string list
-  (** Exception raised when a test failed, with the list of counter-examples.
-      [Test_fail (name, l)] means test [name] failed on elements of [l]. *)
-
-  exception Test_error of string * string * exn * string
-  (** Exception raised when a test raised an exception [e], with
-      the sample that triggered the exception.
-      [Test_error (name, i, e, st)]
-      means [name] failed on [i] with exception [e], and [st] is the
-      stacktrace (if enabled) or an empty string. *)
-
-  val print_instance : 'a arbitrary -> 'a -> string
-  val print_c_ex : 'a arbitrary -> 'a TestResult.counter_ex -> string
-  val print_fail : 'a arbitrary -> string -> 'a TestResult.counter_ex list -> string
-  val print_fail_other : string -> msg:string -> string
-  val print_error : ?st:string -> 'a arbitrary -> string -> 'a TestResult.counter_ex * exn -> string
-  val print_test_fail : string -> string list -> string
-  val print_test_error : string -> string -> exn -> string -> string
-
-  val print_collect : (string,int) Hashtbl.t -> string
-  (** Print "collect" results.
-      @since 0.6 *)
-
-  val print_stat : ('a stat * (int,int) Hashtbl.t) -> string
-  (** Print statistics.
-      @since 0.6 *)
-
-  val check_result : 'a cell -> 'a TestResult.t -> unit
-  (** [check_result cell res] checks that [res] is [Ok _], and returns unit.
-      Otherwise, it raises some exception.
-      @raise Test_error if [res = Error _]
-      @raise Test_error if [res = Failed _] *)
-
-  type res =
-    | Success
-    | Failure
-    | FalseAssumption
-    | Error of exn * string
-
-  type 'a event =
-    | Generating
-    | Collecting of 'a
-    | Testing of 'a
-    | Shrunk of int * 'a
-    | Shrinking of int * int * 'a
-
-  type 'a handler = string -> 'a cell -> 'a event -> unit
-  (** Handler executed after each event during testing of an instance. *)
-
-  type 'a step = string -> 'a cell -> 'a -> res -> unit
-  (** Callback executed after each instance of a test has been run.
-      The callback is given the instance tested, and the current results
-      of the test. *)
-
-  type 'a callback = string -> 'a cell -> 'a TestResult.t -> unit
-  (** Callback executed after each test has been run.
-      [f name cell res] means test [cell], named [name], gave [res]. *)
-
-  val check_cell :
-    ?long:bool -> ?call:'a callback ->
-    ?step:'a step -> ?handler:'a handler ->
-    ?rand:Random.State.t -> 'a cell -> 'a TestResult.t
-  (** [check_cell ~long ~rand test] generates up to [count] random
-      values of type ['a] using [arbitrary] and the random state [st]. The
-      predicate [law] is called on them and if it returns [false] or raises an
-      exception then we have a counter-example for the [law].
-
-      @param long if [true] then multiply the number of instances to generate
-        by the cell's long_factor.
-      @param call function called on each test case, with the result.
-      @param step function called on each instance of the test case, with the result.
-      @return the result of the test.
-  *)
-
-  val check_cell_exn :
-    ?long:bool -> ?call:'a callback -> ?step:'a step ->
-    ?rand:Random.State.t -> 'a cell -> unit
-  (** Same as {!check_cell} but calls  {!check_result} on the result.
-      @raise Test_error if [res = Error _]
-      @raise Test_error if [res = Failed _] *)
-
-  val check_exn : ?long:bool -> ?rand:Random.State.t -> t -> unit
-  (** Checks the property against some test cases, and calls {!check_result},
-      which might raise an exception in case of failure.
-      @raise Test_error if [res = Error _]
-      @raise Test_error if [res = Failed _] *)
 end
 
 (** {2 Sub-tests} *)
@@ -1048,7 +984,7 @@ val find_example_gen :
 
 val choose : 'a arbitrary list -> 'a arbitrary
 (** Choose among the given list of generators. The list must not
-  be empty; if it is Invalid_argument is raised. *)
+    be empty; if it is Invalid_argument is raised. *)
 
 val unit : unit arbitrary
 (** Always generates [()], obviously. *)
@@ -1119,7 +1055,7 @@ val pos_int : int arbitrary
 
 val small_int_corners : unit -> int arbitrary
 (** As [small_int], but each newly created generator starts with
- a list of corner cases before falling back on random generation. *)
+    a list of corner cases before falling back on random generation. *)
 
 val neg_int : int arbitrary
 (** Negative int generator (0 included, see {!Gen.neg_int}).
@@ -1205,7 +1141,7 @@ val fun1_unsafe : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary
     The functions are always pure and total functions:
     - when given the same argument (as decided by Pervasives.(=)), it returns the same value
     - it never does side effects, like printing or never raise exceptions etc.
-    The functions generated are really printable.
+      The functions generated are really printable.
 
     renamed from {!fun1} since 0.6
 
@@ -1323,11 +1259,11 @@ val fun4 :
 (** @since 0.6 *)
 
 val oneofl : ?print:'a Print.t -> ?collect:('a -> string) ->
-             'a list -> 'a arbitrary
+  'a list -> 'a arbitrary
 (** Pick an element randomly in the list. *)
 
 val oneofa : ?print:'a Print.t -> ?collect:('a -> string) ->
-             'a array -> 'a arbitrary
+  'a array -> 'a arbitrary
 (** Pick an element randomly in the array. *)
 
 val oneof : 'a arbitrary list -> 'a arbitrary
@@ -1337,17 +1273,17 @@ val always : ?print:'a Print.t -> 'a -> 'a arbitrary
 (** Always return the same element. *)
 
 val frequency : ?print:'a Print.t -> ?small:('a -> int) ->
-                ?shrink:'a Shrink.t -> ?collect:('a -> string) ->
-                (int * 'a arbitrary) list -> 'a arbitrary
+  ?shrink:'a Shrink.t -> ?collect:('a -> string) ->
+  (int * 'a arbitrary) list -> 'a arbitrary
 (** Similar to {!oneof} but with frequencies. *)
 
 val frequencyl : ?print:'a Print.t -> ?small:('a -> int) ->
-                (int * 'a) list -> 'a arbitrary
+  (int * 'a) list -> 'a arbitrary
 (** Same as {!oneofl}, but each element is paired with its frequency in
     the probability distribution (the higher, the more likely). *)
 
 val frequencya : ?print:'a Print.t -> ?small:('a -> int) ->
-                (int * 'a) array -> 'a arbitrary
+  (int * 'a) array -> 'a arbitrary
 (** Same as {!frequencyl}, but with an array. *)
 
 val map : ?rev:('b -> 'a) -> ('a -> 'b) -> 'a arbitrary -> 'b arbitrary
@@ -1360,7 +1296,7 @@ val map : ?rev:('b -> 'a) -> ('a -> 'b) -> 'a arbitrary -> 'b arbitrary
 
 val map_same_type : ('a -> 'a) -> 'a arbitrary -> 'a arbitrary
 (** Specialization of [map] when the transformation preserves the type, which
-   makes shrinker, printer, etc. still relevant. *)
+    makes shrinker, printer, etc. still relevant. *)
 
 val map_keep_input :
   ?print:'b Print.t -> ?small:('b -> int) ->
