@@ -911,7 +911,22 @@ module Test : sig
         (since 0.10)
   *)
 
+  val get_law : 'a QCheck2.Test.cell -> ('a -> bool)
+  (** @deprecated use {!QCheck2.Test.get_law} instead *)
+  val get_name : _ QCheck2.Test.cell -> string
+  (** @deprecated use {!QCheck2.Test.get_name} instead *)
   val set_name : _ QCheck2.Test.cell -> string -> unit
+  (** @deprecated use {!QCheck2.Test.set_name} instead *)
+
+  val get_count : _ QCheck2.Test.cell -> int
+  (** Get the count of a cell.
+      @deprecated use {!QCheck2.Test.get_count} instead
+      @since 0.5.3 *)
+
+  val get_long_factor : _ QCheck2.Test.cell -> int
+  (** Get the long factor of a cell.
+      @deprecated use {!QCheck2.Test.get_long_factor} instead
+      @since 0.5.3 *)
 
   val make :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->

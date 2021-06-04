@@ -1321,6 +1321,10 @@ end
 
 module Test = struct
   let set_name = QCheck2.Test.set_name
+  let get_law = QCheck2.Test.get_law
+  let get_name = QCheck2.Test.get_name
+  let get_count = QCheck2.Test.get_count
+  let get_long_factor = QCheck2.Test.get_long_factor
 
   let make_cell ?if_assumptions_fail
       ?count ?long_factor ?max_gen
