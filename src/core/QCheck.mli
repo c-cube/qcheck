@@ -1267,7 +1267,11 @@ val oneofa : ?print:'a Print.t -> ?collect:('a -> string) ->
 (** Pick an element randomly in the array. *)
 
 val oneof : 'a arbitrary list -> 'a arbitrary
-(** Pick a generator among the list, randomly. *)
+(** Pick a generator among the list, randomly.
+    @deprecated this function is badly specified and will not use shrinkers
+    appropriately. Consider using {!Gen.oneof} and then {!make} to build
+    a well behaved arbitrary instance.
+*)
 
 val always : ?print:'a Print.t -> 'a -> 'a arbitrary
 (** Always return the same element. *)
