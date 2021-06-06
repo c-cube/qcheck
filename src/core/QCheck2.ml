@@ -1315,13 +1315,6 @@ let oneofl ?print ?collect xs = make ?print ?collect (Gen.oneofl xs)
 
 let oneofa ?print ?collect xs = make ?print ?collect (Gen.oneofa xs)
 
-(** Given a list of generators, returns generator that randomly uses one of the generators
-    from the list *)
-let oneof (l : 'a arbitrary list) : 'a arbitrary =
-  let gens = List.map (fun a -> a.gen) l in
-  let {print; collect; _} = List.hd l in
-  make ?print ?collect (Gen.oneof gens)
-
 (** Generator that always returns given value *)
 let always ?print x = make ?print (Gen.pure x)
 

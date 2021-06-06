@@ -1525,9 +1525,6 @@ val oneofa : ?print:'a Print.t -> ?collect:('a -> string) ->
              'a array -> 'a arbitrary
 (** Pick an element randomly in the array. *)
 
-val oneof : 'a arbitrary list -> 'a arbitrary
-(** Pick a generator among the list, randomly. *)
-
 val frequency : ?print:'a Print.t -> ?collect:('a -> string) ->
                 (int * 'a arbitrary) list -> 'a arbitrary
 (** Similar to {!oneof} but with frequencies. *)
