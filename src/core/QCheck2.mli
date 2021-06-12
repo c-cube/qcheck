@@ -1,6 +1,7 @@
 (*
 QCheck: Random testing for OCaml
-copyright (c) 2013-2017, Guillaume Bury, Simon Cruanes, Vincent Hugot, Jan Midtgaard, Julien Debon
+copyright (c) 2013-2017, Guillaume Bury, Simon Cruanes, Vincent Hugot,
+Jan Midtgaard, Julien Debon, Valentin Chaboche
 all rights reserved.
 *)
 
@@ -19,13 +20,12 @@ content will appear. *)
 
     This explains the organization of this module:
 
-    - {!arbitrary} is used to describe how to generate random values,
-      shrink them (make counter-examples as small as possible), print
-      them, etc. Auxiliary modules such as {!Gen} and {!Print}
-      can be used along with {!make} to build one's own arbitrary instances.
+    - {!Gen} is used to describe how to generate random values.
+      Auxiliary module {!Print} can be used along with {!Test.make}
+      to build one's own generator instances.
 
     - {!Test} is used to describe a single test, that is, a property of
-      type ['a -> bool] combined with an ['a arbitrary] that is used to generate
+      type ['a -> bool] combined with an ['a Gen.t] that is used to generate
       the test cases for this property. Optional parameters
       allow to specify the random generator state, number of instances to generate
       and test, etc.
@@ -39,7 +39,9 @@ content will appear. *)
     {[
       let test =
         QCheck2.(Test.make ~count:1000
-                   (list int) (fun l -> List.rev (List.rev l) = l));;
+                  ~pp:Print.(list int)
+                  Gen.(list int)
+                  (fun l -> List.rev (List.rev l) = l));;
 
       QCheck2.Test.check_exn test;;
     ]}
@@ -56,7 +58,8 @@ content will appear. *)
           Test.make
             ~name:"All lists are sorted"
             ~count:10_000
-            (list small_nat)
+            ~pp:Print.(list small_nat)
+            Gen.(list small_nat)
             (fun l -> l = List.sort compare l));;
 
       QCheck2.Test.check_exn test;;
@@ -676,6 +679,7 @@ module Gen : sig
   val fix : (('a -> 'b t) -> 'a -> 'b t) -> 'a -> 'b t
   (** Parametrized fixpoint combinator for generating recursive values.
 
+      /!\ TODO: description here.
       The fixpoint is parametrized over an arbitrary state ['a], and the
       fixpoint computation may change the value of this state in the recursive
       calls.
@@ -1205,9 +1209,9 @@ end
 
 (** {1 Arbitrary} *)
 
-type 'a arbitrary
-(** A value of type ['a arbitrary] is a {!Gen.t} packaged with some optional features:
-    - [print] generated values to display counter-examples when a test fails
+(*
+  /!\ TODO: take this documentation for Test.cell
+  - [print] generated values to display counter-examples when a test fails
     - [collect] values by tag, useful to display distribution of generated values
     - [stats] to get some statistics about generated values
 
@@ -1217,79 +1221,13 @@ type 'a arbitrary
     Abstract since QCheck2.
 *)
 
+(* /!\ TODO: move this definition to Test.cell *)
 type 'a stat = string * ('a -> int)
 (** A statistic on a distribution of values of type ['a].
     The function {b MUST} return a positive integer. *)
 
-val make :
-  ?print:'a Print.t ->
-  ?collect:('a -> string) ->
-  ?stats:'a stat list ->
-  'a Gen.t -> 'a arbitrary
-(** [make ?print ?collect ?stats gen] builds an [arbitrary].
-
-    Only the generator is mandatory, all other arguments are optional.
-    That being said, we recommend setting at least the [print] parameter to
-    get better error messages in case of test failures.
-*)
-
-val set_gen : 'a Gen.t -> 'a arbitrary -> 'a arbitrary
-(** [set_gen gen arb] returns an arbitrary similar to [arb] where the generating function is [gen].
-
-    @since 0.7
-*)
-
-val set_print : 'a Print.t -> 'a arbitrary -> 'a arbitrary
-(** [set_print p arb] returns an arbitrary similar to [arb] where the printing function is [p]. *)
-
-val set_collect : ('a -> string) -> 'a arbitrary -> 'a arbitrary
-(** [set_collect c arb] returns an arbitrary similar to [arb] where the collecting function is [c]. *)
-
-val set_stats : 'a stat list -> 'a arbitrary -> 'a arbitrary
-(** [set_stats s arb] returns an arbitrary similar to [arb] where the statistics function is [s].
-
-    @since 0.6
-*)
-
-val add_stat : 'a stat -> 'a arbitrary -> 'a arbitrary
-(** [add_stat s arb] adds the statistic [s] to the arbitrary instance [arb].
-
-    @since 0.6 *)
-
-val get_gen : 'a arbitrary -> 'a Gen.t
-(** [get_gen arb] returns the underlying random generator of [arb].
-
-    @since 0.6 *)
-
-val get_print : 'a arbitrary -> 'a Print.t option
-(** [get_print arb] returns the underlying optional value printer of [arb]. *)
-
-val get_collect : 'a arbitrary -> ('a -> string) option
-(** [get_collect arb] returns the underlying optional collecting function of [arb]. *)
-
-val get_stats : 'a arbitrary -> 'a stat list
-(** [get_stats arb] returns the underlying statistics functions of [arb]. *)
-
-(** {2 Primitive arbitraries} *)
-
-val unit : unit arbitrary
-(** Always generates [()].
-
-    Does not shrink. *)
-
-val bool : bool arbitrary
-(** Boolean generator.
-
-    Uniformly distributed.
-
-    Shrinks towards [false]. *)
-
-val int : int arbitrary
-(** Int generator.
-
-    Uniformly distributed.
-
-    Shrinks towards [0]. *)
+(*
+/!\ TODO: all these arbitrary might be missing in Gen
 
 val pos_int : int arbitrary
 (** Positive int generator ([0] included).
@@ -1298,120 +1236,11 @@ val pos_int : int arbitrary
 
     Shrinks towards [origin] if specified, otherwise towards [0]. *)
 
-val small_nat : int arbitrary
-(** Small positive integers (< [100], [0] included).
-
-    Non-uniform: smaller numbers are more likely than bigger numbers.
-
-    Shrinks towards [0].
-
-    @since 0.5.1 *)
-
-val small_int : int arbitrary
-(** Small unsigned integers.
-
-    @deprecated use {!small_signed_int}. *)
-
-val small_signed_int : int arbitrary
-(** Small SIGNED integers, based on {!small_nat}.
-
-    Non-uniform: smaller numbers (in absolute value) are more likely than bigger numbers.
-
-    Shrinks towards [0].
-
-    @since 0.5.2 *)
-
-val int32 : int32 arbitrary
-(** Int32 generator.
-
-    Uniformly distributed.
-
-    Shrinks towards [0l]. *)
-
-val int64 : int64 arbitrary
-(** Int64 generator.
-
-    Uniformly distributed.
-
-    Shrinks towards [0L]. *)
-
-val float : float arbitrary
-(** Generates regular floats (no nan and no infinities).
-
-    Shrinks towards [0.]. *)
-(* FIXME: does not generate nan nor infinity I think. *)
-
-val pos_float : float arbitrary
-(** Positive float generator (no nan and no infinities).
-
-    Shrinks towards [0.]. *)
-
-val neg_float : float arbitrary
-(** Negative float generator (no nan and no infinities).
-
-    Shrinks towards [-0.]. *)
 
 val small_int_corners : unit -> int arbitrary
 (** As {!small_int}, but each newly created generator starts with
     a list of corner cases before falling back on random generation. *)
 
-val neg_int : int arbitrary
-(** Generates non-strictly negative integers ([0] included).
-
-    Non-uniform: smaller numbers (in absolute value) are more likely than bigger numbers.
-
-    Shrinks towards [0].
-*)
-
-val char : char arbitrary
-(** Generates characters in the [0..255] range.
-
-    Uniformly distributed.
-
-    Shrinks towards ['a']. *)
-
-val printable_char : char arbitrary
-(** Generates printable characters.
-
-    The exhaustive list of character codes is:
-    - [32] to [126], inclusive
-    - ['\n']
-
-    Shrinks towards ['a']. *)
-
-val numeral_char : char arbitrary
-(** Generates numeral characters ['0'..'9'].
-
-    Shrinks towards ['0'].
-*)
-
-val string_gen_of_size : int Gen.t -> char Gen.t -> string arbitrary
-(** [string_gen_of_size size gen] builds a string arbitrary from a (non-negative) size generator [size].
-    All characters are generated using [gen].
-
-    Shrinks on [size] first, then on [gen].
-*)
-
-val string_gen : char Gen.t -> string arbitrary
-(** [string_gen gen] generates strings with a distribution of length of {!Gen.nat}.
-    All characters are generated using [gen].
-
-    Shrinks on {!Gen.nat} first, then on [gen]. *)
-
-val string : string arbitrary
-(** [string] generates strings with a distribution of length of {!Gen.nat}
-    and distribution of characters of {!Gen.char}.
-
-    Shrinks on {!Gen.nat} first, then on {!Gen.char}. *)
-
-val small_string : string arbitrary
-(** Same as {!string} but uses {!Gen.small_nat} for the size. *)
-
-val string_of_size : int Gen.t -> string arbitrary
-(** [string_of_size size] generates strings with a distribution of length of [size]
-    and distribution of characters of {!Gen.char}.
-
-    Shrinks on [size] first, then on {!Gen.char}. *)
 
 val printable_string : string arbitrary
 (** [printable_string] generates strings with a distribution of length of {!Gen.nat}
@@ -1443,161 +1272,8 @@ val numeral_string_of_size : int Gen.t -> string arbitrary
 
     Shrinks on [size] first, then on {!Gen.numeral}. *)
 
-(** {2 Ranges} *)
-
-val int_bound : int -> int arbitrary
-(** Uniform integer generator producing integers within [0..bound].
-
-    Shrinks towards [0].
-
-    @raise Invalid_argument if the argument is negative. *)
-
-val int_range : ?origin:int -> int -> int -> int arbitrary
-(** [int_range ?origin low high] is an uniform integer generator producing integers within [low..high] (inclusive).
-
-    Shrinks towards [origin] if specified, otherwise towards [0] (but always stays within the range).
-
-    Examples:
-    - [int_range ~origin:6 (-5) 15] will shrink towards [6]
-    - [int_range (-5) 15] will shrink towards [0]
-    - [int_range 8 20] will shrink towards [8] (closest to [0] within range)
-    - [int_range (-20) (-8)] will shrink towards [-8] (closest to [0] within range)
-
-    @raise Invalid_argument if any of the following holds:
-    - [low > high]
-    - [origin < low]
-    - [origin > high] *)
-
-val (--) : int -> int -> int arbitrary
-(** [a -- b] is an alias for [int_range ~origin:a a b]. See {!int_range} for more information. *)
-
-val float_bound_inclusive : ?origin : float -> float -> float arbitrary
-(** [float_bound_inclusive ?origin bound] returns a random floating-point number between [0.] and
-    [bound] (inclusive). If [bound] is negative, the result is negative or zero.  If
-    [bound] is [0.], the result is [0.].
-
-    Shrinks towards [origin] if given, otherwise towards [0.].
-
-    @since 0.11 *)
-
-val float_bound_exclusive : ?origin : float -> float -> float arbitrary
-(** [float_bound_exclusive origin bound] returns a random floating-point number between [0.] and
-    [bound] (exclusive).  If [bound] is negative, the result is negative or zero.
-
-    Shrinks towards [origin] if given, otherwise towards [0.].
-
-    @raise Invalid_argument if [bound] is [0.].
-
-    @since 0.11 *)
-
-val float_range : ?origin : float -> float -> float -> float arbitrary
-(** [float_range ?origin low high] generates floating-point numbers within [low] and [high] (inclusive).
-
-    Shrinks towards [origin] if specified, otherwise towards [0.] (but always stays within the range).
-
-    Examples:
-    - [float_range ~origin:6.2 (-5.8) 15.1] will shrink towards [6.2]
-    - [float_range (-5.8) 15.1] will shrink towards [0.]
-    - [float_range 8.5 20.1] will shrink towards [8.5] (closest to [0.] within range)
-    - [float_range (-20.1) (-8.5)] will shrink towards [-8.5] (closest to [0.] within range)
-
-    @raise Invalid_argument if any of the following holds:
-    - [low > high]
-    - [high -. low > max_float]
-    - [origin < low]
-    - [origin > high]
-
-    @since 0.11 *)
-
-(** {2 Choosing elements} *)
-
-val choose : 'a arbitrary list -> 'a arbitrary
-(** Choose among the given list of generators. The list must not
-    be empty; if it is Invalid_argument is raised.
-
-    Shrinks towards the first arbitrary of the list. *)
-
-val oneofl : ?print:'a Print.t -> ?collect:('a -> string) ->
-             'a list -> 'a arbitrary
-(** Pick an element randomly in the list. *)
-
-val oneofa : ?print:'a Print.t -> ?collect:('a -> string) ->
-             'a array -> 'a arbitrary
-(** Pick an element randomly in the array. *)
-
-val frequency : ?print:'a Print.t -> ?collect:('a -> string) ->
-                (int * 'a arbitrary) list -> 'a arbitrary
-(** Similar to {!oneof} but with frequencies. *)
-
-val frequencyl : ?print:'a Print.t -> (int * 'a) list -> 'a arbitrary
-(** Same as {!oneofl}, but each element is paired with its frequency in
-    the probability distribution (the higher, the more likely). *)
-
-val frequencya : ?print:'a Print.t -> (int * 'a) array -> 'a arbitrary
-(** Same as {!frequencyl}, but with an array. *)
-
-(** {2 Lists, arrays and options} *)
-
-val small_list : 'a arbitrary -> 'a list arbitrary
-(** [small_list arb] builds a list arbitrary from an element arbitrary [arb]. List size is generated by {!Gen.small_nat}.
-
-    Shrinks on the number of elements first, then on elements.
-
-    @since 0.5.3 *)
-
-val list : 'a arbitrary -> 'a list arbitrary
-(** [list arb] builds a list arbitrary from an element arbitrary [arb]. List size is generated by {!Gen.nat}.
-
-    Shrinks on the number of elements first, then on elements.
-*)
-
-val list_of_size : int Gen.t -> 'a arbitrary -> 'a list arbitrary
-(** [list_of_size size arb] builds a list arbitrary from an element arbitrary [arb]. List size is generated by [size].
-
-    Shrinks on the number of elements first, then on elements.
-*)
-
-val array : 'a arbitrary -> 'a array arbitrary
-(** [array arb] builds an array arbitrary from an element arbitrary [arb]. Array size is generated by {!Gen.nat}.
-
-    Shrinks on the number of elements first, then on elements.
-*)
-
-val array_of_size : int Gen.t -> 'a arbitrary -> 'a array arbitrary
-(** [array_of_size size arb] builds an array arbitrary from an element arbitrary [arb]. Array size is generated by [size].
-
-    Shrinks on the number of elements first, then on elements.
-*)
-
-val option : 'a arbitrary -> 'a option arbitrary
-(** [option arb] is an option arbitrary.
-
-    Shrinks towards {!None} then towards shrinks of [arb].
-*)
-
-(** {2 Functions}
-
-    QCheck also provides generators of functions.
-
-    All generated functions are pure:
-    - the same argument(s) will always return the same value
-    - there are no side effects
-
-    Using random functions is particularly useful to test higher-order
-    functions (i.e. functions that take functions as arguments).
-
-    Example: to test that transforming all elements of a list and then taking its head
-    is equivalent to taking the head and then transforming it:
-    {[
-    Test.make
-      (pair (list_of_size Gen.(1 -- 10) int) (fun1 Observable.int float))
-      (fun (l, Fun (_, f)) -> List.hd (List.map f l) = f (List.hd l))
-    ]}
-
-    This test generates random lists (between 1 and 10 elements) of integers and
-    random functions of type [int -> float] and checks the above property.
- *)
-
+              *)
+  
 (** Utils on combining function arguments. *)
 module Tuple : sig
   (** Heterogeneous tuple, used to pass any number of arguments to
@@ -1645,13 +1321,13 @@ type 'f fun_repr
 
 (** A function packed with the data required to print/shrink it.
 
-    The idiomatic way to use any [fun_] arbitrary is to directly pattern match
+    The idiomatic way to use any [fun_] Gen.t is to directly pattern match
     on it to obtain the executable function.
 
     For example (note the [Fun (_, f)] part):
     {[
       QCheck2.(Test.make
-        pair (fun1 Observable.int bool) (small_list int))
+        Gen.(pair (fun1 Observable.int bool) (small_list int))
         (fun (Fun (_, f), l) -> l = (List.rev_map f l |> List.rev l))
     ]}
 
@@ -1664,9 +1340,9 @@ type 'f fun_repr
 *)
 type 'f fun_ = Fun of 'f fun_repr * 'f
 
-val fun1 : 'a Observable.t -> 'b arbitrary -> ('a -> 'b) fun_ arbitrary
-(** [fun1 obs arb] generates random functions that take an argument observable
-    via [obs] and map to random values generated with [arb].
+val fun1 : 'a Observable.t -> 'b Gen.t -> ('a -> 'b) fun_ Gen.t
+(** [fun1 obs gen] generates random functions that take an argument observable
+    via [obs] and map to random values generated with [gen].
     To write functions with multiple arguments, it's better to use {!Tuple}
     or {!Observable.pair} rather than applying {!fun_} several times
     (shrinking will be faster).
@@ -1675,8 +1351,8 @@ val fun1 : 'a Observable.t -> 'b arbitrary -> ('a -> 'b) fun_ arbitrary
 val fun2 :
   'a Observable.t ->
   'b Observable.t ->
-  'c arbitrary ->
-  ('a -> 'b -> 'c) fun_ arbitrary
+  'c Gen.t ->
+  ('a -> 'b -> 'c) fun_ Gen.t
 (** Specialized version of {!fun_nary} for functions of 2 arguments, for convenience.
     @since 0.6 *)
 
@@ -1684,8 +1360,8 @@ val fun3 :
   'a Observable.t ->
   'b Observable.t ->
   'c Observable.t ->
-  'd arbitrary ->
-  ('a -> 'b -> 'c -> 'd) fun_ arbitrary
+  'd Gen.t ->
+  ('a -> 'b -> 'c -> 'd) fun_ Gen.t
 (** Specialized version of {!fun_nary} for functions of 3 arguments, for convenience.
     @since 0.6 *)
 
@@ -1694,14 +1370,14 @@ val fun4 :
   'b Observable.t ->
   'c Observable.t ->
   'd Observable.t ->
-  'e arbitrary ->
-  ('a -> 'b -> 'c -> 'd -> 'e) fun_ arbitrary
+  'e Gen.t ->
+  ('a -> 'b -> 'c -> 'd -> 'e) fun_ Gen.t
 (** Specialized version of {!fun_nary} for functions of 4 arguments, for convenience.
     @since 0.6 *)
 
-val fun_nary : 'a Tuple.obs -> 'b arbitrary -> ('a Tuple.t -> 'b) fun_ arbitrary
-(** [fun_nary tuple_obs arb] generates random n-ary functions. Arguments are observed
-    using [tuple_obs] and return values are generated using [arb].
+val fun_nary : 'a Tuple.obs -> 'b Gen.t -> ('a Tuple.t -> 'b) fun_ Gen.t
+(** [fun_nary tuple_obs gen] generates random n-ary functions. Arguments are observed
+    using [tuple_obs] and return values are generated using [gen].
 
     Example (the property is wrong as a random function may return [false], this is for
     the sake of demonstrating the syntax):
@@ -1738,44 +1414,6 @@ module Fn : sig
       deconstructing as documented in {!fun_}. *)
 end
 
-(** {2 Composing arbitraries} *)
-
-val pair : 'a arbitrary -> 'b arbitrary -> ('a * 'b) arbitrary
-(** [pair arb1 arb2] generates pairs.
-
-    Shrinks on [arb1] and then [arb2].
-*)
-
-val triple : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> ('a * 'b * 'c) arbitrary
-(** [triple arb1 arb2 arb3] generates triples.
-
-    Shrinks on [arb1], then [arb2], and then [arb3].
-*)
-
-val quad : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> 'd arbitrary -> ('a * 'b * 'c * 'd) arbitrary
-(** [quad arb1 arb2 arb3 arb4] generates quadruples.
-
-    Shrinks on [arb1], then [arb2], then [arb3], and then [arb4].
-*)
-
-val always : ?print:'a Print.t -> 'a -> 'a arbitrary
-(** Always return the same element. *)
-
-val map : ?print:'b Print.t -> ?collect:('b -> string) -> ('a -> 'b) -> 'a arbitrary -> 'b arbitrary
-(** [map f a] returns a new arbitrary instance that generates values using
-    [a] and then transforms them through [f].
- *)
-
-val map_same_type : ('a -> 'a) -> 'a arbitrary -> 'a arbitrary
-(** Specialization of [map] when the transformation preserves the type, which
-    makes printer, etc. still relevant. *)
-
-(** {2 Shrinking} *)
-
-val add_shrink_invariant : ('a -> bool) -> 'a arbitrary -> 'a arbitrary
-(** [add_shrink_invariant f arb] applies {!Gen.add_shrink_invariant} with [f] on the underlying generator of [arb].
-
-    @since 0.8 *)
 
 (** {2 Assumptions} *)
 
@@ -1826,7 +1464,7 @@ val assume_fail : unit -> 'a
 (** {1 Tests}
 
     A test is a universal property of type [foo -> bool] for some type [foo],
-    with an object of type [foo arbitrary] used to generate, print, etc. values
+    with an object of type [foo Gen.t] used to generate values
     of type [foo].
 
     See {!Test.make} to build a test, and {!Test.check_exn} to
@@ -1881,10 +1519,12 @@ module TestResult : sig
   val get_count_gen : _ t -> int
   (** [get_count_gen t] returns the number of generated cases. *)
 
+  (* /!\ TODO: not sure how to translate this *)
   val get_collect : _ t -> (string,int) Hashtbl.t option
   (** [get_collect t] returns the repartition of generated arbitrary instances.
       @since NEXT_RELEASE *)
 
+  (* /!\ TODO: same here *)
   val get_stats : 'a t -> ('a stat * (int,int) Hashtbl.t) list
   (** [get_stats t] returns the statistics captured by the arbitrary.
       @since NEXT_RELEASE *)
@@ -1917,8 +1557,7 @@ module TestResult : sig
       @deprecated use {!get_collect} instead *)
 end
 
-(** A test is a pair of an arbitrary (to generate, shrink, print values) and a property that
-    all generated values must satisfy. *)
+(** A test is a pair of an generator and a property thar all generated values must satisfy. *)
 module Test : sig
   (** The main features of this module are:
       - {!make} a test
@@ -1936,13 +1575,16 @@ module Test : sig
   (** A single property test on a value of type ['a]. A {!Test.t} wraps a [cell]
       and hides its type parameter. *)
 
+  (* /!\ TODO: move 'a stat here *)
+     
   val make_cell :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
-    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
-    ?name:string -> 'a arbitrary -> ('a -> bool) ->
+    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int -> ?name:string ->
+    ?print:'a Print.t -> ?collect:('a -> string) -> ?stats:('a stat list) ->
+     'a Gen.t -> ('a -> bool) ->
     'a cell
-  (** [make_cell arb prop] builds a test that checks property [prop] on instances
-      of the generator [arb].
+  (** [make_cell gen prop] builds a test that checks property [prop] on instances
+      of the generator [gen].
       @param name the name of the test.
       @param count number of test cases to run, counting only
         the test cases which satisfy preconditions.
@@ -1960,6 +1602,9 @@ module Test : sig
         A warning will be emitted otherwise if
         the flag is [`Warning], the test will be a failure if the flag is [`Fatal].
         (since 0.10)
+      @param print used in {!Print} to display generated values failing the [prop]
+      @param collect (* /!\ TODO: here *)
+      @param stats on a distribution of values of type 'a
   *)
 
   val make_cell_from_QCheck1 :
@@ -1973,9 +1618,12 @@ module Test : sig
       @deprecated Migrate to QCheck2 and use {!make_cell} instead.
    *)
 
-  val get_arbitrary : 'a cell -> 'a arbitrary
   val get_law : 'a cell -> ('a -> bool)
   val get_name : _ cell -> string
+  val get_gen : 'a cell -> 'a Gen.t
+  val get_print_opt : 'a cell -> ('a Print.t) option
+  val get_collect_opt : 'a cell -> ('a -> string) option
+  val get_stats : 'a cell -> ('a stat list)
   val set_name : _ cell -> string -> unit
 
   val get_count : _ cell -> int
@@ -1992,10 +1640,11 @@ module Test : sig
 
   val make :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
-    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
-    ?name:string -> 'a arbitrary -> ('a -> bool) -> t
-  (** [make arb prop] builds a test that checks property [prop] on instances
-      of the generator [arb].
+    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int -> ?name:string ->
+    ?print:('a Print.t) -> ?collect:('a -> string) -> ?stats:('a stat list) ->
+    'a Gen.t -> ('a -> bool) -> t
+  (** [make gen prop] builds a test that checks property [prop] on instances
+      of the generator [gen].
       See {!make_cell} for a description of the parameters.
   *)
 
@@ -2028,11 +1677,11 @@ module Test : sig
       means [name] failed on [i] with exception [e], and [st] is the
       stacktrace (if enabled) or an empty string. *)
 
-  val print_instance : 'a arbitrary -> 'a -> string
-  val print_c_ex : 'a arbitrary -> 'a TestResult.counter_ex -> string
-  val print_fail : 'a arbitrary -> string -> 'a TestResult.counter_ex list -> string
+  val print_instance : 'a cell -> 'a -> string
+  val print_c_ex : 'a cell -> 'a TestResult.counter_ex -> string
+  val print_fail : 'a cell -> string -> 'a TestResult.counter_ex list -> string
   val print_fail_other : string -> msg:string -> string
-  val print_error : ?st:string -> 'a arbitrary -> string -> 'a TestResult.counter_ex * exn -> string
+  val print_error : ?st:string -> 'a cell -> string -> 'a TestResult.counter_ex * exn -> string
   val print_test_fail : string -> string list -> string
   val print_test_error : string -> string -> exn -> string -> string
 
@@ -2080,7 +1729,7 @@ module Test : sig
     ?step:'a step -> ?handler:'a handler ->
     ?rand:Random.State.t -> 'a cell -> 'a TestResult.t
   (** [check_cell ~long ~rand test] generates up to [count] random
-      values of type ['a] using [arbitrary] and the random state [st]. The
+      values of type ['a] using [Gen.t] and the random state [st]. The
       predicate [law] is called on them and if it returns [false] or raises an
       exception then we have a counter-example for the [law].
 
@@ -2144,6 +1793,7 @@ val find_example_gen :
   'a Gen.t ->
   'a
 (** Toplevel version of {!find_example}.
+    (* TODO: I'm not sure th documentation is up to date *)
     [find_example_gen ~f arb ~n] is roughly the same as
     [Gen.generate1 (find_example ~f arb |> gen)].
     @param rand the random state to use to generate inputs.
@@ -2170,8 +1820,6 @@ val find_example_gen :
     Below are the most common situations you may encounter:
     - as shrinking is now integrated, several function arguments like [~shrink] or [~rev] have been removed: you
       can remove such reverse functions, they will no longer be necessary.
-    - {!type:arbitrary} is no longer private, it is now abstract: if you used field access directly (e.g. [my_arb.print]), you
-      must now use getter functions, e.g. {!get_gen} or {!get_print}.
     - accessor functions like {!QCheck.gen} have been renamed to consistent names like {!get_gen}.
     - {!QCheck.map_keep_input} has been removed: you can use {!map} directly.
     - {!Gen.t} is no longer public, it is now abstract: it is recommended to use

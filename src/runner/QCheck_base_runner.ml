@@ -122,7 +122,6 @@ module Raw = struct
   let callback ~colors ~verbose ~print_res ~print name cell result =
     let module R = QCheck2.TestResult in
     let module T = QCheck2.Test in
-    let arb = T.get_arbitrary cell in
     let reset_line = if colors then Color.reset_line else "\n" in
     if verbose then (
       print.info "%slaw %s: %d relevant cases (%d total)\n"
@@ -138,12 +137,12 @@ module Raw = struct
       match R.get_state result with
         | R.Success -> ()
         | R.Failed {instances=l} ->
-          print.fail "%s%s\n" reset_line (T.print_fail arb name l);
+          print.fail "%s%s\n" reset_line (T.print_fail cell name l);
         | R.Failed_other {msg} ->
           print.fail "%s%s\n" reset_line (T.print_fail_other name ~msg);
         | R.Error {instance; exn; backtrace} ->
           print.err "%s%s\n" reset_line
-            (T.print_error ~st:backtrace arb name (instance,exn));
+            (T.print_error ~st:backtrace cell name (instance,exn));
     )
 
   let print_std = { info = Printf.printf; fail = Printf.printf; err = Printf.printf }
@@ -216,7 +215,7 @@ let pp_counter ~size out c =
     size c.passed size c.expected t
 
 let debug_shrinking_counter_example cell out x =
-  match QCheck2.Test.get_arbitrary cell |> QCheck2.get_print with
+  match QCheck2.Test.get_print_opt cell  with
   | None -> Printf.fprintf out "<no printer provided>"
   | Some print -> Printf.fprintf out "%s" (print x)
 
@@ -300,8 +299,8 @@ let callback ~size ~out ~verbose ~colors c name _ r =
       (pp_counter ~size) c name
   )
 
-let print_inst arb x =
-  match QCheck2.get_print arb with
+let print_inst cell x =
+  match QCheck2.Test.get_print_opt cell with
   | Some f -> f x
   | None -> "<no printer>"
 
@@ -353,7 +352,7 @@ let print_fail ~colors out cell c_ex =
   Printf.fprintf out "\n--- %a %s\n\n" (Color.pp_str_c ~colors `Red) "Failure" (String.make 68 '-');
   Printf.fprintf out "Test %s failed (%d shrink steps):\n\n%s\n%!"
     (QCheck2.Test.get_name cell) c_ex.QCheck2.TestResult.shrink_steps
-    (print_inst (QCheck2.Test.get_arbitrary cell) c_ex.QCheck2.TestResult.instance);
+    (print_inst cell c_ex.QCheck2.TestResult.instance);
   print_messages ~colors out cell c_ex.QCheck2.TestResult.msg_l
 
 let print_fail_other ~colors out cell msg =
@@ -365,7 +364,7 @@ let print_error ~colors out cell c_ex exn bt =
   Printf.fprintf out "Test %s errored on (%d shrink steps):\n\n%s\n\nexception %s\n%s\n%!"
     (QCheck2.Test.get_name cell)
     c_ex.QCheck2.TestResult.shrink_steps
-    (print_inst (QCheck2.Test.get_arbitrary cell) c_ex.QCheck2.TestResult.instance)
+    (print_inst cell c_ex.QCheck2.TestResult.instance)
     (Printexc.to_string exn)
     bt;
   print_messages ~colors out cell c_ex.QCheck2.TestResult.msg_l

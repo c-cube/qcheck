@@ -1,6 +1,7 @@
 (*
 QCheck: Random testing for OCaml
-copyright (c) 2013-2017, Guillaume Bury, Simon Cruanes, Vincent Hugot, Jan Midtgaard, Julien Debon
+copyright (c) 2013-2017, Guillaume Bury, Simon Cruanes, Vincent Hugot,
+Jan Midtgaard, Julien Debon, Valentin Chaboche
 all rights reserved.
 *)
 
@@ -890,172 +891,6 @@ end
 type 'a stat = string * ('a -> int)
 (** A statistic on a distribution of values of type ['a] *)
 
-type 'a arbitrary = {
-  gen: 'a Gen.t;
-  print: ('a -> string) option; (** print values *)
-  collect: ('a -> string) option;  (** map value to tag, and group by tag *)
-  stats: 'a stat list; (** statistics to collect and print *)
-}
-
-let make ?print ?collect ?(stats=[]) gen = {
-  gen;
-  print;
-  collect;
-  stats;
-}
-
-let set_print f o = {o with print=Some f}
-
-let set_collect f o = {o with collect=Some f}
-
-let set_stats s o = {o with stats=s}
-
-let add_stat s o = {o with stats=s :: o.stats}
-
-let set_gen g o = {o with gen=g}
-
-let add_shrink_invariant (p : 'a -> bool) (arb : 'a arbitrary) : 'a arbitrary =
-  {arb with gen = Gen.add_shrink_invariant p arb.gen}
-
-let get_gen o = o.gen
-
-let get_print o = o.print
-
-let get_collect o = o.collect
-
-let get_stats o = o.stats
-
-let choose l =
-  match l with
-  | [] -> raise (Invalid_argument "QCheck2.choose called with an empty list")
-  | l ->
-    let gens = List.map get_gen l in
-    make (Gen.oneof gens)
-
-let unit : unit arbitrary =
-  make ~print:Print.unit Gen.unit
-
-let bool = make ~print:string_of_bool Gen.bool
-
-let float = make ~print:string_of_float Gen.float
-
-let pos_float = make ~print:string_of_float Gen.pfloat
-
-let neg_float = make ~print:string_of_float Gen.nfloat
-
-let float_bound_inclusive ?origin bound =
-  make ~print:string_of_float (Gen.float_bound_inclusive ?origin bound)
-
-let float_bound_exclusive ?origin bound =
-  make ~print:string_of_float (Gen.float_bound_exclusive ?origin bound)
-
-let float_range ?origin low high = make ~print:string_of_float (Gen.float_range ?origin low high)
-
-let make_int gen = make ~print:Print.int gen
-
-let int = make_int Gen.int
-
-let pos_int = make_int Gen.pint
-
-let int_bound n = make_int (Gen.int_bound n)
-
-let int_range ?origin a b = make_int (Gen.int_range ?origin a b)
-
-let (--) a b = int_range ~origin:a a b
-
-let small_int = make_int Gen.small_nat
-
-let small_nat = make_int Gen.small_nat
-
-let small_signed_int = make_int Gen.small_signed_int
-
-let small_int_corners () = make_int (Gen.nng_corners ())
-
-let neg_int = make_int Gen.neg_int
-
-let int32 = make ~print:(fun i -> Int32.to_string i ^ "l") Gen.int32
-
-let int64 = make ~print:(fun i -> Int64.to_string i ^ "L") Gen.int64
-
-let char = make ~print:(Format.sprintf "%C") Gen.char
-
-let printable_char = make ~print:(Format.sprintf "%C") Gen.printable
-
-let numeral_char = make ~print:(Format.sprintf "%C") Gen.numeral
-
-let string_gen_of_size (size : int Gen.t) (gen : char Gen.t) : string arbitrary =
-  make ~print:(Format.sprintf "%S") (Gen.string_size ~gen size)
-
-let string_gen (gen : char Gen.t) : string arbitrary =
-  make ~print:(Format.sprintf "%S") (Gen.string ~gen)
-
-let string : string arbitrary = string_gen Gen.char
-
-let string_of_size size = string_gen_of_size size Gen.char
-
-let small_string = string_gen_of_size Gen.small_nat Gen.char
-
-let printable_string = string_gen Gen.printable
-
-let printable_string_of_size size = string_gen_of_size size Gen.printable
-
-let small_printable_string = string_gen_of_size Gen.small_nat Gen.printable
-
-let numeral_string = string_gen Gen.numeral
-
-let numeral_string_of_size size = string_gen_of_size size Gen.numeral
-
-let list_sum_ f l = List.fold_left (fun acc x-> f x+acc) 0 l
-
-let mk_list a gen =
-  let print = Option.map Print.list a.print in
-  make ?print gen
-
-let list a = mk_list a (Gen.list a.gen)
-
-let list_of_size size a = mk_list a (Gen.list_size size a.gen)
-
-let small_list a = mk_list a (Gen.small_list a.gen)
-
-let array_sum_ f a = Array.fold_left (fun acc x -> f x+acc) 0 a
-
-let array a =
-  make
-    ?print:(Option.map Print.array a.print)
-    (Gen.array a.gen)
-
-let array_of_size size a =
-  make
-    ?print:(Option.map Print.array a.print)
-    (Gen.array_size size a.gen)
-
-let pair a b =
-  make
-    ?print:(_opt_map_2 ~f:Print.pair a.print b.print)
-    (Gen.pair a.gen b.gen)
-
-let triple a b c =
-  make
-    ?print:(_opt_map_3 ~f:Print.triple a.print b.print c.print)
-    (Gen.triple a.gen b.gen c.gen)
-
-let quad a b c d =
-  make
-    ?print:(_opt_map_4 ~f:Print.quad a.print b.print c.print d.print)
-    (Gen.quad a.gen b.gen c.gen d.gen)
-
-let option a =
-  let g = Gen.opt a.gen in
-  make
-    ?print:(Option.map Print.option a.print)
-    g
-
-let map ?print ?collect (f : 'a -> 'b) (a : 'a arbitrary) =
-  make
-    ?print
-    ?collect
-    (Gen.map f a.gen)
-
 (** Internal module taking care of storing generated function bindings.
 
     In essence, a generated function of type ['a -> 'b] is a map (table) where
@@ -1067,7 +902,7 @@ let map ?print ?collect (f : 'a -> 'b) (a : 'a arbitrary) =
 module Poly_tbl : sig
   type ('key, 'value) t
 
-  val create: 'key Observable.t -> 'value arbitrary -> int -> ('key, 'value) t Gen.t
+  val create: 'key Observable.t -> 'value Gen.t -> int -> ('key, 'value) t Gen.t
 
   val get : ('key, 'value) t -> 'key -> 'value option
 
@@ -1082,7 +917,7 @@ end = struct
     p_tree_bindings_rev : ('key * 'value Tree.t) list ref;
   }
 
-  let create (type k) (type v) (k_obs : k Observable.t) (v_arb : v arbitrary) (size : int) : (k, v) t Gen.t =
+  let create (type k) (type v) (k_obs : k Observable.t) (v_gen : v Gen.t) (size : int) : (k, v) t Gen.t =
     fun st ->
     let module T = Hashtbl.Make(struct
         type t = k
@@ -1099,13 +934,15 @@ end = struct
           with Not_found ->
             if extend then (
               (* Generate a new value and "record" the binding for potential future display/shrinking *)
-              let value_tree = v_arb.gen st in
+              let value_tree = v_gen st in
               p_tree_bindings_rev := (key, value_tree) :: !p_tree_bindings_rev;
               let v = Tree.root value_tree in
               T.add tbl key v;
               Some v
             ) else None) in
-      let p_print = (fun () -> match v_arb.print with
+      let p_print = (fun () -> "<fun>") in
+      (* /!\ TODO: print is lost here 
+         let p_print = (fun () -> match v_arb.print with
           | None -> "<fun>"
           | Some pp_v ->
             let b = Buffer.create 64 in
@@ -1116,7 +953,7 @@ end = struct
                    (k_obs.Observable.print key) (pp_v value))
               tbl;
             Format.pp_print_flush to_b ();
-            Buffer.contents b) in
+            Buffer.contents b) in *) 
       let p_size=(fun size_v -> T.fold (fun _ v n -> n + size_v v) tbl 0) in
     {get; p_print; p_size; p_tree_bindings_rev}
       in
@@ -1147,7 +984,7 @@ end
 (** Internal representation of functions, used for shrinking and printing (in case of error). *)
 type ('a, 'b) fun_repr_tbl = {
   fun_tbl: ('a, 'b) Poly_tbl.t; (** Input-output bindings *)
-  fun_arb: 'b arbitrary; (** How to generate/print output values *)
+  fun_gen: 'b Gen.t; (** How to generate/print output values *)
   fun_default: 'b; (** Default value for all inputs not explicitly mapped in {!fun_tbl} *)
 }
 
@@ -1180,8 +1017,8 @@ module Fn = struct
 
   let make_ (r : 'a fun_repr) : 'a fun_ = Fun (r, function_of_repr r)
 
-  let mk_repr tbl arb def =
-    Fun_tbl { fun_tbl=tbl; fun_arb=arb; fun_default=def; }
+  let mk_repr tbl gen def =
+    Fun_tbl { fun_tbl=tbl; fun_gen=gen; fun_default=def; }
 
   let map_repr f repr = Fun_map (f, repr)
 
@@ -1195,11 +1032,13 @@ module Fn = struct
       = fun buf r -> match r with
         | Fun_map (_, sub_repr) -> aux buf sub_repr
         | Fun_tbl r ->
-          Buffer.add_string buf (Poly_tbl.print r.fun_tbl);
+           Buffer.add_string buf (Poly_tbl.print r.fun_tbl);
+           Printf.bprintf buf "_  -> %s" "<opaque>"
+           (* /!\ TODO: print is no longer available here
           Printf.bprintf buf "_ -> %s" (match r.fun_arb.print with
               | None -> "<opaque>"
               | Some print -> print r.fun_default
-            );
+            ); *)
     in
     Printf.bprintf buf "{";
     aux buf r;
@@ -1208,16 +1047,17 @@ module Fn = struct
 
   let print (Fun (repr, _real_function)) = print_repr repr
 
-  (** [gen_rep obs arb] creates a function generator. Input values are observed with [obs] and
-      output values are generated with [arb]. *)
-  let gen_rep (obs : 'a Observable.t) (arb : 'b arbitrary) : ('a -> 'b) fun_repr Gen.t =
-    Gen.liftA2 (fun default_value poly_tbl -> mk_repr poly_tbl arb default_value) arb.gen (Poly_tbl.create obs arb 8)
+  (** [gen_rep obs gen] creates a function generator. Input values are observed with [obs] and
+      output values are generated with [gen]. *)
+  let gen_rep (obs : 'a Observable.t) (gen : 'b Gen.t) : ('a -> 'b) fun_repr Gen.t =
+    Gen.liftA2 (fun default_value poly_tbl -> mk_repr poly_tbl gen default_value) gen (Poly_tbl.create obs gen 8)
 
-  let gen (obs : 'a Observable.t) (arb : 'b arbitrary) : ('a -> 'b) fun_ Gen.t =
-    Gen.map make_ (gen_rep obs arb)
+  let gen (obs : 'a Observable.t) (gen : 'b Gen.t) : ('a -> 'b) fun_ Gen.t =
+    Gen.map make_ (gen_rep obs gen)
 end
 
-let fun1 obs arb = make ~print:Fn.print (Fn.gen obs arb)
+(* /!\ TODO: we lose the print here *) 
+let fun1 obs gen = Fn.gen obs gen
 
 module Tuple = struct
   (** heterogeneous list (generic tuple) used to uncurry functions *)
@@ -1275,7 +1115,7 @@ module Tuple = struct
       ~hash:(hash o)
       (print o)
 
-  let gen (o:'a obs) (ret:'b arbitrary) : ('a t -> 'b) fun_ Gen.t =
+  let gen (o:'a obs) (ret:'b Gen.t) : ('a t -> 'b) fun_ Gen.t =
     Fn.gen (observable o) ret
 
   module Infix = struct
@@ -1285,55 +1125,27 @@ module Tuple = struct
   include Infix
 end
 
-let fun_nary (o:_ Tuple.obs) ret : _ arbitrary =
-  make
-    ~print:Fn.print
-    (Tuple.gen o ret)
+let fun_nary (o:_ Tuple.obs) ret : _ Gen.t =
+  (* /!\ TODO: Printer ? *) 
+  (Tuple.gen o ret)
 
 let fun2 o1 o2 ret =
   let open Tuple in
-  map
+  Gen.map
     (Fn.map_fun (fun g x y -> g (x @:: y @:: nil)))
     (fun_nary (o1 @-> o2 @-> o_nil) ret)
 
 let fun3 o1 o2 o3 ret =
   let open Tuple in
-  map
+  Gen.map
     (Fn.map_fun (fun g x y z -> g (x @:: y @:: z @:: nil)))
     (fun_nary (o1 @-> o2 @-> o3 @-> o_nil) ret)
 
 let fun4 o1 o2 o3 o4 ret =
   let open Tuple in
-  map
+  Gen.map
     (Fn.map_fun (fun g x y z w -> g (x @:: y @:: z @:: w @:: nil)))
     (fun_nary (o1 @-> o2 @-> o3 @-> o4 @-> o_nil) ret)
-
-(* Generator combinators *)
-
-(** given a list, returns generator that picks at random from list *)
-let oneofl ?print ?collect xs = make ?print ?collect (Gen.oneofl xs)
-
-let oneofa ?print ?collect xs = make ?print ?collect (Gen.oneofa xs)
-
-(** Generator that always returns given value *)
-let always ?print x = make ?print (Gen.pure x)
-
-(** like oneof, but with weights *)
-let frequency ?print ?collect (l : (int * 'a arbitrary) list) : 'a arbitrary =
-  let first = snd (List.hd l) in
-  let print = _opt_sum print first.print in
-  let collect = _opt_sum collect first.collect in
-  let gens = List.map (fun (x,y) -> x, y.gen) l in
-  make ?print ?collect (Gen.frequency gens)
-
-(** Given list of [(frequency,value)] pairs, returns value with probability proportional
-    to given frequency *)
-let frequencyl ?print l = make ?print (Gen.frequencyl l)
-
-let frequencya ?print l = make ?print (Gen.frequencya l)
-
-let map_same_type (f : 'a -> 'a) (arb : 'a arbitrary) : 'a arbitrary =
-  {arb with gen = Gen.map f arb.gen}
 
 module TestResult = struct
   type 'a counter_ex = {
@@ -1417,7 +1229,10 @@ module Test = struct
     max_gen : int; (* max number of instances to generate (>= count) *)
     max_fail : int; (* max number of failures *)
     law : 'a -> bool; (* the law to check *)
-    arb : 'a arbitrary; (* how to generate/print/shrink instances *)
+    gen : 'a Gen.t; (* how to generate/shrink instances *)
+    print : 'a Print.t option; (* how to print values *)
+    collect : ('a -> string) option; (* /!\ TODO: collect ? *)
+    stats : 'a stat list; (* distribution of values of type 'a *)
     qcheck1_shrink : ('a -> ('a -> unit) -> unit) option; (* QCheck1-backward-compatible shrinking *)
     if_assumptions_fail: [`Fatal | `Warning] * float;
     mutable name : string; (* name of the law *)
@@ -1431,7 +1246,13 @@ module Test = struct
 
   let get_law {law; _} = law
 
-  let get_arbitrary {arb; _} = arb
+  let get_gen {gen; _} = gen
+
+  let get_print_opt {print; _} = print
+
+  let get_collect_opt {collect; _} = collect
+
+  let get_stats {stats; _} = stats
 
   let get_count {count; _ } = count
 
@@ -1447,12 +1268,15 @@ module Test = struct
 
   let make_cell ?(if_assumptions_fail=default_if_assumptions_fail)
       ?(count=default_count) ?(long_factor=1) ?max_gen
-      ?(max_fail=1) ?(name=fresh_name()) arb law
+      ?(max_fail=1) ?(name=fresh_name()) ?print ?collect ?(stats=[]) gen law
     =
     let max_gen = match max_gen with None -> count + 200 | Some x->x in
     {
       law;
-      arb;
+      gen;
+      collect;
+      print;
+      stats;
       max_gen;
       max_fail;
       name;
@@ -1466,13 +1290,17 @@ module Test = struct
       ?(count=default_count) ?(long_factor=1) ?max_gen
       ?(max_fail=1) ?(name=fresh_name()) ~gen ?shrink ?print ?collect ~stats law
     =
-    (* Make a "fake" QCheck2 arbitrary with no shrinking *)
+    (* Make a "fake" QCheck2 arbitrary with no shrinking
+       /!\ TODO: can't it be translate to a QCheck2.gen to have an automatic shrinking ?
+     *)
     let fake_gen = Gen.make_primitive ~gen ~shrink:(fun _ -> Seq.empty) in
-    let fake_arb = make fake_gen ?print ?collect ~stats in
     let max_gen = match max_gen with None -> count + 200 | Some x->x in
     {
       law;
-      arb = fake_arb;
+      gen = fake_gen;
+      print;
+      collect;
+      stats;
       max_gen;
       max_fail;
       name;
@@ -1482,8 +1310,8 @@ module Test = struct
       qcheck1_shrink = shrink;
     }
 
-  let make ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?name arb law =
-    Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?name arb law)
+  let make ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?name ?print ?collect ?stats gen law =
+    Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?name ?print ?collect ?stats gen law)
 
   (** {6 Running the test} *)
 
@@ -1534,10 +1362,10 @@ module Test = struct
   let new_input_tree state =
     state.res.R.count_gen <- state.res.R.count_gen + 1;
     state.cur_max_gen <- state.cur_max_gen - 1;
-    state.test.arb.gen state.rand
+    state.test.gen state.rand
 
   (* statistics on inputs *)
-  let collect st i = match st.test.arb.collect with
+  let collect st i = match st.test.collect with
     | None -> ()
     | Some f ->
       let key = f i in
@@ -1764,7 +1592,7 @@ module Test = struct
               state=R.Success; count=0; count_gen=0;
               collect_tbl=lazy (Hashtbl.create 10);
               instances=[]; warnings=[];
-              stats_tbl= List.map (fun stat -> stat, Hashtbl.create 10) cell.arb.stats;
+              stats_tbl= List.map (fun stat -> stat, Hashtbl.create 10) cell.stats;
             };
     } in
     let res = check_state state in
@@ -1924,9 +1752,9 @@ module Test = struct
   let check_result cell res = match res.R.state with
     | R.Success -> ()
     | R.Error {instance; exn; backtrace} ->
-      raise (Test_error (cell.name, print_c_ex cell.arb instance, exn, backtrace))
+      raise (Test_error (cell.name, print_c_ex cell instance, exn, backtrace))
     | R.Failed {instances=l} ->
-      let l = List.map (print_c_ex cell.arb) l in
+      let l = List.map (print_c_ex cell) l in
       raise (Test_fail (cell.name, l))
     | R.Failed_other {msg} ->
       raise (Test_fail (cell.name, [msg]))
@@ -1943,8 +1771,7 @@ let find_example ?(name : string = "<example>") ?(count : int option) ~(f : 'a -
      test the property [fun x -> not (f x)]; any counter-example *)
   let gen st =
     let cell =
-      let arb = make gen in
-      Test.make_cell ~max_fail:1 ?count arb (fun x -> not (f x))
+      Test.make_cell ~max_fail:1 ?count gen (fun x -> not (f x))
     in
     let res = Test.check_cell ~rand:st cell in
     begin match res.TestResult.state with
