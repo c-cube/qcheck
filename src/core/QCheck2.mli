@@ -216,6 +216,11 @@ module Gen : sig
 
       @since 0.5.2 *)
 
+  val small_int_corners : unit -> int t
+  (** As {!small_int}, but each newly created generator starts with
+    a list of corner cases before falling back on random generation. *)
+
+
   val int32 : int32 t
   (** Generates uniform {!int32} values.
 

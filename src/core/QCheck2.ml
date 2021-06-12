@@ -683,7 +683,7 @@ module Gen = struct
 
   let int_corners = int_pos_corners @ [min_int]
 
-  let nng_corners () : int t = graft_corners nat int_pos_corners ()
+  let small_int_corners () : int t = graft_corners nat int_pos_corners ()
 
   (* sized, fix *)
 
