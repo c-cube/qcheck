@@ -679,8 +679,7 @@ module Gen : sig
   val fix : (('a -> 'b t) -> 'a -> 'b t) -> 'a -> 'b t
   (** Parametrized fixpoint combinator for generating recursive values.
 
-      /!\ TODO: description here.
-      The fixpoint is parametrized over an arbitrary state ['a], and the
+      The fixpoint is parametrized over an generator state ['a], and the
       fixpoint computation may change the value of this state in the recursive
       calls.
 
@@ -1207,72 +1206,6 @@ module Observable : sig
   (** [quad o1 o2 o3 o4] is an observable of quadruples of [('a * 'b * 'c * 'd)]. *)
 end
 
-(** {1 Arbitrary} *)
-
-(*
-  /!\ TODO: take this documentation for Test.cell
-  - [print] generated values to display counter-examples when a test fails
-    - [collect] values by tag, useful to display distribution of generated values
-    - [stats] to get some statistics about generated values
-
-    ⚠️ The collect field is unstable and might be removed, or
-    moved into {!Test}.
-
-    Abstract since QCheck2.
-*)
-
-(* /!\ TODO: move this definition to Test.cell *)
-type 'a stat = string * ('a -> int)
-(** A statistic on a distribution of values of type ['a].
-    The function {b MUST} return a positive integer. *)
-
-(*
-/!\ TODO: all these arbitrary might be missing in Gen
-
-val pos_int : int arbitrary
-(** Positive int generator ([0] included).
-
-    Uniformly distributed.
-
-    Shrinks towards [origin] if specified, otherwise towards [0]. *)
-
-
-val small_int_corners : unit -> int arbitrary
-(** As {!small_int}, but each newly created generator starts with
-    a list of corner cases before falling back on random generation. *)
-
-
-val printable_string : string arbitrary
-(** [printable_string] generates strings with a distribution of length of {!Gen.nat}
-    and distribution of characters of {!Gen.printable}.
-
-    Shrinks on {!Gen.nat} first, then on {!Gen.printable}. *)
-
-val printable_string_of_size : int Gen.t -> string arbitrary
-(** [printable_string_of_size size] generates strings with a distribution of length of [size]
-    and distribution of characters of {!Gen.printable}.
-
-    Shrinks on [size] first, then on {!Gen.printable}. *)
-
-val small_printable_string : string arbitrary
-(** [small_printable_string] generates strings with a distribution of length of {!Gen.small_nat}
-    and distribution of characters of {!Gen.printable}.
-
-    Shrinks on {!Gen.small_nat} first, then on {!Gen.printable}. *)
-
-val numeral_string : string arbitrary
-(** [numeral_string] generates strings with a distribution of length of {!Gen.nat}
-    and distribution of characters of {!Gen.numeral}.
-
-    Shrinks on {!Gen.nat} first, then on {!Gen.numeral}. *)
-
-val numeral_string_of_size : int Gen.t -> string arbitrary
-(** [numeral_string_of_size size] generates strings with a distribution of length of [size]
-    and distribution of characters of {!Gen.numeral}.
-
-    Shrinks on [size] first, then on {!Gen.numeral}. *)
-
-              *)
   
 (** Utils on combining function arguments. *)
 module Tuple : sig
@@ -1473,6 +1406,10 @@ val assume_fail : unit -> 'a
     and use {!QCheck_runner}.
 *)
 
+type 'a stat = string * ('a -> int)
+(** A statistic on a distribution of values of type ['a].
+  The function {b MUST} return a positive integer. *)
+
 (** Result of running a test *)
 module TestResult : sig
   type 'a counter_ex = {
@@ -1519,14 +1456,12 @@ module TestResult : sig
   val get_count_gen : _ t -> int
   (** [get_count_gen t] returns the number of generated cases. *)
 
-  (* /!\ TODO: not sure how to translate this *)
   val get_collect : _ t -> (string,int) Hashtbl.t option
-  (** [get_collect t] returns the repartition of generated arbitrary instances.
+  (** [get_collect t] returns the repartition of generated values.
       @since NEXT_RELEASE *)
 
-  (* /!\ TODO: same here *)
   val get_stats : 'a t -> ('a stat * (int,int) Hashtbl.t) list
-  (** [get_stats t] returns the statistics captured by the arbitrary.
+  (** [get_stats t] returns the statistics captured by the test.
       @since NEXT_RELEASE *)
 
   val get_warnings : _ t -> string list
@@ -1574,8 +1509,6 @@ module Test : sig
   type 'a cell
   (** A single property test on a value of type ['a]. A {!Test.t} wraps a [cell]
       and hides its type parameter. *)
-
-  (* /!\ TODO: move 'a stat here *)
      
   val make_cell :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
@@ -1603,7 +1536,7 @@ module Test : sig
         the flag is [`Warning], the test will be a failure if the flag is [`Fatal].
         (since 0.10)
       @param print used in {!Print} to display generated values failing the [prop]
-      @param collect (* /!\ TODO: here *)
+      @param collect (* collect values by tag, useful to display distribution of generated *)
       @param stats on a distribution of values of type 'a
   *)
 
@@ -1793,9 +1726,8 @@ val find_example_gen :
   'a Gen.t ->
   'a
 (** Toplevel version of {!find_example}.
-    (* TODO: I'm not sure th documentation is up to date *)
-    [find_example_gen ~f arb ~n] is roughly the same as
-    [Gen.generate1 (find_example ~f arb |> gen)].
+    [find_example_gen ~f gen] is roughly the same as
+    [Gen.generate1 @@ find_example ~f gen].
     @param rand the random state to use to generate inputs.
     @raise No_example_found if no example was found within [count] tries.
     @since 0.6 *)

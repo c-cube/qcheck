@@ -1231,7 +1231,7 @@ module Test = struct
     law : 'a -> bool; (* the law to check *)
     gen : 'a Gen.t; (* how to generate/shrink instances *)
     print : 'a Print.t option; (* how to print values *)
-    collect : ('a -> string) option; (* /!\ TODO: collect ? *)
+    collect : ('a -> string) option; (* collect values by tag, useful to display distribution of generated *)
     stats : 'a stat list; (* distribution of values of type 'a *)
     qcheck1_shrink : ('a -> ('a -> unit) -> unit) option; (* QCheck1-backward-compatible shrinking *)
     if_assumptions_fail: [`Fatal | `Warning] * float;
@@ -1290,9 +1290,7 @@ module Test = struct
       ?(count=default_count) ?(long_factor=1) ?max_gen
       ?(max_fail=1) ?(name=fresh_name()) ~gen ?shrink ?print ?collect ~stats law
     =
-    (* Make a "fake" QCheck2 arbitrary with no shrinking
-       /!\ TODO: can't it be translate to a QCheck2.gen to have an automatic shrinking ?
-     *)
+    (* Make a "fake" QCheck2 arbitrary with no shrinking *)
     let fake_gen = Gen.make_primitive ~gen ~shrink:(fun _ -> Seq.empty) in
     let max_gen = match max_gen with None -> count + 200 | Some x->x in
     {
