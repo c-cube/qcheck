@@ -518,16 +518,14 @@ module Gen = struct
     let shrink a = fun () -> Shrink.int32_towards 0l a () in
     Tree.make_primitive shrink x
 
-  (** TODO Not actually unsigned, fix in https://github.com/c-cube/qcheck/issues/105 *)
-  let ui32 : int32 t = int32
+  let ui32 : int32 t = map Int32.abs int32
 
   let int64 : int64 t = fun st ->
     let x = random_binary_string 64 st |> Int64.of_string in
     let shrink a = fun () -> Shrink.int64_towards 0L a () in
     Tree.make_primitive shrink x
 
-  (** TODO Not actually unsigned, fix in https://github.com/c-cube/qcheck/issues/105 *)
-  let ui64 : int64 t = int64
+  let ui64 : int64 t = map Int64.abs int64
 
   let list_size (size : int t) (gen : 'a t) : 'a list t =
     size >>= fun size ->
