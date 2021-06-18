@@ -1278,7 +1278,7 @@ type 'f fun_repr
 *)
 type 'f fun_ = Fun of 'f fun_repr * 'f
 
-val fun1 : 'a Observable.t -> 'b Gen.t -> ('a -> 'b) fun_ Gen.t
+val fun1 : 'a Observable.t -> ?print:('b Print.t) -> 'b Gen.t -> ('a -> 'b) fun_ Gen.t
 (** [fun1 obs gen] generates random functions that take an argument observable
     via [obs] and map to random values generated with [gen].
     To write functions with multiple arguments, it's better to use {!Tuple}
@@ -1289,6 +1289,7 @@ val fun1 : 'a Observable.t -> 'b Gen.t -> ('a -> 'b) fun_ Gen.t
 val fun2 :
   'a Observable.t ->
   'b Observable.t ->
+  ?print:'c Print.t ->
   'c Gen.t ->
   ('a -> 'b -> 'c) fun_ Gen.t
 (** Specialized version of {!fun_nary} for functions of 2 arguments, for convenience.
@@ -1298,6 +1299,7 @@ val fun3 :
   'a Observable.t ->
   'b Observable.t ->
   'c Observable.t ->
+  ?print:'d Print.t ->
   'd Gen.t ->
   ('a -> 'b -> 'c -> 'd) fun_ Gen.t
 (** Specialized version of {!fun_nary} for functions of 3 arguments, for convenience.
@@ -1308,12 +1310,13 @@ val fun4 :
   'b Observable.t ->
   'c Observable.t ->
   'd Observable.t ->
+  ?print:'e Print.t ->
   'e Gen.t ->
   ('a -> 'b -> 'c -> 'd -> 'e) fun_ Gen.t
 (** Specialized version of {!fun_nary} for functions of 4 arguments, for convenience.
     @since 0.6 *)
 
-val fun_nary : 'a Tuple.obs -> 'b Gen.t -> ('a Tuple.t -> 'b) fun_ Gen.t
+val fun_nary : 'a Tuple.obs -> ?print:('b Print.t) -> 'b Gen.t -> ('a Tuple.t -> 'b) fun_ Gen.t
 (** [fun_nary tuple_obs gen] generates random n-ary functions. Arguments are observed
     using [tuple_obs] and return values are generated using [gen].
 
