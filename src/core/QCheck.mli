@@ -1,6 +1,7 @@
 (*
 QCheck: Random testing for OCaml
-copyright (c) 2013-2017, Guillaume Bury, Simon Cruanes, Vincent Hugot, Jan Midtgaard
+copyright (c) 2013-2017, Guillaume Bury, Simon Cruanes, Vincent Hugot,
+Jan Midtgaard, Julien Debon, Valentin Chaboche
 all rights reserved.
 *)
 
