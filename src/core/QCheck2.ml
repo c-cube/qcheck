@@ -656,7 +656,7 @@ module Gen = struct
   let string_size ?(gen = char) (size : int t) : string t =
     bytes_size ~gen size >|= Bytes.unsafe_to_string
 
-  let string ?(gen : char t option) : string t = string_size ?gen nat
+  let string : string t = string_size nat
 
   let string_of gen = string_size ~gen nat
 
@@ -888,7 +888,6 @@ end
 
 type 'a stat = string * ('a -> int)
 (** A statistic on a distribution of values of type ['a] *)
-
 (** Internal module taking care of storing generated function bindings.
 
     In essence, a generated function of type ['a -> 'b] is a map (table) where
