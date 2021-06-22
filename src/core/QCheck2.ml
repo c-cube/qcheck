@@ -888,6 +888,7 @@ end
 
 type 'a stat = string * ('a -> int)
 (** A statistic on a distribution of values of type ['a] *)
+
 (** Internal module taking care of storing generated function bindings.
 
     In essence, a generated function of type ['a -> 'b] is a map (table) where
