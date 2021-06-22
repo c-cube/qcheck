@@ -6,6 +6,8 @@
 QuickCheck inspired property-based testing for OCaml, and combinators to
 generate random values to run tests on.
 
+image::https://github.com/c-cube/qcheck/actions/workflows/main.yml/badge.svg[https://github.com/c-cube/qcheck/actions/workflows/main.yml[build]]
+
 
 The documentation can be found https://c-cube.github.io/qcheck/[here].
 This library spent some time in
