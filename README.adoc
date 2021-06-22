@@ -6,7 +6,7 @@
 QuickCheck inspired property-based testing for OCaml, and combinators to
 generate random values to run tests on.
 
-image::https://github.com/c-cube/qcheck/actions/workflows/main.yml/badge.svg[https://github.com/c-cube/qcheck/actions/workflows/main.yml[build]]
+image::https://github.com/c-cube/qcheck/actions/workflows/main.yml/badge.svg[alt="build", link=https://github.com/c-cube/qcheck/actions/workflows/main.yml]
 
 
 The documentation can be found https://c-cube.github.io/qcheck/[here].
@@ -24,8 +24,6 @@ Jan Midtgaard has http://janmidtgaard.dk/quickcheck/index.html[a lecture] about
 property-based testing that relies on QCheck.
 
 toc::[]
-
-image::https://travis-ci.org/c-cube/qcheck.svg?branch=master[alt="Build Status", link="https://travis-ci.org/c-cube/qcheck"]
 
 == Use
 
