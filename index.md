@@ -5,6 +5,7 @@ Repository: <https://github.com/c-cube/qcheck>
 Documentation:
 
 - [last](0.17)
+- [development (unreleased)](dev)
 
 - [0.17](0.17)
 - [0.16](0.16)
