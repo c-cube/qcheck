@@ -1,0 +1,26 @@
+name: build
+on: [push]
+jobs:
+  run:
+    name: Build
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+        ocaml-compiler:
+          - 4.08.x
+          - 4.12.x
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: ocaml/setup-ocaml@v2
+      with:
+        ocaml-compiler: ${{ matrix.ocaml-compiler }}
+    - run: opam pin -n .
+    - run: opam depext -yt qcheck qcheck-core qcheck-ounit
+    - run: opam install -t . --deps-only
+    - run: opam exec -- dune build
+    - run: opam exec -- dune runtest
+      if: ${{ matrix.os == 'ubuntu-latest'}}

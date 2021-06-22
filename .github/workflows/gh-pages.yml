@@ -1,0 +1,43 @@
+name: github pages
+
+on:
+  push:
+    branches:
+      - master  # Set a branch name to trigger deployment
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+
+      - name: Cache opam
+        id: cache-opam
+        uses: actions/cache@v2
+        with:
+          path: ~/.opam
+          key: opam-ubuntu-latest-4.12.0
+
+      - uses: avsm/setup-ocaml@v1
+        with:
+          ocaml-version: '4.12.0'
+
+      - name: Pin
+        run: opam pin -n .
+
+      - name: Depext
+        run: opam depext -yt qcheck-ounit qcheck-core qcheck
+
+      - name: Deps
+        run: opam install -d . --deps-only
+
+      - name: Build
+        run: opam exec -- dune build @doc
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_build/default/_doc/_html/
+          destination_dir: dev
+          enable_jekyll: true
