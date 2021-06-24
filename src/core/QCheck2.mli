@@ -90,7 +90,7 @@ content will appear. *)
       QCheck2.Gen.generate ~n:20 tree_gen;;
     ]}
 
-    @since NEXT_RELEASE
+    @since 0.18
 *)
 
 (** A tree represents a generated value and its successive shrunk values. *)
@@ -1466,19 +1466,19 @@ module TestResult : sig
 
   val get_collect : _ t -> (string,int) Hashtbl.t option
   (** [get_collect t] returns the repartition of generated values.
-      @since NEXT_RELEASE *)
+      @since 0.18 *)
 
   val get_stats : 'a t -> ('a stat * (int,int) Hashtbl.t) list
   (** [get_stats t] returns the statistics captured by the test.
-      @since NEXT_RELEASE *)
+      @since 0.18 *)
 
   val get_warnings : _ t -> string list
   (** [get_warnings t] returns the list of warnings emitted during the test.
-      @since NEXT_RELEASE *)
+      @since 0.18 *)
 
   val get_instances : 'a t -> 'a list
   (** [get_instances t] returns the generated instances, with no guarantee on the order.
-      @since NEXT_RELEASE *)
+      @since 0.18 *)
 
   val is_success : _ t -> bool
   (** Returns true iff the state if [Success]

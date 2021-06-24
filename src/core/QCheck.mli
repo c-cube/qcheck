@@ -339,7 +339,7 @@ module Gen : sig
   (**  An option generator, with optional ratio.
       @param ratio a float between [0.] and [1.] indicating the probability of a sample to be [Some _]
       rather than [None].
-      @since NEXT_RELEASE ([?ratio] parameter)
+      @since 0.18 ([?ratio] parameter)
   *)
 
   val pair : 'a t -> 'b t -> ('a * 'b) t (** Generates pairs. *)
@@ -870,7 +870,7 @@ module TestResult : sig
 end
 
 (** Module related to individual tests.
-     @since NEXT_RELEASE most of it moved to {!QCheck2}, and the type ['a cell] was made a private implementation detail.
+     @since 0.18 most of it moved to {!QCheck2}, and the type ['a cell] was made a private implementation detail.
 *)
 module Test : sig
   val fail_report : string -> 'a

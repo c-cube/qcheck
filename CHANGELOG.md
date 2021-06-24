@@ -1,5 +1,26 @@
 # Changes
 
+## 0.18
+
+This releases marks the addition of `QCheck2`, a module where generation
+and shrinking are better integrated.
+See [#109](https://github.com/c-cube/qcheck/pull/109) and [#116](https://github.com/c-cube/qcheck/pull/116).
+
+This API is still experimental. The normal `QCheck` module is still there
+and hasn't changed much.
+
+deprecations and breakges:
+
+- make `QCheck.Test_result.t` abstract and add missing getters
+- deprecate `QCheck.oneof`
+- require at least OCaml 4.08
+
+other changes:
+
+- unsigned int32 and int64
+- rename `small_int_corners`
+- add `?ratio` to `opt`, to modify random distribution of options
+
 ## 0.17
 
 - new function: `Gen.delay`
