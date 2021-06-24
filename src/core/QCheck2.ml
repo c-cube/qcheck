@@ -1210,6 +1210,12 @@ module TestResult = struct
     | Failed _ | Error _ | Failed_other _ -> false
 end
 
+module Test_exceptions = struct
+
+  exception Test_fail of string * string list
+  exception Test_error of string * string * exn * string
+end
+
 module Test = struct
 
   type 'a cell = {
@@ -1587,8 +1593,7 @@ module Test = struct
     call cell.name cell res;
     res
 
-  exception Test_fail of string * string list
-  exception Test_error of string * string * exn * string
+  include Test_exceptions
 
   (* print instance using [arb] *)
   let print_instance arb i = match arb.print with

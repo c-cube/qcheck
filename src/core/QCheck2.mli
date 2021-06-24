@@ -1500,6 +1500,20 @@ module TestResult : sig
       @deprecated use {!get_collect} instead *)
 end
 
+module Test_exceptions : sig
+
+  exception Test_fail of string * string list
+  (** Exception raised when a test failed, with the list of counter-examples.
+      [Test_fail (name, l)] means test [name] failed on elements of [l]. *)
+
+  exception Test_error of string * string * exn * string
+  (** Exception raised when a test raised an exception [e], with
+      the sample that triggered the exception.
+      [Test_error (name, i, e, st)]
+      means [name] failed on [i] with exception [e], and [st] is the
+      stacktrace (if enabled) or an empty string. *)
+end
+
 (** A test is a pair of an generator and a property thar all generated values must satisfy. *)
 module Test : sig
   (** The main features of this module are:
@@ -1607,16 +1621,7 @@ module Test : sig
 
   (** {3 Running the test} *)
 
-  exception Test_fail of string * string list
-  (** Exception raised when a test failed, with the list of counter-examples.
-      [Test_fail (name, l)] means test [name] failed on elements of [l]. *)
-
-  exception Test_error of string * string * exn * string
-  (** Exception raised when a test raised an exception [e], with
-      the sample that triggered the exception.
-      [Test_error (name, i, e, st)]
-      means [name] failed on [i] with exception [e], and [st] is the
-      stacktrace (if enabled) or an empty string. *)
+  include module type of Test_exceptions
 
   val print_instance : 'a cell -> 'a -> string
   val print_c_ex : 'a cell -> 'a TestResult.counter_ex -> string

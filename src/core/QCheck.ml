@@ -1243,7 +1243,7 @@ let map_keep_input ?print ?small f a =
     Gen.(map_keep_input f a.gen)
 
 module TestResult = struct
-  type 'a counter_ex = {
+  type 'a counter_ex = 'a QCheck2.TestResult.counter_ex = {
     instance: 'a; (** The counter-example(s) *)
     shrink_steps: int; (** How many shrinking steps for this counterex *)
     msg_l: string list; (** messages. @since 0.7 *)
@@ -1253,7 +1253,7 @@ module TestResult = struct
 
   (** Result state.
       changed in 0.10 (move to inline records) *)
-  type 'a state =
+  type 'a state = 'a QCheck2.TestResult.state =
     | Success
     | Failed of {
         instances: 'a failed_state; (** Failed instance(s) *)
@@ -1267,59 +1267,46 @@ module TestResult = struct
 
 
   (* result returned by running a test *)
-  type 'a t = {
-    mutable state : 'a state;
-    mutable count: int;  (* number of tests *)
-    mutable count_gen: int; (* number of generated cases *)
-    collect_tbl: (string, int) Hashtbl.t lazy_t;
-    stats_tbl: ('a stat * (int, int) Hashtbl.t) list;
-    mutable warnings: string list;
-    mutable instances: 'a list;
-  }
+  type 'a t = 'a QCheck2.TestResult.t
 
-  let get_count {count; _} = count
-  let get_count_gen {count_gen; _} = count_gen
-  let get_state {state; _} = state
-
-  (* indicate failure on the given [instance] *)
-  let fail ~msg_l ~small ~steps:shrink_steps res instance =
-    let c_ex = {instance; shrink_steps; msg_l; } in
-    match res.state with
-    | Success -> res.state <- Failed {instances=[ c_ex ]}
-    | Error _
-    | Failed_other _ -> ()
-    | Failed {instances=[]} -> assert false
-    | Failed {instances=((c_ex'::_) as l)} ->
-        match small with
-        | Some small ->
-            (* all counter-examples in [l] have same size according to [small],
-               so we just compare to the first one, and we enforce
-               the invariant *)
-            begin match poly_compare (small instance) (small c_ex'.instance) with
-            | 0 -> res.state <- Failed {instances=c_ex :: l} (* same size: add [c_ex] to [l] *)
-            | n when n<0 -> res.state <- Failed {instances=[c_ex]} (* drop [l] *)
-            | _ -> () (* drop [c_ex], not small enough *)
-            end
-        | _ ->
-            (* no [small] function, keep all counter-examples *)
-            res.state <-
-              Failed {instances=c_ex :: l}
-
-  let error ~msg_l ~steps res instance exn backtrace =
-    res.state <- Error {instance={instance; shrink_steps=steps; msg_l; }; exn; backtrace}
-
-  let collect r =
-    if Lazy.is_val r.collect_tbl then Some (Lazy.force r.collect_tbl) else None
-
-  let stats r = r.stats_tbl
-  let warnings r = r.warnings
-
-  let is_success r = match r.state with
-    | Success -> true
-    | Failed _ | Error _ | Failed_other _ -> false
+  let get_count = QCheck2.TestResult.get_count
+  let get_count_gen = QCheck2.TestResult.get_count_gen
+  let get_state = QCheck2.TestResult.get_state
+  let stats = QCheck2.TestResult.stats
+  let collect = QCheck2.TestResult.collect
+  let warnings = QCheck2.TestResult.warnings
+  let is_success = QCheck2.TestResult.is_success
 end
 
 module Test = struct
+  type res = QCheck2.Test.res =
+    | Success
+    | Failure
+    | FalseAssumption
+    | Error of exn * string
+  type 'a event = 'a QCheck2.Test.event =
+    | Generating
+    | Collecting of 'a
+    | Testing of 'a
+    | Shrunk of int * 'a
+    | Shrinking of int * int * 'a
+
+  type 'a cell = 'a QCheck2.Test.cell
+  type 'a handler = 'a QCheck2.Test.handler
+  type 'a step = 'a QCheck2.Test.step
+  type 'a callback = 'a QCheck2.Test.callback
+  type t = QCheck2.Test.t
+
+  include QCheck2.Test_exceptions
+
+  let print_instance = QCheck2.Test.print_instance
+  let print_c_ex = QCheck2.Test.print_c_ex
+  let print_error = QCheck2.Test.print_error
+  let print_fail = QCheck2.Test.print_fail
+  let print_fail_other = QCheck2.Test.print_fail_other
+  let print_test_fail = QCheck2.Test.print_test_fail
+  let print_test_error = QCheck2.Test.print_test_error
+
   let set_name = QCheck2.Test.set_name
   let get_law = QCheck2.Test.get_law
   let get_name = QCheck2.Test.get_name
@@ -1336,9 +1323,13 @@ module Test = struct
   let make ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law =
     QCheck2.Test.Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law)
 
-    let fail_report = QCheck2.Test.fail_report
+  let fail_report = QCheck2.Test.fail_report
 
-    let fail_reportf = QCheck2.Test.fail_reportf
+  let fail_reportf = QCheck2.Test.fail_reportf
+
+  let check_cell_exn = QCheck2.Test.check_cell_exn
+  let check_exn = QCheck2.Test.check_exn
+  let check_cell = QCheck2.Test.check_cell
 end
 
 let find_example ?(name="<example>") ?count ~f g : _ Gen.t =

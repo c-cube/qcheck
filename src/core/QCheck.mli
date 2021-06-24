@@ -805,7 +805,7 @@ val get_print : 'a arbitrary -> 'a Print.t option
 
 (** Result of running a test *)
 module TestResult : sig
-  type 'a counter_ex = {
+  type 'a counter_ex = 'a QCheck2.TestResult.counter_ex = {
     instance: 'a; (** The counter-example(s) *)
 
     shrink_steps: int; (** How many shrinking steps for this counterex *)
@@ -819,7 +819,7 @@ module TestResult : sig
 
   (** Result state.
       changed in 0.10 (move to inline records, add Fail_other) *)
-  type 'a state =
+  type 'a state = 'a QCheck2.TestResult.state =
     | Success
     | Failed of {
         instances: 'a failed_state; (** Failed instance(s) *)
@@ -832,17 +832,7 @@ module TestResult : sig
       } (** Error, backtrace, and instance that triggered it *)
 
   (* result returned by running a test *)
-  type 'a t = private {
-    mutable state : 'a state;
-    mutable count: int;  (* Number of tests *)
-    mutable count_gen: int; (* Number of generated cases *)
-    collect_tbl: (string, int) Hashtbl.t lazy_t;
-    stats_tbl: ('a stat * (int, int) Hashtbl.t) list; (** @since 0.6 *)
-    mutable warnings: string list;
-    mutable instances: 'a list;
-    (** List of instances used for this test, in no particular order.
-        @since 0.9 *)
-  }
+  type 'a t = 'a QCheck2.TestResult.t
 
   val get_count : _ t -> int
   (** Get the count of a cell.
@@ -870,9 +860,29 @@ module TestResult : sig
 end
 
 (** Module related to individual tests.
-     @since 0.18 most of it moved to {!QCheck2}, and the type ['a cell] was made a private implementation detail.
+     @since 0.18 most of it moved to {!QCheck2},
+     and the type ['a cell] was made a private implementation detail.
 *)
 module Test : sig
+  type res = QCheck2.Test.res =
+    | Success
+    | Failure
+    | FalseAssumption
+    | Error of exn * string
+  type 'a event = 'a QCheck2.Test.event =
+    | Generating
+    | Collecting of 'a
+    | Testing of 'a
+    | Shrunk of int * 'a
+    | Shrinking of int * int * 'a
+
+  type 'a cell = 'a QCheck2.Test.cell
+  type 'a handler = 'a QCheck2.Test.handler
+  type 'a step = 'a QCheck2.Test.step
+  type 'a callback = 'a QCheck2.Test.callback
+
+  type t = QCheck2.Test.t
+
   val fail_report : string -> 'a
   (** Fail the test with some additional message that will
       be reported.
@@ -886,7 +896,7 @@ module Test : sig
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
     ?small:('a -> int) -> ?name:string -> 'a arbitrary -> ('a -> bool) ->
-    'a QCheck2.Test.cell
+    'a cell
   (** [make_cell arb prop] builds a test that checks property [prop] on instances
       of the generator [arb].
       @param name the name of the test.
@@ -912,19 +922,19 @@ module Test : sig
         (since 0.10)
   *)
 
-  val get_law : 'a QCheck2.Test.cell -> ('a -> bool)
+  val get_law : 'a cell -> ('a -> bool)
   (** @deprecated use {!QCheck2.Test.get_law} instead *)
-  val get_name : _ QCheck2.Test.cell -> string
+  val get_name : _ cell -> string
   (** @deprecated use {!QCheck2.Test.get_name} instead *)
-  val set_name : _ QCheck2.Test.cell -> string -> unit
+  val set_name : _ cell -> string -> unit
   (** @deprecated use {!QCheck2.Test.set_name} instead *)
 
-  val get_count : _ QCheck2.Test.cell -> int
+  val get_count : _ cell -> int
   (** Get the count of a cell.
       @deprecated use {!QCheck2.Test.get_count} instead
       @since 0.5.3 *)
 
-  val get_long_factor : _ QCheck2.Test.cell -> int
+  val get_long_factor : _ cell -> int
   (** Get the long factor of a cell.
       @deprecated use {!QCheck2.Test.get_long_factor} instead
       @since 0.5.3 *)
@@ -932,11 +942,32 @@ module Test : sig
   val make :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
-    ?small:('a -> int) -> ?name:string -> 'a arbitrary -> ('a -> bool) -> QCheck2.Test.t
+    ?small:('a -> int) -> ?name:string -> 'a arbitrary -> ('a -> bool) -> t
   (** [make arb prop] builds a test that checks property [prop] on instances
       of the generator [arb].
       See {!make_cell} for a description of the parameters.
   *)
+
+  include module type of QCheck2.Test_exceptions
+
+  val print_instance : 'a cell -> 'a -> string
+  val print_c_ex : 'a cell -> 'a TestResult.counter_ex -> string
+  val print_fail : 'a cell -> string -> 'a TestResult.counter_ex list -> string
+  val print_fail_other : string -> msg:string -> string
+  val print_error : ?st:string -> 'a cell -> string -> 'a TestResult.counter_ex * exn -> string
+  val print_test_fail : string -> string list -> string
+  val print_test_error : string -> string -> exn -> string -> string
+
+  val check_cell :
+    ?long:bool -> ?call:'a callback ->
+    ?step:'a step -> ?handler:'a handler ->
+    ?rand:Random.State.t -> 'a cell -> 'a TestResult.t
+
+  val check_cell_exn :
+    ?long:bool -> ?call:'a callback -> ?step:'a step ->
+    ?rand:Random.State.t -> 'a cell -> unit
+
+  val check_exn : ?long:bool -> ?rand:Random.State.t -> t -> unit
 end
 
 (** {2 Sub-tests} *)
