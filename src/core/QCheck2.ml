@@ -728,9 +728,9 @@ module Print = struct
 
   let float = string_of_float
 
-  let string s = s
+  let string s = Printf.sprintf "%S" s
 
-  let char c = String.make 1 c
+  let char c = Printf.sprintf "%C" c
 
   let option f = function
     | None -> "None"
