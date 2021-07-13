@@ -4,14 +4,9 @@ Error: tests:2:error_raise_exn.
 
 Error: tests:2:error_raise_exn (in the log).
 
-Raised at file "src/core/QCheck2.ml", line 1742, characters 6-78
-Called from file "src/lib/ounit2/advanced/oUnitRunner.ml", line 83, characters 13-26
 
 test `error_raise_exn` raised exception `Dune__exe__QCheck_ounit_test.Error`
 on `0 (after 63 shrink steps)`
-Raised at file "example/ounit/QCheck_ounit_test.ml", line 19, characters 14-25
-Called from file "src/core/QCheck2.ml", line 1392, characters 9-14
-Called from file "src/core/QCheck2.ml", line 1515, characters 20-48
 
 ------------------------------------------------------------------------------
 ==============================================================================

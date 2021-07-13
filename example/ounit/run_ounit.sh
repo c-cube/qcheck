@@ -8,5 +8,7 @@ CODE=$?
 # remove non deterministic output
 echo "$OUT" \
   | grep -v 'File .*, line .*' \
+  | grep -v 'Called from file' \
+  | grep -v 'Raised at file' \
   | sed 's/in: .*seconds/in: <nondet> seconds/'
 exit $CODE
