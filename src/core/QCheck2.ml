@@ -1255,6 +1255,12 @@ module Test = struct
 
   let default_count = 100
 
+  let global_count count =
+    match (count, Sys.getenv_opt "QCHECK_COUNT") with
+    | (Some x, _) -> x
+    | (_, Some x) -> int_of_string x
+    | (None, None) -> default_count
+
   let fresh_name =
     let r = ref 0 in
     (fun () -> incr r; Printf.sprintf "anon_test_%d" !r)
@@ -1262,9 +1268,10 @@ module Test = struct
   let default_if_assumptions_fail = `Warning, 0.05
 
   let make_cell ?(if_assumptions_fail=default_if_assumptions_fail)
-      ?(count=default_count) ?(long_factor=1) ?max_gen
+      ?(count) ?(long_factor=1) ?max_gen
       ?(max_fail=1) ?(name=fresh_name()) ?print ?collect ?(stats=[]) gen law
     =
+    let count = global_count count in
     let max_gen = match max_gen with None -> count + 200 | Some x->x in
     {
       law;
@@ -1282,9 +1289,10 @@ module Test = struct
     }
 
   let make_cell_from_QCheck1 ?(if_assumptions_fail=default_if_assumptions_fail)
-      ?(count=default_count) ?(long_factor=1) ?max_gen
+      ?(count) ?(long_factor=1) ?max_gen
       ?(max_fail=1) ?(name=fresh_name()) ~gen ?shrink ?print ?collect ~stats law
     =
+    let count = global_count count in
     (* Make a "fake" QCheck2 arbitrary with no shrinking *)
     let fake_gen = Gen.make_primitive ~gen ~shrink:(fun _ -> Seq.empty) in
     let max_gen = match max_gen with None -> count + 200 | Some x->x in
@@ -1305,6 +1313,8 @@ module Test = struct
 
   let make ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?name ?print ?collect ?stats gen law =
     Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?name ?print ?collect ?stats gen law)
+
+  let test_get_count (Test cell) = get_count cell
 
   (** {6 Running the test} *)
 

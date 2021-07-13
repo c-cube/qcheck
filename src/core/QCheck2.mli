@@ -1603,6 +1603,8 @@ module Test : sig
       See {!make_cell} for a description of the parameters.
   *)
 
+  val test_get_count : t -> int
+
   val fail_report : string -> 'a
   (** Fail the test with some additional message that will be reported.
 
