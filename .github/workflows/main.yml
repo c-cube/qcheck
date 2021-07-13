@@ -1,5 +1,11 @@
 name: build
-on: [push]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 jobs:
   run:
     name: Build
@@ -19,7 +25,7 @@ jobs:
       with:
         ocaml-compiler: ${{ matrix.ocaml-compiler }}
     - run: opam pin -n .
-    - run: opam depext -yt qcheck qcheck-core qcheck-ounit
+    - run: opam depext -yt qcheck qcheck-core qcheck-ounit qcheck-alcotest
     - run: opam install -t . --deps-only
     - run: opam exec -- dune build
     - run: opam exec -- dune runtest
