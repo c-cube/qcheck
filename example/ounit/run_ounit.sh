@@ -6,5 +6,7 @@ OUT=`./QCheck_ounit_test.exe $@`
 CODE=$?
 
 # remove non deterministic output
-echo "$OUT" | sed 's/in: .*seconds/in: <nondet> seconds/'
+echo "$OUT" \
+  | grep -v 'File .*, line .*' \
+  | sed 's/in: .*seconds/in: <nondet> seconds/'
 exit $CODE
