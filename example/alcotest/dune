@@ -2,3 +2,14 @@
 (executable
   (name QCheck_alcotest_test)
   (libraries qcheck-core qcheck-alcotest alcotest))
+
+(rule
+  (targets output.txt)
+  (package qcheck-alcotest)
+  (action
+    (with-accepted-exit-codes 1
+      (with-stdout-to %{targets} (run ./QCheck_alcotest_test.exe)))))
+
+(rule
+  (alias runtest)
+  (action (diff output.txt.expected output.txt)))

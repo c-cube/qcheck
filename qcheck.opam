@@ -16,7 +16,7 @@ build: [
   ["dune" "runtest" "-p" name "-j" jobs] {with-test}
 ]
 depends: [
-  "dune"
+  "dune" { >= "2.2" }
   "base-bytes"
   "base-unix"
   "qcheck-core" { = version }
