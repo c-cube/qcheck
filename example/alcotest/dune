@@ -18,4 +18,5 @@
 
 (rule
   (alias runtest)
+  (enabled_if (< %{ocaml_version} 4.09.0))
   (action (diff output.txt.expected output.txt)))
