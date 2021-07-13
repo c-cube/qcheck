@@ -10,3 +10,4 @@ man
 *.tar.gz
 *.byte
 .merlin
+_opam/
