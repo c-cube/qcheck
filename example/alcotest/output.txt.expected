@@ -1,0 +1,24 @@
+qcheck random seed: 1234
+Testing `my test'.
+
+  [OK]          suite          0   list_rev_is_involutive.
+> [FAIL]        suite          1   fail_sort_id.
+  [FAIL]        suite          2   error_raise_exn.
+  [FAIL]        suite          3   fail_check_err_message.
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ [FAIL]        suite          1   fail_sort_id.                               │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+test `fail_sort_id` failed on ≥ 1 cases: [1; 0] (after 20 shrink steps)
+                                           
+[exception] test `fail_sort_id` failed on ≥ 1 cases: [1; 0] (after 20 shrink steps)
+                                           
+            Raised at file "src/core/QCheck2.ml", line 1759, characters 6-38
+            Called from file "src/alcotest-engine/core.ml", line 229, characters 17-23
+            Called from file "src/alcotest-engine/monad.ml", line 24, characters 31-35
+            
+
+ ──────────────────────────────────────────────────────────────────────────────
+
+3 failures! 4 tests run.
