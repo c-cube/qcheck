@@ -634,14 +634,14 @@ module Gen = struct
     size st >>= fun size ->
     (* Adding char shrinks to a mutable list is expensive: ~20-30% cost increase *)
     (* Adding char shrinks to a mutable lazy list is less expensive: ~15% cost increase *)
-    let char_trees_rev = ref (fun () -> []) in
+    let char_trees_rev = ref [] in
     let bytes = Bytes.init size (fun _ ->
                     let char_tree = gen st in
-                    char_trees_rev := (fun () -> char_tree :: ((!char_trees_rev) ()));
+                    char_trees_rev := char_tree :: !char_trees_rev ;
                     (* Performance: return the root right now, the heavy processing of shrinks can wait until/if there is a need to shrink *)
                     root char_tree) in
     let shrink = fun () ->
-      let char_trees = List.rev ((!char_trees_rev) ()) in
+      let char_trees = List.rev !char_trees_rev in
       let char_list_tree = sequence_list char_trees in
       let bytes_tree = char_list_tree >|= (fun char_list ->
           let bytes = Bytes.create size in
@@ -651,7 +651,6 @@ module Gen = struct
       children bytes_tree ()
     in
     Tree (bytes, shrink)
-
 
   let string_size ?(gen = char) (size : int t) : string t =
     bytes_size ~gen size >|= Bytes.unsafe_to_string

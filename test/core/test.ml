@@ -120,10 +120,20 @@ module Test = struct
        ])
 end
 
+module String = struct
+
+  let test_string_shrinking () =
+    let shrink_result = QCheck2.(find_example_gen ~f:(fun s -> s <> s ^ s) Gen.string) in
+    Alcotest.(check string) "Shrinking a non-empty string shrinks to \"a\"" "a" shrink_result
+
+  let tests = ("String", Alcotest.[test_case "shrinking" `Quick test_string_shrinking])
+end
+
 let () =
   Alcotest.run "QCheck"
     [
       Shrink.tests;
       Gen.tests;
       Test.tests;
+      String.tests
     ]
