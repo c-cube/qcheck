@@ -91,9 +91,39 @@ module Gen = struct
        ])
 end
 
+module Test = struct
+  let test_count_n ?count expected =
+    let t = QCheck2.(Test.make ?count Gen.int (fun _ -> true)) in
+    let msg = Printf.sprintf "QCheck2.Test.make ~count:%s |> get_count = %d"
+                (Option.fold ~none:"None" ~some:string_of_int count) expected
+    in
+    Alcotest.(check int) msg expected (QCheck2.Test.test_get_count t)
+
+  let test_count_10 () = test_count_n ~count:10 10
+
+  let test_count_0 () = test_count_n ~count:0 0
+
+  let test_count_default () = test_count_n 100
+
+  let test_count_env () =
+    let () = Unix.putenv "QCHECK_COUNT" "5" in
+    let t = QCheck2.(Test.make Gen.int (fun _ -> true)) in
+    let actual = QCheck2.Test.test_get_count t in
+    Alcotest.(check int) "default count is from QCHECK_COUNT" 5 actual
+
+  let tests =
+    ("Test", Alcotest.[
+         test_case "make with custom count" `Quick test_count_10;
+         test_case "make with custom count" `Quick test_count_0;
+         test_case "make with default count" `Quick test_count_default;
+         test_case "make with env count" `Quick test_count_env;
+       ])
+end
+
 let () =
   Alcotest.run "QCheck"
     [
       Shrink.tests;
       Gen.tests;
+      Test.tests;
     ]
