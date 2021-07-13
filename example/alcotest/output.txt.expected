@@ -19,8 +19,6 @@ test `fail_sort_id` failed on ≥ 1 cases: [1; 0] (after 20 shrink steps)
             Called from file "src/alcotest-engine/monad.ml", line 24, characters 31-35
             
 
-Logs saved to `~/w/qcheck/_build/default/example/alcotest/_build/_tests/my test/suite.001.output'.
  ──────────────────────────────────────────────────────────────────────────────
 
-Full test results in `~/w/qcheck/_build/default/example/alcotest/_build/_tests/my test'.
 3 failures! 4 tests run.

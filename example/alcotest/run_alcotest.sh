@@ -6,5 +6,8 @@ OUT=`./QCheck_alcotest_test.exe $@`
 CODE=$?
 
 # remove non deterministic output
-echo "$OUT" | grep -v 'This run has ID' | sed 's/! in .*s\./!/'
+echo "$OUT" | grep -v 'This run has ID' \
+  | grep -v 'Full test results in' \
+  | grep -v 'Logs saved to' \
+  | sed 's/! in .*s\./!/'
 exit $CODE
