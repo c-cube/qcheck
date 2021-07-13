@@ -1,0 +1,53 @@
+.FEF
+==============================================================================
+Error: tests:2:error_raise_exn.
+
+File "/home/simon/w/qcheck/_build/default/example/ounit/oUnit-tests-noether#00.log", line 57, characters 1-1:
+Error: tests:2:error_raise_exn (in the log).
+
+Raised at file "src/core/QCheck2.ml", line 1742, characters 6-78
+Called from file "src/lib/ounit2/advanced/oUnitRunner.ml", line 83, characters 13-26
+
+test `error_raise_exn` raised exception `Dune__exe__QCheck_ounit_test.Error`
+on `0 (after 63 shrink steps)`
+Raised at file "example/ounit/QCheck_ounit_test.ml", line 19, characters 14-25
+Called from file "src/core/QCheck2.ml", line 1392, characters 9-14
+Called from file "src/core/QCheck2.ml", line 1515, characters 20-48
+
+------------------------------------------------------------------------------
+==============================================================================
+Error: tests:3:fail_check_err_message.
+
+File "/home/simon/w/qcheck/_build/default/example/ounit/oUnit-tests-noether#00.log", line 72, characters 1-1:
+Error: tests:3:fail_check_err_message (in the log).
+
+File "src/core/QCheck2.ml", line 1587, characters 1-1:
+Error: tests:3:fail_check_err_message (in the code).
+
+
+test `fail_check_err_message` failed on ≥ 1 cases:
+0 (after 7 shrink steps)
+this
+will
+always
+fail
+
+
+
+------------------------------------------------------------------------------
+==============================================================================
+Error: tests:1:fail_sort_id.
+
+File "/home/simon/w/qcheck/_build/default/example/ounit/oUnit-tests-noether#00.log", line 34, characters 1-1:
+Error: tests:1:fail_sort_id (in the log).
+
+File "src/core/QCheck2.ml", line 1587, characters 1-1:
+Error: tests:1:fail_sort_id (in the code).
+
+
+test `fail_sort_id` failed on ≥ 1 cases: [1; 0] (after 20 shrink steps)
+                                           
+
+------------------------------------------------------------------------------
+Ran: 4 tests in: <nondet> seconds.
+FAILED: Cases: 4 Tried: 4 Errors: 1 Failures: 2 Skip:  0 Todo: 0 Timeouts: 0.
