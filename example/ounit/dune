@@ -7,6 +7,7 @@
   (targets output.txt)
   (deps ./QCheck_ounit_test.exe)
   (package qcheck)
+  (enabled_if (and (= %{os_type} "Unix") (< %{ocaml_version} 4.09.0)))
   (action
     (with-accepted-exit-codes
       1
@@ -16,5 +17,5 @@
 
 (rule
   (alias runtest)
-  (enabled_if (< %{ocaml_version} 4.09.0))
+  (enabled_if (and (= %{os_type} "Unix") (< %{ocaml_version} 4.09.0)))
   (action (diff output.txt.expected output.txt)))
