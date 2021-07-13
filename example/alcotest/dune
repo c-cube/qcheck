@@ -5,10 +5,16 @@
 
 (rule
   (targets output.txt)
+  (deps ./QCheck_alcotest_test.exe)
   (package qcheck-alcotest)
   (action
-    (with-accepted-exit-codes 1
-      (with-stdout-to %{targets} (run ./QCheck_alcotest_test.exe)))))
+    (with-accepted-exit-codes
+      1
+      (setenv
+        QCHECK_SEED 1234
+        (with-stdout-to
+          %{targets}
+          (run ./run_alcotest.sh --color=never))))))
 
 (rule
   (alias runtest)
