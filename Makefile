@@ -13,6 +13,9 @@ clean:
 doc:
 	@dune build @doc
 
+format:
+	@dune build @fmt --auto-promote
+
 example-test:
 	@dune exec example/ounit/QCheck_test.exe
 
