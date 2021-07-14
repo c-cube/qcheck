@@ -1255,10 +1255,12 @@ module Test = struct
   let default_count = 100
 
   let global_count count =
-    match (count, Sys.getenv_opt "QCHECK_COUNT") with
+    let count = match (count, Sys.getenv_opt "QCHECK_COUNT") with
     | (Some x, _) -> x
     | (_, Some x) -> int_of_string x
     | (None, None) -> default_count
+  in
+  if count < 0 then invalid_arg ("count must be > 0 but value is " ^ string_of_int count) else count
 
   let fresh_name =
     let r = ref 0 in
