@@ -6,47 +6,38 @@ all rights reserved.
 
 (** {1 Quickcheck inspired property-based testing} *)
 
-let poly_compare=compare
-open Printf
+let poly_compare = compare
 
+open Printf
 module RS = Random.State
 
-let (|>) x f = f x
+let ( |> ) x f = f x
 
 let rec foldn ~f ~init:acc i =
-  if i = 0 then acc else foldn ~f ~init:(f acc i) (i-1)
+  if i = 0 then acc else foldn ~f ~init:(f acc i) (i - 1)
 
 let _is_some = function Some _ -> true | None -> false
 
-let _opt_map_or ~d ~f = function
-  | None -> d
-  | Some x -> f x
+let _opt_map_or ~d ~f = function None -> d | Some x -> f x
 
-let _opt_or a b = match a with
-  | None -> b
-  | Some x -> x
+let _opt_or a b = match a with None -> b | Some x -> x
 
-let _opt_map ~f = function
-  | None -> None
-  | Some x -> Some (f x)
+let _opt_map ~f = function None -> None | Some x -> Some (f x)
 
-let _opt_map_2 ~f a b = match a, b with
-  | Some x, Some y -> Some (f x y)
+let _opt_map_2 ~f a b =
+  match (a, b) with (Some x, Some y) -> Some (f x y) | _ -> None
+
+let _opt_map_3 ~f a b c =
+  match (a, b, c) with (Some x, Some y, Some z) -> Some (f x y z) | _ -> None
+
+let _opt_map_4 ~f a b c d =
+  match (a, b, c, d) with
+  | (Some x, Some y, Some z, Some w) -> Some (f x y z w)
   | _ -> None
 
-let _opt_map_3 ~f a b c = match a, b, c with
-  | Some x, Some y, Some z -> Some (f x y z)
-  | _ -> None
+let _opt_sum a b = match (a, b) with (Some _, _) -> a | (None, _) -> b
 
-let _opt_map_4 ~f a b c d = match a, b, c, d with
-  | Some x, Some y, Some z, Some w -> Some (f x y z w)
-  | _ -> None
-
-let _opt_sum a b = match a, b with
-  | Some _, _ -> a
-  | None, _ -> b
-
-let sum_int = List.fold_left (+) 0
+let sum_int = List.fold_left ( + ) 0
 
 exception No_example_found of string
 (* raised if an example failed to be found *)
@@ -55,35 +46,46 @@ let assume = QCheck2.assume
 
 let assume_fail = QCheck2.assume_fail
 
-let (==>) = QCheck2.(==>)
+let ( ==> ) = QCheck2.( ==> )
 
 module Gen = struct
   type 'a t = RS.t -> 'a
+
   type 'a sized = int -> Random.State.t -> 'a
 
   let return x _st = x
+
   let pure = return
 
-  let (>>=) gen f st =
-    f (gen st) st
+  let ( >>= ) gen f st = f (gen st) st
 
-  let (<*>) f x st = f st (x st)
+  let ( <*> ) f x st = f st (x st)
+
   let map f x st = f (x st)
+
   let map2 f x y st = f (x st) (y st)
+
   let map3 f x y z st = f (x st) (y st) (z st)
-  let map_keep_input f gen st = let x = gen st in x, f x
-  let (>|=) x f st = f (x st)
-  let (<$>) f x st = f (x st)
+
+  let map_keep_input f gen st =
+    let x = gen st in
+    (x, f x)
+
+  let ( >|= ) x f st = f (x st)
+
+  let ( <$> ) f x st = f (x st)
 
   let oneof l st = List.nth l (Random.State.int st (List.length l)) st
+
   let oneofl xs st = List.nth xs (Random.State.int st (List.length xs))
+
   let oneofa xs st = Array.get xs (Random.State.int st (Array.length xs))
 
   let frequencyl l st =
     let sums = sum_int (List.map fst l) in
     let i = Random.State.int st sums in
     let rec aux acc = function
-      | ((x,g)::xs) -> if i < acc+x then g else aux (acc+x) xs
+      | (x, g) :: xs -> if i < acc + x then g else aux (acc + x) xs
       | _ -> failwith "frequency"
     in
     aux 0 l
@@ -106,19 +108,19 @@ module Gen = struct
 
   let big_nat st =
     let p = RS.float st 1. in
-    if p < 0.75 then nat st
-    else RS.int st 1_000_000
+    if p < 0.75 then nat st else RS.int st 1_000_000
 
   let unit _st = ()
 
   let bool st = RS.bool st
 
   let float st =
-    exp (RS.float st 15. *. (if RS.float st 1. < 0.5 then 1. else -1.))
-    *. (if RS.float st 1. < 0.5 then 1. else -1.)
+    exp (RS.float st 15. *. if RS.float st 1. < 0.5 then 1. else -1.)
+    *. if RS.float st 1. < 0.5 then 1. else -1.
 
   let pfloat st = abs_float (float st)
-  let nfloat st = -.(pfloat st)
+
+  let nfloat st = -.pfloat st
 
   let float_bound_inclusive bound st = RS.float st bound
 
@@ -129,108 +131,109 @@ module Gen = struct
     | b_neg -> RS.float st (b_neg +. epsilon_float)
 
   let float_range low high =
-    if high < low || high -. low > max_float then invalid_arg "Gen.float_range";
-    fun st -> low +. (float_bound_inclusive (high -. low) st)
+    if high < low || high -. low > max_float then invalid_arg "Gen.float_range" ;
+    fun st -> low +. float_bound_inclusive (high -. low) st
 
-  let (--.) = float_range
+  let ( --. ) = float_range
 
-  let neg_int st = -(nat st)
+  let neg_int st = -nat st
 
   let opt ?(ratio = 0.85) f st =
     let p = RS.float st 1. in
-    if p < (1.0 -. ratio) then None
-    else Some (f st)
+    if p < 1.0 -. ratio then None else Some (f st)
 
   (* Uniform random int generator *)
   let pint =
-    if Sys.word_size = 32 then
-      fun st -> RS.bits st
+    if Sys.word_size = 32 then fun st -> RS.bits st
     else (* word size = 64 *)
       fun st ->
-        RS.bits st                        (* Bottom 30 bits *)
-        lor (RS.bits st lsl 30)           (* Middle 30 bits *)
-        lor ((RS.bits st land 3) lsl 60)  (* Top 2 bits *)  (* top bit = 0 *)
+      RS.bits st (* Bottom 30 bits *)
+      lor (RS.bits st lsl 30) (* Middle 30 bits *)
+      lor ((RS.bits st land 3) lsl 60)
 
-  let int st = if RS.bool st then - (pint st) - 1 else pint st
+  (* Top 2 bits *)
+  (* top bit = 0 *)
+
+  let int st = if RS.bool st then -pint st - 1 else pint st
+
   let int_bound n =
-    if n < 0 then invalid_arg "Gen.int_bound";
-    if n <= (1 lsl 30) - 2
-    then fun st -> Random.State.int st (n + 1)
-    else fun st -> let r = pint st in r mod (n + 1)
+    if n < 0 then invalid_arg "Gen.int_bound" ;
+    if n <= (1 lsl 30) - 2 then fun st -> Random.State.int st (n + 1)
+    else fun st ->
+      let r = pint st in
+      r mod (n + 1)
+
   let int_range a b =
-    if b < a then invalid_arg "Gen.int_range";
+    if b < a then invalid_arg "Gen.int_range" ;
     if a >= 0 || b < 0 then (
       (* range smaller than max_int *)
-      assert (b-a >= 0);
-      fun st -> a + (int_bound (b-a) st)
-    ) else (
-      (* range potentially bigger than max_int: we split on 0 and
-         choose the itv wrt to their size ratio *)
-      fun st ->
+      assert (b - a >= 0) ;
+      fun st -> a + int_bound (b - a) st)
+    else
+      fun (* range potentially bigger than max_int: we split on 0 and
+             choose the itv wrt to their size ratio *)
+            st ->
       let f_a = float_of_int a in
-      let ratio = (-.f_a) /. (1. +. float_of_int b -. f_a) in
-      if Random.State.float st 1. <= ratio then - (int_bound (- (a+1)) st) - 1
+      let ratio = -.f_a /. (1. +. float_of_int b -. f_a) in
+      if Random.State.float st 1. <= ratio then -int_bound (-(a + 1)) st - 1
       else int_bound b st
-    )
 
-  let (--) = int_range
+  let ( -- ) = int_range
 
   (* NOTE: we keep this alias to not break code that uses [small_int]
      for sizes of strings, arrays, etc. *)
   let small_int = small_nat
 
-  let small_signed_int st =
-    if bool st
-    then small_nat st
-    else - (small_nat st)
+  let small_signed_int st = if bool st then small_nat st else -small_nat st
 
   let char_range a b = map Char.chr (Char.code a -- Char.code b)
 
   let random_binary_string st length =
     (* 0b011101... *)
     let s = Bytes.create (length + 2) in
-    Bytes.set s 0 '0';
-    Bytes.set s 1 'b';
+    Bytes.set s 0 '0' ;
+    Bytes.set s 1 'b' ;
     for i = 0 to length - 1 do
-      Bytes.set s (i+2) (if RS.bool st then '0' else '1')
-    done;
+      Bytes.set s (i + 2) (if RS.bool st then '0' else '1')
+    done ;
     Bytes.unsafe_to_string s
 
   let ui32 st = Int32.of_string (random_binary_string st 32)
+
   let ui64 st = Int64.of_string (random_binary_string st 64)
 
   let list_size size gen st =
-    foldn ~f:(fun acc _ -> (gen st)::acc) ~init:[] (size st)
+    foldn ~f:(fun acc _ -> gen st :: acc) ~init:[] (size st)
+
   let list gen st = list_size nat gen st
+
   let list_repeat n g = list_size (return n) g
 
-  let array_size size gen st =
-    Array.init (size st) (fun _ -> gen st)
+  let array_size size gen st = Array.init (size st) (fun _ -> gen st)
+
   let array gen st = array_size nat gen st
+
   let array_repeat n g = array_size (return n) g
 
-  let flatten_l l st = List.map (fun f->f st) l
-  let flatten_a a st = Array.map (fun f->f st) a
-  let flatten_opt o st =
-    match o with
-    | None -> None
-    | Some f -> Some (f st)
-  let flatten_res r st =
-    match r with
-    | Ok f -> Ok (f st)
-    | Error e -> Error e
+  let flatten_l l st = List.map (fun f -> f st) l
+
+  let flatten_a a st = Array.map (fun f -> f st) a
+
+  let flatten_opt o st = match o with None -> None | Some f -> Some (f st)
+
+  let flatten_res r st = match r with Ok f -> Ok (f st) | Error e -> Error e
 
   let shuffle_a a st =
-    for i = Array.length a-1 downto 1 do
-      let j = Random.State.int st (i+1) in
+    for i = Array.length a - 1 downto 1 do
+      let j = Random.State.int st (i + 1) in
       let tmp = a.(i) in
-      a.(i) <- a.(j);
-      a.(j) <- tmp;
+      a.(i) <- a.(j) ;
+      a.(j) <- tmp
     done
 
   let shuffle_l l st =
     let a = Array.of_list l in
-    shuffle_a a st;
+    shuffle_a a st ;
     Array.to_list a
 
   let shuffle_w_l l st =
@@ -239,10 +242,12 @@ module Gen = struct
       (float_bound_inclusive 1. st ** (1. /. fl_w), v)
     in
     let samples = List.rev_map sample l in
-    List.sort (fun (w1, _) (w2, _) -> poly_compare w1 w2) samples |> List.rev_map snd
+    List.sort (fun (w1, _) (w2, _) -> poly_compare w1 w2) samples
+    |> List.rev_map snd
 
   let range_subset ~size low high st =
-    if not (low <= high && size <= high - low + 1) then invalid_arg "Gen.range_subset";
+    if not (low <= high && size <= high - low + 1) then
+      invalid_arg "Gen.range_subset" ;
     (* The algorithm below is attributed to Floyd, see for example
        https://eyalsch.wordpress.com/2010/04/01/random-sample/
        https://math.stackexchange.com/questions/178690
@@ -252,17 +257,15 @@ module Gen = struct
        dependencies implements dichotomic search, so using Set is
        easier.
     *)
-    let module ISet = Set.Make(Int) in
+    let module ISet = Set.Make (Int) in
     let s = ref ISet.empty in
     let arr = Array.make size 0 in
     for i = high - size to high do
       let pos = int_range high i st in
-      let choice =
-        if ISet.mem pos !s then i else pos
-      in
-      arr.(i - low) <- choice;
-      s := ISet.add choice !s;
-    done;
+      let choice = if ISet.mem pos !s then i else pos in
+      arr.(i - low) <- choice ;
+      s := ISet.add choice !s
+    done ;
     arr
 
   let array_subset size arr st =
@@ -278,28 +281,35 @@ module Gen = struct
   let char st = char_of_int (RS.int st 256)
 
   let printable_chars =
-    let l = 126-32+1 in
+    let l = 126 - 32 + 1 in
     let s = Bytes.create l in
-    for i = 0 to l-2 do
-      Bytes.set s i (char_of_int (32+i))
-    done;
-    Bytes.set s (l-1) '\n';
+    for i = 0 to l - 2 do
+      Bytes.set s i (char_of_int (32 + i))
+    done ;
+    Bytes.set s (l - 1) '\n' ;
     Bytes.unsafe_to_string s
 
   let printable st = printable_chars.[RS.int st (String.length printable_chars)]
+
   let numeral st = char_of_int (48 + RS.int st 10)
 
   let string_size ?(gen = char) size st =
     let s = Bytes.create (size st) in
     for i = 0 to Bytes.length s - 1 do
       Bytes.set s i (gen st)
-    done;
+    done ;
     Bytes.unsafe_to_string s
+
   let string ?gen st = string_size ?gen nat st
+
   let string_of gen = string_size ~gen nat
+
   let string_readable = string_size ~gen:char nat
+
   let small_string ?gen st = string_size ?gen small_nat st
+
   let small_list gen = list_size small_nat gen
+
   let small_array gen = array_size small_nat gen
 
   let join g st = (g st) st
@@ -307,18 +317,24 @@ module Gen = struct
   (* corner cases *)
 
   let graft_corners gen corners () =
-    let cors = ref corners in fun st ->
-      match !cors with [] -> gen st
-      | e::l -> cors := l; e
+    let cors = ref corners in
+    fun st ->
+      match !cors with
+      | [] -> gen st
+      | e :: l ->
+          cors := l ;
+          e
 
-  let int_pos_corners = [0;1;2;max_int]
-  let int_corners = int_pos_corners @ [min_int]
+  let int_pos_corners = [ 0; 1; 2; max_int ]
+
+  let int_corners = int_pos_corners @ [ min_int ]
 
   let nng_corners () = graft_corners nat int_pos_corners ()
 
   (* sized, fix *)
 
   let sized_size s f st = f (s st) st
+
   let sized f = sized_size nat f
 
   let fix f =
@@ -328,7 +344,7 @@ module Gen = struct
   (* nat splitting *)
 
   let nat_split2 n st =
-    if (n < 2) then invalid_arg "nat_split2";
+    if n < 2 then invalid_arg "nat_split2" ;
     let n1 = int_range 1 (n - 1) st in
     (n1, n - n1)
 
@@ -337,77 +353,82 @@ module Gen = struct
     (n1, n - n1)
 
   let pos_split ~size:k n st =
-    if (k > n) then invalid_arg "nat_split";
+    if k > n then invalid_arg "nat_split" ;
     (* To split n into n{0}+n{1}+..+n{k-1}, we draw distinct "boundaries"
        b{-1}..b{k-1}, with b{-1}=0 and b{k-1} = n
        and the k-1 intermediate boundaries b{0}..b{k-2}
        chosen randomly distinct in [1;n-1].
 
        Then each n{i} is defined as b{i}-b{i-1}. *)
-    let b = range_subset ~size:(k-1) 1 (n - 1) st in
+    let b = range_subset ~size:(k - 1) 1 (n - 1) st in
     Array.init k (fun i ->
-      if i = 0 then b.(0)
-      else if i = k-1 then n - b.(i-1)
-      else b.(i) - b.(i-1)
-    )
+        if i = 0 then b.(0)
+        else if i = k - 1 then n - b.(i - 1)
+        else b.(i) - b.(i - 1))
 
   let nat_split ~size:k n st =
-    pos_split ~size:k (n+k) st
-    |> Array.map (fun v -> v - 1)
+    pos_split ~size:k (n + k) st |> Array.map (fun v -> v - 1)
 
-  let generate ?(rand=Random.State.make_self_init()) ~n g =
+  let generate ?(rand = Random.State.make_self_init ()) ~n g =
     list_repeat n g rand
 
-  let generate1 ?(rand=Random.State.make_self_init()) g = g rand
+  let generate1 ?(rand = Random.State.make_self_init ()) g = g rand
 
   let delay f st = f () st
 
-  let (let+) = (>|=)
+  let ( let+ ) = ( >|= )
 
-  let (and+) = pair
+  let ( and+ ) = pair
 
-  let (let*) = (>>=)
+  let ( let* ) = ( >>= )
 
-  let (and*) = pair
+  let ( and* ) = pair
 end
 
 module Print = struct
   type 'a t = 'a -> string
 
   let unit _ = "()"
+
   let int = string_of_int
+
   let bool = string_of_bool
+
   let float = string_of_float
+
   let string s = s
+
   let char c = String.make 1 c
 
-  let option f = function
-    | None -> "None"
-    | Some x -> "Some (" ^ f x ^ ")"
+  let option f = function None -> "None" | Some x -> "Some (" ^ f x ^ ")"
 
-  let pair a b (x,y) = Printf.sprintf "(%s, %s)" (a x) (b y)
-  let triple a b c (x,y,z) = Printf.sprintf "(%s, %s, %s)" (a x) (b y) (c z)
-  let quad a b c d (x,y,z,w) =
+  let pair a b (x, y) = Printf.sprintf "(%s, %s)" (a x) (b y)
+
+  let triple a b c (x, y, z) = Printf.sprintf "(%s, %s, %s)" (a x) (b y) (c z)
+
+  let quad a b c d (x, y, z, w) =
     Printf.sprintf "(%s, %s, %s, %s)" (a x) (b y) (c z) (d w)
 
   let list pp l =
     let b = Buffer.create 25 in
-    Buffer.add_char b '[';
-    List.iteri (fun i x ->
-      if i > 0 then Buffer.add_string b "; ";
-      Buffer.add_string b (pp x))
-      l;
-    Buffer.add_char b ']';
+    Buffer.add_char b '[' ;
+    List.iteri
+      (fun i x ->
+        if i > 0 then Buffer.add_string b "; " ;
+        Buffer.add_string b (pp x))
+      l ;
+    Buffer.add_char b ']' ;
     Buffer.contents b
 
   let array pp a =
     let b = Buffer.create 25 in
-    Buffer.add_string b "[|";
-    Array.iteri (fun i x ->
-      if i > 0 then Buffer.add_string b "; ";
-      Buffer.add_string b (pp x))
-      a;
-    Buffer.add_string b "|]";
+    Buffer.add_string b "[|" ;
+    Array.iteri
+      (fun i x ->
+        if i > 0 then Buffer.add_string b "; " ;
+        Buffer.add_string b (pp x))
+      a ;
+    Buffer.add_string b "|]" ;
     Buffer.contents b
 
   let comap f p x = p (f x)
@@ -415,42 +436,68 @@ end
 
 module Iter = struct
   type 'a t = ('a -> unit) -> unit
+
   let empty _ = ()
+
   let return x yield = yield x
-  let (<*>) a b yield = a (fun f -> b (fun x ->  yield (f x)))
-  let (>>=) a f yield = a (fun x -> f x yield)
+
+  let ( <*> ) a b yield = a (fun f -> b (fun x -> yield (f x)))
+
+  let ( >>= ) a f yield = a (fun x -> f x yield)
+
   let map f a yield = a (fun x -> yield (f x))
+
   let map2 f a b yield = a (fun x -> b (fun y -> yield (f x y)))
-  let (>|=) a f = map f a
-  let append a b yield = a yield; b yield
-  let append_l l yield = List.iter (fun s->s yield) l
+
+  let ( >|= ) a f = map f a
+
+  let append a b yield =
+    a yield ;
+    b yield
+
+  let append_l l yield = List.iter (fun s -> s yield) l
+
   let flatten s yield = s (fun sub -> sub yield)
+
   let filter f s yield = s (fun x -> if f x then yield x)
-  let (<+>) = append
+
+  let ( <+> ) = append
+
   let of_list l yield = List.iter yield l
+
   let of_array a yield = Array.iter yield a
-  let pair a b yield = a (fun x -> b(fun y -> yield (x,y)))
-  let triple a b c yield = a (fun x -> b (fun y -> c (fun z -> yield (x,y,z))))
+
+  let pair a b yield = a (fun x -> b (fun y -> yield (x, y)))
+
+  let triple a b c yield =
+    a (fun x -> b (fun y -> c (fun z -> yield (x, y, z))))
+
   let quad a b c d yield =
-    a (fun x -> b (fun y -> c (fun z -> d (fun w -> yield (x,y,z,w)))))
+    a (fun x -> b (fun y -> c (fun z -> d (fun w -> yield (x, y, z, w)))))
 
   exception IterExit
+
   let find_map p iter =
     let r = ref None in
-    (try iter (fun x -> match p x with Some _ as y -> r := y; raise IterExit | None -> ())
-     with IterExit -> ()
-    );
+    (try
+       iter (fun x ->
+           match p x with
+           | Some _ as y ->
+               r := y ;
+               raise IterExit
+           | None -> ())
+     with IterExit -> ()) ;
     !r
 
-  let find p iter = find_map (fun x->if p x then Some x else None) iter
+  let find p iter = find_map (fun x -> if p x then Some x else None) iter
 
-  let (let+) = (>|=)
+  let ( let+ ) = ( >|= )
 
-  let (and+) = pair
+  let ( and+ ) = pair
 
-  let (let*) = (>>=)
+  let ( let* ) = ( >>= )
 
-   let (and*) = pair
+  let ( and* ) = pair
 end
 
 module Shrink = struct
@@ -464,50 +511,74 @@ module Shrink = struct
   let int x yield =
     let y = ref x in
     (* try some divisors *)
-    while !y < -2 || !y >2 do y := !y / 2; yield (x - !y); done; (* fast path *)
-    if x>0 then yield (x-1);
-    if x<0 then yield (x+1);
+    while !y < -2 || !y > 2 do
+      y := !y / 2 ;
+      yield (x - !y)
+    done ;
+    (* fast path *)
+    if x > 0 then yield (x - 1) ;
+    if x < 0 then yield (x + 1) ;
     ()
 
   let int32 x yield =
     let open Int32 in
     let y = ref x in
     (* try some divisors *)
-    while !y < -2l || !y > 2l do y := div !y 2l; yield (sub x !y); done; (* fast path *)
-    if x>0l then yield (pred x);
-    if x<0l then yield (succ x);
+    while !y < -2l || !y > 2l do
+      y := div !y 2l ;
+      yield (sub x !y)
+    done ;
+    (* fast path *)
+    if x > 0l then yield (pred x) ;
+    if x < 0l then yield (succ x) ;
     ()
 
   let int64 x yield =
     let open Int64 in
     let y = ref x in
     (* try some divisors *)
-    while !y < -2L || !y > 2L do y := div !y 2L; yield (sub x !y); done; (* fast path *)
-    if x>0L then yield (pred x);
-    if x<0L then yield (succ x);
+    while !y < -2L || !y > 2L do
+      y := div !y 2L ;
+      yield (sub x !y)
+    done ;
+    (* fast path *)
+    if x > 0L then yield (pred x) ;
+    if x < 0L then yield (succ x) ;
     ()
 
   (* aggressive shrinker for integers,
      get from 0 to x, by dichotomy or just enumerating smaller values *)
   let int_aggressive x yield =
     let y = ref x in
-    while !y < -2 || !y >2 do y := !y / 2; yield (x - !y); done; (* fast path *)
-    if x>0 then for i=x-1 downto 0 do yield i done;
-    if x<0 then for i=x+1 to 0 do yield i done
+    while !y < -2 || !y > 2 do
+      y := !y / 2 ;
+      yield (x - !y)
+    done ;
+    (* fast path *)
+    if x > 0 then
+      for i = x - 1 downto 0 do
+        yield i
+      done ;
+    if x < 0 then
+      for i = x + 1 to 0 do
+        yield i
+      done
 
   let filter f shrink x = Iter.filter f (shrink x)
 
-  let char c yield =
-    if Char.code c > 0 then yield (Char.chr (Char.code c-1))
+  let char c yield = if Char.code c > 0 then yield (Char.chr (Char.code c - 1))
 
-  let option s x = match x with
+  let option s x =
+    match x with
     | None -> Iter.empty
-    | Some x -> Iter.(return None <+> map (fun y->Some y) (s x))
+    | Some x -> Iter.(return None <+> map (fun y -> Some y) (s x))
 
   let string s yield =
-    for i =0 to String.length s-1 do
-      let s' = Bytes.init (String.length s-1)
-        (fun j -> if j<i then s.[j] else s.[j+1])
+    for i = 0 to String.length s - 1 do
+      let s' =
+        Bytes.init
+          (String.length s - 1)
+          (fun j -> if j < i then s.[j] else s.[j + 1])
       in
       yield (Bytes.unsafe_to_string s')
     done
@@ -516,38 +587,39 @@ module Shrink = struct
     let n = Array.length a in
     let chunk_size = ref n in
     while !chunk_size > 0 do
-      for i=0 to n - !chunk_size do
+      for i = 0 to n - !chunk_size do
         (* remove elements in [i .. i+!chunk_size] *)
-        let a' = Array.init (n - !chunk_size)
-          (fun j -> if j< i then a.(j) else a.(j + !chunk_size))
+        let a' =
+          Array.init (n - !chunk_size) (fun j ->
+              if j < i then a.(j) else a.(j + !chunk_size))
         in
         yield a'
-      done;
-      chunk_size := !chunk_size / 2;
-    done;
+      done ;
+      chunk_size := !chunk_size / 2
+    done ;
     match shrink with
     | None -> ()
     | Some f ->
         (* try to shrink each element of the array *)
         for i = 0 to Array.length a - 1 do
           f a.(i) (fun x ->
-            let b = Array.copy a in
-            b.(i) <- x;
-            yield b
-          )
+              let b = Array.copy a in
+              b.(i) <- x ;
+              yield b)
         done
 
   let list_spine l yield =
     let n = List.length l in
-    let chunk_size = ref ((n+1)/2) in
+    let chunk_size = ref ((n + 1) / 2) in
 
     (* push the [n] first elements of [l] into [q], return the rest of the list *)
-    let rec fill_queue n l q = match n,l with
-      | 0, _ -> l
-      | _, x::xs ->
-        Queue.push x q;
-        fill_queue (n-1) xs q
-      | _, _ -> assert false
+    let rec fill_queue n l q =
+      match (n, l) with
+      | (0, _) -> l
+      | (_, x :: xs) ->
+          Queue.push x q ;
+          fill_queue (n - 1) xs q
+      | (_, _) -> assert false
     in
 
     (* remove elements from the list, by chunks of size [chunk_size] (bigger
@@ -557,196 +629,217 @@ module Shrink = struct
       let l' = fill_queue !chunk_size l q in
       (* remove [chunk_size] elements in queue *)
       let rec pos_loop rev_prefix suffix =
-        yield (List.rev_append rev_prefix suffix);
+        yield (List.rev_append rev_prefix suffix) ;
         match suffix with
         | [] -> ()
-        | x::xs ->
-          Queue.push x q;
-          let y = Queue.pop q in
-          (pos_loop [@tailcall]) (y::rev_prefix) xs
+        | x :: xs ->
+            Queue.push x q ;
+            let y = Queue.pop q in
+            (pos_loop [@tailcall]) (y :: rev_prefix) xs
       in
-      pos_loop [] l';
-      chunk_size := !chunk_size / 2;
+      pos_loop [] l' ;
+      chunk_size := !chunk_size / 2
     done
 
   let list_elems shrink l yield =
     (* try to shrink each element of the list *)
-    let rec elem_loop rev_prefix suffix = match suffix with
+    let rec elem_loop rev_prefix suffix =
+      match suffix with
       | [] -> ()
-      | x::xs ->
-         shrink x (fun x' -> yield (List.rev_append rev_prefix (x'::xs)));
-         elem_loop (x::rev_prefix) xs
+      | x :: xs ->
+          shrink x (fun x' -> yield (List.rev_append rev_prefix (x' :: xs))) ;
+          elem_loop (x :: rev_prefix) xs
     in
     elem_loop [] l
 
   let list ?shrink l yield =
-    list_spine l yield;
-    match shrink with
-    | None -> ()
-    | Some shrink -> list_elems shrink l yield
+    list_spine l yield ;
+    match shrink with None -> () | Some shrink -> list_elems shrink l yield
 
-  let pair a b (x,y) yield =
-    a x (fun x' -> yield (x',y));
-    b y (fun y' -> yield (x,y'))
+  let pair a b (x, y) yield =
+    a x (fun x' -> yield (x', y)) ;
+    b y (fun y' -> yield (x, y'))
 
-  let triple a b c (x,y,z) yield =
-    a x (fun x' -> yield (x',y,z));
-    b y (fun y' -> yield (x,y',z));
-    c z (fun z' -> yield (x,y,z'))
+  let triple a b c (x, y, z) yield =
+    a x (fun x' -> yield (x', y, z)) ;
+    b y (fun y' -> yield (x, y', z)) ;
+    c z (fun z' -> yield (x, y, z'))
 
-  let quad a b c d (x,y,z,w) yield =
-    a x (fun x' -> yield (x',y,z,w));
-    b y (fun y' -> yield (x,y',z,w));
-    c z (fun z' -> yield (x,y,z',w));
-    d w (fun w' -> yield (x,y,z,w'))
+  let quad a b c d (x, y, z, w) yield =
+    a x (fun x' -> yield (x', y, z, w)) ;
+    b y (fun y' -> yield (x, y', z, w)) ;
+    c z (fun z' -> yield (x, y, z', w)) ;
+    d w (fun w' -> yield (x, y, z, w'))
 end
 
 (** {2 Observe Values} *)
 
 module Observable = struct
   (** An observable is a (random) predicate on ['a] *)
-  type -'a t = {
-    print: 'a Print.t;
-    eq: ('a -> 'a -> bool);
-    hash: ('a -> int);
-  }
+  type -'a t = { print : 'a Print.t; eq : 'a -> 'a -> bool; hash : 'a -> int }
 
   let hash o x = o.hash x
+
   let equal o x y = o.eq x y
+
   let print o x = o.print x
 
-  let make ?(eq=(=)) ?(hash=Hashtbl.hash) print =
-    {print; eq; hash; }
+  let make ?(eq = ( = )) ?(hash = Hashtbl.hash) print = { print; eq; hash }
 
   module H = struct
     let combine a b = Hashtbl.seeded_hash a b
+
     let combine_f f s x = Hashtbl.seeded_hash s (f x)
+
     let int i = i land max_int
+
     let bool b = if b then 1 else 2
+
     let char x = Char.code x
-    let string (x:string) = Hashtbl.hash x
-    let opt f = function
-      | None -> 42
-      | Some x -> combine 43 (f x)
+
+    let string (x : string) = Hashtbl.hash x
+
+    let opt f = function None -> 42 | Some x -> combine 43 (f x)
+
     let list f l = List.fold_left (combine_f f) 0x42 l
+
     let array f l = Array.fold_left (combine_f f) 0x42 l
-    let pair f g (x,y) = combine (f x) (g y)
+
+    let pair f g (x, y) = combine (f x) (g y)
   end
 
   module Eq = struct
     type 'a t = 'a -> 'a -> bool
 
-    let int : int t = (=)
-    let string : string t = (=)
-    let bool : bool t = (=)
-    let float : float t = (=)
-    let unit () () = true
-    let char : char t = (=)
+    let int : int t = ( = )
 
-    let rec list f l1 l2 = match l1, l2 with
-      | [], [] -> true
-      | [], _ | _, [] -> false
-      | x1::l1', x2::l2' -> f x1 x2 && list f l1' l2'
+    let string : string t = ( = )
+
+    let bool : bool t = ( = )
+
+    let float : float t = ( = )
+
+    let unit () () = true
+
+    let char : char t = ( = )
+
+    let rec list f l1 l2 =
+      match (l1, l2) with
+      | ([], []) -> true
+      | ([], _) | (_, []) -> false
+      | (x1 :: l1', x2 :: l2') -> f x1 x2 && list f l1' l2'
 
     let array eq a b =
       let rec aux i =
-        if i = Array.length a then true
-        else eq a.(i) b.(i) && aux (i+1)
+        if i = Array.length a then true else eq a.(i) b.(i) && aux (i + 1)
       in
-      Array.length a = Array.length b
-      &&
-      aux 0
+      Array.length a = Array.length b && aux 0
 
-    let option f o1 o2 = match o1, o2 with
-      | None, None -> true
-      | Some _, None
-      | None, Some _ -> false
-      | Some x, Some y -> f x y
+    let option f o1 o2 =
+      match (o1, o2) with
+      | (None, None) -> true
+      | (Some _, None) | (None, Some _) -> false
+      | (Some x, Some y) -> f x y
 
-    let pair f g (x1,y1)(x2,y2) = f x1 x2 && g y1 y2
+    let pair f g (x1, y1) (x2, y2) = f x1 x2 && g y1 y2
   end
 
   let unit : unit t = make ~hash:(fun _ -> 1) ~eq:Eq.unit Print.unit
+
   let bool : bool t = make ~hash:H.bool ~eq:Eq.bool Print.bool
+
   let int : int t = make ~hash:H.int ~eq:Eq.int Print.int
+
   let float : float t = make ~eq:Eq.float Print.float
+
   let string = make ~hash:H.string ~eq:Eq.string Print.string
+
   let char = make ~hash:H.char ~eq:Eq.char Print.char
 
   let option p =
-    make ~hash:(H.opt p.hash) ~eq:(Eq.option p.eq)
-      (Print.option p.print)
+    make ~hash:(H.opt p.hash) ~eq:(Eq.option p.eq) (Print.option p.print)
 
   let array p =
     make ~hash:(H.array p.hash) ~eq:(Eq.array p.eq) (Print.array p.print)
+
   let list p =
     make ~hash:(H.list p.hash) ~eq:(Eq.list p.eq) (Print.list p.print)
 
   let map f p =
-    make ~hash:(fun x -> p.hash (f x)) ~eq:(fun x y -> p.eq (f x)(f y))
+    make
+      ~hash:(fun x -> p.hash (f x))
+      ~eq:(fun x y -> p.eq (f x) (f y))
       (fun x -> p.print (f x))
 
   let pair a b =
-    make ~hash:(H.pair a.hash b.hash) ~eq:(Eq.pair a.eq b.eq) (Print.pair a.print b.print)
-  let triple a b c =
-    map (fun (x,y,z) -> x,(y,z)) (pair a (pair b c))
+    make
+      ~hash:(H.pair a.hash b.hash)
+      ~eq:(Eq.pair a.eq b.eq)
+      (Print.pair a.print b.print)
+
+  let triple a b c = map (fun (x, y, z) -> (x, (y, z))) (pair a (pair b c))
+
   let quad a b c d =
-    map (fun (x,y,z,u) -> x,(y,z,u)) (pair a (triple b c d))
+    map (fun (x, y, z, u) -> (x, (y, z, u))) (pair a (triple b c d))
 end
 
-type 'a stat = string * ('a -> int)
 (** A statistic on a distribution of values of type ['a] *)
+type 'a stat = string * ('a -> int)
 
 type 'a arbitrary = {
-  gen: 'a Gen.t;
-  print: ('a -> string) option; (** print values *)
-  small: ('a -> int) option;  (** size of example *)
-  shrink: ('a -> 'a Iter.t) option;  (** shrink to smaller examples *)
-  collect: ('a -> string) option;  (** map value to tag, and group by tag *)
-  stats: 'a stat list; (** statistics to collect and print *)
+  gen : 'a Gen.t;
+  print : ('a -> string) option;  (** print values *)
+  small : ('a -> int) option;  (** size of example *)
+  shrink : ('a -> 'a Iter.t) option;  (** shrink to smaller examples *)
+  collect : ('a -> string) option;  (** map value to tag, and group by tag *)
+  stats : 'a stat list;  (** statistics to collect and print *)
 }
 
-let make ?print ?small ?shrink ?collect ?(stats=[]) gen = {
-  gen;
-  print;
-  small;
-  shrink;
-  collect;
-  stats;
-}
+let make ?print ?small ?shrink ?collect ?(stats = []) gen =
+  { gen; print; small; shrink; collect; stats }
 
-let set_small f o = {o with small=Some f}
-let set_print f o = {o with print=Some f}
-let set_shrink f o = {o with shrink=Some f}
-let set_collect f o = {o with collect=Some f}
-let set_stats s o = {o with stats=s}
-let add_stat s o = {o with stats=s :: o.stats}
-let set_gen g o = {o with gen=g}
+let set_small f o = { o with small = Some f }
 
-let add_shrink_invariant f o = match o.shrink with
+let set_print f o = { o with print = Some f }
+
+let set_shrink f o = { o with shrink = Some f }
+
+let set_collect f o = { o with collect = Some f }
+
+let set_stats s o = { o with stats = s }
+
+let add_stat s o = { o with stats = s :: o.stats }
+
+let set_gen g o = { o with gen = g }
+
+let add_shrink_invariant f o =
+  match o.shrink with
   | None -> o
-  | Some shr -> {o with shrink=Some (Shrink.filter f shr)}
+  | Some shr -> { o with shrink = Some (Shrink.filter f shr) }
 
 let get_gen o = o.gen
+
 let gen = get_gen
+
 let get_print o = o.print
 
 let small1 _ = 1
 
 let make_scalar ?print ?collect gen =
   make ~shrink:Shrink.nil ~small:small1 ?print ?collect gen
+
 let make_int ?collect gen =
   make ~shrink:Shrink.int ~small:small1 ~print:Print.int ?collect gen
 
 let adapt_ o gen =
   make ?print:o.print ?small:o.small ?shrink:o.shrink ?collect:o.collect gen
 
-let choose l = match l with
+let choose l =
+  match l with
   | [] -> raise (Invalid_argument "quickcheck.choose")
   | l ->
       let a = Array.of_list l in
-      adapt_ a.(0)
-        (fun st ->
+      adapt_ a.(0) (fun st ->
           let arb = a.(RS.int st (Array.length a)) in
           arb.gen st)
 
@@ -754,8 +847,11 @@ let unit : unit arbitrary =
   make ~small:small1 ~shrink:Shrink.nil ~print:(fun _ -> "()") Gen.unit
 
 let bool = make_scalar ~print:string_of_bool Gen.bool
+
 let float = make_scalar ~print:string_of_float Gen.float
+
 let pos_float = make_scalar ~print:string_of_float Gen.pfloat
+
 let neg_float = make_scalar ~print:string_of_float Gen.nfloat
 
 let float_bound_inclusive bound =
@@ -764,49 +860,80 @@ let float_bound_inclusive bound =
 let float_bound_exclusive bound =
   make_scalar ~print:string_of_float (Gen.float_bound_exclusive bound)
 
-let float_range low high = make_scalar ~print:string_of_float (Gen.float_range low high)
+let float_range low high =
+  make_scalar ~print:string_of_float (Gen.float_range low high)
 
 let int = make_int Gen.int
+
 let int_bound n = make_int (Gen.int_bound n)
+
 let int_range a b = make_int (Gen.int_range a b)
-let (--) = int_range
+
+let ( -- ) = int_range
+
 let pos_int = make_int Gen.pint
+
 let small_int = make_int Gen.small_int
+
 let small_nat = make_int Gen.small_nat
+
 let small_signed_int = make_int Gen.small_signed_int
+
 let small_int_corners () = make_int (Gen.nng_corners ())
+
 let neg_int = make_int Gen.neg_int
 
 let int32 =
-  make ~print:(fun i -> Int32.to_string i ^ "l") ~small:small1
-    ~shrink:Shrink.int32 Gen.ui32
+  make
+    ~print:(fun i -> Int32.to_string i ^ "l")
+    ~small:small1
+    ~shrink:Shrink.int32
+    Gen.ui32
+
 let int64 =
-  make ~print:(fun i -> Int64.to_string i ^ "L") ~small:small1
-    ~shrink:Shrink.int64 Gen.ui64
+  make
+    ~print:(fun i -> Int64.to_string i ^ "L")
+    ~small:small1
+    ~shrink:Shrink.int64
+    Gen.ui64
 
 let char = make_scalar ~print:(sprintf "%C") Gen.char
+
 let printable_char = make_scalar ~print:(sprintf "%C") Gen.printable
+
 let numeral_char = make_scalar ~print:(sprintf "%C") Gen.numeral
 
 let string_gen_of_size size gen =
-  make ~shrink:Shrink.string ~small:String.length
-    ~print:(sprintf "%S") (Gen.string_size ~gen size)
+  make
+    ~shrink:Shrink.string
+    ~small:String.length
+    ~print:(sprintf "%S")
+    (Gen.string_size ~gen size)
+
 let string_gen gen =
-  make ~shrink:Shrink.string ~small:String.length
-    ~print:(sprintf "%S") (Gen.string ~gen)
+  make
+    ~shrink:Shrink.string
+    ~small:String.length
+    ~print:(sprintf "%S")
+    (Gen.string ~gen)
 
 let string = string_gen Gen.char
+
 let string_of_size size = string_gen_of_size size Gen.char
+
 let small_string = string_gen_of_size Gen.small_nat Gen.char
 
 let printable_string = string_gen Gen.printable
+
 let printable_string_of_size size = string_gen_of_size size Gen.printable
+
 let small_printable_string = string_gen_of_size Gen.small_nat Gen.printable
 
 let numeral_string = string_gen Gen.numeral
+
 let numeral_string_of_size size = string_gen_of_size size Gen.numeral
 
-let list_sum_ f l = List.fold_left (fun acc x-> f x+acc) 0 l
+let list_sum_ f l = List.fold_left (fun acc x -> f x + acc) 0 l
 
 let mk_list a gen =
   (* small sums sub-sizes if present, otherwise just length *)
@@ -815,10 +942,12 @@ let mk_list a gen =
   make ~small ~shrink:(Shrink.list ?shrink:a.shrink) ?print gen
 
 let list a = mk_list a (Gen.list a.gen)
+
 let list_of_size size a = mk_list a (Gen.list_size size a.gen)
+
 let small_list a = mk_list a (Gen.small_list a.gen)
 
-let array_sum_ f a = Array.fold_left (fun acc x -> f x+acc) 0 a
+let array_sum_ f a = Array.fold_left (fun acc x -> f x + acc) 0 a
 
 let array a =
   let small = _opt_map_or ~d:Array.length ~f:array_sum_ a.small in
@@ -838,42 +967,56 @@ let array_of_size size a =
 
 let pair a b =
   make
-    ?small:(_opt_map_2 ~f:(fun f g (x,y) -> f x+g y) a.small b.small)
+    ?small:(_opt_map_2 ~f:(fun f g (x, y) -> f x + g y) a.small b.small)
     ?print:(_opt_map_2 ~f:Print.pair a.print b.print)
-    ~shrink:(Shrink.pair (_opt_or a.shrink Shrink.nil) (_opt_or b.shrink Shrink.nil))
+    ~shrink:
+      (Shrink.pair (_opt_or a.shrink Shrink.nil) (_opt_or b.shrink Shrink.nil))
     (Gen.pair a.gen b.gen)
 
 let triple a b c =
   make
-    ?small:(_opt_map_3 ~f:(fun f g h (x,y,z) -> f x+g y+h z) a.small b.small c.small)
+    ?small:
+      (_opt_map_3
+         ~f:(fun f g h (x, y, z) -> f x + g y + h z)
+         a.small
+         b.small
+         c.small)
     ?print:(_opt_map_3 ~f:Print.triple a.print b.print c.print)
-    ~shrink:(Shrink.triple (_opt_or a.shrink Shrink.nil)
-      (_opt_or b.shrink Shrink.nil) (_opt_or c.shrink Shrink.nil))
+    ~shrink:
+      (Shrink.triple
+         (_opt_or a.shrink Shrink.nil)
+         (_opt_or b.shrink Shrink.nil)
+         (_opt_or c.shrink Shrink.nil))
     (Gen.triple a.gen b.gen c.gen)
 
 let quad a b c d =
   make
-    ?small:(_opt_map_4 ~f:(fun f g h i (x,y,z,w) ->
-                             f x+g y+h z+i w) a.small b.small c.small d.small)
+    ?small:
+      (_opt_map_4
+         ~f:(fun f g h i (x, y, z, w) -> f x + g y + h z + i w)
+         a.small
+         b.small
+         c.small
+         d.small)
     ?print:(_opt_map_4 ~f:Print.quad a.print b.print c.print d.print)
-    ~shrink:(Shrink.quad (_opt_or a.shrink Shrink.nil)
-                   (_opt_or b.shrink Shrink.nil)
-       (_opt_or c.shrink Shrink.nil)
-       (_opt_or d.shrink Shrink.nil))
+    ~shrink:
+      (Shrink.quad
+         (_opt_or a.shrink Shrink.nil)
+         (_opt_or b.shrink Shrink.nil)
+         (_opt_or c.shrink Shrink.nil)
+         (_opt_or d.shrink Shrink.nil))
     (Gen.quad a.gen b.gen c.gen d.gen)
 
 let option ?ratio a =
   let g = Gen.opt ?ratio a.gen
   and shrink = _opt_map a.shrink ~f:Shrink.option
   and small =
-    _opt_map_or a.small ~d:(function None -> 0 | Some _ -> 1)
+    _opt_map_or
+      a.small
+      ~d:(function None -> 0 | Some _ -> 1)
       ~f:(fun f o -> match o with None -> 0 | Some x -> f x)
   in
-  make
-    ~small
-    ?shrink
-    ?print:(_opt_map ~f:Print.option a.print)
-    g
+  make ~small ?shrink ?print:(_opt_map ~f:Print.option a.print) g
 
 let map ?rev f a =
   make
@@ -883,304 +1026,308 @@ let map ?rev f a =
     ?collect:(_opt_map_2 rev a.collect ~f:(fun r f x -> f (r x)))
     (fun st -> f (a.gen st))
 
-
 let fun1_unsafe : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary =
-  fun a1 a2 ->
-    let magic_object = Obj.magic (object end) in
-    let gen : ('a -> 'b) Gen.t = fun st ->
-      let h = Hashtbl.create 10 in
-      fun x ->
-        if x == magic_object then
-          Obj.magic h
-        else
-          try Hashtbl.find h x
-          with Not_found ->
-            let b = a2.gen st in
-            Hashtbl.add h x b;
-            b in
-    let pp : (('a -> 'b) -> string) option = _opt_map_2 a1.print a2.print ~f:(fun p1 p2 f ->
-      let h : ('a, 'b) Hashtbl.t = Obj.magic (f magic_object) in
-      let b = Buffer.create 20 in
-      Hashtbl.iter (fun key value -> Printf.bprintf b "%s -> %s; " (p1 key) (p2 value)) h;
-      "{" ^ Buffer.contents b ^ "}"
-    ) in
-    make
-      ?print:pp
-      gen
+ fun a1 a2 ->
+  let magic_object = Obj.magic (object end) in
+  let gen : ('a -> 'b) Gen.t =
+   fun st ->
+    let h = Hashtbl.create 10 in
+    fun x ->
+      if x == magic_object then Obj.magic h
+      else
+        try Hashtbl.find h x
+        with Not_found ->
+          let b = a2.gen st in
+          Hashtbl.add h x b ;
+          b
+  in
+  let pp : (('a -> 'b) -> string) option =
+    _opt_map_2 a1.print a2.print ~f:(fun p1 p2 f ->
+        let h : ('a, 'b) Hashtbl.t = Obj.magic (f magic_object) in
+        let b = Buffer.create 20 in
+        Hashtbl.iter
+          (fun key value -> Printf.bprintf b "%s -> %s; " (p1 key) (p2 value))
+          h ;
+        "{" ^ Buffer.contents b ^ "}")
+  in
+  make ?print:pp gen
 
 let fun2_unsafe gp1 gp2 gp3 = fun1_unsafe gp1 (fun1_unsafe gp2 gp3)
 
 module Poly_tbl : sig
   type ('a, 'b) t
 
-  val create: 'a Observable.t -> 'b arbitrary -> int -> ('a, 'b) t Gen.t
+  val create : 'a Observable.t -> 'b arbitrary -> int -> ('a, 'b) t Gen.t
+
   val get : ('a, 'b) t -> 'a -> 'b option
+
   val size : ('b -> int) -> (_, 'b) t -> int
+
   val shrink1 : ('a, 'b) t Shrink.t
+
   val shrink2 : 'b Shrink.t -> ('a, 'b) t Shrink.t
-  val print : (_,_) t Print.t
+
+  val print : (_, _) t Print.t
 end = struct
   type ('a, 'b) t = {
     get : 'a -> 'b option;
-    p_size: ('b->int) -> int;
-    p_shrink1: ('a, 'b) t Iter.t;
-    p_shrink2: 'b Shrink.t -> ('a, 'b) t Iter.t;
-    p_print: unit -> string;
+    p_size : ('b -> int) -> int;
+    p_shrink1 : ('a, 'b) t Iter.t;
+    p_shrink2 : 'b Shrink.t -> ('a, 'b) t Iter.t;
+    p_print : unit -> string;
   }
 
-  let create (type k)(type v) k v size st : (k,v) t =
-    let module T = Hashtbl.Make(struct
-        type t = k
-        let equal = k.Observable.eq
-        let hash = k.Observable.hash
-      end) in
-    let tbl_to_list tbl =
-      T.fold (fun k v l -> (k,v)::l) tbl []
+  let create (type k v) k v size st : (k, v) t =
+    let module T = Hashtbl.Make (struct
+      type t = k
+
+      let equal = k.Observable.eq
+
+      let hash = k.Observable.hash
+    end) in
+    let tbl_to_list tbl = T.fold (fun k v l -> (k, v) :: l) tbl []
     and tbl_of_list l =
       let tbl = T.create (max (List.length l) 8) in
-      List.iter (fun (k,v) -> T.add tbl k v) l;
+      List.iter (fun (k, v) -> T.add tbl k v) l ;
       tbl
     in
     (* make a table
        @param extend if true, extend table on the fly *)
-    let rec make ~extend tbl = {
-      get=(fun x ->
-        try Some (T.find tbl x)
-        with Not_found ->
-          if extend then (
-            let v = v.gen st in
-            T.add tbl x v;
-            Some v
-          ) else None);
-      p_print=(fun () -> match v.print with
-        | None -> "<fun>"
-        | Some pp_v ->
-          let b = Buffer.create 64 in
-          T.iter
-            (fun key value ->
-               Printf.bprintf b "%s -> %s; "
-                 (k.Observable.print key) (pp_v value))
-            tbl;
-        Buffer.contents b);
-      p_shrink1=(fun yield ->
-        Shrink.list (tbl_to_list tbl)
-          (fun l ->
-             yield (make ~extend:false (tbl_of_list l)))
-      );
-      p_shrink2=(fun shrink_val yield ->
-        (* shrink bindings one by one *)
-        T.iter
-          (fun x y ->
-             shrink_val y
-               (fun y' ->
-                  let tbl' = T.copy tbl in
-                  T.replace tbl' x y';
-                  yield (make ~extend:false tbl')))
-          tbl);
-      p_size=(fun size_v -> T.fold (fun _ v n -> n + size_v v) tbl 0);
-    } in
+    let rec make ~extend tbl =
+      {
+        get =
+          (fun x ->
+            try Some (T.find tbl x)
+            with Not_found ->
+              if extend then (
+                let v = v.gen st in
+                T.add tbl x v ;
+                Some v)
+              else None);
+        p_print =
+          (fun () ->
+            match v.print with
+            | None -> "<fun>"
+            | Some pp_v ->
+                let b = Buffer.create 64 in
+                T.iter
+                  (fun key value ->
+                    Printf.bprintf
+                      b
+                      "%s -> %s; "
+                      (k.Observable.print key)
+                      (pp_v value))
+                  tbl ;
+                Buffer.contents b);
+        p_shrink1 =
+          (fun yield ->
+            Shrink.list (tbl_to_list tbl) (fun l ->
+                yield (make ~extend:false (tbl_of_list l))));
+        p_shrink2 =
+          (fun shrink_val yield ->
+            (* shrink bindings one by one *)
+            T.iter
+              (fun x y ->
+                shrink_val y (fun y' ->
+                    let tbl' = T.copy tbl in
+                    T.replace tbl' x y' ;
+                    yield (make ~extend:false tbl')))
+              tbl);
+        p_size = (fun size_v -> T.fold (fun _ v n -> n + size_v v) tbl 0);
+      }
+    in
     make ~extend:true (T.create size)
 
   let get t x = t.get x
+
   let shrink1 t = t.p_shrink1
+
   let shrink2 p t = t.p_shrink2 p
+
   let print t = t.p_print ()
+
   let size p t = t.p_size p
 end
 
 (** Internal representation of functions *)
 type ('a, 'b) fun_repr_tbl = {
-  fun_tbl: ('a, 'b) Poly_tbl.t;
-  fun_arb: 'b arbitrary;
-  fun_default: 'b;
+  fun_tbl : ('a, 'b) Poly_tbl.t;
+  fun_arb : 'b arbitrary;
+  fun_default : 'b;
 }
 
 type 'f fun_repr =
   | Fun_tbl : ('a, 'ret) fun_repr_tbl -> ('a -> 'ret) fun_repr
   | Fun_map : ('f1 -> 'f2) * 'f1 fun_repr -> 'f2 fun_repr
 
-type _ fun_ =
-  | Fun : 'f fun_repr * 'f -> 'f fun_
+type _ fun_ = Fun : 'f fun_repr * 'f -> 'f fun_
 
 (** Reifying functions *)
 module Fn = struct
   type 'a t = 'a fun_
 
-  let apply (Fun (_,f)) = f
+  let apply (Fun (_, f)) = f
 
-  let make_ (r:_ fun_repr) : _ fun_ =
-    let rec call
-      : type f. f fun_repr -> f
-      = fun r -> match r with
-        | Fun_tbl r ->
-          begin fun x -> match Poly_tbl.get r.fun_tbl x with
+  let make_ (r : _ fun_repr) : _ fun_ =
+    let rec call : type f. f fun_repr -> f =
+     fun r ->
+      match r with
+      | Fun_tbl r -> (
+          fun x ->
+            match Poly_tbl.get r.fun_tbl x with
             | None -> r.fun_default
-            | Some y -> y
-          end
-        | Fun_map (g, r') -> g (call r')
+            | Some y -> y)
+      | Fun_map (g, r') -> g (call r')
     in
     Fun (r, call r)
 
   let mk_repr tbl arb def =
-    Fun_tbl { fun_tbl=tbl; fun_arb=arb; fun_default=def; }
+    Fun_tbl { fun_tbl = tbl; fun_arb = arb; fun_default = def }
 
-  let map_repr f repr = Fun_map (f,repr)
-  let map_fun f (Fun (repr,_)) = make_ (map_repr f repr)
+  let map_repr f repr = Fun_map (f, repr)
 
-  let shrink_rep (r: _ fun_repr): _ Iter.t =
+  let map_fun f (Fun (repr, _)) = make_ (map_repr f repr)
+
+  let shrink_rep (r : _ fun_repr) : _ Iter.t =
     let open Iter in
-    let rec aux
-      : type f. f fun_repr Shrink.t
-      = function
-        | Fun_tbl {fun_arb=a; fun_tbl=tbl; fun_default=def} ->
-          let sh_v = match a.shrink with None -> Shrink.nil | Some s->s in
-          (Poly_tbl.shrink1 tbl >|= fun tbl' -> mk_repr tbl' a def)
-          <+>
-            (sh_v def >|= fun def' -> mk_repr tbl a def')
-          <+>
-            (Poly_tbl.shrink2 sh_v tbl >|= fun tbl' -> mk_repr tbl' a def)
-        | Fun_map (g, r') ->
-          aux r' >|= map_repr g
+    let rec aux : type f. f fun_repr Shrink.t = function
+      | Fun_tbl { fun_arb = a; fun_tbl = tbl; fun_default = def } ->
+          let sh_v = match a.shrink with None -> Shrink.nil | Some s -> s in
+          Poly_tbl.shrink1 tbl
+          >|= (fun tbl' -> mk_repr tbl' a def)
+          <+> (sh_v def >|= fun def' -> mk_repr tbl a def')
+          <+> (Poly_tbl.shrink2 sh_v tbl >|= fun tbl' -> mk_repr tbl' a def)
+      | Fun_map (g, r') -> aux r' >|= map_repr g
     in
     aux r
 
-  let shrink (Fun (rep,_)) =
+  let shrink (Fun (rep, _)) =
     let open Iter in
     shrink_rep rep >|= make_
 
-  let rec size_rep
-    : type f. f fun_repr -> int
-    = function
-      | Fun_map (_, r') -> size_rep r'
-      | Fun_tbl r ->
+  let rec size_rep : type f. f fun_repr -> int = function
+    | Fun_map (_, r') -> size_rep r'
+    | Fun_tbl r ->
         let size_v x = match r.fun_arb.small with None -> 0 | Some f -> f x in
         Poly_tbl.size size_v r.fun_tbl + size_v r.fun_default
 
-  let size (Fun (rep,_)) = size_rep rep
+  let size (Fun (rep, _)) = size_rep rep
 
   let print_rep r =
     let buf = Buffer.create 32 in
-    let rec aux
-      : type f. Buffer.t -> f fun_repr -> unit
-      = fun buf r -> match r with
-        | Fun_map (_, r') -> aux buf r'
-        | Fun_tbl r ->
-          Buffer.add_string buf (Poly_tbl.print r.fun_tbl);
-          Printf.bprintf buf "_ -> %s" (match r.fun_arb.print with
+    let rec aux : type f. Buffer.t -> f fun_repr -> unit =
+     fun buf r ->
+      match r with
+      | Fun_map (_, r') -> aux buf r'
+      | Fun_tbl r ->
+          Buffer.add_string buf (Poly_tbl.print r.fun_tbl) ;
+          Printf.bprintf
+            buf
+            "_ -> %s"
+            (match r.fun_arb.print with
             | None -> "<opaque>"
-            | Some s -> s r.fun_default
-          );
+            | Some s -> s r.fun_default)
     in
-    Printf.bprintf buf "{";
-    aux buf r;
-    Printf.bprintf buf "}";
+    Printf.bprintf buf "{" ;
+    aux buf r ;
+    Printf.bprintf buf "}" ;
     Buffer.contents buf
 
-  let print (Fun (rep,_)) = print_rep rep
+  let print (Fun (rep, _)) = print_rep rep
 
-  let gen_rep (a:_ Observable.t) (b:_ arbitrary): _ fun_repr Gen.t =
-    fun st ->
-      mk_repr (Poly_tbl.create a b 8 st) b (b.gen st)
+  let gen_rep (a : _ Observable.t) (b : _ arbitrary) : _ fun_repr Gen.t =
+   fun st -> mk_repr (Poly_tbl.create a b 8 st) b (b.gen st)
 
   let gen a b = Gen.map make_ (gen_rep a b)
 end
 
 let fun1 o ret =
-  make
-    ~shrink:Fn.shrink
-    ~print:Fn.print
-    ~small:Fn.size
-    (Fn.gen o ret)
+  make ~shrink:Fn.shrink ~print:Fn.print ~small:Fn.size (Fn.gen o ret)
 
 module Tuple = struct
   (** heterogeneous list (generic tuple) used to uncurry functions *)
-  type 'a t =
-    | Nil : unit t
-    | Cons : 'a * 'b t -> ('a * 'b) t
+  type 'a t = Nil : unit t | Cons : 'a * 'b t -> ('a * 'b) t
 
   let nil = Nil
-  let cons x tail = Cons (x,tail)
+
+  let cons x tail = Cons (x, tail)
 
   type 'a obs =
     | O_nil : unit obs
     | O_cons : 'a Observable.t * 'b obs -> ('a * 'b) obs
 
   let o_nil = O_nil
-  let o_cons x tail = O_cons (x,tail)
 
-  let rec hash
-    : type a. a obs -> a t -> int
-    = fun o t -> match o, t with
-      | O_nil, Nil -> 42
-      | O_cons (o,tail_o), Cons (x, tail) ->
+  let o_cons x tail = O_cons (x, tail)
+
+  let rec hash : type a. a obs -> a t -> int =
+   fun o t ->
+    match (o, t) with
+    | (O_nil, Nil) -> 42
+    | (O_cons (o, tail_o), Cons (x, tail)) ->
         Observable.H.combine (Observable.hash o x) (hash tail_o tail)
 
-  let rec equal
-    : type a. a obs -> a t -> a t -> bool
-    = fun o a b -> match o, a, b with
-      | O_nil, Nil, Nil -> true
-      | O_cons (o, tail_o), Cons (x1, tail1), Cons (x2,tail2) ->
-        Observable.equal o x1 x2 &&
-        equal tail_o tail1 tail2
+  let rec equal : type a. a obs -> a t -> a t -> bool =
+   fun o a b ->
+    match (o, a, b) with
+    | (O_nil, Nil, Nil) -> true
+    | (O_cons (o, tail_o), Cons (x1, tail1), Cons (x2, tail2)) ->
+        Observable.equal o x1 x2 && equal tail_o tail1 tail2
 
   let print o tup =
-    let rec aux
-      : type a. a obs -> Buffer.t -> a t  -> unit
-      = fun o buf t -> match o, t with
-        | O_nil, Nil -> Printf.bprintf buf "()"
-        | O_cons (o, O_nil), Cons (x,Nil) ->
+    let rec aux : type a. a obs -> Buffer.t -> a t -> unit =
+     fun o buf t ->
+      match (o, t) with
+      | (O_nil, Nil) -> Printf.bprintf buf "()"
+      | (O_cons (o, O_nil), Cons (x, Nil)) ->
           Printf.bprintf buf "%s" (Observable.print o x)
-        | O_cons (o, tail_o), Cons (x,tail) ->
-          Printf.bprintf buf "%s, %a"
-            (Observable.print o x) (aux tail_o) tail
+      | (O_cons (o, tail_o), Cons (x, tail)) ->
+          Printf.bprintf buf "%s, %a" (Observable.print o x) (aux tail_o) tail
     in
     let buf = Buffer.create 64 in
-    Buffer.add_string buf "(";
-    aux o buf tup;
-    Buffer.add_string buf ")";
+    Buffer.add_string buf "(" ;
+    aux o buf tup ;
+    Buffer.add_string buf ")" ;
     Buffer.contents buf
 
-  let observable (o:'a obs) : 'a t Observable.t =
-    Observable.make
-      ~eq:(equal o)
-      ~hash:(hash o)
-      (print o)
+  let observable (o : 'a obs) : 'a t Observable.t =
+    Observable.make ~eq:(equal o) ~hash:(hash o) (print o)
 
-  let gen (o:'a obs) (ret:'b arbitrary) : ('a t -> 'b) fun_ Gen.t =
+  let gen (o : 'a obs) (ret : 'b arbitrary) : ('a t -> 'b) fun_ Gen.t =
     Fn.gen (observable o) ret
 
   module Infix = struct
-    let (@::) x tail = cons x tail
-    let (@->) o tail = o_cons o tail
+    let ( @:: ) x tail = cons x tail
+
+    let ( @-> ) o tail = o_cons o tail
   end
+
   include Infix
 end
 
-let fun_nary (o:_ Tuple.obs) ret : _ arbitrary =
-  make
-    ~shrink:Fn.shrink
-    ~print:Fn.print
-    ~small:Fn.size
-    (Tuple.gen o ret)
+let fun_nary (o : _ Tuple.obs) ret : _ arbitrary =
+  make ~shrink:Fn.shrink ~print:Fn.print ~small:Fn.size (Tuple.gen o ret)
 
 let fun2 o1 o2 ret =
   let open Tuple in
   map
-    ~rev:(Fn.map_fun (fun g (Cons (x, Cons (y,Nil))) -> g x y))
+    ~rev:(Fn.map_fun (fun g (Cons (x, Cons (y, Nil))) -> g x y))
     (Fn.map_fun (fun g x y -> g (x @:: y @:: nil)))
     (fun_nary (o1 @-> o2 @-> o_nil) ret)
 
 let fun3 o1 o2 o3 ret =
   let open Tuple in
   map
-    ~rev:(Fn.map_fun (fun g (Cons (x, Cons (y, Cons (z,Nil)))) -> g x y z))
+    ~rev:(Fn.map_fun (fun g (Cons (x, Cons (y, Cons (z, Nil)))) -> g x y z))
     (Fn.map_fun (fun g x y z -> g (x @:: y @:: z @:: nil)))
     (fun_nary (o1 @-> o2 @-> o3 @-> o_nil) ret)
 
 let fun4 o1 o2 o3 o4 ret =
   let open Tuple in
   map
-    ~rev:(Fn.map_fun (fun g (Cons (x, Cons (y, Cons (z,Cons (w,Nil))))) -> g x y z w))
+    ~rev:
+      (Fn.map_fun (fun g (Cons (x, Cons (y, Cons (z, Cons (w, Nil))))) ->
+           g x y z w))
     (Fn.map_fun (fun g x y z w -> g (x @:: y @:: z @:: w @:: nil)))
     (fun_nary (o1 @-> o2 @-> o3 @-> o4 @-> o_nil) ret)
 
@@ -1188,12 +1335,13 @@ let fun4 o1 o2 o3 o4 ret =
 
 (** given a list, returns generator that picks at random from list *)
 let oneofl ?print ?collect xs = make ?print ?collect (Gen.oneofl xs)
+
 let oneofa ?print ?collect xs = make ?print ?collect (Gen.oneofa xs)
 
 (** Given a list of generators, returns generator that randomly uses one of the generators
     from the list *)
 let oneof l =
-  let gens = List.map (fun a->a.gen) l in
+  let gens = List.map (fun a -> a.gen) l in
   let first = List.hd l in
   let print = first.print
   and small = first.small
@@ -1213,40 +1361,43 @@ let frequency ?print ?small ?shrink ?collect l =
   let print = _opt_sum print first.print in
   let shrink = _opt_sum shrink first.shrink in
   let collect = _opt_sum collect first.collect in
-  let gens = List.map (fun (x,y) -> x, y.gen) l in
+  let gens = List.map (fun (x, y) -> (x, y.gen)) l in
   make ?print ?small ?shrink ?collect (Gen.frequency gens)
 
 (** Given list of [(frequency,value)] pairs, returns value with probability proportional
     to given frequency *)
 let frequencyl ?print ?small l = make ?print ?small (Gen.frequencyl l)
+
 let frequencya ?print ?small l = make ?print ?small (Gen.frequencya l)
 
-let map_same_type f a =
-  adapt_ a (fun st -> f (a.gen st))
+let map_same_type f a = adapt_ a (fun st -> f (a.gen st))
 
 let map_keep_input ?print ?small f a =
   make
-    ?print:(match print, a.print with
-        | Some f1, Some f2 -> Some (Print.pair f2 f1)
-        | Some f, None -> Some (Print.comap snd f)
-        | None, Some f -> Some (Print.comap fst f)
-        | None, None -> None)
-    ?small:(match small, a.small with
-        | Some f, _ -> Some (fun (_,y) -> f y)
-        | None, Some f -> Some (fun (x,_) -> f x)
-        | None, None -> None)
-    ?shrink:(match a.shrink with
+    ?print:
+      (match (print, a.print) with
+      | (Some f1, Some f2) -> Some (Print.pair f2 f1)
+      | (Some f, None) -> Some (Print.comap snd f)
+      | (None, Some f) -> Some (Print.comap fst f)
+      | (None, None) -> None)
+    ?small:
+      (match (small, a.small) with
+      | (Some f, _) -> Some (fun (_, y) -> f y)
+      | (None, Some f) -> Some (fun (x, _) -> f x)
+      | (None, None) -> None)
+    ?shrink:
+      (match a.shrink with
       | None -> None
       | Some s ->
-        let s' (x,_) = Iter.map (fun x->x, f x) (s x) in
-        Some s')
+          let s' (x, _) = Iter.map (fun x -> (x, f x)) (s x) in
+          Some s')
     Gen.(map_keep_input f a.gen)
 
 module TestResult = struct
   type 'a counter_ex = 'a QCheck2.TestResult.counter_ex = {
-    instance: 'a; (** The counter-example(s) *)
-    shrink_steps: int; (** How many shrinking steps for this counterex *)
-    msg_l: string list; (** messages. @since 0.7 *)
+    instance : 'a;  (** The counter-example(s) *)
+    shrink_steps : int;  (** How many shrinking steps for this counterex *)
+    msg_l : string list;  (** messages. @since 0.7 *)
   }
 
   type 'a failed_state = 'a counter_ex list
@@ -1255,26 +1406,26 @@ module TestResult = struct
       changed in 0.10 (move to inline records) *)
   type 'a state = 'a QCheck2.TestResult.state =
     | Success
-    | Failed of {
-        instances: 'a failed_state; (** Failed instance(s) *)
-      }
-    | Failed_other of {msg: string}
-    | Error of {
-        instance: 'a counter_ex;
-        exn: exn;
-        backtrace: string;
-      } (** Error, backtrace, and instance that triggered it *)
-
+    | Failed of { instances : 'a failed_state  (** Failed instance(s) *) }
+    | Failed_other of { msg : string }
+    | Error of { instance : 'a counter_ex; exn : exn; backtrace : string }
+        (** Error, backtrace, and instance that triggered it *)
 
   (* result returned by running a test *)
   type 'a t = 'a QCheck2.TestResult.t
 
   let get_count = QCheck2.TestResult.get_count
+
   let get_count_gen = QCheck2.TestResult.get_count_gen
+
   let get_state = QCheck2.TestResult.get_state
+
   let stats = QCheck2.TestResult.stats
+
   let collect = QCheck2.TestResult.collect
+
   let warnings = QCheck2.TestResult.warnings
+
   let is_success = QCheck2.TestResult.is_success
 end
 
@@ -1284,6 +1435,7 @@ module Test = struct
     | Failure
     | FalseAssumption
     | Error of exn * string
+
   type 'a event = 'a QCheck2.Test.event =
     | Generating
     | Collecting of 'a
@@ -1292,47 +1444,84 @@ module Test = struct
     | Shrinking of int * int * 'a
 
   type 'a cell = 'a QCheck2.Test.cell
+
   type 'a handler = 'a QCheck2.Test.handler
+
   type 'a step = 'a QCheck2.Test.step
+
   type 'a callback = 'a QCheck2.Test.callback
+
   type t = QCheck2.Test.t
 
   include QCheck2.Test_exceptions
 
   let print_instance = QCheck2.Test.print_instance
+
   let print_c_ex = QCheck2.Test.print_c_ex
+
   let print_error = QCheck2.Test.print_error
+
   let print_fail = QCheck2.Test.print_fail
+
   let print_fail_other = QCheck2.Test.print_fail_other
+
   let print_test_fail = QCheck2.Test.print_test_fail
+
   let print_test_error = QCheck2.Test.print_test_error
 
   let set_name = QCheck2.Test.set_name
+
   let get_law = QCheck2.Test.get_law
+
   let get_name = QCheck2.Test.get_name
+
   let get_count = QCheck2.Test.get_count
+
   let get_long_factor = QCheck2.Test.get_long_factor
 
-  let make_cell ?if_assumptions_fail
-      ?count ?long_factor ?max_gen
-  ?max_fail ?small:_removed_in_qcheck_2 ?name arb law
-  =
-  let {gen; shrink; print; collect; stats; _} = arb in
-  QCheck2.Test.make_cell_from_QCheck1 ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?name ~gen ?shrink ?print ?collect ~stats law
+  let make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail
+      ?small:_removed_in_qcheck_2 ?name arb law =
+    let { gen; shrink; print; collect; stats; _ } = arb in
+    QCheck2.Test.make_cell_from_QCheck1
+      ?if_assumptions_fail
+      ?count
+      ?long_factor
+      ?max_gen
+      ?max_fail
+      ?name
+      ~gen
+      ?shrink
+      ?print
+      ?collect
+      ~stats
+      law
 
-  let make ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law =
-    QCheck2.Test.Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law)
+  let make ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?small
+      ?name arb law =
+    QCheck2.Test.Test
+      (make_cell
+         ?if_assumptions_fail
+         ?count
+         ?long_factor
+         ?max_gen
+         ?max_fail
+         ?small
+         ?name
+         arb
+         law)
 
   let fail_report = QCheck2.Test.fail_report
 
   let fail_reportf = QCheck2.Test.fail_reportf
 
   let check_cell_exn = QCheck2.Test.check_cell_exn
+
   let check_exn = QCheck2.Test.check_exn
+
   let check_cell = QCheck2.Test.check_cell
 end
 
-let find_example ?(name="<example>") ?count ~f g : _ Gen.t =
+let find_example ?(name = "<example>") ?count ~f g : _ Gen.t =
   (* the random generator of examples satisfying [f]. To do that we
      test the property [fun x -> not (f x)]; any counter-example *)
   let gen st =
@@ -1341,17 +1530,15 @@ let find_example ?(name="<example>") ?count ~f g : _ Gen.t =
       Test.make_cell ~max_fail:1 ?count arb (fun x -> not (f x))
     in
     let res = QCheck2.Test.check_cell ~rand:st cell in
-    begin match QCheck2.TestResult.get_state res with
-      | QCheck2.TestResult.Success -> raise (No_example_found name)
-      | QCheck2.TestResult.Error _ -> raise (No_example_found name)
-      | QCheck2.TestResult.Failed {instances=[]} -> assert false
-      | QCheck2.TestResult.Failed {instances=failed::_} ->
+    match QCheck2.TestResult.get_state res with
+    | QCheck2.TestResult.Success -> raise (No_example_found name)
+    | QCheck2.TestResult.Error _ -> raise (No_example_found name)
+    | QCheck2.TestResult.Failed { instances = [] } -> assert false
+    | QCheck2.TestResult.Failed { instances = failed :: _ } ->
         (* found counter-example! *)
         failed.QCheck2.TestResult.instance
-      | QCheck2.TestResult.Failed_other {msg=_} ->
+    | QCheck2.TestResult.Failed_other { msg = _ } ->
         raise (No_example_found name)
-
-    end
   in
   gen
 
