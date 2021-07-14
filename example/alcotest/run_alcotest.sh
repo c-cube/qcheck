@@ -9,5 +9,7 @@ CODE=$?
 echo "$OUT" | grep -v 'This run has ID' \
   | grep -v 'Full test results in' \
   | grep -v 'Logs saved to' \
+  | grep -v 'Raised at file' \
+  | grep -v 'Called from file' \
   | sed 's/! in .*s\./!/'
 exit $CODE
