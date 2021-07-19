@@ -7,30 +7,27 @@ all rights reserved.
 
 (** {1 Quickcheck inspired property-based testing} *)
 
-let poly_compare=compare
+let poly_compare = compare
 
 module RS = Random.State
 
 let rec foldn ~f ~init:acc i =
-  if i = 0 then acc else foldn ~f ~init:(f acc i) (i-1)
+  if i = 0 then acc else foldn ~f ~init:(f acc i) (i - 1)
 
-let _opt_map_2 ~f a b = match a, b with
-  | Some x, Some y -> Some (f x y)
+let _opt_map_2 ~f a b =
+  match (a, b) with (Some x, Some y) -> Some (f x y) | _ -> None
+
+let _opt_map_3 ~f a b c =
+  match (a, b, c) with (Some x, Some y, Some z) -> Some (f x y z) | _ -> None
+
+let _opt_map_4 ~f a b c d =
+  match (a, b, c, d) with
+  | (Some x, Some y, Some z, Some w) -> Some (f x y z w)
   | _ -> None
 
-let _opt_map_3 ~f a b c = match a, b, c with
-  | Some x, Some y, Some z -> Some (f x y z)
-  | _ -> None
+let _opt_sum a b = match (a, b) with (Some _, _) -> a | (None, _) -> b
 
-let _opt_map_4 ~f a b c d = match a, b, c, d with
-  | Some x, Some y, Some z, Some w -> Some (f x y z w)
-  | _ -> None
-
-let _opt_sum a b = match a, b with
-  | Some _, _ -> a
-  | None, _ -> b
-
-let sum_int = List.fold_left (+) 0
+let sum_int = List.fold_left ( + ) 0
 
 exception Failed_precondition
 (* raised if precondition is false *)
@@ -42,209 +39,238 @@ let assume b = if not b then raise Failed_precondition
 
 let assume_fail () = raise Failed_precondition
 
-let (==>) b1 b2 = if b1 then b2 else raise Failed_precondition
+let ( ==> ) b1 b2 = if b1 then b2 else raise Failed_precondition
 
 (** Enhancement of Stdlib [Seq] to backport some recent functions, and add a few useful others. *)
 module Seq = struct
-
   include Seq
 
   (* The following functions are copied from https://github.com/ocaml/ocaml/blob/trunk/stdlib/seq.ml to support older OCaml versions. *)
 
   let rec unfold f u () =
-    match f u with
-    | None -> Nil
-    | Some (x, u') -> Cons (x, unfold f u')
+    match f u with None -> Nil | Some (x, u') -> Cons (x, unfold f u')
 
   let rec append seq1 seq2 () =
-    match seq1() with
-    | Nil -> seq2()
+    match seq1 () with
+    | Nil -> seq2 ()
     | Cons (x, next) -> Cons (x, append next seq2)
 
   let cons x next () = Cons (x, next)
 
   (* End of copy of old functions. *)
 
-  let is_empty (seq : _ t) : bool = match seq () with
-    | Nil -> true
-    | _ -> false
+  let is_empty (seq : _ t) : bool = match seq () with Nil -> true | _ -> false
 
   (** Take at most [n] values. *)
-  let rec take (n : int) (seq : _ t) : _ t = fun () -> match (n, seq ()) with
+  let rec take (n : int) (seq : _ t) : _ t =
+   fun () ->
+    match (n, seq ()) with
     | (0, _) | (_, Nil) -> Nil
     | (n, Cons (a, rest)) -> Cons (a, take (n - 1) rest)
 
-
   let hd (l : 'a t) : 'a option =
-    match l () with
-    | Nil -> None
-    | Cons (hd, _) -> Some hd
+    match l () with Nil -> None | Cons (hd, _) -> Some hd
 
   (** Useful to improve [Seq] code perf when chaining functions *)
   let apply (l : 'a t) : 'a node = l ()
 end
 
 module Shrink = struct
-
   module type Number = sig
     type t
+
     val equal : t -> t -> bool
+
     val div : t -> t -> t
+
     val add : t -> t -> t
+
     val sub : t -> t -> t
+
     val of_int : int -> t
   end
 
-  let number_towards (type a) (module Number : Number with type t = a) ~(destination : a) (x : a) : a Seq.t = fun () ->
-    Seq.unfold (fun current_shrink ->
-        if Number.equal current_shrink x
-        then None
-        else (
+  let number_towards (type a) (module Number : Number with type t = a)
+      ~(destination : a) (x : a) : a Seq.t =
+   fun () ->
+    Seq.unfold
+      (fun current_shrink ->
+        if Number.equal current_shrink x then None
+        else
           (* Halve the operands before subtracting them so they don't overflow.
              Consider [number_towards min_int max_int] *)
-          let half_diff =  Number.sub (Number.div x (Number.of_int 2)) (Number.div current_shrink (Number.of_int 2)) in
-          if half_diff = Number.of_int 0
-          (* [current_shrink] is the last valid shrink candidate, put [x] as next step to make sure we stop *)
+          let half_diff =
+            Number.sub
+              (Number.div x (Number.of_int 2))
+              (Number.div current_shrink (Number.of_int 2))
+          in
+          if
+            half_diff = Number.of_int 0
+            (* [current_shrink] is the last valid shrink candidate, put [x] as next step to make sure we stop *)
           then Some (current_shrink, x)
-          else Some (current_shrink, Number.add current_shrink half_diff)
-      )) destination ()
+          else Some (current_shrink, Number.add current_shrink half_diff))
+      destination
+      ()
 
-  let int_towards destination x = fun () ->
+  let int_towards destination x () =
     let module Int : Number with type t = int = struct
       include Int
+
       let of_int = Fun.id
     end in
     number_towards (module Int) ~destination x ()
 
-  let int32_towards destination x = fun () ->
+  let int32_towards destination x () =
     number_towards (module Int32) ~destination x ()
 
-  let int64_towards destination x = fun () ->
+  let int64_towards destination x () =
     number_towards (module Int64) ~destination x ()
 
   (** Arbitrarily limit to 15 elements as dividing a [float] by 2 doesn't converge quickly
       towards the destination. *)
-  let float_towards destination x = fun () ->
+  let float_towards destination x () =
     number_towards (module Float) ~destination x |> Seq.take 15 |> Seq.apply
 
-  let int_aggressive_towards (destination : int) (n : int) : int Seq.t = fun () ->
-    Seq.unfold (fun current ->
+  let int_aggressive_towards (destination : int) (n : int) : int Seq.t =
+   fun () ->
+    Seq.unfold
+      (fun current ->
         if current = n then None
-        else if current < n then let next = succ current in Some (next, next)
-        else let next = pred current in Some (next, next)
-      ) destination ()
+        else if current < n then
+          let next = succ current in
+          Some (next, next)
+        else
+          let next = pred current in
+          Some (next, next))
+      destination
+      ()
 
-  let int_aggressive n = fun () -> int_aggressive_towards 0 n ()
-
+  let int_aggressive n () = int_aggressive_towards 0 n ()
 end
 
 module Tree = struct
-  type 'a t = Tree of 'a * ('a t) Seq.t
+  type 'a t = Tree of 'a * 'a t Seq.t
 
   let root (Tree (root, _) : 'a t) : 'a = root
 
-  let children (Tree (_, children) : 'a t) : ('a t) Seq.t = children
+  let children (Tree (_, children) : 'a t) : 'a t Seq.t = children
 
-  let rec pp ?(depth : int option) (inner_pp : Format.formatter -> 'a -> unit) (ppf : Format.formatter) (t : 'a t) : unit =
-    let Tree (x, xs) = t in
+  let rec pp ?(depth : int option) (inner_pp : Format.formatter -> 'a -> unit)
+      (ppf : Format.formatter) (t : 'a t) : unit =
+    let (Tree (x, xs)) = t in
     let wrapper_box ppf inner =
       Format.fprintf ppf "@[<hv2>Tree(@,%a@]@,)" inner ()
     in
     let inner ppf () =
-      Format.fprintf ppf "@[<hv2>Node(@,%a@]@,),@ @[<hv>Shrinks(" inner_pp x;
-      if Option.fold depth ~none:false ~some:(fun depth -> depth <= 0) then (
-        Format.fprintf ppf "<max depth reached>@])")
+      Format.fprintf ppf "@[<hv2>Node(@,%a@]@,),@ @[<hv>Shrinks(" inner_pp x ;
+      if Option.fold depth ~none:false ~some:(fun depth -> depth <= 0) then
+        Format.fprintf ppf "<max depth reached>@])"
       else if Seq.is_empty xs then Format.fprintf ppf "@])"
-      else (
-        Format.fprintf ppf "@,%a@]@,)"
+      else
+        Format.fprintf
+          ppf
+          "@,%a@]@,)"
           (Format.pp_print_list
              ~pp_sep:(fun ppf () -> Format.fprintf ppf ",@ ")
              (pp ?depth:(Option.map pred depth) inner_pp))
-          (List.of_seq xs);
-      )
+          (List.of_seq xs)
     in
     wrapper_box ppf inner
 
   let rec map (f : 'a -> 'b) (a : 'a t) : 'b t =
-    let Tree (x, xs) = a in
+    let (Tree (x, xs)) = a in
     let y = f x in
-    let ys = fun () -> Seq.map (fun smaller_x -> map f smaller_x) xs () in
+    let ys () = Seq.map (fun smaller_x -> map f smaller_x) xs () in
     Tree (y, ys)
 
   (** Note that parameter order is reversed. *)
-  let (>|=) a f = map f a
+  let ( >|= ) a f = map f a
 
   let rec ap (f : ('a -> 'b) t) (a : 'a t) : 'b t =
-    let Tree (x0, xs) = a in
-    let Tree (f0, fs) = f in
+    let (Tree (x0, xs)) = a in
+    let (Tree (f0, fs)) = f in
     let y = f0 x0 in
-    let ys = fun () -> Seq.append (Seq.map (fun f' -> ap f' a) fs) (Seq.map (fun x' -> ap f x') xs) () in
+    let ys () =
+      Seq.append
+        (Seq.map (fun f' -> ap f' a) fs)
+        (Seq.map (fun x' -> ap f x') xs)
+        ()
+    in
     Tree (y, ys)
 
-  let (<*>) = ap
+  let ( <*> ) = ap
 
-  let liftA2 (f : 'a -> 'b -> 'c) (a : 'a t) (b : 'b t) : 'c t =
-    (a >|= f) <*> b
+  let liftA2 (f : 'a -> 'b -> 'c) (a : 'a t) (b : 'b t) : 'c t = a >|= f <*> b
 
   let rec bind (a : 'a t) (f : 'a -> 'b t) : 'b t =
-    let Tree (x, xs) = a in
-    let Tree (y, ys_of_x) = f x in
-    let ys_of_xs = fun () -> Seq.map (fun smaller_x -> bind smaller_x f) xs () in
-    let ys = fun () -> Seq.append ys_of_xs ys_of_x () in
+    let (Tree (x, xs)) = a in
+    let (Tree (y, ys_of_x)) = f x in
+    let ys_of_xs () = Seq.map (fun smaller_x -> bind smaller_x f) xs () in
+    let ys () = Seq.append ys_of_xs ys_of_x () in
     Tree (y, ys)
 
-  let (>>=) = bind
+  let ( >>= ) = bind
 
   let pure x = Tree (x, Seq.empty)
 
   let rec make_primitive (shrink : 'a -> 'a Seq.t) (x : 'a) : 'a t =
-    let shrink_trees = fun () -> shrink x |> Seq.map (make_primitive shrink) |> Seq.apply in
+    let shrink_trees () =
+      shrink x |> Seq.map (make_primitive shrink) |> Seq.apply
+    in
     Tree (x, shrink_trees)
 
   let rec opt (a : 'a t) : 'a option t =
-    let Tree (x, xs) = a in
-    let shrinks = fun () -> Seq.cons (pure None) (Seq.map opt xs) () in
+    let (Tree (x, xs)) = a in
+    let shrinks () = Seq.cons (pure None) (Seq.map opt xs) () in
     Tree (Some x, shrinks)
 
-  let rec sequence_list (l : 'a t list) : 'a list t = match l with
+  let rec sequence_list (l : 'a t list) : 'a list t =
+    match l with
     | [] -> pure []
     | hd :: tl -> liftA2 List.cons hd (sequence_list tl)
 
   let rec add_shrink_invariant (p : 'a -> bool) (a : 'a t) : 'a t =
-    let Tree (x, xs) = a in
-    let xs' = fun () -> Seq.filter_map (fun (Tree (x', _) as t) -> if p x' then Some (add_shrink_invariant p t) else None) xs () in
+    let (Tree (x, xs)) = a in
+    let xs' () =
+      Seq.filter_map
+        (fun (Tree (x', _) as t) ->
+          if p x' then Some (add_shrink_invariant p t) else None)
+        xs
+        ()
+    in
     Tree (x, xs')
 
   (** [applicative_take n trees] returns a tree of lists with at most the [n] first elements of the input list. *)
-  let rec applicative_take (n : int) (l : 'a t list) : 'a list t = match (n, l) with
+  let rec applicative_take (n : int) (l : 'a t list) : 'a list t =
+    match (n, l) with
     | (0, _) | (_, []) -> pure []
-    | (n, (tree :: trees)) -> liftA2 List.cons tree (applicative_take (pred n) trees)
+    | (n, tree :: trees) ->
+        liftA2 List.cons tree (applicative_take (pred n) trees)
 end
 
 module Gen = struct
-
   type 'a t = RS.t -> 'a Tree.t
 
   type 'a sized = int -> RS.t -> 'a Tree.t
 
-  let map f x = fun st -> Tree.map f (x st)
+  let map f x st = Tree.map f (x st)
 
   (** Note that parameter order is reversed. *)
-  let (>|=) x f = map f x
+  let ( >|= ) x f = map f x
 
-  let (<$>) = map
+  let ( <$> ) = map
 
   let pure (a : 'a) : 'a t = fun _ -> Tree.pure a
 
-  let ap (f : ('a -> 'b) t) (x : 'a t) : 'b t = fun st -> Tree.ap (f st)  (x st)
+  let ap (f : ('a -> 'b) t) (x : 'a t) : 'b t = fun st -> Tree.ap (f st) (x st)
 
-  let (<*>) = ap
+  let ( <*> ) = ap
 
-  let liftA2 (f : 'a -> 'b -> 'c) (a : 'a t) (b : 'b t) : 'c t =
-    (a >|= f) <*> b
+  let liftA2 (f : 'a -> 'b -> 'c) (a : 'a t) (b : 'b t) : 'c t = a >|= f <*> b
 
-  let liftA3 (f : 'a -> 'b -> 'c -> 'd) (a : 'a t) (b : 'b t) (c : 'c t) : 'd t =
-    (a >|= f) <*> b <*> c
+  let liftA3 (f : 'a -> 'b -> 'c -> 'd) (a : 'a t) (b : 'b t) (c : 'c t) : 'd t
+      =
+    a >|= f <*> b <*> c
 
   let map2 = liftA2
 
@@ -252,28 +278,51 @@ module Gen = struct
 
   let return = pure
 
-  let bind (gen : 'a t) (f : 'a -> ('b t)) : 'b t = fun st -> Tree.bind (gen st) (fun a -> f a st)
+  let bind (gen : 'a t) (f : 'a -> 'b t) : 'b t =
+   fun st -> Tree.bind (gen st) (fun a -> f a st)
 
-  let (>>=) = bind
+  let ( >>= ) = bind
 
-  let sequence_list (l : 'a t list) : 'a list t = fun st -> List.map (fun gen -> gen st) l |> Tree.sequence_list
+  let sequence_list (l : 'a t list) : 'a list t =
+   fun st -> List.map (fun gen -> gen st) l |> Tree.sequence_list
 
-  let make_primitive ~(gen : RS.t -> 'a) ~(shrink : 'a -> 'a Seq.t) : 'a t = fun st ->
-    Tree.make_primitive shrink (gen st)
+  let make_primitive ~(gen : RS.t -> 'a) ~(shrink : 'a -> 'a Seq.t) : 'a t =
+   fun st -> Tree.make_primitive shrink (gen st)
 
-  let parse_origin (loc : string) (pp : Format.formatter -> 'a -> unit) ~(origin : 'a) ~(low : 'a) ~(high : 'a) : 'a =
-    if origin < low then invalid_arg Format.(asprintf "%s: origin value %a is lower than low value %a" loc pp origin pp low)
-    else if origin > high then invalid_arg Format.(asprintf "%s: origin value %a is greater than high value %a" loc pp origin pp high)
+  let parse_origin (loc : string) (pp : Format.formatter -> 'a -> unit)
+      ~(origin : 'a) ~(low : 'a) ~(high : 'a) : 'a =
+    if origin < low then
+      invalid_arg
+        Format.(
+          asprintf
+            "%s: origin value %a is lower than low value %a"
+            loc
+            pp
+            origin
+            pp
+            low)
+    else if origin > high then
+      invalid_arg
+        Format.(
+          asprintf
+            "%s: origin value %a is greater than high value %a"
+            loc
+            pp
+            origin
+            pp
+            high)
     else origin
 
-  let small_nat : int t = fun st ->
+  let small_nat : int t =
+   fun st ->
     let p = RS.float st 1. in
     let x = if p < 0.75 then RS.int st 10 else RS.int st 100 in
-    let shrink a = fun () -> Shrink.int_towards 0 a () in
+    let shrink a () = Shrink.int_towards 0 a () in
     Tree.make_primitive shrink x
 
   (** Natural number generator *)
-  let nat : int t = fun st ->
+  let nat : int t =
+   fun st ->
     let p = RS.float st 1. in
     let x =
       if p < 0.5 then RS.int st 10
@@ -281,86 +330,105 @@ module Gen = struct
       else if p < 0.95 then RS.int st 1_000
       else RS.int st 10_000
     in
-    let shrink a = fun () -> Shrink.int_towards 0 a () in
+    let shrink a () = Shrink.int_towards 0 a () in
     Tree.make_primitive shrink x
 
-  let big_nat : int t = fun st ->
+  let big_nat : int t =
+   fun st ->
     let p = RS.float st 1. in
-    if p < 0.75
-    then nat st
+    if p < 0.75 then nat st
     else
-      let shrink a = fun () -> Shrink.int_towards 0 a () in
+      let shrink a () = Shrink.int_towards 0 a () in
       Tree.make_primitive shrink (RS.int st 1_000_000)
 
   let unit : unit t = fun _st -> Tree.pure ()
 
-  let bool : bool t = fun st ->
+  let bool : bool t =
+   fun st ->
     let false_gen = Tree.pure false in
-    if RS.bool st
-    then Tree.Tree (true, Seq.return false_gen)
-    else false_gen
+    if RS.bool st then Tree.Tree (true, Seq.return false_gen) else false_gen
 
-  let float : float t = fun st ->
-    let x = exp (RS.float st 15. *. (if RS.bool st then 1. else -1.))
-            *. (if RS.bool st then 1. else -1.)
+  let float : float t =
+   fun st ->
+    let x =
+      exp (RS.float st 15. *. if RS.bool st then 1. else -1.)
+      *. if RS.bool st then 1. else -1.
     in
-    let shrink a = fun () -> Shrink.float_towards 0. a () in
+    let shrink a () = Shrink.float_towards 0. a () in
     Tree.make_primitive shrink x
 
   let pfloat : float t = float >|= abs_float
 
   let nfloat : float t = pfloat >|= Float.neg
 
-  let float_bound_inclusive ?(origin : float = 0.) (bound : float) : float t = fun st ->
+  let float_bound_inclusive ?(origin : float = 0.) (bound : float) : float t =
+   fun st ->
     let (low, high) = Float.min_max_num 0. bound in
-    let shrink a = fun () ->
-      let origin = parse_origin "Gen.float_bound_inclusive" Format.pp_print_float ~origin ~low ~high in
+    let shrink a () =
+      let origin =
+        parse_origin
+          "Gen.float_bound_inclusive"
+          Format.pp_print_float
+          ~origin
+          ~low
+          ~high
+      in
       Shrink.float_towards origin a ()
     in
     let x = RS.float st bound in
     Tree.make_primitive shrink x
 
   let float_bound_exclusive ?(origin : float = 0.) (bound : float) : float t =
-    if bound = 0. then invalid_arg "Gen.float_bound_exclusive";
+    if bound = 0. then invalid_arg "Gen.float_bound_exclusive" ;
     fun st ->
       let (low, high) = Float.min_max_num 0. bound in
-      let shrink a = fun () ->
-        let origin = parse_origin "Gen.float_bound_exclusive" Format.pp_print_float ~origin ~low ~high in
+      let shrink a () =
+        let origin =
+          parse_origin
+            "Gen.float_bound_exclusive"
+            Format.pp_print_float
+            ~origin
+            ~low
+            ~high
+        in
         Shrink.float_towards origin a ()
       in
       let bound =
-        if bound > 0.
-        then bound -. epsilon_float
-        else bound +. epsilon_float
+        if bound > 0. then bound -. epsilon_float else bound +. epsilon_float
       in
       let x = RS.float st bound in
       Tree.make_primitive shrink x
 
   let pick_origin_within_range ~low ~high ~goal =
-    if low > goal then low
-    else if high < goal then high
-    else goal
+    if low > goal then low else if high < goal then high else goal
 
-  let float_range ?(origin : float option) (low : float) (high : float) : float t =
+  let float_range ?(origin : float option) (low : float) (high : float) :
+      float t =
     if high < low then invalid_arg "Gen.float_range: high < low"
-    else if high -. low > max_float then invalid_arg "Gen.float_range: high -. low > max_float";
-    let origin = parse_origin "Gen.float_range" Format.pp_print_float
-                   ~origin:(Option.value ~default:(pick_origin_within_range ~low ~high ~goal:0.) origin)
-                   ~low
-                   ~high in
-    (float_bound_inclusive ~origin (high -. low))
-    >|= (fun x -> low +. x)
+    else if high -. low > max_float then
+      invalid_arg "Gen.float_range: high -. low > max_float" ;
+    let origin =
+      parse_origin
+        "Gen.float_range"
+        Format.pp_print_float
+        ~origin:
+          (Option.value
+             ~default:(pick_origin_within_range ~low ~high ~goal:0.)
+             origin)
+        ~low
+        ~high
+    in
+    float_bound_inclusive ~origin (high -. low) >|= fun x -> low +. x
 
-  let (--.) low high = float_range ?origin:None low high
+  let ( --. ) low high = float_range ?origin:None low high
 
   let neg_int : int t = nat >|= Int.neg
 
   (** [opt gen] shrinks towards [None] then towards shrinks of [gen]. *)
-  let opt ?(ratio : float = 0.85) (gen : 'a t) : 'a option t = fun st ->
+  let opt ?(ratio : float = 0.85) (gen : 'a t) : 'a option t =
+   fun st ->
     let p = RS.float st 1. in
-    if p < (1. -. ratio)
-    then Tree.pure None
-    else Tree.opt (gen st)
+    if p < 1. -. ratio then Tree.pure None else Tree.opt (gen st)
 
   (* Uniform positive random int generator.
 
@@ -385,23 +453,26 @@ module Gen = struct
      {!Sys.int_size}.
   *)
   let pint_raw (st : RS.t) : int =
-    if Sys.word_size = 32
-    then RS.bits st
-    else (* word size = 64 *)
+    if Sys.word_size = 32 then RS.bits st
+    else
+      (* word size = 64 *)
       (* Bottom 30 bits *)
       let right = RS.bits st in
       (* Middle 30 bits *)
-      let middle = (RS.bits st lsl 30) in
+      let middle = RS.bits st lsl 30 in
       (* Technically we could write [3] but this is clearer *)
       let two_bits_mask = 0b11 in
       (* Top 2 bits *)
-      let left = ((RS.bits st land two_bits_mask) lsl 60) in
+      let left = (RS.bits st land two_bits_mask) lsl 60 in
       left lor middle lor right
 
-  let pint ?(origin : int = 0) : int t = fun st ->
+  let pint ?(origin : int = 0) : int t =
+   fun st ->
     let x = pint_raw st in
-    let shrink a = fun () ->
-      let origin = parse_origin "Gen.pint" Format.pp_print_int ~origin ~low:0 ~high:max_int in
+    let shrink a () =
+      let origin =
+        parse_origin "Gen.pint" Format.pp_print_int ~origin ~low:0 ~high:max_int
+      in
       Shrink.int_towards origin a ()
     in
     Tree.make_primitive shrink x
@@ -418,50 +489,52 @@ module Gen = struct
 
   let int : int t =
     bool >>= fun b ->
-    if b
-    then pint ~origin:0 >|= (fun n -> - n - 1)
-    else pint ~origin:0
+    if b then pint ~origin:0 >|= fun n -> -n - 1 else pint ~origin:0
 
   let int_bound (n : int) : int t =
-    if n < 0 then invalid_arg "Gen.int_bound";
+    if n < 0 then invalid_arg "Gen.int_bound" ;
     fun st ->
-      if n <= (1 lsl 30) - 2
-      then Tree.make_primitive (fun a () -> Shrink.int_towards 0 a ()) (RS.int st (n + 1))
+      if n <= (1 lsl 30) - 2 then
+        Tree.make_primitive
+          (fun a () -> Shrink.int_towards 0 a ())
+          (RS.int st (n + 1))
       else Tree.map (fun r -> r mod (n + 1)) (pint st)
 
   (** To support ranges wider than [Int.max_int], the general idea is to find the center,
       and generate a random half-difference number as well as whether we add or
       subtract that number from the center. *)
   let int_range ?(origin : int option) (low : int) (high : int) : int t =
-    if high < low then invalid_arg "Gen.int_range: high < low";
+    if high < low then invalid_arg "Gen.int_range: high < low" ;
     fun st ->
-      let Tree.Tree(n, _shrinks) = if low >= 0 || high < 0 then (
+      let (Tree.Tree (n, _shrinks)) =
+        if low >= 0 || high < 0 then
           (* range smaller than max_int *)
           Tree.map (fun n -> low + n) (int_bound (high - low) st)
-        ) else (
+        else
           (* range potentially bigger than max_int: we split on 0 and
              choose the interval with regard to their size ratio *)
           let f_low = float_of_int low in
           let f_high = float_of_int high in
-          let ratio = (-.f_low) /. (1. +. f_high -. f_low) in
-          if RS.float st 1. <= ratio
-          then Tree.map (fun n -> -n - 1) (int_bound (- (low + 1)) st)
+          let ratio = -.f_low /. (1. +. f_high -. f_low) in
+          if RS.float st 1. <= ratio then
+            Tree.map (fun n -> -n - 1) (int_bound (-(low + 1)) st)
           else int_bound high st
-        ) in
-      let shrink a = fun () ->
-        let origin = match origin with
+      in
+      let shrink a () =
+        let origin =
+          match origin with
           | None -> pick_origin_within_range ~low ~high ~goal:0
           | Some origin ->
-         if origin < low
-         then invalid_arg "Gen.int_range: origin < low"
-         else if origin > high then invalid_arg "Gen.int_range: origin > high"
-         else origin
+              if origin < low then invalid_arg "Gen.int_range: origin < low"
+              else if origin > high then
+                invalid_arg "Gen.int_range: origin > high"
+              else origin
         in
         Shrink.int_towards origin a ()
       in
       Tree.make_primitive shrink n
 
-  let (--) low high = int_range ?origin:None low high
+  let ( -- ) low high = int_range ?origin:None low high
 
   let oneof (l : 'a t list) : 'a t =
     int_range 0 (List.length l - 1) >>= List.nth l
@@ -476,53 +549,55 @@ module Gen = struct
      for sizes of strings, arrays, etc. *)
   let small_int = small_nat
 
-  let small_signed_int : int t = fun st ->
-    if RS.bool st
-    then small_nat st
-    else (small_nat >|= Int.neg) st
+  let small_signed_int : int t =
+   fun st -> if RS.bool st then small_nat st else (small_nat >|= Int.neg) st
 
   (** Shrink towards the first element of the list *)
   let frequency (l : (int * 'a t) list) : 'a t =
-    if l = [] then failwith "QCheck2.frequency called with an empty list";
+    if l = [] then failwith "QCheck2.frequency called with an empty list" ;
     let sums = sum_int (List.map fst l) in
-    if sums < 1 then failwith "QCheck2.frequency called with weight sum < 1";
-    int_bound (sums - 1)
-    >>= fun i ->
+    if sums < 1 then failwith "QCheck2.frequency called with weight sum < 1" ;
+    int_bound (sums - 1) >>= fun i ->
     let rec aux acc = function
-      | ((x, g) :: xs) -> if i < acc + x then g else aux (acc + x) xs
+      | (x, g) :: xs -> if i < acc + x then g else aux (acc + x) xs
       | _ -> assert false
     in
     aux 0 l
 
   let frequencyl (l : (int * 'a) list) : 'a t =
-    List.map (fun (weight, value) -> (weight, pure value)) l
-    |> frequency
+    List.map (fun (weight, value) -> (weight, pure value)) l |> frequency
 
   let frequencya a = frequencyl (Array.to_list a)
 
   let char_range ?(origin : char option) (a : char) (b : char) : char t =
-    (int_range ~origin:(Char.code (Option.value ~default:a origin)) (Char.code a) (Char.code b)) >|= Char.chr
+    int_range
+      ~origin:(Char.code (Option.value ~default:a origin))
+      (Char.code a)
+      (Char.code b)
+    >|= Char.chr
 
   let random_binary_string (length : int) (st : RS.t) : string =
     (* 0b011101... *)
     let s = Bytes.create (length + 2) in
-    Bytes.set s 0 '0';
-    Bytes.set s 1 'b';
+    Bytes.set s 0 '0' ;
+    Bytes.set s 1 'b' ;
     for i = 0 to length - 1 do
-      Bytes.set s (i+2) (if RS.bool st then '0' else '1')
-    done;
+      Bytes.set s (i + 2) (if RS.bool st then '0' else '1')
+    done ;
     Bytes.unsafe_to_string s
 
-  let int32 : int32 t = fun st ->
+  let int32 : int32 t =
+   fun st ->
     let x = random_binary_string 32 st |> Int32.of_string in
-    let shrink a = fun () -> Shrink.int32_towards 0l a () in
+    let shrink a () = Shrink.int32_towards 0l a () in
     Tree.make_primitive shrink x
 
   let ui32 : int32 t = map Int32.abs int32
 
-  let int64 : int64 t = fun st ->
+  let int64 : int64 t =
+   fun st ->
     let x = random_binary_string 64 st |> Int64.of_string in
-    let shrink a = fun () -> Shrink.int64_towards 0L a () in
+    let shrink a () = Shrink.int64_towards 0L a () in
     Tree.make_primitive shrink x
 
   let ui64 : int64 t = map Int64.abs int64
@@ -530,9 +605,7 @@ module Gen = struct
   let list_size (size : int t) (gen : 'a t) : 'a list t =
     size >>= fun size ->
     let rec loop n =
-      if n <= 0
-      then pure []
-      else liftA2 List.cons gen (loop (n - 1))
+      if n <= 0 then pure [] else liftA2 List.cons gen (loop (n - 1))
     in
     loop size
 
@@ -541,11 +614,12 @@ module Gen = struct
   let list_repeat (n : int) (gen : 'a t) : 'a list t = list_size (pure n) gen
 
   let array_size (size : int t) (gen : 'a t) : 'a array t =
-    (list_size size gen) >|= Array.of_list
+    list_size size gen >|= Array.of_list
 
   let array (gen : 'a t) : 'a array t = list gen >|= Array.of_list
 
-  let array_repeat (n : int) (gen : 'a t) : 'a array t = list_repeat n gen >|= Array.of_list
+  let array_repeat (n : int) (gen : 'a t) : 'a array t =
+    list_repeat n gen >|= Array.of_list
 
   let rec flatten_l (l : 'a t list) : 'a list t =
     match l with
@@ -556,57 +630,60 @@ module Gen = struct
     Array.to_list a |> flatten_l >|= Array.of_list
 
   let flatten_opt (o : 'a t option) : 'a option t =
-    match o with
-    | None -> pure None
-    | Some gen -> opt gen
+    match o with None -> pure None | Some gen -> opt gen
 
   let flatten_res (res : ('a t, 'e) result) : ('a, 'e) result t =
-    match res with
-    | Ok gen -> gen >|= Result.ok
-    | Error e -> pure (Error e)
+    match res with Ok gen -> gen >|= Result.ok | Error e -> pure (Error e)
 
-  let shuffle_a (a : 'a array) : 'a array t = fun st ->
+  let shuffle_a (a : 'a array) : 'a array t =
+   fun st ->
     let a = Array.copy a in
     for i = Array.length a - 1 downto 1 do
       let j = RS.int st (i + 1) in
       let tmp = a.(i) in
-      a.(i) <- a.(j);
-      a.(j) <- tmp;
-    done;
+      a.(i) <- a.(j) ;
+      a.(j) <- tmp
+    done ;
     Tree.pure a
 
   let shuffle_l (l : 'a list) : 'a list t =
     Array.of_list l |> shuffle_a >|= Array.to_list
 
-  let shuffle_w_l (l : ((int * 'a) list)) : 'a list t = fun st ->
+  let shuffle_w_l (l : (int * 'a) list) : 'a list t =
+   fun st ->
     let sample (w, v) =
-      let Tree.Tree (p, _) = float_bound_inclusive 1. st in
+      let (Tree.Tree (p, _)) = float_bound_inclusive 1. st in
       let fl_w = float_of_int w in
       (p ** (1. /. fl_w), v)
     in
     let samples = List.rev_map sample l in
     samples
     |> List.sort (fun (w1, _) (w2, _) -> poly_compare w1 w2)
-    |> List.rev_map snd
-    |> Tree.pure
+    |> List.rev_map snd |> Tree.pure
 
-  let pair (g1 : 'a t) (g2 : 'b t) : ('a * 'b) t = liftA2 (fun a b -> (a, b)) g1 g2
+  let pair (g1 : 'a t) (g2 : 'b t) : ('a * 'b) t =
+    liftA2 (fun a b -> (a, b)) g1 g2
 
-  let triple (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) : ('a * 'b * 'c) t = (fun a b c -> (a, b, c)) <$> g1 <*> g2 <*> g3
+  let triple (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) : ('a * 'b * 'c) t =
+    (fun a b c -> (a, b, c)) <$> g1 <*> g2 <*> g3
 
-  let quad (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) (g4 : 'd t) : ('a * 'b * 'c * 'd) t =
+  let quad (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) (g4 : 'd t) :
+      ('a * 'b * 'c * 'd) t =
     (fun a b c d -> (a, b, c, d)) <$> g1 <*> g2 <*> g3 <*> g4
 
   (** Don't reuse {!int_range} which is much less performant (many more checks because of the possible range and origins). As a [string] generator may call this hundreds or even thousands of times for a single value, it's worth optimizing. *)
-  let char : char t = fun st ->
+  let char : char t =
+   fun st ->
     let c = RS.int st 256 in
-    let shrink a = fun () -> Shrink.int_towards (int_of_char 'a') a |> Seq.apply in
+    let shrink a () = Shrink.int_towards (int_of_char 'a') a |> Seq.apply in
     Tree.map char_of_int (Tree.make_primitive shrink c)
 
   (** The first characters are the usual lower case alphabetical letters to help shrinking. *)
   let printable_chars : char list =
     (* Left and right inclusive *)
-    let range min max = List.init (max - min) (fun i -> char_of_int (i + min)) in
+    let range min max =
+      List.init (max - min) (fun i -> char_of_int (i + min))
+    in
     let a = 97 in
     let z = 122 in
     let lower_alphabet = range a z in
@@ -616,9 +693,10 @@ module Gen = struct
     (* '~' *)
     let last_printable_char = 126 in
     let after_lower_alphabet = range (z + 1) last_printable_char in
-    let newline = ['\n'] in
+    let newline = [ '\n' ] in
     (* Put alphabet first for shrinking *)
-    List.flatten [lower_alphabet; before_lower_alphabet; after_lower_alphabet; newline]
+    List.flatten
+      [ lower_alphabet; before_lower_alphabet; after_lower_alphabet; newline ]
 
   let printable : char t =
     int_range ~origin:0 0 (List.length printable_chars - 1)
@@ -629,24 +707,29 @@ module Gen = struct
     let nine = 57 in
     int_range ~origin:zero zero nine >|= char_of_int
 
-  let bytes_size ?(gen = char) (size : int t) : bytes t = fun st ->
+  let bytes_size ?(gen = char) (size : int t) : bytes t =
+   fun st ->
     let open Tree in
     size st >>= fun size ->
     (* Adding char shrinks to a mutable list is expensive: ~20-30% cost increase *)
     (* Adding char shrinks to a mutable lazy list is less expensive: ~15% cost increase *)
     let char_trees_rev = ref [] in
-    let bytes = Bytes.init size (fun _ ->
-                    let char_tree = gen st in
-                    char_trees_rev := char_tree :: !char_trees_rev ;
-                    (* Performance: return the root right now, the heavy processing of shrinks can wait until/if there is a need to shrink *)
-                    root char_tree) in
-    let shrink = fun () ->
+    let bytes =
+      Bytes.init size (fun _ ->
+          let char_tree = gen st in
+          char_trees_rev := char_tree :: !char_trees_rev ;
+          (* Performance: return the root right now, the heavy processing of shrinks can wait until/if there is a need to shrink *)
+          root char_tree)
+    in
+    let shrink () =
       let char_trees = List.rev !char_trees_rev in
       let char_list_tree = sequence_list char_trees in
-      let bytes_tree = char_list_tree >|= (fun char_list ->
-          let bytes = Bytes.create size in
-          List.iteri (Bytes.set bytes) char_list ;
-          bytes) in
+      let bytes_tree =
+        char_list_tree >|= fun char_list ->
+        let bytes = Bytes.create size in
+        List.iteri (Bytes.set bytes) char_list ;
+        bytes
+      in
       (* Technically [bytes_tree] is the whole tree, but for perf reasons we eagerly created the root above *)
       children bytes_tree ()
     in
@@ -672,20 +755,23 @@ module Gen = struct
   (* corner cases *)
 
   let graft_corners (gen : 'a t) (corners : 'a list) () : 'a t =
-    let cors = ref corners in fun st ->
-      match !cors with [] -> gen st
-                     | e::l -> cors := l; Tree.pure e
+    let cors = ref corners in
+    fun st ->
+      match !cors with
+      | [] -> gen st
+      | e :: l ->
+          cors := l ;
+          Tree.pure e
 
-  let int_pos_corners = [0; 1; 2; max_int]
+  let int_pos_corners = [ 0; 1; 2; max_int ]
 
-  let int_corners = int_pos_corners @ [min_int]
+  let int_corners = int_pos_corners @ [ min_int ]
 
   let small_int_corners () : int t = graft_corners nat int_pos_corners ()
 
   (* sized, fix *)
 
-  let sized_size (size : int t) (gen : 'a sized) : 'a t =
-    size >>= gen
+  let sized_size (size : int t) (gen : 'a sized) : 'a t = size >>= gen
 
   let sized (gen : 'a sized) : 'a t = sized_size nat gen
 
@@ -693,27 +779,28 @@ module Gen = struct
     let rec f' n st = f f' n st in
     f'
 
-  let generate ?(rand=RS.make_self_init()) ~(n : int) (gen : 'a t) : 'a list =
+  let generate ?(rand = RS.make_self_init ()) ~(n : int) (gen : 'a t) : 'a list
+      =
     list_repeat n gen rand |> Tree.root
 
-  let generate1 ?(rand=RS.make_self_init()) (gen : 'a t) : 'a =
+  let generate1 ?(rand = RS.make_self_init ()) (gen : 'a t) : 'a =
     gen rand |> Tree.root
 
-  let generate_tree ?(rand=RS.make_self_init()) (gen : 'a t) : 'a Tree.t =
+  let generate_tree ?(rand = RS.make_self_init ()) (gen : 'a t) : 'a Tree.t =
     gen rand
 
   let delay (f : unit -> 'a t) : 'a t = fun st -> f () st
 
   let add_shrink_invariant (p : 'a -> bool) (gen : 'a t) : 'a t =
-    fun st -> gen st |> Tree.add_shrink_invariant p
+   fun st -> gen st |> Tree.add_shrink_invariant p
 
-  let (let+) = (>|=)
+  let ( let+ ) = ( >|= )
 
-  let (and+) = pair
+  let ( and+ ) = pair
 
-  let (let*) = (>>=)
+  let ( let* ) = ( >>= )
 
-  let (and*) = pair
+  let ( and* ) = pair
 end
 
 module Print = struct
@@ -731,35 +818,35 @@ module Print = struct
 
   let char c = Printf.sprintf "%C" c
 
-  let option f = function
-    | None -> "None"
-    | Some x -> "Some (" ^ f x ^ ")"
+  let option f = function None -> "None" | Some x -> "Some (" ^ f x ^ ")"
 
-  let pair a b (x,y) = Printf.sprintf "(%s, %s)" (a x) (b y)
+  let pair a b (x, y) = Printf.sprintf "(%s, %s)" (a x) (b y)
 
-  let triple a b c (x,y,z) = Printf.sprintf "(%s, %s, %s)" (a x) (b y) (c z)
+  let triple a b c (x, y, z) = Printf.sprintf "(%s, %s, %s)" (a x) (b y) (c z)
 
-  let quad a b c d (x,y,z,w) =
+  let quad a b c d (x, y, z, w) =
     Printf.sprintf "(%s, %s, %s, %s)" (a x) (b y) (c z) (d w)
 
   let list pp l =
     let b = Buffer.create 25 in
-    Buffer.add_char b '[';
-    List.iteri (fun i x ->
-        if i > 0 then Buffer.add_string b "; ";
+    Buffer.add_char b '[' ;
+    List.iteri
+      (fun i x ->
+        if i > 0 then Buffer.add_string b "; " ;
         Buffer.add_string b (pp x))
-      l;
-    Buffer.add_char b ']';
+      l ;
+    Buffer.add_char b ']' ;
     Buffer.contents b
 
   let array pp a =
     let b = Buffer.create 25 in
-    Buffer.add_string b "[|";
-    Array.iteri (fun i x ->
-        if i > 0 then Buffer.add_string b "; ";
+    Buffer.add_string b "[|" ;
+    Array.iteri
+      (fun i x ->
+        if i > 0 then Buffer.add_string b "; " ;
         Buffer.add_string b (pp x))
-      a;
-    Buffer.add_string b "|]";
+      a ;
+    Buffer.add_string b "|]" ;
     Buffer.contents b
 
   let contramap f p x = p (f x)
@@ -771,11 +858,7 @@ end
 
 module Observable = struct
   (** An observable is a (random) predicate on ['a] *)
-  type -'a t = {
-    print: 'a Print.t;
-    eq: ('a -> 'a -> bool);
-    hash: ('a -> int);
-  }
+  type -'a t = { print : 'a Print.t; eq : 'a -> 'a -> bool; hash : 'a -> int }
 
   let hash o x = o.hash x
 
@@ -783,8 +866,7 @@ module Observable = struct
 
   let print o x = o.print x
 
-  let make ?(eq=(=)) ?(hash=Hashtbl.hash) print =
-    {print; eq; hash; }
+  let make ?(eq = ( = )) ?(hash = Hashtbl.hash) print = { print; eq; hash }
 
   module H = struct
     let combine a b = Hashtbl.seeded_hash a b
@@ -797,54 +879,51 @@ module Observable = struct
 
     let char x = Char.code x
 
-    let string (x:string) = Hashtbl.hash x
+    let string (x : string) = Hashtbl.hash x
 
-    let opt f = function
-      | None -> 42
-      | Some x -> combine 43 (f x)
+    let opt f = function None -> 42 | Some x -> combine 43 (f x)
+
     let list f l = List.fold_left (combine_f f) 0x42 l
 
     let array f l = Array.fold_left (combine_f f) 0x42 l
 
-    let pair f g (x,y) = combine (f x) (g y)
+    let pair f g (x, y) = combine (f x) (g y)
   end
 
   module Eq = struct
     type 'a t = 'a -> 'a -> bool
 
-    let int : int t = (=)
+    let int : int t = ( = )
 
-    let string : string t = (=)
+    let string : string t = ( = )
 
-    let bool : bool t = (=)
+    let bool : bool t = ( = )
 
-    let float : float t = (=)
+    let float : float t = ( = )
 
     let unit () () = true
 
-    let char : char t = (=)
+    let char : char t = ( = )
 
-    let rec list f l1 l2 = match l1, l2 with
-      | [], [] -> true
-      | [], _ | _, [] -> false
-      | x1::l1', x2::l2' -> f x1 x2 && list f l1' l2'
+    let rec list f l1 l2 =
+      match (l1, l2) with
+      | ([], []) -> true
+      | ([], _) | (_, []) -> false
+      | (x1 :: l1', x2 :: l2') -> f x1 x2 && list f l1' l2'
 
     let array eq a b =
       let rec aux i =
-        if i = Array.length a then true
-        else eq a.(i) b.(i) && aux (i+1)
+        if i = Array.length a then true else eq a.(i) b.(i) && aux (i + 1)
       in
-      Array.length a = Array.length b
-      &&
-      aux 0
+      Array.length a = Array.length b && aux 0
 
-    let option f o1 o2 = match o1, o2 with
-      | None, None -> true
-      | Some _, None
-      | None, Some _ -> false
-      | Some x, Some y -> f x y
+    let option f o1 o2 =
+      match (o1, o2) with
+      | (None, None) -> true
+      | (Some _, None) | (None, Some _) -> false
+      | (Some x, Some y) -> f x y
 
-    let pair f g (x1,y1)(x2,y2) = f x1 x2 && g y1 y2
+    let pair f g (x1, y1) (x2, y2) = f x1 x2 && g y1 y2
   end
 
   let unit : unit t = make ~hash:(fun _ -> 1) ~eq:Eq.unit Print.unit
@@ -860,8 +939,7 @@ module Observable = struct
   let char = make ~hash:H.char ~eq:Eq.char Print.char
 
   let option p =
-    make ~hash:(H.opt p.hash) ~eq:(Eq.option p.eq)
-      (Print.option p.print)
+    make ~hash:(H.opt p.hash) ~eq:(Eq.option p.eq) (Print.option p.print)
 
   let array p =
     make ~hash:(H.array p.hash) ~eq:(Eq.array p.eq) (Print.array p.print)
@@ -870,23 +948,28 @@ module Observable = struct
     make ~hash:(H.list p.hash) ~eq:(Eq.list p.eq) (Print.list p.print)
 
   let contramap f p =
-    make ~hash:(fun x -> p.hash (f x)) ~eq:(fun x y -> p.eq (f x)(f y))
+    make
+      ~hash:(fun x -> p.hash (f x))
+      ~eq:(fun x y -> p.eq (f x) (f y))
       (fun x -> p.print (f x))
 
   let map = contramap
 
   let pair a b =
-    make ~hash:(H.pair a.hash b.hash) ~eq:(Eq.pair a.eq b.eq) (Print.pair a.print b.print)
+    make
+      ~hash:(H.pair a.hash b.hash)
+      ~eq:(Eq.pair a.eq b.eq)
+      (Print.pair a.print b.print)
 
   let triple a b c =
-    contramap (fun (x,y,z) -> x,(y,z)) (pair a (pair b c))
+    contramap (fun (x, y, z) -> (x, (y, z))) (pair a (pair b c))
 
   let quad a b c d =
-    contramap (fun (x,y,z,u) -> x,(y,z,u)) (pair a (triple b c d))
+    contramap (fun (x, y, z, u) -> (x, (y, z, u))) (pair a (triple b c d))
 end
 
-type 'a stat = string * ('a -> int)
 (** A statistic on a distribution of values of type ['a] *)
+type 'a stat = string * ('a -> int)
 
 (** Internal module taking care of storing generated function bindings.
 
@@ -899,7 +982,12 @@ type 'a stat = string * ('a -> int)
 module Poly_tbl : sig
   type ('key, 'value) t
 
-  val create: 'key Observable.t -> ?v_print:'value Print.t -> 'value Gen.t -> int -> ('key, 'value) t Gen.t
+  val create :
+    'key Observable.t ->
+    ?v_print:'value Print.t ->
+    'value Gen.t ->
+    int ->
+    ('key, 'value) t Gen.t
 
   val get : ('key, 'value) t -> 'key -> 'value option
 
@@ -908,64 +996,93 @@ module Poly_tbl : sig
   val print : ('key, 'value) t Print.t
 end = struct
   type ('key, 'value) t = {
-    get : 'key -> 'value option; (** Don't be fooled by its name and signature: this function mutates the table during test execution by adding entries (key is the value on which the function is applied in the test, and the value is generated on the fly). *)
-    p_size: ('value -> int) -> int;
-    p_print: unit -> string;
+    get : 'key -> 'value option;
+        (** Don't be fooled by its name and signature: this function mutates the table during test execution by adding entries (key is the value on which the function is applied in the test, and the value is generated on the fly). *)
+    p_size : ('value -> int) -> int;
+    p_print : unit -> string;
     p_tree_bindings_rev : ('key * 'value Tree.t) list ref;
   }
 
-  let create (type k) (type v) (k_obs : k Observable.t) ?(v_print: v Print.t option) (v_gen : v Gen.t) (size : int) : (k, v) t Gen.t =
-    fun st ->
-    let module T = Hashtbl.Make(struct
-                       type t = k
-                       let equal = k_obs.Observable.eq
-                       let hash = k_obs.Observable.hash
-                     end) in
+  let create (type k v) (k_obs : k Observable.t) ?(v_print : v Print.t option)
+      (v_gen : v Gen.t) (size : int) : (k, v) t Gen.t =
+   fun st ->
+    let module T = Hashtbl.Make (struct
+      type t = k
+
+      let equal = k_obs.Observable.eq
+
+      let hash = k_obs.Observable.hash
+    end) in
     (* make a table
        @param extend if [true], extend table [tbl] on the fly (during test execution, to "record" input values and generate an associated output value). [false] during shrinking (use the default value if the input value is not in the table). *)
     let make ~extend tbl =
-      let initial_tree_bindings_rev = T.to_seq tbl |> List.of_seq |> List.rev_map (fun (k, v) -> k, Tree.pure v) in
+      let initial_tree_bindings_rev =
+        T.to_seq tbl |> List.of_seq
+        |> List.rev_map (fun (k, v) -> (k, Tree.pure v))
+      in
       let p_tree_bindings_rev = ref initial_tree_bindings_rev in
-      let get = (fun key ->
-          try Some (T.find tbl key)
-          with Not_found ->
-            if extend then (
-              (* Generate a new value and "record" the binding for potential future display/shrinking *)
-              let value_tree = v_gen st in
-              p_tree_bindings_rev := (key, value_tree) :: !p_tree_bindings_rev;
-              let v = Tree.root value_tree in
-              T.add tbl key v;
-              Some v
-            ) else None)
+      let get key =
+        try Some (T.find tbl key)
+        with Not_found ->
+          if extend then (
+            (* Generate a new value and "record" the binding for potential future display/shrinking *)
+            let value_tree = v_gen st in
+            p_tree_bindings_rev := (key, value_tree) :: !p_tree_bindings_rev ;
+            let v = Tree.root value_tree in
+            T.add tbl key v ;
+            Some v)
+          else None
       in
-      let p_print = (fun () ->
-          let pp_v = Option.value ~default:(fun _ -> "<opaque>") v_print in
-          let b = Buffer.create 64 in
-          let to_b = Format.formatter_of_buffer b in
-          T.iter
-            (fun key value ->
-              Format.fprintf to_b "%s -> %s; "
-                (k_obs.Observable.print key) (pp_v value))
-            tbl;
-          Format.pp_print_flush to_b ();
-          Buffer.contents b)
+      let p_print () =
+        let pp_v = Option.value ~default:(fun _ -> "<opaque>") v_print in
+        let b = Buffer.create 64 in
+        let to_b = Format.formatter_of_buffer b in
+        T.iter
+          (fun key value ->
+            Format.fprintf
+              to_b
+              "%s -> %s; "
+              (k_obs.Observable.print key)
+              (pp_v value))
+          tbl ;
+        Format.pp_print_flush to_b () ;
+        Buffer.contents b
       in
-      let p_size=(fun size_v -> T.fold (fun _ v n -> n + size_v v) tbl 0) in
-      {get; p_print; p_size; p_tree_bindings_rev}
+      let p_size size_v = T.fold (fun _ v n -> n + size_v v) tbl 0 in
+      { get; p_print; p_size; p_tree_bindings_rev }
     in
     let root_tbl = T.create size in
     (* During initial running of the test, record bindings, hence [~extend:true]. *)
     let root = make ~extend:true root_tbl in
     (* Build the (lazy!) shrink tree of tables here *)
-    let shrinks : (k, v) t Tree.t Seq.t = fun () ->
+    let shrinks : (k, v) t Tree.t Seq.t =
+     fun () ->
       (* This only gets evaluated *after* the test was run for [tbl], meaning it is correctly
          populated with bindings recorded during the test already *)
-      let current_bindings : (k * v Tree.t) list = List.rev !(root.p_tree_bindings_rev) in
-      let take_at_most_tree : int Tree.t = Tree.make_primitive (Shrink.int_towards 0) (List.length current_bindings) in
-      let current_tree_bindings : (k * v) Tree.t list = List.map (fun (k, tree) -> Tree.map (fun v -> (k, v)) tree) current_bindings in
-      let shrunk_bindings_tree : (k * v) list Tree.t = Tree.bind take_at_most_tree (fun take_at_most -> Tree.applicative_take take_at_most current_tree_bindings) in
+      let current_bindings : (k * v Tree.t) list =
+        List.rev !(root.p_tree_bindings_rev)
+      in
+      let take_at_most_tree : int Tree.t =
+        Tree.make_primitive
+          (Shrink.int_towards 0)
+          (List.length current_bindings)
+      in
+      let current_tree_bindings : (k * v) Tree.t list =
+        List.map
+          (fun (k, tree) -> Tree.map (fun v -> (k, v)) tree)
+          current_bindings
+      in
+      let shrunk_bindings_tree : (k * v) list Tree.t =
+        Tree.bind take_at_most_tree (fun take_at_most ->
+            Tree.applicative_take take_at_most current_tree_bindings)
+      in
       (* During shrinking, we don't want to record/add bindings, so [~extend:false]. *)
-      let shrunk_poly_tbl_tree : (k, v) t Tree.t = Tree.map (fun bindings -> List.to_seq bindings |> T.of_seq |> make ~extend:false) shrunk_bindings_tree in
+      let shrunk_poly_tbl_tree : (k, v) t Tree.t =
+        Tree.map
+          (fun bindings ->
+            List.to_seq bindings |> T.of_seq |> make ~extend:false)
+          shrunk_bindings_tree
+      in
       (* [shrunk_poly_tbl_tree] is a bit misleading: its root *should* be the same as [root] but because of the required laziness
          induced by the mutation of bindings, we don't use it, only graft its children to the original [root]. *)
       Tree.children shrunk_poly_tbl_tree ()
@@ -973,21 +1090,26 @@ end = struct
     Tree.Tree (root, shrinks)
 
   let get t x = t.get x
+
   let print t = t.p_print ()
+
   let size p t = t.p_size p
 end
 
 (** Internal representation of functions, used for shrinking and printing (in case of error). *)
 type ('a, 'b) fun_repr_tbl = {
-  fun_tbl: ('a, 'b) Poly_tbl.t; (** Input-output bindings *)
-  fun_gen: 'b Gen.t; (** How to generate output values *)
-  fun_print: 'b Print.t option; (** How to print output values *)
-  fun_default: 'b; (** Default value for all inputs not explicitly mapped in {!fun_tbl} *)
+  fun_tbl : ('a, 'b) Poly_tbl.t;  (** Input-output bindings *)
+  fun_gen : 'b Gen.t;  (** How to generate output values *)
+  fun_print : 'b Print.t option;  (** How to print output values *)
+  fun_default : 'b;
+      (** Default value for all inputs not explicitly mapped in {!fun_tbl} *)
 }
 
 type 'f fun_repr =
-  | Fun_tbl : ('a, 'ret) fun_repr_tbl -> ('a -> 'ret) fun_repr (** Input-output list of bindings *)
-  | Fun_map : ('f1 -> 'f2) * 'f1 fun_repr -> 'f2 fun_repr (** Mapped from another function (typically used for currying) *)
+  | Fun_tbl : ('a, 'ret) fun_repr_tbl -> ('a -> 'ret) fun_repr
+      (** Input-output list of bindings *)
+  | Fun_map : ('f1 -> 'f2) * 'f1 fun_repr -> 'f2 fun_repr
+      (** Mapped from another function (typically used for currying) *)
 
 (** A QCheck function, as in Koen Claessen's paper "Shrinking and showing functions".
     Such a function is a pair of the function representation (used for shrinking and
@@ -1006,16 +1128,16 @@ module Fn = struct
   (** [function_of_repr repr] creates the "real" function (that will be used in tests)
       from its representation. *)
   let rec function_of_repr : type f. f fun_repr -> f = function
-    | Fun_tbl {fun_tbl; fun_default; _} ->
-       (fun x -> match Poly_tbl.get fun_tbl x with
-                      | None -> fun_default
-                      | Some y -> y)
+    | Fun_tbl { fun_tbl; fun_default; _ } -> (
+        fun x ->
+          match Poly_tbl.get fun_tbl x with None -> fun_default | Some y -> y)
     | Fun_map (g, sub_repr) -> g (function_of_repr sub_repr)
 
   let make_ (r : 'a fun_repr) : 'a fun_ = Fun (r, function_of_repr r)
 
   let mk_repr tbl gen ?print def =
-    Fun_tbl { fun_tbl=tbl; fun_gen=gen; fun_print=print; fun_default=def; }
+    Fun_tbl
+      { fun_tbl = tbl; fun_gen = gen; fun_print = print; fun_default = def }
 
   let map_repr f repr = Fun_map (f, repr)
 
@@ -1024,29 +1146,37 @@ module Fn = struct
   (** [print_rep repr] returns a string representation of [repr]. *)
   let print_repr r =
     let buf = Buffer.create 32 in
-    let rec aux
-      : type f. Buffer.t -> f fun_repr -> unit
-      = fun buf r -> match r with
-        | Fun_map (_, sub_repr) -> aux buf sub_repr
-        | Fun_tbl r ->
-           Buffer.add_string buf (Poly_tbl.print r.fun_tbl);
-           Printf.bprintf buf "_ -> %s" (match r.fun_print with
-                                         | None -> "<opaque>"
-                                         | Some print -> print r.fun_default);
+    let rec aux : type f. Buffer.t -> f fun_repr -> unit =
+     fun buf r ->
+      match r with
+      | Fun_map (_, sub_repr) -> aux buf sub_repr
+      | Fun_tbl r ->
+          Buffer.add_string buf (Poly_tbl.print r.fun_tbl) ;
+          Printf.bprintf
+            buf
+            "_ -> %s"
+            (match r.fun_print with
+            | None -> "<opaque>"
+            | Some print -> print r.fun_default)
     in
-    Printf.bprintf buf "{";
-    aux buf r;
-    Printf.bprintf buf "}";
+    Printf.bprintf buf "{" ;
+    aux buf r ;
+    Printf.bprintf buf "}" ;
     Buffer.contents buf
 
   let print (Fun (repr, _real_function)) = print_repr repr
 
   (** [gen_rep obs gen] creates a function generator. Input values are observed with [obs] and
       output values are generated with [gen]. *)
-  let gen_rep (obs : 'a Observable.t) ?(print : 'b Print.t option) (gen : 'b Gen.t)  : ('a -> 'b) fun_repr Gen.t =
-    Gen.liftA2 (fun default_value poly_tbl -> mk_repr poly_tbl gen ?print default_value) gen (Poly_tbl.create ?v_print:print obs gen 8)
+  let gen_rep (obs : 'a Observable.t) ?(print : 'b Print.t option)
+      (gen : 'b Gen.t) : ('a -> 'b) fun_repr Gen.t =
+    Gen.liftA2
+      (fun default_value poly_tbl -> mk_repr poly_tbl gen ?print default_value)
+      gen
+      (Poly_tbl.create ?v_print:print obs gen 8)
 
-  let gen (obs : 'a Observable.t) ?(print : 'b Print.t option) (gen : 'b Gen.t)  : ('a -> 'b) fun_ Gen.t =
+  let gen (obs : 'a Observable.t) ?(print : 'b Print.t option) (gen : 'b Gen.t)
+      : ('a -> 'b) fun_ Gen.t =
     Gen.map make_ (gen_rep obs gen ?print)
 end
 
@@ -1054,13 +1184,11 @@ let fun1 obs ?print gen = Fn.gen obs ?print gen
 
 module Tuple = struct
   (** heterogeneous list (generic tuple) used to uncurry functions *)
-  type 'a t =
-    | Nil : unit t
-    | Cons : 'a * 'b t -> ('a * 'b) t
+  type 'a t = Nil : unit t | Cons : 'a * 'b t -> ('a * 'b) t
 
   let nil = Nil
 
-  let cons x tail = Cons (x,tail)
+  let cons x tail = Cons (x, tail)
 
   type 'a obs =
     | O_nil : unit obs
@@ -1068,57 +1196,55 @@ module Tuple = struct
 
   let o_nil = O_nil
 
-  let o_cons x tail = O_cons (x,tail)
+  let o_cons x tail = O_cons (x, tail)
 
-  let rec hash
-    : type a. a obs -> a t -> int
-    = fun o t -> match o, t with
-      | O_nil, Nil -> 42
-      | O_cons (o,tail_o), Cons (x, tail) ->
+  let rec hash : type a. a obs -> a t -> int =
+   fun o t ->
+    match (o, t) with
+    | (O_nil, Nil) -> 42
+    | (O_cons (o, tail_o), Cons (x, tail)) ->
         Observable.H.combine (Observable.hash o x) (hash tail_o tail)
 
-  let rec equal
-    : type a. a obs -> a t -> a t -> bool
-    = fun o a b -> match o, a, b with
-      | O_nil, Nil, Nil -> true
-      | O_cons (o, tail_o), Cons (x1, tail1), Cons (x2,tail2) ->
-        Observable.equal o x1 x2 &&
-        equal tail_o tail1 tail2
+  let rec equal : type a. a obs -> a t -> a t -> bool =
+   fun o a b ->
+    match (o, a, b) with
+    | (O_nil, Nil, Nil) -> true
+    | (O_cons (o, tail_o), Cons (x1, tail1), Cons (x2, tail2)) ->
+        Observable.equal o x1 x2 && equal tail_o tail1 tail2
 
   let print o tup =
-    let rec aux
-      : type a. a obs -> Buffer.t -> a t  -> unit
-      = fun o buf t -> match o, t with
-        | O_nil, Nil -> Printf.bprintf buf "()"
-        | O_cons (o, O_nil), Cons (x,Nil) ->
+    let rec aux : type a. a obs -> Buffer.t -> a t -> unit =
+     fun o buf t ->
+      match (o, t) with
+      | (O_nil, Nil) -> Printf.bprintf buf "()"
+      | (O_cons (o, O_nil), Cons (x, Nil)) ->
           Printf.bprintf buf "%s" (Observable.print o x)
-        | O_cons (o, tail_o), Cons (x,tail) ->
-          Printf.bprintf buf "%s, %a"
-            (Observable.print o x) (aux tail_o) tail
+      | (O_cons (o, tail_o), Cons (x, tail)) ->
+          Printf.bprintf buf "%s, %a" (Observable.print o x) (aux tail_o) tail
     in
     let buf = Buffer.create 64 in
-    Buffer.add_string buf "(";
-    aux o buf tup;
-    Buffer.add_string buf ")";
+    Buffer.add_string buf "(" ;
+    aux o buf tup ;
+    Buffer.add_string buf ")" ;
     Buffer.contents buf
 
-  let observable (o:'a obs) : 'a t Observable.t =
-    Observable.make
-      ~eq:(equal o)
-      ~hash:(hash o)
-      (print o)
+  let observable (o : 'a obs) : 'a t Observable.t =
+    Observable.make ~eq:(equal o) ~hash:(hash o) (print o)
 
-  let gen (o:'a obs) ?(print:'b Print.t option) (ret:'b Gen.t) : ('a t -> 'b) fun_ Gen.t =
+  let gen (o : 'a obs) ?(print : 'b Print.t option) (ret : 'b Gen.t) :
+      ('a t -> 'b) fun_ Gen.t =
     Fn.gen (observable o) ?print ret
 
   module Infix = struct
-    let (@::) x tail = cons x tail
-    let (@->) o tail = o_cons o tail
+    let ( @:: ) x tail = cons x tail
+
+    let ( @-> ) o tail = o_cons o tail
   end
+
   include Infix
 end
 
-let fun_nary (o:_ Tuple.obs) ?print ret : _ Gen.t = Tuple.gen o ?print ret
+let fun_nary (o : _ Tuple.obs) ?print ret : _ Gen.t = Tuple.gen o ?print ret
 
 let fun2 o1 o2 ?print ret =
   Gen.map
@@ -1137,57 +1263,54 @@ let fun4 o1 o2 o3 o4 ?print ret =
 
 module TestResult = struct
   type 'a counter_ex = {
-    instance: 'a; (** The counter-example(s) *)
-    shrink_steps: int; (** How many shrinking steps for this counterex *)
-    msg_l: string list; (** messages. @since 0.7 *)
+    instance : 'a;  (** The counter-example(s) *)
+    shrink_steps : int;  (** How many shrinking steps for this counterex *)
+    msg_l : string list;  (** messages. @since 0.7 *)
   }
 
   (** Result state.
       changed in 0.10 (move to inline records) *)
   type 'a state =
     | Success
-    | Failed of {
-        instances: 'a counter_ex list; (** Failed instance(s) *)
-      }
-    | Failed_other of {msg: string}
-    | Error of {
-        instance: 'a counter_ex;
-        exn: exn;
-        backtrace: string;
-      } (** Error, backtrace, and instance that triggered it *)
-
+    | Failed of { instances : 'a counter_ex list  (** Failed instance(s) *) }
+    | Failed_other of { msg : string }
+    | Error of { instance : 'a counter_ex; exn : exn; backtrace : string }
+        (** Error, backtrace, and instance that triggered it *)
 
   (* result returned by running a test *)
   type 'a t = {
     mutable state : 'a state;
-    mutable count: int;  (* number of tests *)
-    mutable count_gen: int; (* number of generated cases *)
-    collect_tbl: (string, int) Hashtbl.t lazy_t;
-    stats_tbl: ('a stat * (int, int) Hashtbl.t) list;
-    mutable warnings: string list;
-    mutable instances: 'a list;
-    (** List of instances used for this test, in no particular order.
+    mutable count : int;
+    (* number of tests *)
+    mutable count_gen : int;
+    (* number of generated cases *)
+    collect_tbl : (string, int) Hashtbl.t lazy_t;
+    stats_tbl : ('a stat * (int, int) Hashtbl.t) list;
+    mutable warnings : string list;
+    mutable instances : 'a list;
+        (** List of instances used for this test, in no particular order.
         @since 0.9 *)
   }
 
-  let get_state {state; _} = state
+  let get_state { state; _ } = state
 
-  let get_count {count; _} = count
+  let get_count { count; _ } = count
 
-  let get_count_gen {count_gen; _} = count_gen
+  let get_count_gen { count_gen; _ } = count_gen
 
   (* indicate failure on the given [instance] *)
   let fail ~msg_l ~steps:shrink_steps res instance =
-    let c_ex = {instance; shrink_steps; msg_l; } in
+    let c_ex = { instance; shrink_steps; msg_l } in
     match res.state with
-    | Success -> res.state <- Failed {instances=[ c_ex ]}
-    | Error _
-    | Failed_other _ -> ()
-    | Failed {instances=[]} -> assert false
-    | Failed {instances=l} -> res.state <- Failed {instances=c_ex :: l}
+    | Success -> res.state <- Failed { instances = [ c_ex ] }
+    | Error _ | Failed_other _ -> ()
+    | Failed { instances = [] } -> assert false
+    | Failed { instances = l } -> res.state <- Failed { instances = c_ex :: l }
 
   let error ~msg_l ~steps res instance exn backtrace =
-    res.state <- Error {instance={instance; shrink_steps=steps; msg_l; }; exn; backtrace}
+    res.state <-
+      Error
+        { instance = { instance; shrink_steps = steps; msg_l }; exn; backtrace }
 
   let get_collect r =
     if Lazy.is_val r.collect_tbl then Some (Lazy.force r.collect_tbl) else None
@@ -1204,76 +1327,90 @@ module TestResult = struct
 
   let get_instances r = r.instances
 
-  let is_success r = match r.state with
+  let is_success r =
+    match r.state with
     | Success -> true
     | Failed _ | Error _ | Failed_other _ -> false
 end
 
 module Test_exceptions = struct
-
   exception Test_fail of string * string list
+
   exception Test_error of string * string * exn * string
 end
 
 module Test = struct
-
   type 'a cell = {
-    count : int; (* number of tests to do *)
-    long_factor : int; (* multiplicative factor for long test count *)
-    max_gen : int; (* max number of instances to generate (>= count) *)
-    max_fail : int; (* max number of failures *)
-    law : 'a -> bool; (* the law to check *)
-    gen : 'a Gen.t; (* how to generate/shrink instances *)
-    print : 'a Print.t option; (* how to print values *)
-    collect : ('a -> string) option; (* collect values by tag, useful to display distribution of generated *)
-    stats : 'a stat list; (* distribution of values of type 'a *)
-    qcheck1_shrink : ('a -> ('a -> unit) -> unit) option; (* QCheck1-backward-compatible shrinking *)
-    if_assumptions_fail: [`Fatal | `Warning] * float;
+    count : int;
+    (* number of tests to do *)
+    long_factor : int;
+    (* multiplicative factor for long test count *)
+    max_gen : int;
+    (* max number of instances to generate (>= count) *)
+    max_fail : int;
+    (* max number of failures *)
+    law : 'a -> bool;
+    (* the law to check *)
+    gen : 'a Gen.t;
+    (* how to generate/shrink instances *)
+    print : 'a Print.t option;
+    (* how to print values *)
+    collect : ('a -> string) option;
+    (* collect values by tag, useful to display distribution of generated *)
+    stats : 'a stat list;
+    (* distribution of values of type 'a *)
+    qcheck1_shrink : ('a -> ('a -> unit) -> unit) option;
+    (* QCheck1-backward-compatible shrinking *)
+    if_assumptions_fail : [ `Fatal | `Warning ] * float;
     mutable name : string; (* name of the law *)
   }
 
-  type t = | Test : 'a cell -> t
+  type t = Test : 'a cell -> t
 
-  let get_name {name; _} = name
+  let get_name { name; _ } = name
 
   let set_name c name = c.name <- name
 
-  let get_law {law; _} = law
+  let get_law { law; _ } = law
 
-  let get_gen {gen; _} = gen
+  let get_gen { gen; _ } = gen
 
-  let get_print_opt {print; _} = print
+  let get_print_opt { print; _ } = print
 
-  let get_collect_opt {collect; _} = collect
+  let get_collect_opt { collect; _ } = collect
 
-  let get_stats {stats; _} = stats
+  let get_stats { stats; _ } = stats
 
-  let get_count {count; _ } = count
+  let get_count { count; _ } = count
 
-  let get_long_factor {long_factor; _} = long_factor
+  let get_long_factor { long_factor; _ } = long_factor
 
   let default_count = 100
 
   let global_count count =
-    let count = match (count, Sys.getenv_opt "QCHECK_COUNT") with
-    | (Some x, _) -> x
-    | (_, Some x) -> int_of_string x
-    | (None, None) -> default_count
-  in
-  if count < 0 then invalid_arg ("count must be > 0 but value is " ^ string_of_int count) else count
+    let count =
+      match (count, Sys.getenv_opt "QCHECK_COUNT") with
+      | (Some x, _) -> x
+      | (_, Some x) -> int_of_string x
+      | (None, None) -> default_count
+    in
+    if count < 0 then
+      invalid_arg ("count must be > 0 but value is " ^ string_of_int count)
+    else count
 
   let fresh_name =
     let r = ref 0 in
-    (fun () -> incr r; Printf.sprintf "anon_test_%d" !r)
+    fun () ->
+      incr r ;
+      Printf.sprintf "anon_test_%d" !r
 
-  let default_if_assumptions_fail = `Warning, 0.05
+  let default_if_assumptions_fail = (`Warning, 0.05)
 
-  let make_cell ?(if_assumptions_fail=default_if_assumptions_fail)
-      ?(count) ?(long_factor=1) ?max_gen
-      ?(max_fail=1) ?(name=fresh_name()) ?print ?collect ?(stats=[]) gen law
-    =
+  let make_cell ?(if_assumptions_fail = default_if_assumptions_fail) ?count
+      ?(long_factor = 1) ?max_gen ?(max_fail = 1) ?(name = fresh_name ()) ?print
+      ?collect ?(stats = []) gen law =
     let count = global_count count in
-    let max_gen = match max_gen with None -> count + 200 | Some x->x in
+    let max_gen = match max_gen with None -> count + 200 | Some x -> x in
     {
       law;
       gen;
@@ -1289,14 +1426,14 @@ module Test = struct
       qcheck1_shrink = None;
     }
 
-  let make_cell_from_QCheck1 ?(if_assumptions_fail=default_if_assumptions_fail)
-      ?(count) ?(long_factor=1) ?max_gen
-      ?(max_fail=1) ?(name=fresh_name()) ~gen ?shrink ?print ?collect ~stats law
-    =
+  let make_cell_from_QCheck1
+      ?(if_assumptions_fail = default_if_assumptions_fail) ?count
+      ?(long_factor = 1) ?max_gen ?(max_fail = 1) ?(name = fresh_name ()) ~gen
+      ?shrink ?print ?collect ~stats law =
     let count = global_count count in
     (* Make a "fake" QCheck2 arbitrary with no shrinking *)
     let fake_gen = Gen.make_primitive ~gen ~shrink:(fun _ -> Seq.empty) in
-    let max_gen = match max_gen with None -> count + 200 | Some x->x in
+    let max_gen = match max_gen with None -> count + 200 | Some x -> x in
     {
       law;
       gen = fake_gen;
@@ -1312,8 +1449,21 @@ module Test = struct
       qcheck1_shrink = shrink;
     }
 
-  let make ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?name ?print ?collect ?stats gen law =
-    Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?name ?print ?collect ?stats gen law)
+  let make ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?name
+      ?print ?collect ?stats gen law =
+    Test
+      (make_cell
+         ?if_assumptions_fail
+         ?count
+         ?long_factor
+         ?max_gen
+         ?max_fail
+         ?name
+         ?print
+         ?collect
+         ?stats
+         gen
+         law)
 
   let test_get_count (Test cell) = get_count cell
 
@@ -1322,11 +1472,7 @@ module Test = struct
   module R = TestResult
 
   (* Result of an instance run *)
-  type res =
-    | Success
-    | Failure
-    | FalseAssumption
-    | Error of exn * string
+  type res = Success | Failure | FalseAssumption | Error of exn * string
 
   (* Step function, called after each instance test *)
   type 'a step = string -> 'a cell -> 'a -> res -> unit
@@ -1347,47 +1493,47 @@ module Test = struct
 
   (* state required by {!check} to execute *)
   type 'a state = {
-    test: 'a cell;
-    step: 'a step;
+    test : 'a cell;
+    step : 'a step;
     handler : 'a handler;
-    rand: RS.t;
-    mutable res: 'a TestResult.t;
-    mutable cur_count: int;  (** number of iterations remaining to do *)
-    mutable cur_max_gen: int; (** maximum number of generations allowed *)
-    mutable cur_max_fail: int; (** maximum number of counter-examples allowed *)
+    rand : RS.t;
+    mutable res : 'a TestResult.t;
+    mutable cur_count : int;  (** number of iterations remaining to do *)
+    mutable cur_max_gen : int;  (** maximum number of generations allowed *)
+    mutable cur_max_fail : int;
+        (** maximum number of counter-examples allowed *)
   }
 
   let is_done state = state.cur_count <= 0 || state.cur_max_gen <= 0
 
   let decr_count state =
-    state.res.R.count <- state.res.R.count + 1;
+    state.res.R.count <- state.res.R.count + 1 ;
     state.cur_count <- state.cur_count - 1
 
   let new_input_tree state =
-    state.res.R.count_gen <- state.res.R.count_gen + 1;
-    state.cur_max_gen <- state.cur_max_gen - 1;
+    state.res.R.count_gen <- state.res.R.count_gen + 1 ;
+    state.cur_max_gen <- state.cur_max_gen - 1 ;
     state.test.gen state.rand
 
   (* statistics on inputs *)
-  let collect st i = match st.test.collect with
+  let collect st i =
+    match st.test.collect with
     | None -> ()
     | Some f ->
-      let key = f i in
-      let (lazy tbl) = st.res.R.collect_tbl in
-      let n = try Hashtbl.find tbl key with Not_found -> 0 in
-      Hashtbl.replace tbl key (n+1)
+        let key = f i in
+        let (lazy tbl) = st.res.R.collect_tbl in
+        let n = try Hashtbl.find tbl key with Not_found -> 0 in
+        Hashtbl.replace tbl key (n + 1)
 
   let update_stats st i =
     List.iter
-      (fun ((_,f), tbl) ->
-         let key = f i in
-         let n = try Hashtbl.find tbl key with Not_found -> 0 in
-         Hashtbl.replace tbl key (n+1))
+      (fun ((_, f), tbl) ->
+        let key = f i in
+        let n = try Hashtbl.find tbl key with Not_found -> 0 in
+        Hashtbl.replace tbl key (n + 1))
       st.res.R.stats_tbl
 
-  type res_or_exn =
-    | Shrink_fail
-    | Shrink_exn of exn
+  type res_or_exn = Shrink_fail | Shrink_exn of exn
 
   (* triggered by user to fail with a message *)
   exception User_fail of string
@@ -1397,104 +1543,109 @@ module Test = struct
   let fail_reportf m =
     let buf = Buffer.create 64 in
     Format.kfprintf
-      (fun out -> Format.fprintf out "@?"; fail_report (Buffer.contents buf))
-      (Format.formatter_of_buffer buf) m
+      (fun out ->
+        Format.fprintf out "@?" ;
+        fail_report (Buffer.contents buf))
+      (Format.formatter_of_buffer buf)
+      m
 
-  type 'a run_res =
-    | Run_ok
-    | Run_fail of string list
+  type 'a run_res = Run_ok | Run_fail of string list
 
   let run_law law x =
-    try
-      if law x then Run_ok else Run_fail []
-    with User_fail msg -> Run_fail [msg]
+    try if law x then Run_ok else Run_fail []
+    with User_fail msg -> Run_fail [ msg ]
 
   (* QCheck1-compatibility code *)
   exception Iter_exit
+
   let iter_find_map p iter =
     let r = ref None in
-    (try iter (fun x -> match p x with Some _ as y -> r := y; raise Iter_exit | None -> ())
-     with Iter_exit -> ()
-    );
+    (try
+       iter (fun x ->
+           match p x with
+           | Some _ as y ->
+               r := y ;
+               raise Iter_exit
+           | None -> ())
+     with Iter_exit -> ()) ;
     !r
 
   (* try to shrink counter-ex [i] into a smaller one. Returns
      shrinked value and number of steps *)
-  let shrink st (i_tree : 'a Tree.t) (r : res_or_exn) m : 'a * res_or_exn * string list * int =
-    let is_err = match r with
-      | Shrink_exn _ -> true | _ -> false
-    in
+  let shrink st (i_tree : 'a Tree.t) (r : res_or_exn) m :
+      'a * res_or_exn * string list * int =
+    let is_err = match r with Shrink_exn _ -> true | _ -> false in
     let rec shrink_ st i_tree r m ~steps =
-      let Tree.Tree (i, shrinks) = i_tree in
-      st.handler st.test.name st.test (Shrunk (steps, i));
+      let (Tree.Tree (i, shrinks)) = i_tree in
+      st.handler st.test.name st.test (Shrunk (steps, i)) ;
       let count = ref 0 in
-      let i' = match st.test.qcheck1_shrink with
-        | Some f -> (* QCheck1-compatibility, copied almost verbatim from QCheck.ml old code *)
-           iter_find_map
-             (fun x ->
-               (* let Tree.Tree (x, _) = x_tree in *)
-               try
-                 incr count;
-                 st.handler st.test.name st.test (Shrinking (steps, !count, x));
-                 begin match run_law st.test.law x with
-                 | Run_fail m when not is_err -> Some (Tree.pure x, Shrink_fail, m)
-                 | _ -> None
-                 end
-               with
-               | Failed_precondition | No_example_found _ -> None
-               | e when is_err -> Some (Tree.pure x, Shrink_exn e, []) (* fail test (by error) *)
-             ) (f i)
-        | None -> (* QCheck2 (or QCheck1 with a shrinkless tree): use the shrink tree *)
-        Seq.filter_map
-          (fun x_tree ->
-             let Tree.Tree (x, _) = x_tree in
-             try
-               incr count;
-               st.handler st.test.name st.test (Shrinking (steps, !count, x));
-               begin match run_law st.test.law x with
-                 | Run_fail m when not is_err -> Some (x_tree, Shrink_fail, m)
-                 | _ -> None
-               end
-             with
-             | Failed_precondition | No_example_found _ -> None
-             | e when is_err -> Some (x_tree, Shrink_exn e, []) (* fail test (by error) *)
-          ) shrinks
-               |> Seq.hd
+      let i' =
+        match st.test.qcheck1_shrink with
+        | Some f ->
+            (* QCheck1-compatibility, copied almost verbatim from QCheck.ml old code *)
+            iter_find_map
+              (fun x ->
+                (* let Tree.Tree (x, _) = x_tree in *)
+                try
+                  incr count ;
+                  st.handler st.test.name st.test (Shrinking (steps, !count, x)) ;
+                  match run_law st.test.law x with
+                  | Run_fail m when not is_err ->
+                      Some (Tree.pure x, Shrink_fail, m)
+                  | _ -> None
+                with
+                | Failed_precondition | No_example_found _ -> None
+                | e when is_err -> Some (Tree.pure x, Shrink_exn e, [])
+                (* fail test (by error) *))
+              (f i)
+        | None ->
+            (* QCheck2 (or QCheck1 with a shrinkless tree): use the shrink tree *)
+            Seq.filter_map
+              (fun x_tree ->
+                let (Tree.Tree (x, _)) = x_tree in
+                try
+                  incr count ;
+                  st.handler st.test.name st.test (Shrinking (steps, !count, x)) ;
+                  match run_law st.test.law x with
+                  | Run_fail m when not is_err -> Some (x_tree, Shrink_fail, m)
+                  | _ -> None
+                with
+                | Failed_precondition | No_example_found _ -> None
+                | e when is_err -> Some (x_tree, Shrink_exn e, [])
+                (* fail test (by error) *))
+              shrinks
+            |> Seq.hd
       in
       match i' with
-      | None -> i, r, m, steps
-      | Some (i_tree',r',m') -> shrink_ st i_tree' r' m' ~steps:(steps + 1) (* shrink further *)
+      | None -> (i, r, m, steps)
+      | Some (i_tree', r', m') -> shrink_ st i_tree' r' m' ~steps:(steps + 1)
+      (* shrink further *)
     in
     shrink_ ~steps:0 st i_tree r m
 
-  type 'a check_result =
-    | CR_continue
-    | CR_yield of 'a TestResult.t
+  type 'a check_result = CR_continue | CR_yield of 'a TestResult.t
 
   (* test raised [e] on [input]; try to shrink then fail *)
   let handle_exn state input e bt : _ check_result =
     (* first, shrink
        TODO: shall we shrink differently (i.e. expected only an error)? *)
-    let input, r, msg_l, steps = shrink state input (Shrink_exn e) [] in
+    let (input, r, msg_l, steps) = shrink state input (Shrink_exn e) [] in
     (* recover exception of shrunk input *)
-    let e = match r with
-      | Shrink_fail -> e
-      | Shrink_exn e' -> e'
-    in
-    state.step state.test.name state.test input (Error (e, bt));
-    R.error state.res ~steps ~msg_l input e bt;
+    let e = match r with Shrink_fail -> e | Shrink_exn e' -> e' in
+    state.step state.test.name state.test input (Error (e, bt)) ;
+    R.error state.res ~steps ~msg_l input e bt ;
     CR_yield state.res
 
   (* test failed on [input], which means the law is wrong. Continue if
      we should. *)
   let handle_fail state input msg_l : _ check_result =
     (* first, shrink *)
-    let input, _, msg_l, steps = shrink state input Shrink_fail msg_l in
+    let (input, _, msg_l, steps) = shrink state input Shrink_fail msg_l in
     (* fail *)
-    decr_count state;
-    state.step state.test.name state.test input Failure;
-    state.cur_max_fail <- state.cur_max_fail - 1;
-    R.fail state.res ~steps ~msg_l input;
+    decr_count state ;
+    state.step state.test.name state.test input Failure ;
+    state.cur_max_fail <- state.cur_max_fail - 1 ;
+    R.fail state.res ~steps ~msg_l input ;
     CR_yield state.res
 
   (* [check_state state] applies [state.test] repeatedly ([iter] times)
@@ -1505,50 +1656,51 @@ module Test = struct
   let rec check_state state : _ R.t =
     if is_done state then state.res
     else (
-      state.handler state.test.name state.test Generating;
+      state.handler state.test.name state.test Generating ;
       match new_input_tree state with
-      | i_tree ->
-        check_state_input state i_tree
+      | i_tree -> check_state_input state i_tree
       | exception e ->
-        (* turn it into an error *)
-        let bt = Printexc.get_backtrace() in
-        let msg =
-          Printf.sprintf
-            "ERROR: uncaught exception in generator for test %s after %d steps:\nException: %s\nBacktrace: %s"
-            state.test.name state.test.count (Printexc.to_string e) bt
-        in
-        state.res.R.state <- R.Failed_other {msg};
-        state.res
-    )
+          (* turn it into an error *)
+          let bt = Printexc.get_backtrace () in
+          let msg =
+            Printf.sprintf
+              "ERROR: uncaught exception in generator for test %s after %d \
+               steps:\n\
+               Exception: %s\n\
+               Backtrace: %s"
+              state.test.name
+              state.test.count
+              (Printexc.to_string e)
+              bt
+          in
+          state.res.R.state <- R.Failed_other { msg } ;
+          state.res)
+
   and check_state_input state input_tree =
-    let Tree.Tree (input, _) = input_tree in
-    state.handler state.test.name state.test (Collecting input);
-    state.res.R.instances <- input :: state.res.R.instances;
-    collect state input;
-    update_stats state input;
+    let (Tree.Tree (input, _)) = input_tree in
+    state.handler state.test.name state.test (Collecting input) ;
+    state.res.R.instances <- input :: state.res.R.instances ;
+    collect state input ;
+    update_stats state input ;
     let res =
       try
-        state.handler state.test.name state.test (Testing input);
-        begin match run_law state.test.law input with
-          | Run_ok ->
+        state.handler state.test.name state.test (Testing input) ;
+        match run_law state.test.law input with
+        | Run_ok ->
             (* one test ok *)
-            decr_count state;
-            state.step state.test.name state.test input Success;
+            decr_count state ;
+            state.step state.test.name state.test input Success ;
             CR_continue
-          | Run_fail msg_l ->
-            handle_fail state input_tree msg_l
-        end
+        | Run_fail msg_l -> handle_fail state input_tree msg_l
       with
       | Failed_precondition | No_example_found _ ->
-        state.step state.test.name state.test input FalseAssumption;
-        CR_continue
+          state.step state.test.name state.test input FalseAssumption ;
+          CR_continue
       | e ->
-        let bt = Printexc.get_backtrace () in
-        handle_exn state input_tree e bt
+          let bt = Printexc.get_backtrace () in
+          handle_exn state input_tree e bt
     in
-    match res with
-    | CR_continue -> check_state state
-    | CR_yield x -> x
+    match res with CR_continue -> check_state state | CR_yield x -> x
 
   type 'a callback = string -> 'a cell -> 'a TestResult.t -> unit
 
@@ -1557,84 +1709,109 @@ module Test = struct
   (* check that there are sufficiently many tests which passed, to avoid
      the case where they all passed by failed precondition *)
   let check_if_assumptions target_count cell res : unit =
-    let percentage_of_count = float_of_int res.R.count /. float_of_int target_count in
-    let assm_flag, assm_frac = cell.if_assumptions_fail in
-    if R.is_success res && percentage_of_count < assm_frac then (
+    let percentage_of_count =
+      float_of_int res.R.count /. float_of_int target_count
+    in
+    let (assm_flag, assm_frac) = cell.if_assumptions_fail in
+    if R.is_success res && percentage_of_count < assm_frac then
       let msg =
-        format_of_string "%s: \
-                          only %.1f%% tests (of %d) passed precondition for %S\n\n\
-                          NOTE: it is likely that the precondition is too strong, or that \
-                          the generator is buggy.\n%!"
+        format_of_string
+          "%s: only %.1f%% tests (of %d) passed precondition for %S\n\n\
+           NOTE: it is likely that the precondition is too strong, or that the \
+           generator is buggy.\n\
+           %!"
       in
       match assm_flag with
       | `Warning ->
-        let msg = Printf.sprintf
-            msg "WARNING"
-            (percentage_of_count *. 100.) cell.count cell.name in
-        res.R.warnings <- msg :: res.R.warnings
+          let msg =
+            Printf.sprintf
+              msg
+              "WARNING"
+              (percentage_of_count *. 100.)
+              cell.count
+              cell.name
+          in
+          res.R.warnings <- msg :: res.R.warnings
       | `Fatal ->
-        (* turn it into an error *)
-        let msg = Printf.sprintf
-            msg "ERROR"
-            (percentage_of_count *. 100.) cell.count cell.name in
-        res.R.state <- R.Failed_other {msg}
-    )
+          (* turn it into an error *)
+          let msg =
+            Printf.sprintf
+              msg
+              "ERROR"
+              (percentage_of_count *. 100.)
+              cell.count
+              cell.name
+          in
+          res.R.state <- R.Failed_other { msg }
 
   (* main checking function *)
-  let check_cell ?(long=false) ?(call=callback_nil_)
-      ?(step=step_nil_) ?(handler=handler_nil_)
-      ?(rand=RS.make [| 0 |]) cell =
+  let check_cell ?(long = false) ?(call = callback_nil_) ?(step = step_nil_)
+      ?(handler = handler_nil_) ?(rand = RS.make [| 0 |]) cell =
     let factor = if long then cell.long_factor else 1 in
-    let target_count = factor*cell.count in
-    let state = {
-      test=cell; rand;
-      step; handler;
-      cur_count=target_count;
-      cur_max_gen=factor*cell.max_gen;
-      cur_max_fail=factor*cell.max_fail;
-      res = {R.
-              state=R.Success; count=0; count_gen=0;
-              collect_tbl=lazy (Hashtbl.create 10);
-              instances=[]; warnings=[];
-              stats_tbl= List.map (fun stat -> stat, Hashtbl.create 10) cell.stats;
-            };
-    } in
+    let target_count = factor * cell.count in
+    let state =
+      {
+        test = cell;
+        rand;
+        step;
+        handler;
+        cur_count = target_count;
+        cur_max_gen = factor * cell.max_gen;
+        cur_max_fail = factor * cell.max_fail;
+        res =
+          {
+            R.state = R.Success;
+            count = 0;
+            count_gen = 0;
+            collect_tbl = lazy (Hashtbl.create 10);
+            instances = [];
+            warnings = [];
+            stats_tbl =
+              List.map (fun stat -> (stat, Hashtbl.create 10)) cell.stats;
+          };
+      }
+    in
     let res = check_state state in
-    check_if_assumptions target_count cell res;
-    call cell.name cell res;
+    check_if_assumptions target_count cell res ;
+    call cell.name cell res ;
     res
 
   include Test_exceptions
 
   (* print instance using [arb] *)
-  let print_instance arb i = match arb.print with
-    | None -> "<instance>"
-    | Some pp -> pp i
+  let print_instance arb i =
+    match arb.print with None -> "<instance>" | Some pp -> pp i
 
   let print_c_ex arb c : string =
     let buf = Buffer.create 64 in
-    begin
-      if c.R.shrink_steps > 0
-      then Printf.bprintf buf "%s (after %d shrink steps)"
-          (print_instance arb c.R.instance) c.R.shrink_steps
-      else Buffer.add_string buf (print_instance arb c.R.instance)
-    end;
+    if c.R.shrink_steps > 0 then
+      Printf.bprintf
+        buf
+        "%s (after %d shrink steps)"
+        (print_instance arb c.R.instance)
+        c.R.shrink_steps
+    else Buffer.add_string buf (print_instance arb c.R.instance) ;
     List.iter
       (fun msg ->
-         Buffer.add_char buf '\n';
-         Buffer.add_string buf msg;
-         Buffer.add_char buf '\n')
-      c.R.msg_l;
+        Buffer.add_char buf '\n' ;
+        Buffer.add_string buf msg ;
+        Buffer.add_char buf '\n')
+      c.R.msg_l ;
     Buffer.contents buf
 
   let pp_print_test_fail name out l =
     let rec pp_list out = function
       | [] -> ()
-      | [x] -> Format.fprintf out "%s@," x
+      | [ x ] -> Format.fprintf out "%s@," x
       | x :: y -> Format.fprintf out "%s@,%a" x pp_list y
     in
-    Format.fprintf out "@[test `%s`@ failed on ≥ %d cases:@ @[<v>%a@]@]"
-      name (List.length l) pp_list l
+    Format.fprintf
+      out
+      "@[test `%s`@ failed on ≥ %d cases:@ @[<v>%a@]@]"
+      name
+      (List.length l)
+      pp_list
+      l
 
   let asprintf fmt =
     let buf = Buffer.create 128 in
@@ -1644,123 +1821,157 @@ module Test = struct
   let print_test_fail name l = asprintf "@[%a@]@?" (pp_print_test_fail name) l
 
   let print_test_error name i e stack =
-    Format.sprintf "@[test `%s`@ raised exception `%s`@ on `%s`@,%s@]"
-      name (Printexc.to_string e) i stack
+    Format.sprintf
+      "@[test `%s`@ raised exception `%s`@ on `%s`@,%s@]"
+      name
+      (Printexc.to_string e)
+      i
+      stack
 
   let print_collect c =
     let out = Buffer.create 64 in
     Hashtbl.iter
-      (fun case num -> Printf.bprintf out "%s: %d cases\n" case num) c;
+      (fun case num -> Printf.bprintf out "%s: %d cases\n" case num)
+      c ;
     Buffer.contents out
 
   let stat_max_lines = 20 (* maximum number of lines for a histogram *)
 
-  let print_stat ((name,_), tbl) =
+  let print_stat ((name, _), tbl) =
     let avg = ref 0. in
     let num = ref 0 in
-    let min_idx, max_idx =
+    let (min_idx, max_idx) =
       Hashtbl.fold
-        (fun i res (m1,m2) ->
-           avg := !avg +. float_of_int (i * res);
-           num := !num + res;
-           min i m1, max i m2)
-        tbl (max_int,min_int)
+        (fun i res (m1, m2) ->
+          avg := !avg +. float_of_int (i * res) ;
+          num := !num + res ;
+          (min i m1, max i m2))
+        tbl
+        (max_int, min_int)
     in
     (* compute average *)
-    if !num > 0 then (
-      avg := !avg /. float_of_int !num
-    );
+    if !num > 0 then avg := !avg /. float_of_int !num ;
     (* compute std-dev: sqroot of sum of squared distance-to-average
        https://en.wikipedia.org/wiki/Standard_deviation *)
     let stddev =
       Hashtbl.fold
-        (fun i res m -> m +. (float_of_int i -. !avg) ** 2. *. float_of_int res)
-        tbl 0.
-      |> (fun s -> if !num>0 then s /. float_of_int !num else s)
+        (fun i res m ->
+          m +. (((float_of_int i -. !avg) ** 2.) *. float_of_int res))
+        tbl
+        0.
+      |> (fun s -> if !num > 0 then s /. float_of_int !num else s)
       |> sqrt
     in
     (* compute median *)
     let median = ref 0 in
-    let median_num = ref 0 in (* how many values have we seen yet? once >= !n/2 we set median *)
-    (Hashtbl.fold (fun i cnt acc -> (i,cnt)::acc) tbl [])
-    |> List.sort (fun (i,_) (j,_) -> poly_compare i j)
-    |> List.iter
-      (fun (i,cnt) ->
-         if !median_num < !num/2 then (
-           median_num := !median_num + cnt;
-           (* just went above median! *)
-           if !median_num >= !num/2 then
-             median := i));
+    let median_num = ref 0 in
+    (* how many values have we seen yet? once >= !n/2 we set median *)
+    Hashtbl.fold (fun i cnt acc -> (i, cnt) :: acc) tbl []
+    |> List.sort (fun (i, _) (j, _) -> poly_compare i j)
+    |> List.iter (fun (i, cnt) ->
+           if !median_num < !num / 2 then (
+             median_num := !median_num + cnt ;
+             (* just went above median! *)
+             if !median_num >= !num / 2 then median := i)) ;
     (* group by buckets, if there are too many entries: *)
     (* first compute histogram and bucket size *)
-    let hist_size, bucket_size =
+    let (hist_size, bucket_size) =
       let sample_width = Int64.(sub (of_int max_idx) (of_int min_idx)) in
-      if sample_width > Int64.of_int stat_max_lines
-      then stat_max_lines,
-           int_of_float (ceil (Int64.to_float sample_width /. float_of_int stat_max_lines))
-      else max_idx-min_idx, 1
+      if sample_width > Int64.of_int stat_max_lines then
+        ( stat_max_lines,
+          int_of_float
+            (ceil (Int64.to_float sample_width /. float_of_int stat_max_lines))
+        )
+      else (max_idx - min_idx, 1)
     in
-    let hist_size = if min_idx + bucket_size * hist_size <= max_idx then 1+hist_size else hist_size in
+    let hist_size =
+      if min_idx + (bucket_size * hist_size) <= max_idx then 1 + hist_size
+      else hist_size
+    in
     (* accumulate bucket counts *)
-    let max_val = ref 0 in (* max value after grouping by buckets *)
+    let max_val = ref 0 in
+    (* max value after grouping by buckets *)
     let bucket_count = Array.init hist_size (fun _ -> 0) in
     Hashtbl.iter
       (fun j count ->
-         let bucket = Int64.(to_int (div (sub (of_int j) (of_int min_idx)) (of_int bucket_size))) in
-         let new_count = bucket_count.(bucket) + count in
-         bucket_count.(bucket) <- new_count;
-         max_val := max !max_val new_count) tbl;
+        let bucket =
+          Int64.(
+            to_int (div (sub (of_int j) (of_int min_idx)) (of_int bucket_size)))
+        in
+        let new_count = bucket_count.(bucket) + count in
+        bucket_count.(bucket) <- new_count ;
+        max_val := max !max_val new_count)
+      tbl ;
     (* print entries of the table, sorted by increasing index *)
     let out = Buffer.create 128 in
-    Printf.bprintf out "stats %s:\n" name;
-    Printf.bprintf out
+    Printf.bprintf out "stats %s:\n" name ;
+    Printf.bprintf
+      out
       "  num: %d, avg: %.2f, stddev: %.2f, median %d, min %d, max %d\n"
-      !num !avg stddev !median min_idx max_idx;
+      !num
+      !avg
+      stddev
+      !median
+      min_idx
+      max_idx ;
     let indwidth =
-      max (String.length (Printf.sprintf "%d" min_idx))
-        (max (String.length (Printf.sprintf "%d" max_idx))
-           (String.length (Printf.sprintf "%d" (min_idx + bucket_size * hist_size)))) in
-    let labwidth = if bucket_size=1 then indwidth else 2+2*indwidth in
+      max
+        (String.length (Printf.sprintf "%d" min_idx))
+        (max
+           (String.length (Printf.sprintf "%d" max_idx))
+           (String.length
+              (Printf.sprintf "%d" (min_idx + (bucket_size * hist_size)))))
+    in
+    let labwidth = if bucket_size = 1 then indwidth else 2 + (2 * indwidth) in
     for i = 0 to hist_size - 1 do
-      let i' = min_idx + i * bucket_size in
+      let i' = min_idx + (i * bucket_size) in
       let blabel =
-        if bucket_size=1
-        then Printf.sprintf "%*d" indwidth i'
+        if bucket_size = 1 then Printf.sprintf "%*d" indwidth i'
         else
-          let bucket_bound = i'+bucket_size-1 in
-          Printf.sprintf "%*d..%*d" indwidth i' indwidth (if bucket_bound < i' then max_int else bucket_bound) in
+          let bucket_bound = i' + bucket_size - 1 in
+          Printf.sprintf
+            "%*d..%*d"
+            indwidth
+            i'
+            indwidth
+            (if bucket_bound < i' then max_int else bucket_bound)
+      in
       let bcount = bucket_count.(i) in
       (* NOTE: keep in sync *)
       let bar_len = bcount * 55 / !max_val in
-      Printf.bprintf out "  %*s: %-56s %10d\n" labwidth blabel (String.make bar_len '#') bcount
-    done;
+      Printf.bprintf
+        out
+        "  %*s: %-56s %10d\n"
+        labwidth
+        blabel
+        (String.make bar_len '#')
+        bcount
+    done ;
     Buffer.contents out
 
-  let () = Printexc.register_printer
-      (function
-        | Test_fail (name,l) -> Some (print_test_fail name l)
-        | Test_error (name,i,e,st) -> Some (print_test_error name i e st)
+  let () =
+    Printexc.register_printer (function
+        | Test_fail (name, l) -> Some (print_test_fail name l)
+        | Test_error (name, i, e, st) -> Some (print_test_error name i e st)
         | User_fail s -> Some ("qcheck: user fail:\n" ^ s)
         | _ -> None)
 
-  let print_fail arb name l =
-    print_test_fail name (List.map (print_c_ex arb) l)
+  let print_fail arb name l = print_test_fail name (List.map (print_c_ex arb) l)
 
-  let print_fail_other name ~msg =
-    print_test_fail name [msg]
+  let print_fail_other name ~msg = print_test_fail name [ msg ]
 
-  let print_error ?(st="") arb name (i,e) =
+  let print_error ?(st = "") arb name (i, e) =
     print_test_error name (print_c_ex arb i) e st
 
-  let check_result cell res = match res.R.state with
+  let check_result cell res =
+    match res.R.state with
     | R.Success -> ()
-    | R.Error {instance; exn; backtrace} ->
-      raise (Test_error (cell.name, print_c_ex cell instance, exn, backtrace))
-    | R.Failed {instances=l} ->
-      let l = List.map (print_c_ex cell) l in
-      raise (Test_fail (cell.name, l))
-    | R.Failed_other {msg} ->
-      raise (Test_fail (cell.name, [msg]))
+    | R.Error { instance; exn; backtrace } ->
+        raise (Test_error (cell.name, print_c_ex cell instance, exn, backtrace))
+    | R.Failed { instances = l } ->
+        let l = List.map (print_c_ex cell) l in
+        raise (Test_fail (cell.name, l))
+    | R.Failed_other { msg } -> raise (Test_fail (cell.name, [ msg ]))
 
   let check_cell_exn ?long ?call ?step ?rand cell =
     let res = check_cell ?long ?call ?step ?rand cell in
@@ -1769,28 +1980,25 @@ module Test = struct
   let check_exn ?long ?rand (Test cell) = check_cell_exn ?long ?rand cell
 end
 
-let find_example ?(name : string = "<example>") ?(count : int option) ~(f : 'a -> bool) (gen : 'a Gen.t) : 'a Gen.t =
+let find_example ?(name : string = "<example>") ?(count : int option)
+    ~(f : 'a -> bool) (gen : 'a Gen.t) : 'a Gen.t =
   (* the random generator of examples satisfying [f]. To do that we
      test the property [fun x -> not (f x)]; any counter-example *)
   let gen st =
-    let cell =
-      Test.make_cell ~max_fail:1 ?count gen (fun x -> not (f x))
-    in
+    let cell = Test.make_cell ~max_fail:1 ?count gen (fun x -> not (f x)) in
     let res = Test.check_cell ~rand:st cell in
-    begin match res.TestResult.state with
-      | TestResult.Success -> raise (No_example_found name)
-      | TestResult.Error _ -> raise (No_example_found name)
-      | TestResult.Failed {instances=[]} -> assert false
-      | TestResult.Failed {instances=failed::_} ->
+    match res.TestResult.state with
+    | TestResult.Success -> raise (No_example_found name)
+    | TestResult.Error _ -> raise (No_example_found name)
+    | TestResult.Failed { instances = [] } -> assert false
+    | TestResult.Failed { instances = failed :: _ } ->
         (* found counter-example! *)
         Tree.pure failed.TestResult.instance
-      | TestResult.Failed_other {msg=_} ->
-        raise (No_example_found name)
-
-    end
+    | TestResult.Failed_other { msg = _ } -> raise (No_example_found name)
   in
   gen
 
-let find_example_gen ?(rand : RS.t option) ?(name : string option) ?(count : int option) ~(f : 'a -> bool) (gen : 'a Gen.t) : 'a =
+let find_example_gen ?(rand : RS.t option) ?(name : string option)
+    ?(count : int option) ~(f : 'a -> bool) (gen : 'a Gen.t) : 'a =
   let g = find_example ?name ?count ~f gen in
   Gen.generate1 ?rand g

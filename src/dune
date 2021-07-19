@@ -1,13 +1,12 @@
-
 (library
-  (name qcheck)
-  (public_name qcheck)
-  (wrapped false)
-  (optional)
-  (modules QCheck_runner)
-  (synopsis "compatibility library for qcheck")
-  (libraries qcheck-core qcheck-core.runner qcheck-ounit))
+ (name qcheck)
+ (public_name qcheck)
+ (wrapped false)
+ (optional)
+ (modules QCheck_runner)
+ (synopsis "compatibility library for qcheck")
+ (libraries qcheck-core qcheck-core.runner qcheck-ounit))
 
 (documentation
-  (package qcheck)
-  (mld_files index))
+ (package qcheck)
+ (mld_files index))

@@ -31,36 +31,37 @@ all rights reserved.
 
 (** {2 State} *)
 
-val random_state : unit -> Random.State.t
 (** Access the current random state *)
+val random_state : unit -> Random.State.t
 
-val verbose : unit -> bool
 (** Is the default mode verbose or quiet? *)
+val verbose : unit -> bool
 
-val long_tests : unit -> bool
 (** Is the default mode to run long tests or nor? *)
+val long_tests : unit -> bool
 
-val set_seed : int -> unit
 (** Change the {!random_state} by creating a new one, initialized with
     the given seed. *)
+val set_seed : int -> unit
 
-val set_verbose : bool -> unit
 (** Change the value of [verbose ()] *)
+val set_verbose : bool -> unit
 
-val set_long_tests : bool -> unit
 (** Change the value of [long_tests ()] *)
+val set_long_tests : bool -> unit
 
-val get_time_between_msg : unit -> float
 (** Get the minimum time to wait between printing messages.
     @since 0.9 *)
+val get_time_between_msg : unit -> float
 
-val set_time_between_msg : float -> unit
 (** Set the minimum tiem between messages.
     @since 0.9 *)
-
+val set_time_between_msg : float -> unit
 
 (** {2 Event handlers} *)
 
+(** The type of counter used to keep tracks of the events received for a given
+    test cell. *)
 type counter = private {
   start : float;
   expected : int;
@@ -69,41 +70,43 @@ type counter = private {
   mutable failed : int;
   mutable errored : int;
 }
-(** The type of counter used to keep tracks of the events received for a given
-    test cell. *)
 
-type handler = {
-  handler : 'a. 'a QCheck2.Test.handler;
-}
 (** A type to represent polymorphic-enough handlers for test cells. *)
+type handler = { handler : 'a. 'a QCheck2.Test.handler }
 
+(** An alias type to a generator of handlers for test cells. *)
 type handler_gen =
   colors:bool ->
-  debug_shrink:(out_channel option) ->
-  debug_shrink_list:(string list) ->
-  size:int -> out:out_channel -> verbose:bool -> counter -> handler
-(** An alias type to a generator of handlers for test cells. *)
+  debug_shrink:out_channel option ->
+  debug_shrink_list:string list ->
+  size:int ->
+  out:out_channel ->
+  verbose:bool ->
+  counter ->
+  handler
 
-val default_handler : handler_gen
 (** The default handler used. *)
-
+val default_handler : handler_gen
 
 (** {2 Run a Suite of Tests and Get Results} *)
 
-val run_tests :
-  ?handler:handler_gen ->
-  ?colors:bool -> ?verbose:bool -> ?long:bool ->
-  ?debug_shrink:(out_channel option) ->
-  ?debug_shrink_list:(string list) ->
-  ?out:out_channel -> ?rand:Random.State.t ->
-  QCheck2.Test.t list -> int
 (** Run a suite of tests, and print its results. This is an heritage from
     the "qcheck" library.
     @return an error code, [0] if all tests passed, [1] otherwise.
     @param colors if true, colorful output
     @param verbose if true, prints more information about test cases *)
+val run_tests :
+  ?handler:handler_gen ->
+  ?colors:bool ->
+  ?verbose:bool ->
+  ?long:bool ->
+  ?debug_shrink:out_channel option ->
+  ?debug_shrink_list:string list ->
+  ?out:out_channel ->
+  ?rand:Random.State.t ->
+  QCheck2.Test.t list ->
+  int
 
-val run_tests_main : ?argv:string array -> QCheck2.Test.t list -> 'a
 (** Can be used as the main function of a test file. Exits with a non-0 code
     if the tests fail. It refers to {!run_tests} for actually running tests
     after CLI options have been parsed.
@@ -155,20 +158,16 @@ Collect results for test collect_results:
 failure (1 tests failed, 1 tests errored, ran 4 tests)
 v}
 *)
+val run_tests_main : ?argv:string array -> QCheck2.Test.t list -> 'a
 
 (** {2 Utils for colored output} *)
 module Color : sig
-  type color =
-    [ `Red
-    | `Yellow
-    | `Green
-    | `Blue
-    | `Normal
-    | `Cyan
-    ]
+  type color = [ `Red | `Yellow | `Green | `Blue | `Normal | `Cyan ]
 
   val reset_line : string
-  val pp_str_c : ?bold:bool -> colors:bool -> color -> out_channel -> string -> unit
+
+  val pp_str_c :
+    ?bold:bool -> colors:bool -> color -> out_channel -> string -> unit
 end
 
 (** {2 Internal Utils}
@@ -176,10 +175,10 @@ end
     We provide {b NO} stability guarantee for this module. Use at your
     own risks. *)
 module Raw : sig
-  type ('b,'c) printer = {
-    info: 'a. ('a,'b,'c,unit) format4 -> 'a;
-    fail: 'a. ('a,'b,'c,unit) format4 -> 'a;
-    err: 'a. ('a,'b,'c,unit) format4 -> 'a;
+  type ('b, 'c) printer = {
+    info : 'a. ('a, 'b, 'c, unit) format4 -> 'a;
+    fail : 'a. ('a, 'b, 'c, unit) format4 -> 'a;
+    err : 'a. ('a, 'b, 'c, unit) format4 -> 'a;
   }
 
   val print_std : (out_channel, unit) printer
@@ -190,15 +189,19 @@ module Raw : sig
     verbose:bool ->
     print_res:bool ->
     print:('a, 'b) printer ->
-    string -> 'c QCheck2.Test.cell -> 'c QCheck2.TestResult.t -> unit
+    string ->
+    'c QCheck2.Test.cell ->
+    'c QCheck2.TestResult.t ->
+    unit
 
   type cli_args = {
     cli_verbose : bool;
     cli_long_tests : bool;
     cli_print_list : bool;
     cli_rand : Random.State.t;
-    cli_slow_test : int; (* how many slow tests to display? *)
-    cli_colors: bool;
+    cli_slow_test : int;
+    (* how many slow tests to display? *)
+    cli_colors : bool;
     cli_debug_shrink : out_channel option;
     cli_debug_shrink_list : string list;
   }

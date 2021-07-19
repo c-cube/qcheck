@@ -1,4 +1,3 @@
-
 (** {1 Alcotest backend for QCheck}
 
     We use environment variables for controlling QCheck here, since alcotest
@@ -11,11 +10,14 @@
     @since 0.9
 *)
 
-val to_alcotest :
-  ?verbose:bool -> ?long:bool -> ?rand:Random.State.t ->
-  QCheck2.Test.t -> unit Alcotest.test_case
 (** Convert a qcheck test into an alcotest test
     @param verbose used to print information on stdout (default: [verbose()])
     @param rand the random generator to use (default: [random_state ()])
     @since 0.9
 *)
+val to_alcotest :
+  ?verbose:bool ->
+  ?long:bool ->
+  ?rand:Random.State.t ->
+  QCheck2.Test.t ->
+  unit Alcotest.test_case

@@ -6,8 +6,8 @@ all rights reserved.
 *)
 
 (* Keep the following title alone in its documentation block as it is specially treated by Odoc: it doesn't appear
-in the Contents menu on the left. The next documentation block with all the actual
-content will appear. *)
+   in the Contents menu on the left. The next documentation block with all the actual
+   content will appear. *)
 (** {1 QuickCheck-inspired property-based testing} *)
 
 (** {1 Introduction}
@@ -101,18 +101,17 @@ module Tree : sig
       does not break invariants (e.g. shrinks of a positive number are always positive).
   *)
 
-  type 'a t
   (** A tree of random generated values, where the root contains the value used for the test,
       and the sub-trees contain shrunk values (as trees, to be able to shrink several times a value)
       used if the test fails. *)
+  type 'a t
 
-  val root : 'a t -> 'a
   (** [root tree] returns the root value of the tree of generated values [t]. *)
+  val root : 'a t -> 'a
 
-  val children : 'a t -> 'a t Seq.t
   (** [children tree] returns the direct sub-trees of the tree of generated values [t]. *)
+  val children : 'a t -> 'a t Seq.t
 
-  val pp : ?depth : int -> (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
   (** [pp ?depth pp_a ppf tree] pretty-prints the tree of generated values [tree] using the
       pretty-print formatter [ppf]. Values of type ['a] will be printed using the given
       pretty-printer [pp_a].
@@ -125,6 +124,12 @@ module Tree : sig
       - [2] means "the root, its direct shrinks, and the shrinks of its shrinks"
       - etc.
   *)
+  val pp :
+    ?depth:int ->
+    (Format.formatter -> 'a -> unit) ->
+    Format.formatter ->
+    'a t ->
+    unit
 end
 
 (** A generator is responsible for generating pseudo-random values and provide shrinks (smaller
@@ -135,38 +140,37 @@ module Gen : sig
       - {{!section:composing_generators} generator compositions}
   *)
 
-  type 'a t
   (** A random generator for values of type ['a]. *)
+  type 'a t
 
-  type 'a sized = int -> 'a t
   (** Random generator with a size bound. *)
+  type 'a sized = int -> 'a t
 
   (** {3:primitive_generators Primitive generators} *)
 
-  val unit : unit t
   (** The unit generator.
 
       Does not shrink.
   *)
+  val unit : unit t
 
-  val bool : bool t
   (** The boolean generator.
 
       Shrinks towards [false].
   *)
+  val bool : bool t
 
-  val int : int t
   (** Generates integers uniformly.
 
       Shrinks towards [0].
   *)
+  val int : int t
 
-  val pint : ?origin : int -> int t
   (** Generates non-strictly positive integers uniformly ([0] included).
 
       Shrinks towards [origin] if specified, otherwise towards [0]. *)
+  val pint : ?origin:int -> int t
 
-  val small_nat : int t
   (** Small positive integers (< [100], [0] included).
 
       Non-uniform: smaller numbers are more likely than bigger numbers.
@@ -174,16 +178,16 @@ module Gen : sig
       Shrinks towards [0].
 
       @since 0.5.1 *)
+  val small_nat : int t
 
-  val nat : int t
   (** Generates natural numbers (< [10_000]).
 
       Non-uniform: smaller numbers are more likely than bigger numbers.
 
       Shrinks towards [0].
   *)
+  val nat : int t
 
-  val big_nat : int t
   (** Generates natural numbers, possibly large (< [1_000_000]).
 
       Non-uniform: smaller numbers are more likely than bigger numbers.
@@ -191,23 +195,23 @@ module Gen : sig
       Shrinks towards [0].
 
       @since 0.10 *)
+  val big_nat : int t
 
-  val neg_int : int t
   (** Generates non-strictly negative integers ([0] included).
 
       Non-uniform: smaller numbers (in absolute value) are more likely than bigger numbers.
 
       Shrinks towards [0].
   *)
+  val neg_int : int t
 
-  val small_int : int t
   (** Small UNSIGNED integers, for retrocompatibility.
 
       Shrinks towards [0].
 
       @deprecated use {!small_nat}. *)
+  val small_int : int t
 
-  val small_signed_int : int t
   (** Small SIGNED integers, based on {!small_nat}.
 
       Non-uniform: smaller numbers (in absolute value) are more likely than bigger numbers.
@@ -215,65 +219,64 @@ module Gen : sig
       Shrinks towards [0].
 
       @since 0.5.2 *)
+  val small_signed_int : int t
 
-  val small_int_corners : unit -> int t
   (** As {!small_int}, but each newly created generator starts with
     a list of corner cases before falling back on random generation. *)
+  val small_int_corners : unit -> int t
 
-
-  val int32 : int32 t
   (** Generates uniform {!int32} values.
 
       Shrinks towards [0l].
   *)
+  val int32 : int32 t
 
-  val ui32 : int32 t
   (** Generates {!int32} values.
 
       Shrinks towards [0l].
 
       @deprecated use {!val:int32} instead, the name is wrong, values {i are} signed.
   *)
+  val ui32 : int32 t
 
-  val int64 : int64 t
   (** Generates uniform {!int64} values.
 
       Shrinks towards [0L].
   *)
+  val int64 : int64 t
 
-  val ui64 : int64 t
   (** Generates {!int64} values.
 
       Shrinks towards [0L].
 
       @deprecated use {!val:int64} instead, the name is wrong, values {i are} signed.
   *)
+  val ui64 : int64 t
 
-  val float : float t
   (** Generates floating point numbers.
 
       Shrinks towards [0.].
   *)
+  val float : float t
 
-  val pfloat : float t
   (** Generates positive floating point numbers ([0.] included).
 
       Shrinks towards [0.].
   *)
+  val pfloat : float t
 
-  val nfloat : float t
   (** Generates negative floating point numbers. ([-0.] included).
 
       Shrinks towards [-0.].
   *)
+  val nfloat : float t
 
-  val char : char t
   (** Generates characters in the [0..255] range.
 
       Shrinks towards ['a'].
   *)
+  val char : char t
 
-  val printable : char t
   (** Generates printable characters.
 
     The exhaustive list of character codes is:
@@ -282,21 +285,21 @@ module Gen : sig
 
     Shrinks towards ['a'].
   *)
+  val printable : char t
 
-  val numeral : char t
   (** Generates numeral characters ['0'..'9'].
 
       Shrinks towards ['0'].
   *)
+  val numeral : char t
 
-  val string_size : ?gen:char t -> int t -> string t
   (** Builds a string generator from a (non-negative) size generator.
       Accepts an optional character generator (the default is {!char}).
 
       Shrinks on the number of characters first, then on the characters.
   *)
+  val string_size : ?gen:char t -> int t -> string t
 
-  val string : string t
   (** Builds a string generator. String size is generated by {!nat}.
       The default character generator is {!char}.
       See also {!string_of} and {!string_readable} for versions with
@@ -304,40 +307,40 @@ module Gen : sig
 
       Shrinks on the number of characters first, then on the characters.
   *)
+  val string : string t
 
-  val string_of : char t -> string t
   (** Builds a string generator using the given character generator.
 
       Shrinks on the number of characters first, then on the characters.
 
       @since 0.11 *)
+  val string_of : char t -> string t
 
-  val string_readable : string t
   (** Builds a string generator using the {!char} character generator.
 
       Shrinks on the number of characters first, then on the characters.
 
       @since 0.11 *)
+  val string_readable : string t
 
-  val small_string : ?gen:char t -> string t
   (** Builds a string generator, length is {!small_nat}.
       Accepts an optional character generator (the default is {!char}).
 
       Shrinks on the number of characters first, then on the characters.
   *)
+  val small_string : ?gen:char t -> string t
 
-  val pure : 'a -> 'a t
   (** [pure a] creates a generator that always returns [a].
 
       Does not shrink.
 
       @since 0.8
   *)
+  val pure : 'a -> 'a t
 
-  val return : 'a -> 'a t
   (** Synonym for {!pure} *)
+  val return : 'a -> 'a t
 
-  val make_primitive : gen : (Random.State.t -> 'a) -> shrink : ('a -> 'a Seq.t) -> 'a t
   (** [make_primitive ~gen ~shrink] creates a generator from a function [gen] that creates
       a random value (this function must only use the given {!Random.State.t} for randomness)
       and a function [shrink] that, given a value [a], returns a lazy list of
@@ -359,8 +362,9 @@ module Gen : sig
       [Random.State.t] may very well change in a future version, e.g. if QCheck switches to another
       randomness library.
   *)
+  val make_primitive :
+    gen:(Random.State.t -> 'a) -> shrink:('a -> 'a Seq.t) -> 'a t
 
-  val add_shrink_invariant : ('a -> bool) -> 'a t -> 'a t
   (** [add_shrink_invariant f gen] returns a generator similar to [gen] except all shrinks satisfy [f].
       This way it's easy to preserve invariants that are enforced by
       generators, when shrinking values
@@ -372,17 +376,17 @@ module Gen : sig
       incomplete case of {!Gen.t} being an Alternative (not implemented yet). For now we
       keep it and wait for users feedback (hence deprecation to raise attention).
   *)
+  val add_shrink_invariant : ('a -> bool) -> 'a t -> 'a t
 
   (** {3 Ranges} *)
 
-  val int_bound : int -> int t
   (** Uniform integer generator producing integers within [0..bound].
 
       Shrinks towards [0].
 
       @raise Invalid_argument if the argument is negative. *)
+  val int_bound : int -> int t
 
-  val int_range : ?origin:int -> int -> int -> int t
   (** [int_range ?origin low high] is an uniform integer generator producing integers within [low..high] (inclusive).
 
       Shrinks towards [origin] if specified, otherwise towards [0] (but always stays within the range).
@@ -398,12 +402,12 @@ module Gen : sig
       - [origin < low]
       - [origin > high]
   *)
+  val int_range : ?origin:int -> int -> int -> int t
 
-  val (--) : int -> int -> int t
   (** [a -- b] is an alias for [int_range a b]. See {!int_range} for more information.
   *)
+  val ( -- ) : int -> int -> int t
 
-  val float_bound_inclusive : ?origin : float -> float -> float t
   (** [float_bound_inclusive ?origin bound] returns a random floating-point number between [0.] and
       [bound] (inclusive). If [bound] is negative, the result is negative or zero.  If
       [bound] is [0.], the result is [0.].
@@ -411,8 +415,8 @@ module Gen : sig
       Shrinks towards [origin] if given, otherwise towards [0.].
 
       @since 0.11 *)
+  val float_bound_inclusive : ?origin:float -> float -> float t
 
-  val float_bound_exclusive : ?origin : float -> float -> float t
   (** [float_bound_exclusive origin bound] returns a random floating-point number between [0.] and
       [bound] (exclusive).  If [bound] is negative, the result is negative or zero.
 
@@ -421,8 +425,8 @@ module Gen : sig
       @raise Invalid_argument if [bound] is [0.].
 
       @since 0.11 *)
+  val float_bound_exclusive : ?origin:float -> float -> float t
 
-  val float_range : ?origin : float -> float -> float -> float t
   (** [float_range ?origin low high] generates floating-point numbers within [low] and [high] (inclusive).
 
       Shrinks towards [origin] if specified, otherwise towards [0.] (but always stays within the range).
@@ -440,13 +444,13 @@ module Gen : sig
       - [origin > high]
 
       @since 0.11 *)
+  val float_range : ?origin:float -> float -> float -> float t
 
-  val (--.) : float -> float -> float t
   (** [a --. b] is an alias for [float_range ~origin:a a b]. See {!float_range} for more information.
 
       @since 0.11 *)
+  val ( --. ) : float -> float -> float t
 
-  val char_range : ?origin:char -> char -> char -> char t
   (** [char_range ?origin low high] generates chars between [low] and [high], inclusive.
       Example: [char_range 'a' 'z'] for all lower case ASCII letters.
 
@@ -455,57 +459,57 @@ module Gen : sig
       @raise Invalid_argument if [low > high].
 
       @since 0.13 *)
+  val char_range : ?origin:char -> char -> char -> char t
 
   (** {3 Choosing elements} *)
 
-  val oneof : 'a t list -> 'a t
   (** [oneof l] constructs a generator that selects among the given list of generators [l].
 
       Shrinks towards the first generator of the list.
   *)
+  val oneof : 'a t list -> 'a t
 
-  val oneofl : 'a list -> 'a t
   (** [oneofl l] constructs a generator that selects among the given list of values [l].
 
       Shrinks towards the first element of the list.
   *)
+  val oneofl : 'a list -> 'a t
 
-  val oneofa : 'a array -> 'a t
   (** [oneofa a] constructs a generator that selects among the given array of values [a].
 
       Shrinks towards the first element of the array.
   *)
+  val oneofa : 'a array -> 'a t
 
-  val frequency : (int * 'a t) list -> 'a t
   (** Constructs a generator that selects among a given list of generators.
       Each of the given generators are chosen based on a positive integer weight.
 
       Shrinks towards the first element of the list.
   *)
+  val frequency : (int * 'a t) list -> 'a t
 
-  val frequencyl : (int * 'a) list -> 'a t
   (** Constructs a generator that selects among a given list of values.
       Each of the given values are chosen based on a positive integer weight.
 
       Shrinks towards the first element of the list.
   *)
+  val frequencyl : (int * 'a) list -> 'a t
 
-  val frequencya : (int * 'a) array -> 'a t
   (** Constructs a generator that selects among a given array of values.
       Each of the array entries are chosen based on a positive integer weight.
 
       Shrinks towards the first element of the array.
   *)
+  val frequencya : (int * 'a) array -> 'a t
 
   (** {3 Shuffling elements} *)
 
-  val shuffle_a : 'a array -> 'a array t
   (** Returns a copy of the array with its elements shuffled. *)
+  val shuffle_a : 'a array -> 'a array t
 
-  val shuffle_l : 'a list -> 'a list t
   (** Creates a generator of shuffled lists. *)
+  val shuffle_l : 'a list -> 'a list t
 
-  val shuffle_w_l : (int * 'a) list -> 'a list t
   (** Creates a generator of weighted shuffled lists. A given list is shuffled on each
       generation according to the weights of its elements. An element with a larger weight
       is more likely to be at the front of the list than an element with a smaller weight.
@@ -518,10 +522,10 @@ module Gen : sig
 
       @since 0.11
   *)
+  val shuffle_w_l : (int * 'a) list -> 'a list t
 
   (** {3 Corner cases} *)
 
-  val graft_corners : 'a t -> 'a list -> unit -> 'a t
   (** [graft_corners gen l ()] makes a new generator that enumerates
       the corner cases in [l] and then behaves like [g].
 
@@ -529,70 +533,70 @@ module Gen : sig
       Shrinks towards [gen] otherwise.
 
       @since 0.6 *)
+  val graft_corners : 'a t -> 'a list -> unit -> 'a t
 
-  val int_pos_corners : int list
   (** Non-negative corner cases for int.
 
       @since 0.6 *)
+  val int_pos_corners : int list
 
-  val int_corners : int list
   (** All corner cases for int.
 
       @since 0.6 *)
+  val int_corners : int list
 
   (** {3 Lists, arrays and options} *)
 
-  val list : 'a t -> 'a list t
   (** Builds a list generator from an element generator. List size is generated by {!nat}.
 
       Shrinks on the number of elements first, then on elements.
   *)
+  val list : 'a t -> 'a list t
 
-  val small_list : 'a t -> 'a list t
   (** Generates lists of small size (see {!small_nat}).
 
       Shrinks on the number of elements first, then on elements.
 
       @since 0.5.3 *)
+  val small_list : 'a t -> 'a list t
 
-  val list_size : int t -> 'a t -> 'a list t
   (** Builds a list generator from a (non-negative) size generator and an element generator.
 
       Shrinks on the number of elements first, then on elements.
   *)
+  val list_size : int t -> 'a t -> 'a list t
 
-  val list_repeat : int -> 'a t -> 'a list t
   (** [list_repeat i g] builds a list generator from exactly [i] elements generated by [g].
 
       Shrinks on elements only.
   *)
+  val list_repeat : int -> 'a t -> 'a list t
 
-  val array : 'a t -> 'a array t
   (** Builds an array generator from an element generator. Array size is generated by {!nat}.
 
       Shrinks on the number of elements first, then on elements.
   *)
+  val array : 'a t -> 'a array t
 
-  val array_size : int t -> 'a t -> 'a array t
   (** Builds an array generator from a (non-negative) size generator and an element generator.
 
       Shrinks on the number of elements first, then on elements.
   *)
+  val array_size : int t -> 'a t -> 'a array t
 
-  val small_array : 'a t -> 'a array t
   (** Generates arrays of small size (see {!small_nat}).
 
       Shrinks on the number of elements first, then on elements.
 
       @since 0.10 *)
+  val small_array : 'a t -> 'a array t
 
-  val array_repeat : int -> 'a t -> 'a array t
   (** [array_repeat i g] builds an array generator from exactly [i] elements generated by [g].
 
       Shrinks on elements only.
   *)
+  val array_repeat : int -> 'a t -> 'a array t
 
-  val opt : ?ratio:float -> 'a t -> 'a option t
   (** [opt gen] is an [option] generator that uses [gen] when generating [Some] values.
 
       Shrinks towards {!None} then towards shrinks of [gen].
@@ -600,77 +604,77 @@ module Gen : sig
       @param ratio a float between [0.] and [1.] indicating the probability of a sample to be [Some _]
       rather than [None] (value is [0.85]).
   *)
+  val opt : ?ratio:float -> 'a t -> 'a option t
 
   (** {3 Combining generators} *)
 
-  val pair : 'a t -> 'b t -> ('a * 'b) t
   (** [pair gen1 gen2] generates pairs.
 
       Shrinks on [gen1] and then [gen2].
   *)
+  val pair : 'a t -> 'b t -> ('a * 'b) t
 
-  val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
   (** [triple gen1 gen2 gen3] generates triples.
 
       Shrinks on [gen1], then [gen2] and then [gen3].
   *)
+  val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
 
-  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
   (** [quad gen1 gen2 gen3 gen4] generates quadruples.
 
       Shrinks on [gen1], then [gen2], then [gen3] and then [gen4].
 
       @since 0.5.1
   *)
+  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
 
   (** {3 Convert a structure of generator to a generator of structure} *)
 
-  val flatten_l : 'a t list -> 'a list t
   (** Generate a list of elements from individual generators.
 
       Shrinks on the elements of the list, in the list order.
 
       @since 0.13 *)
+  val flatten_l : 'a t list -> 'a list t
 
-  val flatten_a : 'a t array -> 'a array t
   (** Generate an array of elements from individual generators.
 
       Shrinks on the elements of the array, in the array order.
 
       @since 0.13 *)
+  val flatten_a : 'a t array -> 'a array t
 
-  val flatten_opt : 'a t option -> 'a option t
   (** Generate an option from an optional generator.
 
       Shrinks towards {!None} then shrinks on the value.
 
       @since 0.13 *)
+  val flatten_opt : 'a t option -> 'a option t
 
-  val flatten_res : ('a t, 'e) result -> ('a,'e) result t
   (** Generate a result from [Ok gen], an error from [Error e].
 
       Shrinks on [gen] if [Ok gen].
       Does not shrink if [Error e].
 
       @since 0.13 *)
+  val flatten_res : ('a t, 'e) result -> ('a, 'e) result t
 
-  val join : 'a t t -> 'a t
   (** Collapses a generator of generators to a generator.
 
       Shrinks on the generated generators.
 
       @since 0.5 *)
+  val join : 'a t t -> 'a t
 
   (** {3 Influencing the size of generated values} *)
 
-  val sized : 'a sized -> 'a t
   (** Creates a generator from a size-bounded generator by first
       generating a size using {!nat} and passing the result to the size-bounded generator.
 
       Shrinks on the size first, then on the generator.
   *)
+  val sized : 'a sized -> 'a t
 
-  val sized_size : int t -> 'a sized -> 'a t
   (** Creates a generator from a size-bounded generator by first
       generating a size using the integer generator and passing the result
       to the size-bounded generator.
@@ -678,10 +682,10 @@ module Gen : sig
       Shrinks on the size first, then on the generator.
 
       @since 0.5 *)
+  val sized_size : int t -> 'a sized -> 'a t
 
   (** {3 Recursive data structures} *)
 
-  val fix : (('a -> 'b t) -> 'a -> 'b t) -> 'a -> 'b t
   (** Parametrized fixpoint combinator for generating recursive values.
 
       The fixpoint is parametrized over an generator state ['a], and the
@@ -690,6 +694,7 @@ module Gen : sig
 
       In particular, this can be used for size-bounded generators (with ['a] as [int]).
       The passed size-parameter should decrease to ensure termination. *)
+  val fix : (('a -> 'b t) -> 'a -> 'b t) -> 'a -> 'b t
 
   (** Example:
       {[
@@ -712,11 +717,11 @@ module Gen : sig
       [fix f] shrinks on the generators returned by [f].
   *)
 
-  val delay : (unit -> 'a t) -> 'a t
   (** Delay execution of some code until the generator is actually called.
       This can be used to manually implement recursion or control flow
       in a generator.
       @since 0.17 *)
+  val delay : (unit -> 'a t) -> 'a t
 
   (** {2:composing_generators Composing generators}
 
@@ -838,46 +843,45 @@ module Gen : sig
 
   *)
 
-  val map : ('a -> 'b) -> 'a t -> 'b t
   (** [map f gen] transforms a generator [gen] by applying [f] to each generated element.
 
       Shrinks towards the shrinks of [gen] with [f] applied to them.
   *)
+  val map : ('a -> 'b) -> 'a t -> 'b t
 
-  val (>|=) : 'a t -> ('a -> 'b) -> 'b t
   (** An infix synonym for {!map}. Note the order of arguments is reversed (usually more
       convenient for composing). *)
+  val ( >|= ) : 'a t -> ('a -> 'b) -> 'b t
 
-  val (<$>) : ('a -> 'b) -> 'a t -> 'b t
   (** An infix synonym for {!map}
 
       @since 0.13 *)
+  val ( <$> ) : ('a -> 'b) -> 'a t -> 'b t
 
-  val map2 : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
   (** [map2 f gen1 gen2] transforms two generators [gen1] and [gen2] by applying [f] to each
       pair of generated elements.
 
       Shrinks on [gen1] and then [gen2].
   *)
+  val map2 : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
 
-  val map3 : ('a -> 'b -> 'c -> 'd) -> 'a t -> 'b t -> 'c t -> 'd t
   (** [map3 f gen1 gen2 gen3] transforms three generators [gen1], [gen2], and [gen3] by applying [f]
       to each triple of generated elements.
 
       Shrinks on [gen1], then [gen2], and then [gen3].
   *)
+  val map3 : ('a -> 'b -> 'c -> 'd) -> 'a t -> 'b t -> 'c t -> 'd t
 
-  val ap : ('a -> 'b) t -> 'a t -> 'b t
   (** [ap fgen gen] composes a function generator and an argument generator
       into a result generator.
 
       Shrinks on [fgen] and then [gen].
   *)
+  val ap : ('a -> 'b) t -> 'a t -> 'b t
 
-  val (<*>) : ('a -> 'b) t -> 'a t -> 'b t
   (** Synonym for {!ap} *)
+  val ( <*> ) : ('a -> 'b) t -> 'a t -> 'b t
 
-  val bind : 'a t -> ('a -> 'b t) -> 'b t
   (** [bind gen f] first generates a value of type ['a] with [gen] and then
       passes it to [f] to generate a value of type ['b]. This is typically
       useful when a generator depends on the value generated by another
@@ -885,11 +889,11 @@ module Gen : sig
 
       Shrinks on [gen] and then on the resulting generator.
   *)
+  val bind : 'a t -> ('a -> 'b t) -> 'b t
 
-  val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
   (** Synonym for {!bind} *)
+  val ( >>= ) : 'a t -> ('a -> 'b t) -> 'b t
 
-  val ( let+ ) : 'a t -> ('a -> 'b) -> 'b t
   (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!map}.
 
       Example:
@@ -902,8 +906,8 @@ module Gen : sig
       map (fun n -> string_of_int n) (int_range 0 10)
       ]}
    *)
+  val ( let+ ) : 'a t -> ('a -> 'b) -> 'b t
 
-  val ( and+ ) : 'a t -> 'b t -> ('a * 'b) t
   (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!pair}.
 
       Example:
@@ -919,8 +923,8 @@ module Gen : sig
         (pair (int_range 0 10) bool)
       ]}
    *)
+  val ( and+ ) : 'a t -> 'b t -> ('a * 'b) t
 
-  val ( let* ) : 'a t -> ('a -> 'b t) -> 'b t
   (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!bind}.
 
       Example:
@@ -938,8 +942,8 @@ module Gen : sig
           else map Result.error string_readable)
       ]}
    *)
+  val ( let* ) : 'a t -> ('a -> 'b t) -> 'b t
 
-  val ( and* ) : 'a t -> 'b t -> ('a * 'b) t
   (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!pair}.
 
       Example:
@@ -958,6 +962,7 @@ module Gen : sig
           else map Result.error string_readable)
       ]}
    *)
+  val ( and* ) : 'a t -> 'b t -> ('a * 'b) t
 
   (** {2 Debug generators}
 
@@ -966,63 +971,61 @@ module Gen : sig
       generator produces.
   *)
 
-  val generate : ?rand:Random.State.t -> n:int -> 'a t -> 'a list
   (** [generate ~n gen] generates [n] values using [gen] (shrinks are discarded). *)
+  val generate : ?rand:Random.State.t -> n:int -> 'a t -> 'a list
 
-  val generate1 : ?rand:Random.State.t -> 'a t -> 'a
   (** [generate1 gen] generates one instance of [gen] (shrinks are discarded). *)
+  val generate1 : ?rand:Random.State.t -> 'a t -> 'a
 
-  val generate_tree : ?rand:Random.State.t -> 'a t -> 'a Tree.t
   (** [generate_tree ?rand gen] generates a random value and its shrinks using [gen]. *)
+  val generate_tree : ?rand:Random.State.t -> 'a t -> 'a Tree.t
 end
 
 (** Printing functions and helpers, used to print generated values on
     test failures. *)
 module Print : sig
-
-  type 'a t = 'a -> string
   (** Printer for values of type ['a]. *)
+  type 'a t = 'a -> string
 
-  val unit : unit t
   (** [unit] is a printer of unit.
 
       @since 0.6
   *)
+  val unit : unit t
 
-  val int : int t
   (** [int] is a printer of integer. *)
+  val int : int t
 
-  val bool : bool t
   (** [bool] is a printer of boolean. *)
+  val bool : bool t
 
-  val float : float t
   (** [float] is a printer of float. *)
+  val float : float t
 
-  val char : char t
   (** [char] is a printer of character. *)
+  val char : char t
 
-  val string : string t
   (** [string] is a printer of string. *)
+  val string : string t
 
-  val option : 'a t -> 'a option t
   (** [option p] is a printer of ['a option], using [p] if it is a [Some]. *)
+  val option : 'a t -> 'a option t
 
-  val pair : 'a t -> 'b t -> ('a*'b) t
   (** [pair p1 p2] is a printer of pair. *)
+  val pair : 'a t -> 'b t -> ('a * 'b) t
 
-  val triple : 'a t -> 'b t -> 'c t -> ('a*'b*'c) t
   (** [triple p1 p2 p3] is a printer of triple. *)
+  val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
 
-  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a*'b*'c*'d) t
   (** [quad p1 p2 p3 p4] is a printer of quadruple. *)
+  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
 
-  val list : 'a t -> 'a list t
   (** [list p] is a printer of list, using [p] for each element. *)
+  val list : 'a t -> 'a list t
 
-  val array : 'a t -> 'a array t
   (** [array p] is a printer of array, using [p] for each element. *)
+  val array : 'a t -> 'a array t
 
-  val contramap : ('b -> 'a) -> 'a t -> 'b t
   (** [contramap f p] transforms printer [p] into another using [f].
 
       Note the reverse order of types in [f] which may be
@@ -1030,9 +1033,10 @@ module Print : sig
       ['b] can be obtained by transforming a value of type ['b] to
       ['a] using [f], and then by {i printing} this value of type ['a] using [p].
   *)
+  val contramap : ('b -> 'a) -> 'a t -> 'b t
 
-  val comap : ('b -> 'a) -> 'a t -> 'b t
   (** @deprecated use {!contramap} instead. *)
+  val comap : ('b -> 'a) -> 'a t -> 'b t
 end
 
 (** Shrinking helper functions. *)
@@ -1056,14 +1060,18 @@ module Shrink : sig
       some functions like {!number_towards}. *)
   module type Number = sig
     type t
+
     val equal : t -> t -> bool
+
     val div : t -> t -> t
+
     val add : t -> t -> t
+
     val sub : t -> t -> t
+
     val of_int : int -> t
   end
 
-  val number_towards : (module Number with type t = 'a) -> destination : 'a -> 'a -> 'a Seq.t
   (** Shrink a number by edging towards a destination.
 
       The destination is always the first value for optimal shrinking.
@@ -1084,17 +1092,18 @@ module Shrink : sig
       technique for their custom number types. More specialized, convenient
       functions are provided below, e.g. {!int_towards}.
   *)
+  val number_towards :
+    (module Number with type t = 'a) -> destination:'a -> 'a -> 'a Seq.t
 
-  val int_towards : int -> int -> int Seq.t
   (** {!number_towards} specialized to {!int}. *)
+  val int_towards : int -> int -> int Seq.t
 
-  val int32_towards : int32 -> int32 -> int32 Seq.t
   (** {!number_towards} specialized to {!int32}. *)
+  val int32_towards : int32 -> int32 -> int32 Seq.t
 
-  val int64_towards : int64 -> int64 -> int64 Seq.t
   (** {!number_towards} specialized to {!int64}. *)
+  val int64_towards : int64 -> int64 -> int64 Seq.t
 
-  val float_towards : float -> float -> float Seq.t
   (** {!number_towards} specialized to {!float}.
 
       There are various ways to shrink a float:
@@ -1106,16 +1115,16 @@ module Shrink : sig
       tries to get as close as possible to the destination, e.g. the last value of
       [Gen.float_towards 50 100] may be [99.9969482421875] (or a similar value).
   *)
+  val float_towards : float -> float -> float Seq.t
 
-  val int_aggressive_towards : int -> int -> int Seq.t
   (** [int_agressive_towards destination n] gives all integers from [destination] to [n] (excluded).
 
       {b Be careful about time and memory} as the resulting list can be huge *)
+  val int_aggressive_towards : int -> int -> int Seq.t
 
-  val int_aggressive : int -> int Seq.t
   (** @deprecated Use [int_aggressive_towards 0] instead.
       @since 0.7 *)
-
+  val int_aggressive : int -> int Seq.t
 end
 
 (** An observable is a random function {i argument}. *)
@@ -1135,49 +1144,44 @@ module Observable : sig
      @since 0.6
   *)
 
-  type -'a t
   (** An observable of ['a], packing a printer and other things. *)
+  type -'a t
 
-  val make :
-    ?eq:('a -> 'a -> bool) ->
-    ?hash:('a -> int) ->
-    'a Print.t ->
-    'a t
   (** [make ?eq ?hash print] creates an observable of ['a].
 
       If [eq] is [None], uses the standard polymorphic [(=)] function.
 
       If [hash] is [None], uses a default hashing function.
   *)
+  val make : ?eq:('a -> 'a -> bool) -> ?hash:('a -> int) -> 'a Print.t -> 'a t
 
-  val equal : 'a t -> 'a -> 'a -> bool
   (** [equal o] returns the equality function of [o]. *)
+  val equal : 'a t -> 'a -> 'a -> bool
 
-  val hash : 'a t -> 'a -> int
   (** [hash o] returns the hashing function of [o]. *)
+  val hash : 'a t -> 'a -> int
 
-  val print : 'a t -> 'a Print.t
   (** [print o] returns the printing function of [o]. *)
+  val print : 'a t -> 'a Print.t
 
-  val unit : unit t
   (** [unit] is an observable of [unit]. *)
+  val unit : unit t
 
-  val bool : bool t
   (** [bool] is an observable of [bool]. *)
+  val bool : bool t
 
-  val int : int t
   (** [int] is an observable of [int]. *)
+  val int : int t
 
-  val float : float t
   (** [float] is an observable of [float]. *)
+  val float : float t
 
-  val string : string t
   (** [string] is an observable of [string]. *)
+  val string : string t
 
-  val char : char t
   (** [char] is an observable of [char]. *)
+  val char : char t
 
-  val contramap : ('b -> 'a) -> 'a t -> 'b t
   (** [contramap f o] maps the function [f] on observable [o].
 
       Note the reverse order of types in [f] which may be
@@ -1185,77 +1189,75 @@ module Observable : sig
       ['b] can be obtained by transforming a value of type ['b] to
       ['a] using [f], and then by {i consuming} this value of type ['a] using [o].
   *)
+  val contramap : ('b -> 'a) -> 'a t -> 'b t
 
-  val map : ('b -> 'a) -> 'a t -> 'b t
   (** @deprecated use {!contramap} instead. *)
+  val map : ('b -> 'a) -> 'a t -> 'b t
 
-  val option : 'a t -> 'a option t
   (** [option o] wraps the observable [o] of ['a] into an observable of
       ['a option]. *)
+  val option : 'a t -> 'a option t
 
-  val list : 'a t -> 'a list t
   (** [list o] wraps the observable [o] of ['a] into an observable of
       ['a list]. *)
+  val list : 'a t -> 'a list t
 
-  val array : 'a t -> 'a array t
   (** [array o] wraps the observable [o] of ['a] into an observable of
       ['a array]. *)
+  val array : 'a t -> 'a array t
 
-  val pair : 'a t -> 'b t -> ('a * 'b) t
   (** [pair o1 o2] is an observable of pairs of [('a * 'b)]. *)
+  val pair : 'a t -> 'b t -> ('a * 'b) t
 
-  val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
   (** [triple o1 o2 o3] is an observable of triples of [('a * 'b * 'c)]. *)
+  val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
 
-  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
   (** [quad o1 o2 o3 o4] is an observable of quadruples of [('a * 'b * 'c * 'd)]. *)
+  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
 end
 
-  
 (** Utils on combining function arguments. *)
 module Tuple : sig
   (** Heterogeneous tuple, used to pass any number of arguments to
       a function. *)
-  type 'a t =
-    | Nil : unit t
-    | Cons : 'a * 'b t -> ('a * 'b) t
+  type 'a t = Nil : unit t | Cons : 'a * 'b t -> ('a * 'b) t
 
-  val nil : unit t
   (** [nil] is {!Nil}. *)
+  val nil : unit t
 
-  val cons : 'a -> 'b t -> ('a * 'b) t
   (** [cons] is {!Cons}. *)
+  val cons : 'a -> 'b t -> ('a * 'b) t
 
-  type 'a obs
   (** How to observe a {!t}.
 
       See {!module:Observable} for more information on what
       "observe" means in the QCheck. *)
+  type 'a obs
 
-  val o_nil : unit obs
   (** [o_nil] is the {!obs} equivalent of {!nil}. *)
+  val o_nil : unit obs
 
-  val o_cons : 'a Observable.t -> 'b obs -> ('a * 'b) obs
   (** [o_cons] is the {!obs} equivalent of {!cons}. *)
+  val o_cons : 'a Observable.t -> 'b obs -> ('a * 'b) obs
 
-  val observable : 'a obs -> 'a t Observable.t
   (** [observable obs] returns the underlying observable of [obs]. *)
+  val observable : 'a obs -> 'a t Observable.t
 
   (** Infix {!module:Tuple} operators for convenience. *)
   module Infix : sig
-    val (@::) : 'a -> 'b t -> ('a * 'b) t
     (** Alias for {!cons}. *)
+    val ( @:: ) : 'a -> 'b t -> ('a * 'b) t
 
-    val (@->) : 'a Observable.t -> 'b obs -> ('a * 'b) obs
     (** Alias for {!o_cons}. *)
+    val ( @-> ) : 'a Observable.t -> 'b obs -> ('a * 'b) obs
   end
 
   include module type of Infix
 end
 
-type 'f fun_repr
 (** Used by QCheck to shrink and print generated functions of type ['f] in case
     of test failure. You cannot and should not use it yourself. See {!fun_} for more information. *)
+type 'f fun_repr
 
 (** A function packed with the data required to print/shrink it.
 
@@ -1278,23 +1280,26 @@ type 'f fun_repr
 *)
 type 'f fun_ = Fun of 'f fun_repr * 'f
 
-val fun1 : 'a Observable.t -> ?print:('b Print.t) -> 'b Gen.t -> ('a -> 'b) fun_ Gen.t
 (** [fun1 obs gen] generates random functions that take an argument observable
     via [obs] and map to random values generated with [gen].
     To write functions with multiple arguments, it's better to use {!Tuple}
     or {!Observable.pair} rather than applying {!fun_} several times
     (shrinking will be faster).
     @since 0.6 *)
+val fun1 :
+  'a Observable.t -> ?print:'b Print.t -> 'b Gen.t -> ('a -> 'b) fun_ Gen.t
 
+(** Specialized version of {!fun_nary} for functions of 2 arguments, for convenience.
+    @since 0.6 *)
 val fun2 :
   'a Observable.t ->
   'b Observable.t ->
   ?print:'c Print.t ->
   'c Gen.t ->
   ('a -> 'b -> 'c) fun_ Gen.t
-(** Specialized version of {!fun_nary} for functions of 2 arguments, for convenience.
-    @since 0.6 *)
 
+(** Specialized version of {!fun_nary} for functions of 3 arguments, for convenience.
+    @since 0.6 *)
 val fun3 :
   'a Observable.t ->
   'b Observable.t ->
@@ -1302,9 +1307,9 @@ val fun3 :
   ?print:'d Print.t ->
   'd Gen.t ->
   ('a -> 'b -> 'c -> 'd) fun_ Gen.t
-(** Specialized version of {!fun_nary} for functions of 3 arguments, for convenience.
-    @since 0.6 *)
 
+(** Specialized version of {!fun_nary} for functions of 4 arguments, for convenience.
+    @since 0.6 *)
 val fun4 :
   'a Observable.t ->
   'b Observable.t ->
@@ -1313,10 +1318,7 @@ val fun4 :
   ?print:'e Print.t ->
   'e Gen.t ->
   ('a -> 'b -> 'c -> 'd -> 'e) fun_ Gen.t
-(** Specialized version of {!fun_nary} for functions of 4 arguments, for convenience.
-    @since 0.6 *)
 
-val fun_nary : 'a Tuple.obs -> ?print:('b Print.t) -> 'b Gen.t -> ('a Tuple.t -> 'b) fun_ Gen.t
 (** [fun_nary tuple_obs gen] generates random n-ary functions. Arguments are observed
     using [tuple_obs] and return values are generated using [gen].
 
@@ -1338,27 +1340,27 @@ val fun_nary : 'a Tuple.obs -> ?print:('b Print.t) -> 'b Gen.t -> ('a Tuple.t ->
     ]}
 
     @since 0.6 *)
+val fun_nary :
+  'a Tuple.obs -> ?print:'b Print.t -> 'b Gen.t -> ('a Tuple.t -> 'b) fun_ Gen.t
 
 (** Utils on generated functions.
     @since 0.6 *)
 module Fn : sig
-  val print : 'f fun_ Print.t
   (** [print f] prints the implementation of generated function [f].
 
       The implementation always contains a default case, represented as [_].
 
       Note that printing a function {i before} it was called in the test may not print the full implementation.
    *)
+  val print : 'f fun_ Print.t
 
-  val apply : 'f fun_ -> 'f
-(** [apply f] returns the underlying function to be used in tests. This is an alias for
+  (** [apply f] returns the underlying function to be used in tests. This is an alias for
       deconstructing as documented in {!fun_}. *)
+  val apply : 'f fun_ -> 'f
 end
-
 
 (** {2 Assumptions} *)
 
-val assume : bool -> unit
 (** [assume cond] checks the precondition [cond], and does nothing
     if [cond=true]. If [cond=false], it interrupts the current test (but the test will not be failed).
 
@@ -1372,8 +1374,8 @@ val assume : bool -> unit
 
     @since 0.5.1
 *)
+val assume : bool -> unit
 
-val (==>) : bool -> bool -> bool
 (** [b1 ==> b2] is the logical implication [b1 => b2]
     ie [not b1 || b2] (except that it is strict and will interact
     better with {!Test.check_exn} and the likes, because they will know
@@ -1386,8 +1388,8 @@ val (==>) : bool -> bool -> bool
     both [b1] and [b2] are always evaluated; if [b2] should only be
     evaluated when [b1] holds, see {!assume}.
 *)
+val ( ==> ) : bool -> bool -> bool
 
-val assume_fail : unit -> 'a
 (** [assume_fail ()] is like [assume false], but can take any type
     since we know it always fails (like [assert false]).
     This is useful to ignore some branches in [if] or [match].
@@ -1401,6 +1403,7 @@ val assume_fail : unit -> 'a
 
     @since 0.5.1
 *)
+val assume_fail : unit -> 'a
 
 (** {1 Tests}
 
@@ -1414,104 +1417,101 @@ val assume_fail : unit -> 'a
     and use {!QCheck_runner}.
 *)
 
-type 'a stat = string * ('a -> int)
 (** A statistic on a distribution of values of type ['a].
   The function {b MUST} return a positive integer. *)
+type 'a stat = string * ('a -> int)
 
 (** Result of running a test *)
 module TestResult : sig
+  (** A counter-example when a test fails. *)
   type 'a counter_ex = {
-    instance: 'a; (** The counter-example *)
-
-    shrink_steps: int; (** How many shrinking steps for this counter-example *)
-
-    msg_l: string list;
-    (** Messages of the test. Currently only populated by {!Test.fail_report} and {!Test.fail_reportf}.
+    instance : 'a;  (** The counter-example *)
+    shrink_steps : int;
+        (** How many shrinking steps for this counter-example *)
+    msg_l : string list;
+        (** Messages of the test. Currently only populated by {!Test.fail_report} and {!Test.fail_reportf}.
         @since 0.7 *)
   }
-  (** A counter-example when a test fails. *)
 
   (** Result state.
 
       changed in 0.10 (move to inline records, add Fail_other) *)
   type 'a state =
-    | Success (** If the test passed. *)
-    | Failed of {
-        instances: 'a counter_ex list; (** Failed instance(s) *)
-      }
-    (** If the test failed "normally", i.e. a test returned [false]. *)
-    | Failed_other of {msg: string}
-    (** If the test failed for an unusual reason:
+    | Success  (** If the test passed. *)
+    | Failed of { instances : 'a counter_ex list  (** Failed instance(s) *) }
+        (** If the test failed "normally", i.e. a test returned [false]. *)
+    | Failed_other of { msg : string }
+        (** If the test failed for an unusual reason:
         - an exception was raised by a generator
         - too many assumptions failed and [Test.if_assumptions_fail] was set to [`Fatal]
     *)
     | Error of {
-        instance: 'a counter_ex; (** Instance that triggered the exception in the test *)
-        exn: exn; (** The raised exception *)
-        backtrace: string; (** A best-effort backtrace of the exception *)
+        instance : 'a counter_ex;
+            (** Instance that triggered the exception in the test *)
+        exn : exn;  (** The raised exception *)
+        backtrace : string;  (** A best-effort backtrace of the exception *)
       }
-    (** If the test failed "exceptionally" (an exception was raised by the test). *)
+        (** If the test failed "exceptionally" (an exception was raised by the test). *)
 
   (* Result returned by running a test. *)
   type 'a t
 
-  val get_state : 'a t -> 'a state
   (** [get_state t] returns the final state after a test execution. *)
+  val get_state : 'a t -> 'a state
 
-  val get_count : _ t -> int
   (** [get_count t] returns the number of tests executed. *)
+  val get_count : _ t -> int
 
-  val get_count_gen : _ t -> int
   (** [get_count_gen t] returns the number of generated cases. *)
+  val get_count_gen : _ t -> int
 
-  val get_collect : _ t -> (string,int) Hashtbl.t option
   (** [get_collect t] returns the repartition of generated values.
       @since 0.18 *)
+  val get_collect : _ t -> (string, int) Hashtbl.t option
 
-  val get_stats : 'a t -> ('a stat * (int,int) Hashtbl.t) list
   (** [get_stats t] returns the statistics captured by the test.
       @since 0.18 *)
+  val get_stats : 'a t -> ('a stat * (int, int) Hashtbl.t) list
 
-  val get_warnings : _ t -> string list
   (** [get_warnings t] returns the list of warnings emitted during the test.
       @since 0.18 *)
+  val get_warnings : _ t -> string list
 
-  val get_instances : 'a t -> 'a list
   (** [get_instances t] returns the generated instances, with no guarantee on the order.
       @since 0.18 *)
+  val get_instances : 'a t -> 'a list
 
-  val is_success : _ t -> bool
   (** Returns true iff the state if [Success]
       @since 0.9 *)
+  val is_success : _ t -> bool
 
-  val stats : 'a t -> ('a stat * (int,int) Hashtbl.t) list
   (** Obtain statistics
       @since 0.6
       @deprecated use {!get_stats} instead *)
+  val stats : 'a t -> ('a stat * (int, int) Hashtbl.t) list
 
-  val warnings : _ t -> string list
   (** Obtain list of warnings
       @since 0.10
       @deprecated use {!get_warnings} instead *)
+  val warnings : _ t -> string list
 
-  val collect : _ t -> (string,int) Hashtbl.t option
   (** Obtain statistics
       @since 0.6
       @deprecated use {!get_collect} instead *)
+  val collect : _ t -> (string, int) Hashtbl.t option
 end
 
 module Test_exceptions : sig
-
-  exception Test_fail of string * string list
   (** Exception raised when a test failed, with the list of counter-examples.
       [Test_fail (name, l)] means test [name] failed on elements of [l]. *)
+  exception Test_fail of string * string list
 
-  exception Test_error of string * string * exn * string
   (** Exception raised when a test raised an exception [e], with
       the sample that triggered the exception.
       [Test_error (name, i, e, st)]
       means [name] failed on [i] with exception [e], and [st] is the
       stacktrace (if enabled) or an empty string. *)
+  exception Test_error of string * string * exn * string
 end
 
 (** A test is a pair of an generator and a property thar all generated values must satisfy. *)
@@ -1528,16 +1528,10 @@ module Test : sig
       - {!QCheck_ounit} to convert to OUnit framework
   *)
 
-  type 'a cell
   (** A single property test on a value of type ['a]. A {!Test.t} wraps a [cell]
       and hides its type parameter. *)
-     
-  val make_cell :
-    ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
-    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int -> ?name:string ->
-    ?print:'a Print.t -> ?collect:('a -> string) -> ?stats:('a stat list) ->
-     'a Gen.t -> ('a -> bool) ->
-    'a cell
+  type 'a cell
+
   (** [make_cell gen prop] builds a test that checks property [prop] on instances
       of the generator [gen].
       @param name the name of the test.
@@ -1561,56 +1555,91 @@ module Test : sig
       @param collect (* collect values by tag, useful to display distribution of generated *)
       @param stats on a distribution of values of type 'a
   *)
-
-  val make_cell_from_QCheck1 :
-    ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
-    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
-    ?name:string -> gen:(Random.State.t -> 'a) -> ?shrink:('a -> ('a -> unit) -> unit) ->
-    ?print:('a -> string) -> ?collect:('a -> string) -> stats:'a stat list -> ('a -> bool) ->
+  val make_cell :
+    ?if_assumptions_fail:[ `Fatal | `Warning ] * float ->
+    ?count:int ->
+    ?long_factor:int ->
+    ?max_gen:int ->
+    ?max_fail:int ->
+    ?name:string ->
+    ?print:'a Print.t ->
+    ?collect:('a -> string) ->
+    ?stats:'a stat list ->
+    'a Gen.t ->
+    ('a -> bool) ->
     'a cell
+
   (** ⚠️ Do not use, this is exposed for internal reasons only. ⚠️ 
 
       @deprecated Migrate to QCheck2 and use {!make_cell} instead.
    *)
+  val make_cell_from_QCheck1 :
+    ?if_assumptions_fail:[ `Fatal | `Warning ] * float ->
+    ?count:int ->
+    ?long_factor:int ->
+    ?max_gen:int ->
+    ?max_fail:int ->
+    ?name:string ->
+    gen:(Random.State.t -> 'a) ->
+    ?shrink:('a -> ('a -> unit) -> unit) ->
+    ?print:('a -> string) ->
+    ?collect:('a -> string) ->
+    stats:'a stat list ->
+    ('a -> bool) ->
+    'a cell
 
-  val get_law : 'a cell -> ('a -> bool)
+  val get_law : 'a cell -> 'a -> bool
+
   val get_name : _ cell -> string
+
   val get_gen : 'a cell -> 'a Gen.t
-  val get_print_opt : 'a cell -> ('a Print.t) option
+
+  val get_print_opt : 'a cell -> 'a Print.t option
+
   val get_collect_opt : 'a cell -> ('a -> string) option
-  val get_stats : 'a cell -> ('a stat list)
+
+  val get_stats : 'a cell -> 'a stat list
+
   val set_name : _ cell -> string -> unit
 
-  val get_count : _ cell -> int
   (** Get the count of a cell.
       @since 0.5.3 *)
+  val get_count : _ cell -> int
 
-  val get_long_factor : _ cell -> int
   (** Get the long factor of a cell.
       @since 0.5.3 *)
+  val get_long_factor : _ cell -> int
 
-  type t = Test : 'a cell -> t
-  (** Same as ['a cell], but masking the type parameter. This allows to
+  type t =
+    | Test : 'a cell -> t
+        (** Same as ['a cell], but masking the type parameter. This allows to
       put tests on different types in the same list of tests. *)
 
-  val make :
-    ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
-    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int -> ?name:string ->
-    ?print:('a Print.t) -> ?collect:('a -> string) -> ?stats:('a stat list) ->
-    'a Gen.t -> ('a -> bool) -> t
   (** [make gen prop] builds a test that checks property [prop] on instances
       of the generator [gen].
       See {!make_cell} for a description of the parameters.
   *)
+  val make :
+    ?if_assumptions_fail:[ `Fatal | `Warning ] * float ->
+    ?count:int ->
+    ?long_factor:int ->
+    ?max_gen:int ->
+    ?max_fail:int ->
+    ?name:string ->
+    ?print:'a Print.t ->
+    ?collect:('a -> string) ->
+    ?stats:'a stat list ->
+    'a Gen.t ->
+    ('a -> bool) ->
+    t
 
   val test_get_count : t -> int
 
-  val fail_report : string -> 'a
   (** Fail the test with some additional message that will be reported.
 
       @since 0.7 *)
+  val fail_report : string -> 'a
 
-  val fail_reportf : ('a, Format.formatter, unit, 'b) format4 -> 'a
   (** Format version of {!fail_report}.
 
       Example:
@@ -1620,38 +1649,42 @@ module Test : sig
       ]}
 
       @since 0.7 *)
+  val fail_reportf : ('a, Format.formatter, unit, 'b) format4 -> 'a
 
   (** {3 Running the test} *)
 
   include module type of Test_exceptions
 
   val print_instance : 'a cell -> 'a -> string
+
   val print_c_ex : 'a cell -> 'a TestResult.counter_ex -> string
+
   val print_fail : 'a cell -> string -> 'a TestResult.counter_ex list -> string
+
   val print_fail_other : string -> msg:string -> string
-  val print_error : ?st:string -> 'a cell -> string -> 'a TestResult.counter_ex * exn -> string
+
+  val print_error :
+    ?st:string -> 'a cell -> string -> 'a TestResult.counter_ex * exn -> string
+
   val print_test_fail : string -> string list -> string
+
   val print_test_error : string -> string -> exn -> string -> string
 
-  val print_collect : (string,int) Hashtbl.t -> string
   (** Print "collect" results.
       @since 0.6 *)
+  val print_collect : (string, int) Hashtbl.t -> string
 
-  val print_stat : ('a stat * (int,int) Hashtbl.t) -> string
   (** Print statistics.
       @since 0.6 *)
+  val print_stat : 'a stat * (int, int) Hashtbl.t -> string
 
-  val check_result : 'a cell -> 'a TestResult.t -> unit
   (** [check_result cell res] checks that [res] is [Ok _], and returns unit.
       Otherwise, it raises some exception.
       @raise Test_error if [res = Error _]
       @raise Test_error if [res = Failed _] *)
+  val check_result : 'a cell -> 'a TestResult.t -> unit
 
-  type res =
-    | Success
-    | Failure
-    | FalseAssumption
-    | Error of exn * string
+  type res = Success | Failure | FalseAssumption | Error of exn * string
 
   type 'a event =
     | Generating
@@ -1660,22 +1693,18 @@ module Test : sig
     | Shrunk of int * 'a
     | Shrinking of int * int * 'a
 
-  type 'a handler = string -> 'a cell -> 'a event -> unit
   (** Handler executed after each event during testing of an instance. *)
+  type 'a handler = string -> 'a cell -> 'a event -> unit
 
-  type 'a step = string -> 'a cell -> 'a -> res -> unit
   (** Callback executed after each instance of a test has been run.
       The callback is given the instance tested, and the current results
       of the test. *)
+  type 'a step = string -> 'a cell -> 'a -> res -> unit
 
-  type 'a callback = string -> 'a cell -> 'a TestResult.t -> unit
   (** Callback executed after each test has been run.
       [f name cell res] means test [cell], named [name], gave [res]. *)
+  type 'a callback = string -> 'a cell -> 'a TestResult.t -> unit
 
-  val check_cell :
-    ?long:bool -> ?call:'a callback ->
-    ?step:'a step -> ?handler:'a handler ->
-    ?rand:Random.State.t -> 'a cell -> 'a TestResult.t
   (** [check_cell ~long ~rand test] generates up to [count] random
       values of type ['a] using [Gen.t] and the random state [st]. The
       predicate [law] is called on them and if it returns [false] or raises an
@@ -1687,19 +1716,31 @@ module Test : sig
       @param step function called on each instance of the test case, with the result.
       @return the result of the test.
   *)
+  val check_cell :
+    ?long:bool ->
+    ?call:'a callback ->
+    ?step:'a step ->
+    ?handler:'a handler ->
+    ?rand:Random.State.t ->
+    'a cell ->
+    'a TestResult.t
 
-  val check_cell_exn :
-    ?long:bool -> ?call:'a callback -> ?step:'a step ->
-    ?rand:Random.State.t -> 'a cell -> unit
   (** Same as {!check_cell} but calls  {!check_result} on the result.
       @raise Test_error if [res = Error _]
       @raise Test_error if [res = Failed _] *)
+  val check_cell_exn :
+    ?long:bool ->
+    ?call:'a callback ->
+    ?step:'a step ->
+    ?rand:Random.State.t ->
+    'a cell ->
+    unit
 
-  val check_exn : ?long:bool -> ?rand:Random.State.t -> t -> unit
   (** Checks the property against some test cases, and calls {!check_result},
       which might raise an exception in case of failure.
       @raise Test_error if [res = Error _]
       @raise Test_error if [res = Failed _] *)
+  val check_exn : ?long:bool -> ?rand:Random.State.t -> t -> unit
 end
 
 (** {2 Sub-tests} *)
@@ -1711,15 +1752,9 @@ end
     See https://github.com/c-cube/qcheck/issues/31
 *)
 
-exception No_example_found of string
 (** Raised by {!find_example} and {!find_example_gen} if no example was found. *)
+exception No_example_found of string
 
-val find_example :
-  ?name:string ->
-  ?count:int ->
-  f:('a -> bool) ->
-  'a Gen.t ->
-  'a Gen.t
 (** [find_example ~f gen] uses [gen] to generate some values of type ['a],
     and checks them against [f]. If such a value is found, it is returned.
     Otherwise an exception is raised.
@@ -1732,7 +1767,15 @@ val find_example :
     @raise No_example_found If no example is found within [count] tries.
     @since 0.6
 *)
+val find_example :
+  ?name:string -> ?count:int -> f:('a -> bool) -> 'a Gen.t -> 'a Gen.t
 
+(** Toplevel version of {!find_example}.
+    [find_example_gen ~f gen] is roughly the same as
+    [Gen.generate1 @@ find_example ~f gen].
+    @param rand the random state to use to generate inputs.
+    @raise No_example_found if no example was found within [count] tries.
+    @since 0.6 *)
 val find_example_gen :
   ?rand:Random.State.t ->
   ?name:string ->
@@ -1740,12 +1783,6 @@ val find_example_gen :
   f:('a -> bool) ->
   'a Gen.t ->
   'a
-(** Toplevel version of {!find_example}.
-    [find_example_gen ~f gen] is roughly the same as
-    [Gen.generate1 @@ find_example ~f gen].
-    @param rand the random state to use to generate inputs.
-    @raise No_example_found if no example was found within [count] tries.
-    @since 0.6 *)
 
 (** {1:migration_qcheck2 Migration to QCheck2}
 

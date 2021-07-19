@@ -1,21 +1,27 @@
-
 (executables
-  (names QCheck_runner_test)
-  (libraries qcheck))
+ (names QCheck_runner_test)
+ (libraries qcheck))
 
 (rule
-  (targets output.txt)
-  (deps ./QCheck_runner_test.exe)
-  (package qcheck)
-  (enabled_if (and (= %{os_type} "Unix") (< %{ocaml_version} 4.09.0)))
-  (action
-    (with-accepted-exit-codes
-      1
-      (with-stdout-to
-        %{targets}
-        (run ./QCheck_runner_test.exe --no-colors -s 1234)))))
+ (targets output.txt)
+ (deps ./QCheck_runner_test.exe)
+ (package qcheck)
+ (enabled_if
+  (and
+   (= %{os_type} "Unix")
+   (< %{ocaml_version} 4.09.0)))
+ (action
+  (with-accepted-exit-codes
+   1
+   (with-stdout-to
+    %{targets}
+    (run ./QCheck_runner_test.exe --no-colors -s 1234)))))
 
 (rule
-  (alias runtest)
-  (enabled_if (and (= %{os_type} "Unix") (< %{ocaml_version} 4.09.0)))
-  (action (diff output.txt.expected output.txt)))
+ (alias runtest)
+ (enabled_if
+  (and
+   (= %{os_type} "Unix")
+   (< %{ocaml_version} 4.09.0)))
+ (action
+  (diff output.txt.expected output.txt)))

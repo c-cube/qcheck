@@ -1,8 +1,6 @@
-
 (library
-  (name qcheck_runner)
-  (public_name qcheck-core.runner)
-  (wrapped false)
-  (libraries qcheck-core)
-  (flags :standard -warn-error -a+8 -safe-string)
-  )
+ (name qcheck_runner)
+ (public_name qcheck-core.runner)
+ (wrapped false)
+ (libraries qcheck-core)
+ (flags :standard -warn-error -a+8 -safe-string))

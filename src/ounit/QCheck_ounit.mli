@@ -1,32 +1,38 @@
-
 (** {1 Conversion of tests to OUnit Tests}
 
     @since 0.9
 *)
 
-val to_ounit_test :
-  ?verbose:bool -> ?long:bool -> ?rand:Random.State.t ->
-  QCheck2.Test.t -> OUnit.test
 (** [to_ounit_test ~rand t] wraps [t] into a OUnit test
     @param verbose used to print information on stdout (default: [verbose()])
     @param rand the random generator to use (default: [random_state ()]) *)
+val to_ounit_test :
+  ?verbose:bool ->
+  ?long:bool ->
+  ?rand:Random.State.t ->
+  QCheck2.Test.t ->
+  OUnit.test
 
-val to_ounit_test_cell :
-  ?verbose:bool -> ?long:bool -> ?rand:Random.State.t ->
-  _ QCheck2.Test.cell -> OUnit.test
 (** Same as {!to_ounit_test} but with a polymorphic test cell *)
+val to_ounit_test_cell :
+  ?verbose:bool ->
+  ?long:bool ->
+  ?rand:Random.State.t ->
+  _ QCheck2.Test.cell ->
+  OUnit.test
 
-val (>:::) : string -> QCheck2.Test.t list -> OUnit.test
 (** Same as [OUnit.(>:::)] but with a list of QCheck2 tests *)
+val ( >::: ) : string -> QCheck2.Test.t list -> OUnit.test
 
-val to_ounit2_test : ?rand:Random.State.t -> QCheck2.Test.t -> OUnit2.test
 (** [to_ounit2_test ?rand t] wraps [t] into a OUnit2 test
     @param rand the random generator to use (default: a static seed for reproducibility),
     can be overridden with "-seed" on the command-line
 *)
+val to_ounit2_test : ?rand:Random.State.t -> QCheck2.Test.t -> OUnit2.test
 
-val to_ounit2_test_list : ?rand:Random.State.t -> QCheck2.Test.t list -> OUnit2.test list
 (** [to_ounit2_test_list ?rand t] like [to_ounit2_test] but for a list of tests *)
+val to_ounit2_test_list :
+  ?rand:Random.State.t -> QCheck2.Test.t list -> OUnit2.test list
 
 (** {2 OUnit runners}
 
@@ -41,8 +47,6 @@ val to_ounit2_test_list : ?rand:Random.State.t -> QCheck2.Test.t list -> OUnit2.
     For OUnit2 you can use {!OUnit2.run_test_tt_main}.
 *)
 
-
-val run : ?argv:string array -> OUnit.test -> int
 (** [run test] runs the test, and returns an error code  that is [0]
     if all tests passed, [1] otherwise.
     This is the default runner used by the comment-to-test generator.
@@ -76,8 +80,8 @@ Ran: 4 tests in: 0.74 seconds.
 WARNING! SOME TESTS ARE NEITHER SUCCESSES NOR FAILURES!
 v}
 *)
+val run : ?argv:string array -> OUnit.test -> int
 
-val run_tap : OUnit.test -> OUnit.test_results
 (** TAP-compatible test runner, in case we want to use a test harness.
     It prints one line per test. *)
-
+val run_tap : OUnit.test -> OUnit.test_results
