@@ -462,18 +462,21 @@ module Gen : sig
   (** [oneof l] constructs a generator that selects among the given list of generators [l].
 
       Shrinks towards the first generator of the list.
+      @raise Invalid_argument or Failure if [l] is empty
   *)
 
   val oneofl : 'a list -> 'a t
   (** [oneofl l] constructs a generator that selects among the given list of values [l].
 
       Shrinks towards the first element of the list.
+      @raise Invalid_argument or Failure if [l] is empty
   *)
 
   val oneofa : 'a array -> 'a t
   (** [oneofa a] constructs a generator that selects among the given array of values [a].
 
       Shrinks towards the first element of the array.
+      @raise Invalid_argument or Failure if [l] is empty
   *)
 
   val frequency : (int * 'a t) list -> 'a t
