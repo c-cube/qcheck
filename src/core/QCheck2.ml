@@ -1700,7 +1700,10 @@ module Test = struct
            int_of_float (ceil (Int64.to_float sample_width /. float_of_int stat_max_lines))
       else max_idx-min_idx, 1
     in
-    let hist_size = if min_idx + bucket_size * hist_size <= max_idx then 1+hist_size else hist_size in
+    let hist_size =
+      if Int64.(add (of_int min_idx) (mul (of_int bucket_size) (of_int hist_size))) <= Int64.of_int max_idx
+      then 1+hist_size
+      else hist_size in
     (* accumulate bucket counts *)
     let max_val = ref 0 in (* max value after grouping by buckets *)
     let bucket_count = Array.init hist_size (fun _ -> 0) in
