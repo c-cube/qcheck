@@ -1693,15 +1693,16 @@ module Test = struct
              median := i));
     (* group by buckets, if there are too many entries: *)
     (* first compute histogram and bucket size *)
+    let min_idx64, max_idx64 = Int64.(of_int min_idx, of_int max_idx) in
     let hist_size, bucket_size =
-      let sample_width = Int64.(sub (of_int max_idx) (of_int min_idx)) in
+      let sample_width = Int64.sub max_idx64 min_idx64 in
       if sample_width > Int64.of_int stat_max_lines
       then stat_max_lines,
            int_of_float (ceil (Int64.to_float sample_width /. float_of_int stat_max_lines))
       else max_idx-min_idx, 1
     in
     let hist_size =
-      if Int64.(add (of_int min_idx) (mul (of_int bucket_size) (of_int hist_size))) <= Int64.of_int max_idx
+      if Int64.(add min_idx64 (mul (of_int bucket_size) (of_int hist_size))) <= max_idx64
       then 1+hist_size
       else hist_size in
     (* accumulate bucket counts *)
@@ -1709,7 +1710,7 @@ module Test = struct
     let bucket_count = Array.init hist_size (fun _ -> 0) in
     Hashtbl.iter
       (fun j count ->
-         let bucket = Int64.(to_int (div (sub (of_int j) (of_int min_idx)) (of_int bucket_size))) in
+         let bucket = Int64.(to_int (div (sub (of_int j) min_idx64) (of_int bucket_size))) in
          let new_count = bucket_count.(bucket) + count in
          bucket_count.(bucket) <- new_count;
          max_val := max !max_val new_count) tbl;
