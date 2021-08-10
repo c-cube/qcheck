@@ -1721,9 +1721,8 @@ module Test = struct
       "  num: %d, avg: %.2f, stddev: %.2f, median %d, min %d, max %d\n"
       !num !avg stddev !median min_idx max_idx;
     let indwidth =
-      max (String.length (Printf.sprintf "%d" min_idx))
-        (max (String.length (Printf.sprintf "%d" max_idx))
-           (String.length (Printf.sprintf "%d" (min_idx + bucket_size * hist_size)))) in
+      let str_width i = String.length (Printf.sprintf "%d" i) in
+      List.map str_width [min_idx; max_idx; min_idx + bucket_size * hist_size] |> List.fold_left max min_int in
     let labwidth = if bucket_size=1 then indwidth else 2+2*indwidth in
     for i = 0 to hist_size - 1 do
       let i' = min_idx + i * bucket_size in
