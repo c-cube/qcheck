@@ -12,7 +12,7 @@ Test should_error_raise_exn errored on (1 shrink steps):
 
 0
 
-exception Dune__exe__QCheck2_expect_test.Error
+exception Dune__exe__QCheck2_expect_test.Overall.Error
 
 
 +++ Collect ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -56,6 +56,23 @@ stats num:
   104..109: ####################################                              6
   110..115: #######################################################           9
   116..121: ##################                                                3
+
+!!! Warning !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+Warning for test WARN_unlikely_precond:
+
+WARNING: only 0.7% tests (of 2000) passed precondition for "WARN_unlikely_precond"
+
+NOTE: it is likely that the precondition is too strong, or that the generator is buggy.
+
+--- Failure --------------------------------------------------------------------
+
+Test FAIL_unlikely_precond failed:
+
+ERROR: only 0.7% tests (of 2000) passed precondition for "FAIL_unlikely_precond"
+
+NOTE: it is likely that the precondition is too strong, or that the generator is buggy.
+
 
 --- Failure --------------------------------------------------------------------
 
@@ -105,23 +122,6 @@ Test long_shrink failed (3040 shrink steps):
 Test mod3_should_fail failed (1 shrink steps):
 
 0
-
-!!! Warning !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-Warning for test WARN_unlikely_precond:
-
-WARNING: only 0.7% tests (of 2000) passed precondition for "WARN_unlikely_precond"
-
-NOTE: it is likely that the precondition is too strong, or that the generator is buggy.
-
---- Failure --------------------------------------------------------------------
-
-Test FAIL_unlikely_precond failed:
-
-ERROR: only 0.7% tests (of 2000) passed precondition for "FAIL_unlikely_precond"
-
-NOTE: it is likely that the precondition is too strong, or that the generator is buggy.
-
 
 --- Failure --------------------------------------------------------------------
 
