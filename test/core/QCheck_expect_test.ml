@@ -122,6 +122,24 @@ end
 
 (* tests of shrinking behaviour *)
 module Shrink = struct
+  let rec fac n = match n with
+    | 0 -> 1
+    | n -> n * fac (n - 1)
+
+  (* example from issue #59 *)
+  let test_fac_issue59 =
+    let open QCheck in
+    Test.make ~name:"test fac issue59"
+      (set_shrink Shrink.nil (small_int_corners ()))
+      (fun n -> try (fac n) mod n = 0
+                with
+                (*| Stack_overflow   -> false*)
+                | Division_by_zero -> (n=0))
+
+  let big_bound_issue59 =
+    QCheck.Test.make ~name:"big bound issue59"
+      (QCheck.small_int_corners()) (fun i -> i < 209609)
+
   let long_shrink =
     let open QCheck in
     let listgen = list_of_size (Gen.int_range 1000 10000) int in
@@ -202,6 +220,8 @@ let i =
     Function.prop_foldleft_foldright;
     Function.prop_foldleft_foldright_uncurry;
     Function.prop_foldleft_foldright_uncurry_funlast;
+    (*Shrink.test_fac_issue59;*)
+    Shrink.big_bound_issue59;
     Shrink.long_shrink;
     Shrink.shrink_int;
   ] @ FindExample.find_ex :: FindExample.find_ex_uncaught_issue_99
