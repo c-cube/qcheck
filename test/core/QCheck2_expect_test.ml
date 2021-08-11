@@ -128,6 +128,24 @@ end
 
 (* tests of shrinking behaviour *)
 module Shrink = struct
+  let rec fac n = match n with
+    | 0 -> 1
+    | n -> n * fac (n - 1)
+
+  (* example from issue #59 *)
+  let test_fac_issue59 =
+    let open QCheck2 in
+    Test.make ~name:"test fac issue59"
+      (Gen.make_primitive ~gen:(fun st -> Gen.generate1 ~rand:st (Gen.small_int_corners ())) ~shrink:(fun _ -> Seq.empty))
+      (fun n -> try (fac n) mod n = 0
+                with
+                (*| Stack_overflow   -> false*)
+                | Division_by_zero -> (n=0))
+
+  let big_bound_issue59 =
+    QCheck2.Test.make ~name:"big bound issue59" ~print:QCheck2.Print.int
+      (QCheck2.Gen.small_int_corners()) (fun i -> i < 209609)
+
   let long_shrink =
     let open QCheck2 in
     let listgen = Gen.(list_size (int_range 1000 10000) int) in
@@ -211,6 +229,8 @@ let _ =
     Function.prop_foldleft_foldright;
     Function.prop_foldleft_foldright_uncurry;
     Function.prop_foldleft_foldright_uncurry_funlast;
+    (*Shrink.test_fac_issue59;*)
+    Shrink.big_bound_issue59;
     Shrink.long_shrink;
     Shrink.shrink_int;
   ] @ FindExample.find_ex :: FindExample.find_ex_uncaught_issue_99
