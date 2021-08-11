@@ -86,6 +86,18 @@ let prop_foldleft_foldright_uncurry =
        List.fold_right (fun x y -> Fn.apply f (x,y)) xs z =
        List.fold_left (fun x y -> Fn.apply f (x,y)) z xs)
 
+(* Same as the above (false) property, but generating+shrinking functions last *)
+let prop_foldleft_foldright_uncurry_funlast =
+  let open QCheck in
+  Test.make ~name:"fold_left fold_right uncurried fun last" ~count:1000 ~long_factor:20
+    (triple
+       int_gen
+       (list int_gen)
+       (fun1 Observable.(pair int int) int_gen))
+    (fun (z,xs,f) ->
+       List.fold_right (fun x y -> Fn.apply f (x,y)) xs z =
+       List.fold_left (fun x y -> Fn.apply f (x,y)) z xs)
+
 let long_shrink =
   let open QCheck in
   let listgen = list_of_size (Gen.int_range 1000 10000) int in
@@ -172,6 +184,7 @@ let i =
     fun2;
     prop_foldleft_foldright;
     prop_foldleft_foldright_uncurry;
+    prop_foldleft_foldright_uncurry_funlast;
     long_shrink;
     shrink_int;
     bad_assume_warn;
