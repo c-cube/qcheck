@@ -185,16 +185,18 @@ end
 
 (* tests of statistics and histogram display *)
 module Stats = struct
+  let bool_dist =
+    QCheck.(Test.make ~count:500_000 ~name:"bool dist"
+              (set_collect Bool.to_string bool)) (fun _ -> true)
+
   let char_dist =
     QCheck.(Test.make ~count:500_000 ~name:"char code dist"
-              (add_stat ("char code", Char.code) char))
-      (fun _ -> true)
+              (add_stat ("char code", Char.code) char)) (fun _ -> true)
 
   (* test from issue #40 *)
   let int_stats_neg =
     QCheck.(Test.make ~count:5_000 ~name:"int_stats_neg"
-              (add_stat ("dist",fun x -> x) small_signed_int))
-      (fun _ -> true)
+              (add_stat ("dist",fun x -> x) small_signed_int)) (fun _ -> true)
 
   (* distribution tests from PR #45 *)
   let int_stats_tests =
@@ -240,7 +242,7 @@ let i =
     Shrink.long_shrink;
     Shrink.shrink_int;
   ] @ FindExample.find_ex :: FindExample.find_ex_uncaught_issue_99
-    @ [Stats.char_dist; Stats.int_stats_neg] @ Stats.int_stats_tests)
+    @ [Stats.bool_dist; Stats.char_dist; Stats.int_stats_neg] @ Stats.int_stats_tests)
 
 let () = QCheck_base_runner.set_seed 153870556
 let _  = QCheck_base_runner.run_tests ~colors:false [Stats.int_stat_display_test9]

@@ -143,6 +143,13 @@ ERROR: uncaught exception in generator for test FAIL_#99_1 after 100 steps:
 Exception: QCheck2.No_example_found("<example>")
 Backtrace: 
 
++++ Collect ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Collect results for test bool dist:
+
+true: 250134 cases
+false: 249866 cases
+
 +++ Stats for char code dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 stats char code:
@@ -384,7 +391,7 @@ stats dist:
   -4611686018427387392..-4150517416584648577:                                                                   0
 ================================================================================
 1 warning(s)
-failure (12 tests failed, 1 tests errored, ran 29 tests)
+failure (12 tests failed, 1 tests errored, ran 30 tests)
 random seed: 153870556
 
 +++ Stats for int_stat_display_test9 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
