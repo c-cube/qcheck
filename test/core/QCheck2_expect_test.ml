@@ -203,6 +203,11 @@ module Stats = struct
     QCheck2.(Test.make ~count:500_000 ~name:"char code dist"
               ~stats:[("char code", Char.code)] Gen.char) (fun _ -> true)
 
+  (* test from issue #30 *)
+  let list_size_dist =
+    QCheck2.(Test.make ~count:5_000 ~name:"list size dist"
+              ~stats:[("len",List.length)] Gen.(list int)) (fun _ -> true)
+
   (* test from issue #40 *)
   let int_stats_neg =
     QCheck2.(Test.make ~count:5_000 ~name:"int_stats_neg"
@@ -253,7 +258,11 @@ let _ =
     Shrink.long_shrink;
     Shrink.shrink_int;
   ] @ FindExample.find_ex :: FindExample.find_ex_uncaught_issue_99
-    @ [Stats.bool_dist; Stats.char_dist; Stats.int_stats_neg] @ Stats.int_stats_tests)
+    @ [Stats.bool_dist;
+       Stats.char_dist;
+       Stats.list_size_dist;
+       Stats.int_stats_neg]
+    @ Stats.int_stats_tests)
 
 let () = QCheck_base_runner.set_seed 153870556
 let _  = QCheck_base_runner.run_tests ~colors:false [Stats.int_stat_display_test9]
