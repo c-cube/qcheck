@@ -56,6 +56,13 @@ module Overall = struct
          true)
 end
 
+(* test various generators *)
+module Generator = struct
+  (* example from issue #23 *)
+  let char_dist_issue_23 =
+    QCheck.Test.make ~name:"char never produces '\\255'" ~count:1_000_000 QCheck.char (fun c -> c <> '\255')
+end
+
 (* tests function generator and shrinker *)
 module Function = struct
   let fun1 =
@@ -178,6 +185,11 @@ end
 
 (* tests of statistics and histogram display *)
 module Stats = struct
+  let char_dist =
+    QCheck.(Test.make ~count:500_000 ~name:"char code dist"
+              (add_stat ("char code", Char.code) char))
+      (fun _ -> true)
+
   let stats_negs =
     QCheck.(Test.make ~count:5_000 ~name:"stats_neg"
               (add_stat ("dist",fun x -> x) small_signed_int))
@@ -215,6 +227,7 @@ let i =
     Overall.stats;
     Overall.bad_assume_warn;
     Overall.bad_assume_fail;
+    Generator.char_dist_issue_23;
     Function.fun1;
     Function.fun2;
     Function.prop_foldleft_foldright;
@@ -225,7 +238,7 @@ let i =
     Shrink.long_shrink;
     Shrink.shrink_int;
   ] @ FindExample.find_ex :: FindExample.find_ex_uncaught_issue_99
-    @ Stats.stats_negs :: Stats.stats_tests)
+    @ [Stats.char_dist; Stats.stats_negs] @ Stats.stats_tests)
 
 let () = QCheck_base_runner.set_seed 153870556
 let _  = QCheck_base_runner.run_tests ~colors:false [Stats.stat_display_test9]
