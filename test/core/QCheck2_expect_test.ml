@@ -204,10 +204,18 @@ module Stats = struct
               ~stats:[("char code", Char.code)] Gen.char) (fun _ -> true)
 
   (* test from issue #30 *)
-  let list_size_dist =
-    QCheck2.(Test.make ~count:5_000 ~name:"list size dist"
+  let list_len_dist =
+    QCheck2.(Test.make ~count:5_000 ~name:"list len dist"
               ~stats:[("len",List.length)] Gen.(list int)) (fun _ -> true)
 
+  let small_list_len_dist =
+    QCheck2.(Test.make ~count:5_000 ~name:"small_list len dist"
+              ~stats:[("len",List.length)] Gen.(small_list int)) (fun _ -> true)
+
+  let list_size_len_dist =
+    QCheck2.(Test.make ~count:5_000 ~name:"list_size len dist"
+              ~stats:[("len",List.length)] Gen.(list_size (int_range 5 10) int)) (fun _ -> true)
+  
   (* test from issue #40 *)
   let int_stats_neg =
     QCheck2.(Test.make ~count:5_000 ~name:"int_stats_neg"
@@ -260,7 +268,9 @@ let _ =
   ] @ FindExample.find_ex :: FindExample.find_ex_uncaught_issue_99
     @ [Stats.bool_dist;
        Stats.char_dist;
-       Stats.list_size_dist;
+       Stats.list_len_dist;
+       Stats.small_list_len_dist;
+       Stats.list_size_len_dist;
        Stats.int_stats_neg]
     @ Stats.int_stats_tests)
 
