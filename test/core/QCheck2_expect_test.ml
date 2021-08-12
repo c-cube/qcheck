@@ -233,30 +233,26 @@ module Stats = struct
       Test.make ~count:5_000 ~name:"array_repeat len dist" ~stats:[len] Gen.(array_repeat 42 int)             (fun _ -> true);
     ]
 
-  (* test from issue #40 *)
-  let int_stats_neg =
-    QCheck2.(Test.make ~count:5_000 ~name:"int_stats_neg"
-               ~stats:[("dist",fun x -> x)] Gen.small_signed_int)
-      (fun _ -> true)
-
-  (* distribution tests from PR #45 *)
-  let int_stats_tests =
+  let int_dist_tests =
     let open QCheck2 in
     let dist = ("dist",fun x -> x) in
     [
-      Test.make ~name:"int_stat_display_test_1" ~count:1000   ~stats:[dist] Gen.small_signed_int                 (fun _ -> true);
-      Test.make ~name:"int_stat_display_test_2" ~count:1000   ~stats:[dist] Gen.small_nat                        (fun _ -> true);
-      Test.make ~name:"int_stat_display_test_3" ~count:1000   ~stats:[dist] (Gen.int_range (-43643) 435434)      (fun _ -> true);
-      Test.make ~name:"int_stat_display_test_4" ~count:1000   ~stats:[dist] (Gen.int_range (-40000) 40000)       (fun _ -> true);
-      Test.make ~name:"int_stat_display_test_5" ~count:1000   ~stats:[dist] (Gen.int_range (-4) 4)               (fun _ -> true);
-      Test.make ~name:"int_stat_display_test_6" ~count:1000   ~stats:[dist] (Gen.int_range (-4) 17)              (fun _ -> true);
-      Test.make ~name:"int_stat_display_test_7" ~count:100000 ~stats:[dist] Gen.int                              (fun _ -> true);
-      Test.make ~name:"int_stat_display_test_8" ~count:1000   ~stats:[dist] (Gen.oneofl[min_int;-1;0;1;max_int]) (fun _ -> true);
+      (* test from issue #40 *)
+      Test.make ~name:"int_stats_neg"                  ~count:5000   ~stats:[dist] Gen.small_signed_int                 (fun _ -> true);
+      (* distribution tests from PR #45 *)
+      Test.make ~name:"small_signed_int dist"          ~count:1000   ~stats:[dist] Gen.small_signed_int                 (fun _ -> true);
+      Test.make ~name:"small_nat dist"                 ~count:1000   ~stats:[dist] Gen.small_nat                        (fun _ -> true);
+      Test.make ~name:"int_range (-43643) 435434 dist" ~count:1000   ~stats:[dist] (Gen.int_range (-43643) 435434)      (fun _ -> true);
+      Test.make ~name:"int_range (-40000) 40000 dist"  ~count:1000   ~stats:[dist] (Gen.int_range (-40000) 40000)       (fun _ -> true);
+      Test.make ~name:"int_range (-4) 4 dist"          ~count:1000   ~stats:[dist] (Gen.int_range (-4) 4)               (fun _ -> true);
+      Test.make ~name:"int_range (-4) 17 dist"         ~count:1000   ~stats:[dist] (Gen.int_range (-4) 17)              (fun _ -> true);
+      Test.make ~name:"int dist"                       ~count:100000 ~stats:[dist] Gen.int                              (fun _ -> true);
+      Test.make ~name:"oneof int dist"                 ~count:1000   ~stats:[dist] (Gen.oneofl[min_int;-1;0;1;max_int]) (fun _ -> true);
     ]
 
-  let int_stat_display_test9  =
+  let int_dist_empty_bucket =
     let open QCheck2 in
-    Test.make ~name:"int_stat_display_test9" ~count:1_000
+    Test.make ~name:"int_dist_empty_bucket" ~count:1_000
       ~stats:[("dist",fun x -> x)] Gen.(oneof [small_int_corners ();int]) (fun _ -> true)
 end
 
@@ -289,9 +285,8 @@ let _ =
        Stats.char_dist]
     @ Stats.list_len_tests
     @ Stats.array_len_tests
-    @ [Stats.int_stats_neg]
-    @ Stats.int_stats_tests)
+    @ Stats.int_dist_tests)
 
 let () = QCheck_base_runner.set_seed 153870556
-let _  = QCheck_base_runner.run_tests ~colors:false [Stats.int_stat_display_test9]
+let _  = QCheck_base_runner.run_tests ~colors:false [Stats.int_dist_empty_bucket]
 
