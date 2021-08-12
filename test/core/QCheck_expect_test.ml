@@ -61,6 +61,18 @@ module Generator = struct
   (* example from issue #23 *)
   let char_dist_issue_23 =
     QCheck.Test.make ~name:"char never produces '\\255'" ~count:1_000_000 QCheck.char (fun c -> c <> '\255')
+
+  let list_repeat_test =
+    let open QCheck in
+    let gen = Gen.(small_nat >>= fun i -> list_repeat i unit >>= fun l -> return (i,l)) in
+    Test.make ~name:"list_repeat has constant length" ~count:1000
+      (make ~print:Print.(pair int (list unit)) gen) (fun (i,l) -> List.length l = i)
+
+  let array_repeat_test =
+    let open QCheck in
+    let gen = Gen.(small_nat >>= fun i -> array_repeat i unit >>= fun l -> return (i,l)) in
+    Test.make ~name:"array_repeat has constant length" ~count:1000
+      (make ~print:Print.(pair int (array unit)) gen) (fun (i,l) -> Array.length l = i)
 end
 
 (* tests function generator and shrinker *)
@@ -200,6 +212,17 @@ module Stats = struct
       Test.make ~count:5_000 ~name:"list len dist"         (add_stat len (list int))                              (fun _ -> true);
       Test.make ~count:5_000 ~name:"small_list len dist"   (add_stat len (small_list int))                        (fun _ -> true);
       Test.make ~count:5_000 ~name:"list_of_size len dist" (add_stat len (list_of_size (Gen.int_range 5 10) int)) (fun _ -> true);
+      Test.make ~count:5_000 ~name:"list_repeat len dist"  (add_stat len (make Gen.(list_repeat 42 int)))         (fun _ -> true);
+    ]
+
+  let array_len_tests =
+    let open QCheck in
+    let len = ("len",Array.length) in
+    [
+      Test.make ~count:5_000 ~name:"array len dist"         (add_stat len (array int))                              (fun _ -> true);
+      Test.make ~count:5_000 ~name:"small_array len dist"   (add_stat len (make Gen.(small_array int)))             (fun _ -> true);
+      Test.make ~count:5_000 ~name:"array_of_size len dist" (add_stat len (array_of_size (Gen.int_range 5 10) int)) (fun _ -> true);
+      Test.make ~count:5_000 ~name:"array_repeat len dist"  (add_stat len (make Gen.(array_repeat 42 int)))         (fun _ -> true);
     ]
 
   (* test from issue #40 *)
@@ -241,6 +264,8 @@ let i =
     Overall.bad_assume_warn;
     Overall.bad_assume_fail;
     Generator.char_dist_issue_23;
+    Generator.list_repeat_test;
+    Generator.array_repeat_test;
     Function.fun1;
     Function.fun2;
     Function.prop_foldleft_foldright;
@@ -254,6 +279,7 @@ let i =
     @ [Stats.bool_dist;
        Stats.char_dist]
     @ Stats.list_len_tests
+    @ Stats.array_len_tests
     @ [Stats.int_stats_neg]
     @ Stats.int_stats_tests)
 

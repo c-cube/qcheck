@@ -63,6 +63,16 @@ module Generator = struct
   let char_dist_issue_23 =
     let open QCheck2 in
     Test.make ~name:"char never produces '\\255'" ~count:1_000_000 ~print:Print.char Gen.char (fun c -> c <> '\255')
+
+  let list_repeat_test =
+    let open QCheck2 in
+    Test.make ~name:"list_repeat has constant length" ~count:1000 ~print:Print.(pair int (list unit))
+      Gen.(small_nat >>= fun i -> list_repeat i unit >>= fun l -> return (i,l)) (fun (i,l) -> List.length l = i)
+
+  let array_repeat_test =
+    let open QCheck2 in
+    Test.make ~name:"array_repeat has constant length" ~count:1000 ~print:Print.(pair int (array unit))
+      Gen.(small_nat >>= fun i -> array_repeat i unit >>= fun l -> return (i,l)) (fun (i,l) -> Array.length l = i)
 end
 
 (* tests function generator and shrinker *)
@@ -198,7 +208,7 @@ module Stats = struct
   let bool_dist =
     QCheck2.(Test.make ~count:500_000 ~name:"bool dist"
                ~collect:Bool.to_string Gen.bool) (fun _ -> true)
-  
+
   let char_dist =
     QCheck2.(Test.make ~count:500_000 ~name:"char code dist"
               ~stats:[("char code", Char.code)] Gen.char) (fun _ -> true)
@@ -207,9 +217,20 @@ module Stats = struct
     let open QCheck2 in
     let len = ("len",List.length) in
     [ (* test from issue #30 *)
-      Test.make ~count:5_000 ~name:"list len dist"       ~stats:[len] Gen.(list int)                       (fun _ -> true);
-      Test.make ~count:5_000 ~name:"small_list len dist" ~stats:[len] Gen.(small_list int)                 (fun _ -> true);
-      Test.make ~count:5_000 ~name:"list_size len dist"  ~stats:[len] Gen.(list_size (int_range 5 10) int) (fun _ -> true);
+      Test.make ~count:5_000 ~name:"list len dist"        ~stats:[len] Gen.(list int)                       (fun _ -> true);
+      Test.make ~count:5_000 ~name:"small_list len dist"  ~stats:[len] Gen.(small_list int)                 (fun _ -> true);
+      Test.make ~count:5_000 ~name:"list_size len dist"   ~stats:[len] Gen.(list_size (int_range 5 10) int) (fun _ -> true);
+      Test.make ~count:5_000 ~name:"list_repeat len dist" ~stats:[len] Gen.(list_repeat 42 int)             (fun _ -> true);
+    ]
+
+  let array_len_tests =
+    let open QCheck2 in
+    let len = ("len",Array.length) in
+    [
+      Test.make ~count:5_000 ~name:"array len dist"        ~stats:[len] Gen.(array int)                       (fun _ -> true);
+      Test.make ~count:5_000 ~name:"small_array len dist"  ~stats:[len] Gen.(small_array int)                 (fun _ -> true);
+      Test.make ~count:5_000 ~name:"array_size len dist"   ~stats:[len] Gen.(array_size (int_range 5 10) int) (fun _ -> true);
+      Test.make ~count:5_000 ~name:"array_repeat len dist" ~stats:[len] Gen.(array_repeat 42 int)             (fun _ -> true);
     ]
 
   (* test from issue #40 *)
@@ -252,6 +273,8 @@ let _ =
     Overall.bad_assume_warn;
     Overall.bad_assume_fail;
     Generator.char_dist_issue_23;
+    Generator.list_repeat_test;
+    Generator.array_repeat_test;
     Function.fun1;
     Function.fun2;
     Function.prop_foldleft_foldright;
@@ -265,6 +288,7 @@ let _ =
     @ [Stats.bool_dist;
        Stats.char_dist]
     @ Stats.list_len_tests
+    @ Stats.array_len_tests
     @ [Stats.int_stats_neg]
     @ Stats.int_stats_tests)
 
