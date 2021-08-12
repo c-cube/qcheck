@@ -190,11 +190,13 @@ module Stats = struct
               (add_stat ("char code", Char.code) char))
       (fun _ -> true)
 
+  (* test from issue #40 *)
   let int_stats_neg =
     QCheck.(Test.make ~count:5_000 ~name:"int_stats_neg"
               (add_stat ("dist",fun x -> x) small_signed_int))
       (fun _ -> true)
 
+  (* distribution tests from PR #45 *)
   let int_stats_tests =
     let open QCheck in
     let dist = ("dist",fun x -> x) in
