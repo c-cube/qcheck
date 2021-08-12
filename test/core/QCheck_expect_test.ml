@@ -192,6 +192,16 @@ module Stats = struct
   let char_dist =
     Test.make ~name:"char code dist" ~count:500_000 (add_stat ("char code", Char.code) char) (fun _ -> true)
 
+  let string_len_tests =
+    let len = ("len",String.length) in
+    [
+      Test.make ~name:"string_size len dist"      ~count:5_000 (add_stat len (string_of_size (Gen.int_range 5 10))) (fun _ -> true);
+      Test.make ~name:"string len dist"           ~count:5_000 (add_stat len string)                                (fun _ -> true);
+      Test.make ~name:"string_of len dist"        ~count:5_000 (add_stat len (string_gen (Gen.return 'a')))         (fun _ -> true);
+      Test.make ~name:"printable_string len dist" ~count:5_000 (add_stat len printable_string)                      (fun _ -> true);
+      Test.make ~name:"small_string len dist"     ~count:5_000 (add_stat len small_string)                          (fun _ -> true);
+    ]
+
   let list_len_tests =
     let len = ("len",List.length) in
     [ (* test from issue #30 *)
@@ -259,6 +269,7 @@ let i =
     FindExample.find_ex_uncaught_issue_99_2_succeed;
     Stats.bool_dist;
     Stats.char_dist]
+    @ Stats.string_len_tests
     @ Stats.list_len_tests
     @ Stats.array_len_tests
     @ Stats.int_dist_tests)
