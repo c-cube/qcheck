@@ -2,55 +2,46 @@
 
 (* tests of overall functionality *)
 module Overall = struct
+  open QCheck2
+
   let passing =
-    QCheck2.Test.make ~count:100 ~long_factor:100 ~print:QCheck2.Print.(list int)
-      ~name:"list_rev_is_involutive"
-      QCheck2.Gen.(list small_int)
-      (fun l -> List.rev (List.rev l) = l);;
+    Test.make ~name:"list_rev_is_involutive" ~count:100 ~long_factor:100
+      ~print:Print.(list int)
+      Gen.(list small_int) (fun l -> List.rev (List.rev l) = l)
 
   let failing =
-    QCheck2.Test.make ~count:10
-      ~name:"should_fail_sort_id" ~print:QCheck2.Print.(list int)
-      QCheck2.Gen.(small_list small_int)
-      (fun l -> l = List.sort compare l);;
+    Test.make ~name:"should_fail_sort_id" ~count:10 ~print:Print.(list int)
+      Gen.(small_list small_int) (fun l -> l = List.sort compare l)
 
   exception Error
 
   let error =
-    QCheck2.Test.make ~count:10
-      ~name:"should_error_raise_exn" ~print:QCheck2.Print.int
-      QCheck2.Gen.int
-      (fun _ -> raise Error)
+    Test.make ~name:"should_error_raise_exn" ~count:10 ~print:Print.int
+      Gen.int (fun _ -> raise Error)
 
   let collect =
-    QCheck2.Test.make ~count:100 ~long_factor:100
-      ~name:"collect_results" ~print:QCheck2.Print.int
-      ~collect:string_of_int (QCheck2.Gen.int_bound 4)
-      (fun _ -> true)
+    Test.make ~name:"collect_results" ~count:100 ~long_factor:100
+      ~print:Print.int ~collect:string_of_int
+      (Gen.int_bound 4) (fun _ -> true)
 
   let stats =
-    QCheck2.Test.make ~count:100 ~long_factor:100
-      ~name:"with_stats" ~print:QCheck2.Print.int
+    Test.make ~name:"with_stats" ~count:100 ~long_factor:100 ~print:Print.int
       ~stats:[
         "mod4", (fun i->i mod 4);
         "num", (fun i->i);
       ]
-      (QCheck2.Gen.int_bound 120)
-      (fun _ -> true)
+      (Gen.int_bound 120) (fun _ -> true)
 
   let bad_assume_warn =
-    let open QCheck2 in
-    Test.make ~count:2_000
-      ~name:"WARN_unlikely_precond" ~print:Print.int
+    Test.make ~name:"WARN_unlikely_precond" ~count:2_000 ~print:Print.int
       Gen.int
       (fun x ->
          QCheck.assume (x mod 100 = 1);
          true)
 
   let bad_assume_fail =
-    let open QCheck2 in
-    Test.make ~count:2_000 ~if_assumptions_fail:(`Fatal, 0.1)
-      ~name:"FAIL_unlikely_precond" ~print:Print.int
+    Test.make ~name:"FAIL_unlikely_precond" ~count:2_000
+      ~if_assumptions_fail:(`Fatal, 0.1) ~print:Print.int
       Gen.int
       (fun x ->
          QCheck.assume (x mod 100 = 1);
@@ -59,48 +50,50 @@ end
 
 (* test various generators *)
 module Generator = struct
+  open QCheck2
+
   (* example from issue #23 *)
   let char_dist_issue_23 =
-    let open QCheck2 in
-    Test.make ~name:"char never produces '\\255'" ~count:1_000_000 ~print:Print.char Gen.char (fun c -> c <> '\255')
+    Test.make ~name:"char never produces '\\255'" ~count:1_000_000
+      ~print:Print.char
+      Gen.char (fun c -> c <> '\255')
 
   let list_repeat_test =
-    let open QCheck2 in
-    Test.make ~name:"list_repeat has constant length" ~count:1000 ~print:Print.(pair int (list unit))
-      Gen.(small_nat >>= fun i -> list_repeat i unit >>= fun l -> return (i,l)) (fun (i,l) -> List.length l = i)
+    Test.make ~name:"list_repeat has constant length" ~count:1000
+      ~print:Print.(pair int (list unit))
+      Gen.(small_nat >>= fun i -> list_repeat i unit >>= fun l -> return (i,l))
+      (fun (i,l) -> List.length l = i)
 
   let array_repeat_test =
-    let open QCheck2 in
-    Test.make ~name:"array_repeat has constant length" ~count:1000 ~print:Print.(pair int (array unit))
-      Gen.(small_nat >>= fun i -> array_repeat i unit >>= fun l -> return (i,l)) (fun (i,l) -> Array.length l = i)
+    Test.make ~name:"array_repeat has constant length" ~count:1000
+      ~print:Print.(pair int (array unit))
+      Gen.(small_nat >>= fun i -> array_repeat i unit >>= fun l -> return (i,l))
+      (fun (i,l) -> Array.length l = i)
 end
 
 (* tests function generator and shrinker *)
 module Function = struct
-  let fun1 =
-    let open QCheck2 in
-    Test.make ~count:100 ~long_factor:100
-      ~name:"FAIL_pred_map_commute" ~print:Print.(triple (list int) Fn.print Fn.print)
+  open QCheck2
+
+  let fail_pred_map_commute =
+    Test.make ~name:"fail_pred_map_commute" ~count:100 ~long_factor:100
+      ~print:Print.(triple (list int) Fn.print Fn.print)
       Gen.(triple
              (small_list small_int)
              (fun1 ~print:Print.int Observable.int int)
              (fun1 ~print:Print.bool Observable.int bool))
-      (fun (l,QCheck2.Fun (_,f), QCheck2.Fun (_,p)) ->
+      (fun (l,Fun (_,f),Fun (_,p)) ->
          List.filter p (List.map f l) = List.map f (List.filter p l))
 
-  let fun2 =
-    let open QCheck2 in
-    Test.make ~count:100
-      ~name:"FAIL_fun2_pred_strings" ~print:Fn.print
+  let fail_pred_strings =
+    Test.make ~name:"fail_pred_strings" ~count:100 ~print:Fn.print
       (fun1 Observable.string ~print:Print.bool Gen.bool)
-      (fun (Fun (_,p)) ->
-         not (p "some random string") || p "some other string")
+      (fun (Fun (_,p)) -> not (p "some random string") || p "some other string")
 
-  let int_gen = QCheck2.Gen.small_nat (* int *)
+  let int_gen = Gen.small_nat (* int *)
 
   (* Another example (false) property *)
   let prop_foldleft_foldright =
-    let open QCheck2 in
     Test.make ~name:"fold_left fold_right" ~count:1000 ~long_factor:20
       ~print:Print.(triple int (list int) Fn.print)
       Gen.(triple
@@ -111,15 +104,14 @@ module Function = struct
          let l1 = List.fold_right (Fn.apply f) xs z in
          let l2 = List.fold_left (Fn.apply f) z xs in
          if l1=l2 then true
-         else QCheck.Test.fail_reportf "l=%s, fold_left=%s, fold_right=%s@."
-             (QCheck.Print.(list int) xs)
-             (QCheck.Print.int l1)
-             (QCheck.Print.int l2)
+         else Test.fail_reportf "l=%s, fold_left=%s, fold_right=%s@."
+             (Print.(list int) xs)
+             (Print.int l1)
+             (Print.int l2)
       )
 
   (* Another example (false) property *)
   let prop_foldleft_foldright_uncurry =
-    let open QCheck2 in
     Test.make ~name:"fold_left fold_right uncurried" ~count:1000 ~long_factor:20
       ~print:Print.(triple Fn.print int (list int))
       Gen.(triple
@@ -132,7 +124,6 @@ module Function = struct
 
   (* Same as the above (false) property, but generating+shrinking functions last *)
   let prop_foldleft_foldright_uncurry_funlast =
-    let open QCheck2 in
     Test.make ~name:"fold_left fold_right uncurried fun last" ~count:1000 ~long_factor:20
       ~print:Print.(triple int (list int) Fn.print)
       Gen.(triple
@@ -146,13 +137,14 @@ end
 
 (* tests of shrinking behaviour *)
 module Shrink = struct
+  open QCheck2
+
   let rec fac n = match n with
     | 0 -> 1
     | n -> n * fac (n - 1)
 
   (* example from issue #59 *)
   let test_fac_issue59 =
-    let open QCheck2 in
     Test.make ~name:"test fac issue59"
       (Gen.make_primitive ~gen:(fun st -> Gen.generate1 ~rand:st (Gen.small_int_corners ())) ~shrink:(fun _ -> Seq.empty))
       (fun n -> try (fac n) mod n = 0
@@ -161,11 +153,10 @@ module Shrink = struct
                 | Division_by_zero -> (n=0))
 
   let big_bound_issue59 =
-    QCheck2.Test.make ~name:"big bound issue59" ~print:QCheck2.Print.int
-      (QCheck2.Gen.small_int_corners()) (fun i -> i < 209609)
+    Test.make ~name:"big bound issue59" ~print:Print.int
+      (Gen.small_int_corners()) (fun i -> i < 209609)
 
   let long_shrink =
-    let open QCheck2 in
     let listgen = Gen.(list_size (int_range 1000 10000) int) in
     Test.make ~name:"long_shrink" ~print:Print.(pair (list int) (list int))
       (Gen.pair listgen listgen)
@@ -173,15 +164,15 @@ module Shrink = struct
 
   (* test shrinking on integers *)
   let shrink_int =
-    let open QCheck2 in
-    Test.make ~count:1000 ~name:"mod3_should_fail" ~print:Print.int
+    Test.make ~name:"mod3_should_fail" ~count:1000 ~print:Print.int
       Gen.int (fun i -> i mod 3 <> 0)
 end
 
 (* tests of (inner) find_example(_gen) behaviour *)
 module FindExample = struct
+  open QCheck2
+
   let find_ex =
-    let open QCheck2 in
     Test.make ~name:"find_example" ~print:Print.int
       Gen.(2--50)
       (fun n ->
@@ -192,49 +183,44 @@ module FindExample = struct
            f m
          with No_example_found _ -> false)
 
-  let find_ex_uncaught_issue_99 : _ list =
-    let open QCheck2 in
-    let t1 =
-      let rs = (find_example ~count:10 ~f:(fun _ -> false) Gen.int) in
-      Test.make ~name:"FAIL_#99_1" rs (fun _ -> true) in
-    let t2 =
-      Test.make ~name:"should_succeed_#99_2" ~count:10 Gen.int
-        (fun i -> i <= max_int) in
-    [t1;t2]
+  let find_ex_uncaught_issue_99_1_fail =
+    let rs = (find_example ~count:10 ~f:(fun _ -> false) Gen.int) in
+    Test.make ~name:"FAIL_#99_1" rs (fun _ -> true)
+
+  let find_ex_uncaught_issue_99_2_succeed =
+    Test.make ~name:"should_succeed_#99_2" ~count:10
+      Gen.int (fun i -> i <= max_int)
 end
 
 (* tests of statistics and histogram display *)
 module Stats = struct
+  open QCheck2
+
   let bool_dist =
-    QCheck2.(Test.make ~count:500_000 ~name:"bool dist"
-               ~collect:Bool.to_string Gen.bool) (fun _ -> true)
+    Test.make ~name:"bool dist" ~count:500_000 ~collect:Bool.to_string Gen.bool (fun _ -> true)
 
   let char_dist =
-    QCheck2.(Test.make ~count:500_000 ~name:"char code dist"
-              ~stats:[("char code", Char.code)] Gen.char) (fun _ -> true)
+    Test.make ~name:"char code dist" ~count:500_000 ~stats:[("char code", Char.code)] Gen.char (fun _ -> true)
 
   let list_len_tests =
-    let open QCheck2 in
     let len = ("len",List.length) in
     [ (* test from issue #30 *)
-      Test.make ~count:5_000 ~name:"list len dist"        ~stats:[len] Gen.(list int)                       (fun _ -> true);
-      Test.make ~count:5_000 ~name:"small_list len dist"  ~stats:[len] Gen.(small_list int)                 (fun _ -> true);
-      Test.make ~count:5_000 ~name:"list_size len dist"   ~stats:[len] Gen.(list_size (int_range 5 10) int) (fun _ -> true);
-      Test.make ~count:5_000 ~name:"list_repeat len dist" ~stats:[len] Gen.(list_repeat 42 int)             (fun _ -> true);
+      Test.make ~name:"list len dist"        ~count:5_000 ~stats:[len] Gen.(list int)                       (fun _ -> true);
+      Test.make ~name:"small_list len dist"  ~count:5_000 ~stats:[len] Gen.(small_list int)                 (fun _ -> true);
+      Test.make ~name:"list_size len dist"   ~count:5_000 ~stats:[len] Gen.(list_size (int_range 5 10) int) (fun _ -> true);
+      Test.make ~name:"list_repeat len dist" ~count:5_000 ~stats:[len] Gen.(list_repeat 42 int)             (fun _ -> true);
     ]
 
   let array_len_tests =
-    let open QCheck2 in
     let len = ("len",Array.length) in
     [
-      Test.make ~count:5_000 ~name:"array len dist"        ~stats:[len] Gen.(array int)                       (fun _ -> true);
-      Test.make ~count:5_000 ~name:"small_array len dist"  ~stats:[len] Gen.(small_array int)                 (fun _ -> true);
-      Test.make ~count:5_000 ~name:"array_size len dist"   ~stats:[len] Gen.(array_size (int_range 5 10) int) (fun _ -> true);
-      Test.make ~count:5_000 ~name:"array_repeat len dist" ~stats:[len] Gen.(array_repeat 42 int)             (fun _ -> true);
+      Test.make ~name:"array len dist"        ~count:5_000 ~stats:[len] Gen.(array int)                       (fun _ -> true);
+      Test.make ~name:"small_array len dist"  ~count:5_000 ~stats:[len] Gen.(small_array int)                 (fun _ -> true);
+      Test.make ~name:"array_size len dist"   ~count:5_000 ~stats:[len] Gen.(array_size (int_range 5 10) int) (fun _ -> true);
+      Test.make ~name:"array_repeat len dist" ~count:5_000 ~stats:[len] Gen.(array_repeat 42 int)             (fun _ -> true);
     ]
 
   let int_dist_tests =
-    let open QCheck2 in
     let dist = ("dist",fun x -> x) in
     [
       (* test from issue #40 *)
@@ -251,9 +237,8 @@ module Stats = struct
     ]
 
   let int_dist_empty_bucket =
-    let open QCheck2 in
-    Test.make ~name:"int_dist_empty_bucket" ~count:1_000
-      ~stats:[("dist",fun x -> x)] Gen.(oneof [small_int_corners ();int]) (fun _ -> true)
+    Test.make ~name:"int_dist_empty_bucket" ~count:1_000 ~stats:[("dist",fun x -> x)]
+      Gen.(oneof [small_int_corners ();int]) (fun _ -> true)
 end
 
 (* Calling runners *)
@@ -271,8 +256,8 @@ let _ =
     Generator.char_dist_issue_23;
     Generator.list_repeat_test;
     Generator.array_repeat_test;
-    Function.fun1;
-    Function.fun2;
+    Function.fail_pred_map_commute;
+    Function.fail_pred_strings;
     Function.prop_foldleft_foldright;
     Function.prop_foldleft_foldright_uncurry;
     Function.prop_foldleft_foldright_uncurry_funlast;
@@ -280,9 +265,11 @@ let _ =
     Shrink.big_bound_issue59;
     Shrink.long_shrink;
     Shrink.shrink_int;
-  ] @ FindExample.find_ex :: FindExample.find_ex_uncaught_issue_99
-    @ [Stats.bool_dist;
-       Stats.char_dist]
+    FindExample.find_ex;
+    FindExample.find_ex_uncaught_issue_99_1_fail;
+    FindExample.find_ex_uncaught_issue_99_2_succeed;
+    Stats.bool_dist;
+    Stats.char_dist]
     @ Stats.list_len_tests
     @ Stats.array_len_tests
     @ Stats.int_dist_tests)

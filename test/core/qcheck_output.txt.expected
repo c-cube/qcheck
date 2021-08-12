@@ -82,13 +82,13 @@ Test char never produces '\255' failed (0 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test FAIL_pred_map_commute failed (127 shrink steps):
+Test fail_pred_map_commute failed (127 shrink steps):
 
 ([3], {_ -> 0}, {3 -> false; _ -> true})
 
 --- Failure --------------------------------------------------------------------
 
-Test FAIL_fun2_pred_strings failed (1 shrink steps):
+Test fail_pred_strings failed (1 shrink steps):
 
 {some random string -> true; _ -> false}
 
