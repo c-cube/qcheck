@@ -200,28 +200,28 @@ module Stats = struct
               ~stats:[("char code", Char.code)] Gen.char)
       (fun _ -> true)
 
-  let stats_negs =
-    QCheck2.(Test.make ~count:5_000 ~name:"stats_neg"
+  let int_stats_neg =
+    QCheck2.(Test.make ~count:5_000 ~name:"int_stats_neg"
                ~stats:[("dist",fun x -> x)] Gen.small_signed_int)
       (fun _ -> true)
 
-  let stats_tests =
+  let int_stats_tests =
     let open QCheck2 in
     let dist = ("dist",fun x -> x) in
     [
-      Test.make ~name:"stat_display_test_1" ~count:1000   ~stats:[dist] Gen.small_signed_int                 (fun _ -> true);
-      Test.make ~name:"stat_display_test_2" ~count:1000   ~stats:[dist] Gen.small_nat                        (fun _ -> true);
-      Test.make ~name:"stat_display_test_3" ~count:1000   ~stats:[dist] (Gen.int_range (-43643) 435434)      (fun _ -> true);
-      Test.make ~name:"stat_display_test_4" ~count:1000   ~stats:[dist] (Gen.int_range (-40000) 40000)       (fun _ -> true);
-      Test.make ~name:"stat_display_test_5" ~count:1000   ~stats:[dist] (Gen.int_range (-4) 4)               (fun _ -> true);
-      Test.make ~name:"stat_display_test_6" ~count:1000   ~stats:[dist] (Gen.int_range (-4) 17)              (fun _ -> true);
-      Test.make ~name:"stat_display_test_7" ~count:100000 ~stats:[dist] Gen.int                              (fun _ -> true);
-      Test.make ~name:"stat_display_test_8" ~count:1000   ~stats:[dist] (Gen.oneofl[min_int;-1;0;1;max_int]) (fun _ -> true);
+      Test.make ~name:"int_stat_display_test_1" ~count:1000   ~stats:[dist] Gen.small_signed_int                 (fun _ -> true);
+      Test.make ~name:"int_stat_display_test_2" ~count:1000   ~stats:[dist] Gen.small_nat                        (fun _ -> true);
+      Test.make ~name:"int_stat_display_test_3" ~count:1000   ~stats:[dist] (Gen.int_range (-43643) 435434)      (fun _ -> true);
+      Test.make ~name:"int_stat_display_test_4" ~count:1000   ~stats:[dist] (Gen.int_range (-40000) 40000)       (fun _ -> true);
+      Test.make ~name:"int_stat_display_test_5" ~count:1000   ~stats:[dist] (Gen.int_range (-4) 4)               (fun _ -> true);
+      Test.make ~name:"int_stat_display_test_6" ~count:1000   ~stats:[dist] (Gen.int_range (-4) 17)              (fun _ -> true);
+      Test.make ~name:"int_stat_display_test_7" ~count:100000 ~stats:[dist] Gen.int                              (fun _ -> true);
+      Test.make ~name:"int_stat_display_test_8" ~count:1000   ~stats:[dist] (Gen.oneofl[min_int;-1;0;1;max_int]) (fun _ -> true);
     ]
 
-  let stat_display_test9  =
+  let int_stat_display_test9  =
     let open QCheck2 in
-    Test.make ~name:"stat_display_test9" ~count:1_000
+    Test.make ~name:"int_stat_display_test9" ~count:1_000
       ~stats:[("dist",fun x -> x)] Gen.(oneof [small_int_corners ();int]) (fun _ -> true)
 end
 
@@ -248,8 +248,8 @@ let _ =
     Shrink.long_shrink;
     Shrink.shrink_int;
   ] @ FindExample.find_ex :: FindExample.find_ex_uncaught_issue_99
-    @ [Stats.char_dist; Stats.stats_negs] @ Stats.stats_tests)
+    @ [Stats.char_dist; Stats.int_stats_neg] @ Stats.int_stats_tests)
 
 let () = QCheck_base_runner.set_seed 153870556
-let _  = QCheck_base_runner.run_tests ~colors:false [Stats.stat_display_test9]
+let _  = QCheck_base_runner.run_tests ~colors:false [Stats.int_stat_display_test9]
 
