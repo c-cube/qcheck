@@ -82,6 +82,18 @@ Test char never produces '\255' failed (0 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
+Test string never has a \000 char failed (22 shrink steps):
+
+"aaaaaa\000aaaaaaaaaaaaaaaa"
+
+--- Failure --------------------------------------------------------------------
+
+Test string never has a \255 char failed (59 shrink steps):
+
+"aaaaaaaaaaaaaaaaaaaaaaaaaa\255aaaaaaaaaaaaaaaaaaaaaaaa"
+
+--- Failure --------------------------------------------------------------------
+
 Test fail_pred_map_commute failed (16 shrink steps):
 
 ([2], {_ -> 0}, {1 -> false; 2 -> true; _ -> false})
@@ -636,7 +648,7 @@ stats dist:
   -4611686018427387392..-4150517416584648577:                                                                   0
 ================================================================================
 1 warning(s)
-failure (12 tests failed, 1 tests errored, ran 45 tests)
+failure (14 tests failed, 1 tests errored, ran 48 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++

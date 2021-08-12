@@ -58,6 +58,25 @@ module Generator = struct
       ~print:Print.char
       Gen.char (fun c -> c <> '\255')
 
+  let string_test =
+    Test.make ~name:"string has right length and content" ~count:1000 ~print:Print.string
+      Gen.string
+      (fun s ->
+         let len = String.length s in
+         0 <= len && len < 10000
+         && String.to_seq s |>
+            Seq.fold_left (fun acc c -> acc && '\000' <= c && c <= '\255') true)
+
+  let string_never_has_000_char =
+    Test.make ~name:"string never has a \\000 char" ~count:1000 ~print:Print.string
+      Gen.string
+      (fun s -> String.to_seq s |> Seq.fold_left (fun acc c -> acc && c <> '\000') true)
+
+  let string_never_has_255_char =
+    Test.make ~name:"string never has a \\255 char" ~count:1000 ~print:Print.string
+      Gen.string
+      (fun s -> String.to_seq s |> Seq.fold_left (fun acc c -> acc && c <> '\255') true)
+
   let list_repeat_test =
     Test.make ~name:"list_repeat has constant length" ~count:1000
       ~print:Print.(pair int (list unit))
@@ -264,6 +283,9 @@ let _ =
     Overall.bad_assume_warn;
     Overall.bad_assume_fail;
     Generator.char_dist_issue_23;
+    Generator.string_test;
+    Generator.string_never_has_000_char;
+    Generator.string_never_has_255_char;
     Generator.list_repeat_test;
     Generator.array_repeat_test;
     Function.fail_pred_map_commute;
