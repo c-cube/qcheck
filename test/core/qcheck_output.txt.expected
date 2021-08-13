@@ -100,6 +100,12 @@ Test mod3_should_fail failed (84 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
+Test char is never produces 'abcdef' failed (0 shrink steps):
+
+'d'
+
+--- Failure --------------------------------------------------------------------
+
 Test string never has a \000 char failed (25 shrink steps):
 
 "\000"
@@ -648,7 +654,7 @@ stats dist:
   -4611686018427387392..-4150517416584648577:                                                                   0
 ================================================================================
 1 warning(s)
-failure (14 tests failed, 1 tests errored, ran 48 tests)
+failure (15 tests failed, 1 tests errored, ran 50 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
