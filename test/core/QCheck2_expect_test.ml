@@ -58,6 +58,10 @@ module Generator = struct
       ~print:Print.char
       Gen.char (fun c -> c <> '\255')
 
+  let char_test =
+    Test.make ~name:"char has right range'" ~count:1000 ~print:Print.char
+      Gen.char (fun c -> '\000' <= c && c <= '\255')
+
   let string_test =
     Test.make ~name:"string has right length and content" ~count:1000 ~print:Print.string
       Gen.string
@@ -107,10 +111,13 @@ module Shrink = struct
       (Gen.pair listgen listgen)
       (fun (xs,ys) -> List.rev (xs@ys) = (List.rev xs)@(List.rev ys))
 
-  (* test shrinking on integers *)
   let shrink_int =
     Test.make ~name:"mod3_should_fail" ~count:1000 ~print:Print.int
       Gen.int (fun i -> i mod 3 <> 0)
+
+  let char_is_never_abcdef =
+    Test.make ~name:"char is never produces 'abcdef'" ~count:1000 ~print:Print.char
+      Gen.char (fun c -> not (List.mem c ['a';'b';'c';'d';'e';'f']))
 
   let string_never_has_000_char =
     Test.make ~name:"string never has a \\000 char" ~count:1000 ~print:Print.string
@@ -283,6 +290,7 @@ let _ =
     Overall.bad_assume_warn;
     Overall.bad_assume_fail;
     Generator.char_dist_issue_23;
+    Generator.char_test;
     Generator.string_test;
     Generator.list_repeat_test;
     Generator.array_repeat_test;
@@ -290,6 +298,7 @@ let _ =
     Shrink.big_bound_issue59;
     Shrink.long_shrink;
     Shrink.shrink_int;
+    Shrink.char_is_never_abcdef;
     Shrink.string_never_has_000_char;
     Shrink.string_never_has_255_char;
     Function.fail_pred_map_commute;
