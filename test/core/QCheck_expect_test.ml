@@ -69,6 +69,10 @@ module Generator = struct
          && String.to_seq s |>
             Seq.fold_left (fun acc c -> acc && '\000' <= c && c <= '\255') true)
 
+  let list_test =
+    Test.make ~name:"list has right length" ~count:1000
+      (list unit) (fun l -> let len = List.length l in 0 <= len && len < 10_000)
+
   let list_repeat_test =
     let gen = Gen.(small_nat >>= fun i -> list_repeat i unit >>= fun l -> return (i,l)) in
     Test.make ~name:"list_repeat has constant length" ~count:1000
@@ -123,6 +127,38 @@ module Shrink = struct
     Test.make ~name:"string never has a \\255 char" ~count:1000
       string
       (fun s -> String.to_seq s |> Seq.fold_left (fun acc c -> acc && c <> '\255') true)
+
+  let print_list xs = print_endline Print.(list int xs)
+  (* test from issue #64 *)
+  let lists_are_empty_issue_64 =
+    Test.make ~name:"lists are empty"
+      (list small_int) (fun xs -> print_list xs; xs = [])
+
+  let list_shorter_10 =
+    Test.make ~name:"lists shorter than 10"
+      (list small_int) (fun xs -> (*print_list xs;*) List.length xs < 10)
+
+  let length_printer xs =
+    Printf.sprintf "[...] list length: %i" (List.length xs)
+
+  let size_gen = Gen.(oneof [small_nat; int_bound 750_000])
+
+  let list_shorter_432 =
+    Test.make ~name:"lists shorter than 432"
+      (set_print length_printer (list_of_size size_gen small_int)) (*(list small_int)*)
+      (fun xs -> (*print_list xs;*) List.length xs < 432)
+
+  let list_shorter_4332 =
+    Test.make ~name:"lists shorter than 4332"
+      (set_shrink Shrink.list_spine (set_print length_printer (list_of_size size_gen small_int)))
+      (fun xs -> (*print_list xs;*) List.length xs < 4332)
+
+  let list_equal_dupl =
+    Test.make ~name:"lists equal to duplication"
+      (set_print length_printer (list_of_size size_gen small_int))
+      (*(set_print length_printer (list small_int))*)
+      (fun xs -> try xs = xs @ xs
+                 with Stack_overflow -> false)
 end
 
 (* tests function generator and shrinker *)
@@ -183,6 +219,19 @@ module Function = struct
       (fun (z,xs,f) ->
          List.fold_right (fun x y -> Fn.apply f (x,y)) xs z =
          List.fold_left (fun x y -> Fn.apply f (x,y)) z xs)
+
+  (* test from issue #64 *)
+  let fold_left_test =
+    Test.make ~name:"false fold, fun first"
+      (quad  (* string -> int -> string *)
+         (fun2 Observable.string Observable.int small_string)
+         small_string
+         (list small_int)
+         (list small_int))
+      (fun (f,acc,is,js) ->
+         let f = Fn.apply f in
+         List.fold_left f acc (is @ js)
+         = List.fold_left f (List.fold_left f acc is) is) (*Typo*)
 end
 
 (* tests of (inner) find_example(_gen) behaviour *)
@@ -281,6 +330,7 @@ let _ =
     Generator.char_dist_issue_23;
     Generator.char_test;
     Generator.string_test;
+    Generator.list_test;
     Generator.list_repeat_test;
     Generator.array_repeat_test;
     (*Shrink.test_fac_issue59;*)
@@ -290,11 +340,17 @@ let _ =
     Shrink.char_is_never_abcdef;
     Shrink.string_never_has_000_char;
     Shrink.string_never_has_255_char;
+    Shrink.lists_are_empty_issue_64;
+    Shrink.list_shorter_10;
+    Shrink.list_shorter_432;
+    Shrink.list_shorter_4332;
+    Shrink.list_equal_dupl;
     Function.fail_pred_map_commute;
     Function.fail_pred_strings;
     Function.prop_foldleft_foldright;
     Function.prop_foldleft_foldright_uncurry;
     Function.prop_foldleft_foldright_uncurry_funlast;
+    Function.fold_left_test;
     FindExample.find_ex;
     FindExample.find_ex_uncaught_issue_99_1_fail;
     FindExample.find_ex_uncaught_issue_99_2_succeed;
