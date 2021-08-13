@@ -110,9 +110,18 @@ module Shrink = struct
     Test.make ~name:"long_shrink" (pair listgen listgen)
       (fun (xs,ys) -> List.rev (xs@ys) = (List.rev xs)@(List.rev ys))
 
-  let shrink_int =
-    Test.make ~name:"mod3_should_fail" ~count:1000
+  let ints_arent_0_mod_3 =
+    Test.make ~name:"ints arent 0 mod 3" ~count:1000
       int (fun i -> i mod 3 <> 0)
+
+  let ints_are_0 =
+    Test.make ~name:"ints are 0" ~count:1000
+      int (fun i -> Printf.printf "%i\n" i; i = 0)
+
+  (* test from issue #59 *)
+  let ints_smaller_209609 =
+    Test.make ~name:"ints < 209609"
+      (small_int_corners()) (fun i -> i < 209609)
 
   let char_is_never_abcdef =
     Test.make ~name:"char is never produces 'abcdef'" ~count:1000
@@ -336,7 +345,9 @@ let _ =
     (*Shrink.test_fac_issue59;*)
     Shrink.big_bound_issue59;
     Shrink.long_shrink;
-    Shrink.shrink_int;
+    Shrink.ints_arent_0_mod_3;
+    Shrink.ints_are_0;
+    Shrink.ints_smaller_209609;
     Shrink.char_is_never_abcdef;
     Shrink.string_never_has_000_char;
     Shrink.string_never_has_255_char;
