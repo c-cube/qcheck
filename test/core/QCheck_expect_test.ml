@@ -48,7 +48,7 @@ module Overall = struct
          true)
 end
 
-(* test various generators *)
+(* positive tests of the various generators *)
 module Generator = struct
   open QCheck
 
@@ -65,16 +65,6 @@ module Generator = struct
          && String.to_seq s |>
             Seq.fold_left (fun acc c -> acc && '\000' <= c && c <= '\255') true)
 
-  let string_never_has_000_char =
-    Test.make ~name:"string never has a \\000 char" ~count:1000
-      string
-      (fun s -> String.to_seq s |> Seq.fold_left (fun acc c -> acc && c <> '\000') true)
-
-  let string_never_has_255_char =
-    Test.make ~name:"string never has a \\255 char" ~count:1000
-      string
-      (fun s -> String.to_seq s |> Seq.fold_left (fun acc c -> acc && c <> '\255') true)
-
   let list_repeat_test =
     let gen = Gen.(small_nat >>= fun i -> list_repeat i unit >>= fun l -> return (i,l)) in
     Test.make ~name:"list_repeat has constant length" ~count:1000
@@ -84,6 +74,48 @@ module Generator = struct
     let gen = Gen.(small_nat >>= fun i -> array_repeat i unit >>= fun l -> return (i,l)) in
     Test.make ~name:"array_repeat has constant length" ~count:1000
       (make ~print:Print.(pair int (array unit)) gen) (fun (i,l) -> Array.length l = i)
+end
+
+(* negative tests that exercise shrinking behaviour *)
+module Shrink = struct
+  open QCheck
+
+  let rec fac n = match n with
+    | 0 -> 1
+    | n -> n * fac (n - 1)
+
+  (* example from issue #59 *)
+  let test_fac_issue59 =
+    Test.make ~name:"test fac issue59"
+      (set_shrink Shrink.nil (small_int_corners ()))
+      (fun n -> try (fac n) mod n = 0
+                with
+                (*| Stack_overflow   -> false*)
+                | Division_by_zero -> (n=0))
+
+  let big_bound_issue59 =
+    Test.make ~name:"big bound issue59"
+      (small_int_corners()) (fun i -> i < 209609)
+
+  let long_shrink =
+    let listgen = list_of_size (Gen.int_range 1000 10000) int in
+    Test.make ~name:"long_shrink" (pair listgen listgen)
+      (fun (xs,ys) -> List.rev (xs@ys) = (List.rev xs)@(List.rev ys))
+
+  (* test shrinking on integers *)
+  let shrink_int =
+    Test.make ~name:"mod3_should_fail" ~count:1000
+      int (fun i -> i mod 3 <> 0)
+
+  let string_never_has_000_char =
+    Test.make ~name:"string never has a \\000 char" ~count:1000
+      string
+      (fun s -> String.to_seq s |> Seq.fold_left (fun acc c -> acc && c <> '\000') true)
+
+  let string_never_has_255_char =
+    Test.make ~name:"string never has a \\255 char" ~count:1000
+      string
+      (fun s -> String.to_seq s |> Seq.fold_left (fun acc c -> acc && c <> '\255') true)
 end
 
 (* tests function generator and shrinker *)
@@ -144,38 +176,6 @@ module Function = struct
       (fun (z,xs,f) ->
          List.fold_right (fun x y -> Fn.apply f (x,y)) xs z =
          List.fold_left (fun x y -> Fn.apply f (x,y)) z xs)
-end
-
-(* tests of shrinking behaviour *)
-module Shrink = struct
-  open QCheck
-
-  let rec fac n = match n with
-    | 0 -> 1
-    | n -> n * fac (n - 1)
-
-  (* example from issue #59 *)
-  let test_fac_issue59 =
-    Test.make ~name:"test fac issue59"
-      (set_shrink Shrink.nil (small_int_corners ()))
-      (fun n -> try (fac n) mod n = 0
-                with
-                (*| Stack_overflow   -> false*)
-                | Division_by_zero -> (n=0))
-
-  let big_bound_issue59 =
-    Test.make ~name:"big bound issue59"
-      (small_int_corners()) (fun i -> i < 209609)
-
-  let long_shrink =
-    let listgen = list_of_size (Gen.int_range 1000 10000) int in
-    Test.make ~name:"long_shrink" (pair listgen listgen)
-      (fun (xs,ys) -> List.rev (xs@ys) = (List.rev xs)@(List.rev ys))
-
-  (* test shrinking on integers *)
-  let shrink_int =
-    Test.make ~name:"mod3_should_fail" ~count:1000
-      int (fun i -> i mod 3 <> 0)
 end
 
 (* tests of (inner) find_example(_gen) behaviour *)
@@ -273,19 +273,19 @@ let i =
     Overall.bad_assume_fail;
     Generator.char_dist_issue_23;
     Generator.string_test;
-    Generator.string_never_has_000_char;
-    Generator.string_never_has_255_char;
     Generator.list_repeat_test;
     Generator.array_repeat_test;
+    (*Shrink.test_fac_issue59;*)
+    Shrink.big_bound_issue59;
+    Shrink.long_shrink;
+    Shrink.shrink_int;
+    Shrink.string_never_has_000_char;
+    Shrink.string_never_has_255_char;
     Function.fail_pred_map_commute;
     Function.fail_pred_strings;
     Function.prop_foldleft_foldright;
     Function.prop_foldleft_foldright_uncurry;
     Function.prop_foldleft_foldright_uncurry_funlast;
-    (*Shrink.test_fac_issue59;*)
-    Shrink.big_bound_issue59;
-    Shrink.long_shrink;
-    Shrink.shrink_int;
     FindExample.find_ex;
     FindExample.find_ex_uncaught_issue_99_1_fail;
     FindExample.find_ex_uncaught_issue_99_2_succeed;
