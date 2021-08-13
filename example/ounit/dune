@@ -6,7 +6,7 @@
 (rule
   (targets output.txt)
   (deps ./QCheck_ounit_test.exe)
-  (package qcheck)
+  (package qcheck-ounit)
   (enabled_if (= %{os_type} "Unix"))
   (action
     (with-accepted-exit-codes
