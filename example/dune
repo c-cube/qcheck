@@ -6,7 +6,6 @@
 (rule
   (targets output.txt)
   (deps ./QCheck_runner_test.exe)
-  (package qcheck-core)
   (enabled_if (= %{os_type} "Unix"))
   (action
     (with-accepted-exit-codes
@@ -18,4 +17,5 @@
 (rule
   (alias runtest)
   (enabled_if (= %{os_type} "Unix"))
+  (package qcheck)
   (action (diff output.txt.expected output.txt)))
