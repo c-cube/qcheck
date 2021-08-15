@@ -1,12 +1,11 @@
 
 (executables
   (names QCheck_ounit_test QCheck_test)
-  (libraries qcheck ounit2 qcheck-ounit))
+  (libraries ounit2 qcheck-ounit))
 
 (rule
   (targets output.txt)
   (deps ./QCheck_ounit_test.exe)
-  (package qcheck-ounit)
   (enabled_if (= %{os_type} "Unix"))
   (action
     (with-accepted-exit-codes
@@ -17,5 +16,6 @@
 
 (rule
   (alias runtest)
+  (package qcheck-ounit)
   (enabled_if (= %{os_type} "Unix"))
   (action (diff output.txt.expected output.txt)))

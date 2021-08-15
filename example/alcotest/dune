@@ -6,7 +6,6 @@
 (rule
   (targets output.txt)
   (deps ./QCheck_alcotest_test.exe)
-  (package qcheck-alcotest)
   (enabled_if (= %{os_type} "Unix"))
   (action
     (with-accepted-exit-codes
@@ -19,5 +18,6 @@
 
 (rule
   (alias runtest)
+  (package qcheck-alcotest)
   (enabled_if (= %{os_type} "Unix"))
   (action (diff output.txt.expected output.txt)))
