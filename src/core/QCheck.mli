@@ -380,8 +380,14 @@ module Gen : sig
       @since 0.11 *)
 
   val string_readable : string t
-  (** Builds a string generator using the {!char} character generator.
-      @since 0.11 *)
+  (** Builds a string generator using the {!printable} character generator.
+      @since 0.11
+      @deprecated use {!string_printable} *)
+  [@@deprecated "see string_printable"]
+
+  val string_printable : string t
+  (** Builds a string generator using the {!printable} character generator.
+      @since 0.18 *)
 
   val small_string : ?gen:char t -> string t
   (** Builds a string generator, length is {!small_nat}
