@@ -127,6 +127,10 @@ module Shrink = struct
     Test.make ~name:"char is never produces 'abcdef'" ~count:1000
       char (fun c -> not (List.mem c ['a';'b';'c';'d';'e';'f']))
 
+  let strings_are_empty =
+    Test.make ~name:"strings are empty" ~count:1000
+      string (fun s -> (*Printf.printf "\"%s\"\n" (String.escaped s);*) s = "")
+
   let string_never_has_000_char =
     Test.make ~name:"string never has a \\000 char" ~count:1000
       string
@@ -349,6 +353,7 @@ let _ =
     Shrink.ints_are_0;
     Shrink.ints_smaller_209609;
     Shrink.char_is_never_abcdef;
+    Shrink.strings_are_empty;
     Shrink.string_never_has_000_char;
     Shrink.string_never_has_255_char;
     Shrink.lists_are_empty_issue_64;

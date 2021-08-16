@@ -199,6 +199,12 @@ Test char is never produces 'abcdef' failed (0 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
+Test strings are empty failed (249 shrink steps):
+
+"\177"
+
+--- Failure --------------------------------------------------------------------
+
 Test string never has a \000 char failed (25 shrink steps):
 
 "\000"
@@ -783,7 +789,7 @@ stats dist:
   -4611686018427387392..-4150517416584648577:                                                                   0
 ================================================================================
 1 warning(s)
-failure (23 tests failed, 1 tests errored, ran 59 tests)
+failure (24 tests failed, 1 tests errored, ran 60 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
