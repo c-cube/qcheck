@@ -62,6 +62,10 @@ module Generator = struct
     Test.make ~name:"char has right range'" ~count:1000 ~print:Print.char
       Gen.char (fun c -> '\000' <= c && c <= '\255')
 
+  let nat_test =
+    Test.make ~name:"nat has right range" ~count:1000 ~print:Print.int
+      Gen.nat (fun n -> 0 <= n && n < 10000)
+
   let string_test =
     Test.make ~name:"string has right length and content" ~count:1000 ~print:Print.string
       Gen.string
@@ -128,6 +132,10 @@ module Shrink = struct
   let ints_smaller_209609 =
     Test.make ~name:"ints < 209609" ~print:Print.int
       (Gen.small_int_corners()) (fun i -> i < 209609)
+
+  let nats_smaller_5001 =
+    Test.make ~name:"nat < 5001" ~count:1000 ~print:Print.int
+      Gen.nat (fun n -> n < 5001)
 
   let char_is_never_abcdef =
     Test.make ~name:"char is never produces 'abcdef'" ~count:1000 ~print:Print.char
@@ -333,6 +341,7 @@ module Stats = struct
       (* distribution tests from PR #45 *)
       Test.make ~name:"small_signed_int dist"          ~count:1000   ~stats:[dist] Gen.small_signed_int                 (fun _ -> true);
       Test.make ~name:"small_nat dist"                 ~count:1000   ~stats:[dist] Gen.small_nat                        (fun _ -> true);
+      Test.make ~name:"nat dist"                       ~count:1000   ~stats:[dist] Gen.nat                              (fun _ -> true);
       Test.make ~name:"int_range (-43643) 435434 dist" ~count:1000   ~stats:[dist] (Gen.int_range (-43643) 435434)      (fun _ -> true);
       Test.make ~name:"int_range (-40000) 40000 dist"  ~count:1000   ~stats:[dist] (Gen.int_range (-40000) 40000)       (fun _ -> true);
       Test.make ~name:"int_range (-4) 4 dist"          ~count:1000   ~stats:[dist] (Gen.int_range (-4) 4)               (fun _ -> true);
@@ -360,6 +369,7 @@ let _ =
     Overall.bad_assume_fail;
     Generator.char_dist_issue_23;
     Generator.char_test;
+    Generator.nat_test;
     Generator.string_test;
     Generator.list_test;
     Generator.list_repeat_test;
@@ -370,6 +380,7 @@ let _ =
     Shrink.ints_arent_0_mod_3;
     Shrink.ints_are_0;
     Shrink.ints_smaller_209609;
+    Shrink.nats_smaller_5001;
     Shrink.char_is_never_abcdef;
     Shrink.strings_are_empty;
     Shrink.string_never_has_000_char;
