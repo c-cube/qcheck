@@ -178,6 +178,12 @@ module Shrink = struct
       Gen.(list_size size_gen small_int) (*Gen.(list small_int)*)
       (fun xs -> try xs = xs @ xs
                  with Stack_overflow -> false)
+
+  let list_unique_elems =
+    Test.make ~name:"lists have unique elems" ~print:Print.(list int)
+      Gen.(list small_int)
+      (fun xs -> let ys = List.sort_uniq Int.compare xs in
+                 print_list xs; List.length xs = List.length ys)
 end
 
 (* tests function generator and shrinker *)
@@ -373,6 +379,7 @@ let _ =
     Shrink.list_shorter_432;
     Shrink.list_shorter_4332;
     Shrink.list_equal_dupl;
+    Shrink.list_unique_elems;
     Function.fail_pred_map_commute;
     Function.fail_pred_strings;
     Function.prop_foldleft_foldright;
