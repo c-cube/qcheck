@@ -661,7 +661,7 @@ module Gen = struct
 
   let string_readable = string_size ~gen:char nat
 
-  let small_string ?gen st = string_size ?gen small_nat st
+  let small_string ?(gen = char) st = string_size ~gen small_nat st
 
   let small_list gen = list_size small_nat gen
 
