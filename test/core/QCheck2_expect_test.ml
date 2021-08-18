@@ -308,11 +308,11 @@ module Stats = struct
   let string_len_tests =
     let len = ("len",String.length) in
     [
-      Test.make ~name:"string_size len dist"     ~count:5_000 ~stats:[len] Gen.(string_size (int_range 5 10)) (fun _ -> true);
-      Test.make ~name:"string len dist"          ~count:5_000 ~stats:[len] Gen.string                         (fun _ -> true);
-      Test.make ~name:"string_of len dist"       ~count:5_000 ~stats:[len] Gen.(string_of (return 'a'))       (fun _ -> true);
-      Test.make ~name:"string_readable len dist" ~count:5_000 ~stats:[len] Gen.string_readable                (fun _ -> true);
-      Test.make ~name:"small_string len dist"    ~count:5_000 ~stats:[len] Gen.(small_string ~gen:char)(*ugh*)(fun _ -> true);
+      Test.make ~name:"string_size len dist"      ~count:5_000 ~stats:[len] Gen.(string_size (int_range 5 10)) (fun _ -> true);
+      Test.make ~name:"string len dist"           ~count:5_000 ~stats:[len] Gen.string                         (fun _ -> true);
+      Test.make ~name:"string_of len dist"        ~count:5_000 ~stats:[len] Gen.(string_of (return 'a'))       (fun _ -> true);
+      Test.make ~name:"string_printable len dist" ~count:5_000 ~stats:[len] Gen.string_printable               (fun _ -> true);
+      Test.make ~name:"small_string len dist"     ~count:5_000 ~stats:[len] Gen.(small_string ~gen:char)(*ugh*)(fun _ -> true);
     ]
 
   let list_len_tests =
