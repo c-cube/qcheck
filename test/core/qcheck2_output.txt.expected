@@ -330,7 +330,7 @@ Test lists shorter than 4332 failed (4022 shrink steps):
 
 Test lists equal to duplication failed (4 shrink steps):
 
-[...] list length: 1
+[0]
 
 --- Failure --------------------------------------------------------------------
 

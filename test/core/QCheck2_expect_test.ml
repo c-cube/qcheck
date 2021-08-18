@@ -182,7 +182,7 @@ module Shrink = struct
       (fun xs -> (*print_list xs;*) List.length xs < 4332)
 
   let list_equal_dupl =
-    Test.make ~name:"lists equal to duplication" ~print:length_printer
+    Test.make ~name:"lists equal to duplication" ~print:Print.(list int)
       Gen.(list_size size_gen small_int) (*Gen.(list small_int)*)
       (fun xs -> try xs = xs @ xs
                  with Stack_overflow -> false)

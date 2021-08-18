@@ -176,8 +176,8 @@ module Shrink = struct
 
   let list_equal_dupl =
     Test.make ~name:"lists equal to duplication"
-      (set_print length_printer (list_of_size size_gen small_int))
-      (*(set_print length_printer (list small_int))*)
+      (list_of_size size_gen small_int)
+      (*(list small_int)*)
       (fun xs -> try xs = xs @ xs
                  with Stack_overflow -> false)
 
