@@ -527,14 +527,16 @@ module Gen = struct
 
   let ui64 : int64 t = map Int64.abs int64
 
+  (* A tail-recursive implementation over Tree.t *)
   let list_size (size : int t) (gen : 'a t) : 'a list t =
-    size >>= fun size ->
-    let rec loop n =
+    fun st ->
+    Tree.bind (size st) @@ fun size ->
+    let rec loop n acc =
       if n <= 0
-      then pure []
-      else liftA2 List.cons gen (loop (n - 1))
+      then acc
+      else (loop [@tailcall]) (n - 1) (Tree.liftA2 List.cons (gen st) acc)
     in
-    loop size
+    loop size (Tree.pure [])
 
   let list (gen : 'a t) : 'a list t = list_size nat gen
 
