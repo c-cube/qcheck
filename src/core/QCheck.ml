@@ -147,9 +147,15 @@ module Gen = struct
       fun st -> RS.bits st
     else (* word size = 64 *)
       fun st ->
-        RS.bits st                        (* Bottom 30 bits *)
-        lor (RS.bits st lsl 30)           (* Middle 30 bits *)
-        lor ((RS.bits st land 3) lsl 60)  (* Top 2 bits *)  (* top bit = 0 *)
+      (* Technically we could write [3] but this is clearer *)
+      let two_bits_mask = 0b11 in
+      (* Top 2 bits *)
+      let left = ((RS.bits st land two_bits_mask) lsl 60) in
+      (* Middle 30 bits *)
+      let middle = (RS.bits st lsl 30) in
+      (* Bottom 30 bits *)
+      let right = RS.bits st in
+      left lor middle lor right
 
   let int st = if RS.bool st then - (pint st) - 1 else pint st
   let int_bound n =
