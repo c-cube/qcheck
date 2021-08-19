@@ -659,7 +659,7 @@ module Gen = struct
 
   let string_of gen = string_size ~gen nat
 
-  let string_readable = string_size ~gen:char nat
+  let string_printable = string_size ~gen:printable nat
 
   let small_string ?gen st = string_size ?gen small_nat st
 

@@ -13,6 +13,7 @@ deprecations and breakges:
 
 - make `QCheck.Test_result.t` abstract and add missing getters
 - deprecate `QCheck.oneof`
+- deprecate `Gen.string_readable` in favor of `Gen.(string_of char)` or the new `Gen.string_printable`
 - require at least OCaml 4.08
 
 other changes:
