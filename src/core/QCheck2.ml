@@ -384,18 +384,19 @@ module Gen = struct
      Technically this function is a special case of [random_binary_string] where the size is
      {!Sys.int_size}.
   *)
-  let pint_raw (st : RS.t) : int =
+  let pint_raw : RS.t -> int =
     if Sys.word_size = 32
-    then RS.bits st
+    then fun st -> RS.bits st
     else (* word size = 64 *)
-      (* Bottom 30 bits *)
-      let right = RS.bits st in
-      (* Middle 30 bits *)
-      let middle = (RS.bits st lsl 30) in
+      fun st ->
       (* Technically we could write [3] but this is clearer *)
       let two_bits_mask = 0b11 in
       (* Top 2 bits *)
       let left = ((RS.bits st land two_bits_mask) lsl 60) in
+      (* Middle 30 bits *)
+      let middle = (RS.bits st lsl 30) in
+      (* Bottom 30 bits *)
+      let right = RS.bits st in
       left lor middle lor right
 
   let pint ?(origin : int = 0) : int t = fun st ->
