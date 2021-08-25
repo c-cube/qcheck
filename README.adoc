@@ -20,7 +20,7 @@ of interest:
 - https://gitlab.inria.fr/fpottier/feat/[Feat]
 - @gasche's https://github.com/gasche/random-generator/[generator library]
 
-Jan Midtgaard has http://janmidtgaard.dk/quickcheck/index.html[a lecture] about
+Jan Midtgaard (@jmid) has http://janmidtgaard.dk/quickcheck/index.html[a lecture] about
 property-based testing that relies on QCheck.
 
 toc::[]
