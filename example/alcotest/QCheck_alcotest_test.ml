@@ -24,12 +24,36 @@ let simple_qcheck =
     QCheck.small_int
     (fun _ -> QCheck.Test.fail_reportf "@[<v>this@ will@ always@ fail@]")
 
+type tree = Leaf of int | Node of tree * tree
+
+let leaf x = Leaf x
+let node x y = Node (x,y)
+
+let gen_tree = QCheck.Gen.(sized @@ fix
+  (fun self n -> match n with
+    | 0 -> map leaf nat
+    | n ->
+      frequency
+        [1, map leaf nat;
+         2, map2 node (self (n/2)) (self (n/2))]
+    ))
+
+let rec rev_tree = function
+  | Node (x, y) -> Node (rev_tree y, rev_tree x)
+  | Leaf x -> Leaf x
+
+let passing_tree_rev =
+  QCheck.Test.make ~count:1000
+    ~name:"tree_rev_is_involutive"
+    QCheck.(make gen_tree)
+    (fun tree -> rev_tree (rev_tree tree) = tree)
+
 let () =
   Printexc.record_backtrace true;
   let module A = Alcotest in
   let suite =
     List.map QCheck_alcotest.to_alcotest
-      [ passing; failing; error; simple_qcheck ]
+      [ passing; failing; error; simple_qcheck; passing_tree_rev ]
   in
   A.run "my test" [
     "suite", suite

@@ -138,6 +138,31 @@ let stats_negs =
       (add_stat ("dist",fun x -> x) small_signed_int))
     (fun _ -> true)
 
+type tree = Leaf of int | Node of tree * tree
+
+let leaf x = Leaf x
+let node x y = Node (x,y)
+
+let gen_tree = QCheck.Gen.(sized @@ fix
+  (fun self n -> match n with
+    | 0 -> map leaf nat
+    | n ->
+      frequency
+        [1, map leaf nat;
+         2, map2 node (self (n/2)) (self (n/2))]
+    ))
+
+let rec rev_tree = function
+  | Node (x, y) -> Node (rev_tree y, rev_tree x)
+  | Leaf x -> Leaf x
+
+let passing_tree_rev =
+  QCheck.Test.make ~count:1000
+    ~name:"tree_rev_is_involutive"
+    QCheck.(make gen_tree)
+    (fun tree -> rev_tree (rev_tree tree) = tree)
+
+
 let stats_tests =
   let open QCheck in
   [
@@ -167,5 +192,6 @@ let () =
     stats_negs;
     bad_assume_warn;
     bad_assume_fail;
+    passing_tree_rev;
   ] @ find_ex_uncaught_issue_99 @ stats_tests)
 
