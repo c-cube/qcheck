@@ -1,5 +1,40 @@
 (** QCheck(1) tests **)
 
+(** Module representing a tree data structure, used in tests *)
+module IntTree = struct
+  type tree = Leaf of int | Node of tree * tree
+
+  let leaf x = Leaf x
+  let node x y = Node (x,y)
+
+  let rec depth = function
+    | Leaf _ -> 1
+    | Node (x, y) -> 1 + max (depth x) (depth y)
+
+  let rec print_tree = function
+    | Leaf x -> Printf.sprintf "Leaf %d" x
+    | Node (x, y) -> Printf.sprintf "Node (%s, %s)" (print_tree x) (print_tree y)
+
+  let gen_tree = QCheck.Gen.(sized @@ fix
+                        (fun self n -> match n with
+                           | 0 -> map leaf nat
+                           | n ->
+                             frequency
+                               [1, map leaf nat;
+                                2, map2 node (self (n/2)) (self (n/2))]
+                        ))
+
+  let rec rev_tree = function
+    | Node (x, y) -> Node (rev_tree y, rev_tree x)
+    | Leaf x -> Leaf x
+
+  let passing_tree_rev =
+    QCheck.Test.make ~count:1000
+      ~name:"tree_rev_is_involutive"
+      QCheck.(make gen_tree)
+      (fun tree -> rev_tree (rev_tree tree) = tree)
+end
+
 (* tests of overall functionality *)
 module Overall = struct
   open QCheck
@@ -86,6 +121,12 @@ module Generator = struct
     let gen = Gen.(small_nat >>= fun i -> array_repeat i unit >>= fun l -> return (i,l)) in
     Test.make ~name:"array_repeat has constant length" ~count:1000
       (make ~print:Print.(pair int (array unit)) gen) (fun (i,l) -> Array.length l = i)
+
+  let passing_tree_rev =
+    QCheck.Test.make ~count:1000
+      ~name:"tree_rev_is_involutive"
+      QCheck.(make IntTree.gen_tree)
+      (fun tree -> IntTree.(rev_tree (rev_tree tree)) = tree)
 end
 
 (* negative tests that exercise shrinking behaviour *)
@@ -341,6 +382,10 @@ module Stats = struct
   let int_dist_empty_bucket =
     Test.make ~name:"int_dist_empty_bucket" ~count:1_000
       (add_stat ("dist",fun x -> x) (oneof [small_int_corners ();int])) (fun _ -> true)
+
+  let tree_depth_test =
+    let depth = ("depth", IntTree.depth) in
+    Test.make ~name:"tree's depth" ~count:1000 (add_stat depth (make IntTree.gen_tree)) (fun _ -> true)
 end
 
 (* Calling runners *)
@@ -362,6 +407,7 @@ let _ =
     Generator.list_test;
     Generator.list_repeat_test;
     Generator.array_repeat_test;
+    Generator.passing_tree_rev;
     (*Shrink.test_fac_issue59;*)
     Shrink.big_bound_issue59;
     Shrink.long_shrink;
@@ -389,7 +435,8 @@ let _ =
     FindExample.find_ex_uncaught_issue_99_1_fail;
     FindExample.find_ex_uncaught_issue_99_2_succeed;
     Stats.bool_dist;
-    Stats.char_dist]
+    Stats.char_dist;
+    Stats.tree_depth_test]
     @ Stats.string_len_tests
     @ Stats.list_len_tests
     @ Stats.array_len_tests
