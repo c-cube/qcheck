@@ -2,6 +2,7 @@
 (test
   (name test)
   (modules test)
+  (package qcheck-core)
   (libraries qcheck-core alcotest))
 
 (executables
