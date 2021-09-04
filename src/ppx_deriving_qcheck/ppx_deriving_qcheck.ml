@@ -251,22 +251,20 @@ let rec gen_from_type ~loc ?(env = TypeGen.empty) ?(typ_name = "") typ =
           [%expr QCheck.Gen.list [%e gen_from_type ~loc ~env typ]]
       | [%type: [%t? typ] array] ->
           [%expr QCheck.Gen.array [%e gen_from_type ~loc ~env typ]]
-      | _ -> (
-          match typ with
-          | { ptyp_desc = Ptyp_tuple typs; _ } ->
-              let tys = List.map (gen_from_type ~loc ~env) typs in
-              tuple ~loc tys
-          | { ptyp_desc = Ptyp_constr ({ txt = ty; _ }, _); _ } ->
-              let x = TypeGen.find_opt (longident_to_str ty) env in
-              Option.value ~default:(gen ~loc ~env ty) x
-          | { ptyp_desc = Ptyp_var s; _ } -> gen ~loc (Lident s)
-          | { ptyp_desc = Ptyp_variant (rws, _, _); _ } ->
-              gen_from_variant ~loc typ_name rws
-          | { ptyp_desc = Ptyp_arrow (_, left, right); _ } ->
-              gen_from_arrow ~loc ~env left right
-          | _ ->
-              Ppxlib.Location.raise_errorf ~loc
-                "This type is not supported in ppx_deriving_qcheck"))
+      | { ptyp_desc = Ptyp_tuple typs; _ } ->
+          let tys = List.map (gen_from_type ~loc ~env) typs in
+          tuple ~loc tys
+      | { ptyp_desc = Ptyp_constr ({ txt = ty; _ }, _); _ } ->
+          let x = TypeGen.find_opt (longident_to_str ty) env in
+          Option.value ~default:(gen ~loc ~env ty) x
+      | { ptyp_desc = Ptyp_var s; _ } -> gen ~loc (Lident s)
+      | { ptyp_desc = Ptyp_variant (rws, _, _); _ } ->
+          gen_from_variant ~loc typ_name rws
+      | { ptyp_desc = Ptyp_arrow (_, left, right); _ } ->
+          gen_from_arrow ~loc ~env left right
+      | _ ->
+          Ppxlib.Location.raise_errorf ~loc
+            "This type is not supported in ppx_deriving_qcheck")
 
 and gen_from_constr ~loc ?(env = TypeGen.empty)
     { pcd_name; pcd_args; pcd_attributes; _ } =
