@@ -318,27 +318,21 @@ Test lists shorter than 10 failed (16 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test lists shorter than 432 failed:
+Test lists shorter than 432 failed (412 shrink steps):
 
-ERROR: uncaught exception in generator for test lists shorter than 432 after 100 steps:
-Exception: Stack overflow
-Backtrace: 
+[...] list length: 432
 
 --- Failure --------------------------------------------------------------------
 
-Test lists shorter than 4332 failed:
+Test lists shorter than 4332 failed (4022 shrink steps):
 
-ERROR: uncaught exception in generator for test lists shorter than 4332 after 100 steps:
-Exception: Stack overflow
-Backtrace: 
+[...] list length: 4332
 
 --- Failure --------------------------------------------------------------------
 
-Test lists equal to duplication failed:
+Test lists equal to duplication failed (4 shrink steps):
 
-ERROR: uncaught exception in generator for test lists equal to duplication after 100 steps:
-Exception: Stack overflow
-Backtrace: 
+[0]
 
 --- Failure --------------------------------------------------------------------
 

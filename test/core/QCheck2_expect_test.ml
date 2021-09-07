@@ -182,7 +182,7 @@ module Shrink = struct
 
   let strings_are_empty =
     Test.make ~name:"strings are empty" ~count:1000 ~print:Print.string
-      Gen.string (fun s -> (*Printf.printf "\"%s\"\n" (String.escaped s);*) s = "")
+      Gen.string (fun s -> s = "")
 
   let string_never_has_000_char =
     Test.make ~name:"string never has a \\000 char" ~count:1000 ~print:Print.string
@@ -203,7 +203,7 @@ module Shrink = struct
 
   let list_shorter_10 =
     Test.make ~name:"lists shorter than 10" ~print:Print.(list int)
-      Gen.(list small_int) (fun xs -> (*print_list xs;*) List.length xs < 10)
+      Gen.(list small_int) (fun xs -> List.length xs < 10)
 
   let length_printer xs =
     Printf.sprintf "[...] list length: %i" (List.length xs)
@@ -212,17 +212,17 @@ module Shrink = struct
 
   let list_shorter_432 =
     Test.make ~name:"lists shorter than 432" ~print:length_printer
-      Gen.(list_size size_gen small_int) (*Gen.(list small_int)*)
-      (fun xs -> (*print_list xs;*) List.length xs < 432)
+      Gen.(list_size size_gen small_int)
+      (fun xs -> List.length xs < 432)
 
   let list_shorter_4332 =
     Test.make ~name:"lists shorter than 4332" ~print:length_printer
-      Gen.(list_size size_gen small_int) (*Gen.(list small_int)*)
-      (fun xs -> (*print_list xs;*) List.length xs < 4332)
+      Gen.(list_size size_gen small_int)
+      (fun xs -> List.length xs < 4332)
 
   let list_equal_dupl =
-    Test.make ~name:"lists equal to duplication" ~print:length_printer
-      Gen.(list_size size_gen small_int) (*Gen.(list small_int)*)
+    Test.make ~name:"lists equal to duplication" ~print:Print.(list int)
+      Gen.(list_size size_gen small_int)
       (fun xs -> try xs = xs @ xs
                  with Stack_overflow -> false)
 
