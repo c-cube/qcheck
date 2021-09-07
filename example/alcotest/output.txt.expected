@@ -11,9 +11,9 @@ Testing `my test'.
 │ [FAIL]        suite          1   fail_sort_id.                               │
 └──────────────────────────────────────────────────────────────────────────────┘
 
-test `fail_sort_id` failed on ≥ 1 cases: [1; 0] (after 20 shrink steps)
+test `fail_sort_id` failed on ≥ 1 cases: [1; 0] (after 17 shrink steps)
                                            
-[exception] test `fail_sort_id` failed on ≥ 1 cases: [1; 0] (after 20 shrink steps)
+[exception] test `fail_sort_id` failed on ≥ 1 cases: [1; 0] (after 17 shrink steps)
                                            
             
 

@@ -6,7 +6,7 @@ Error: tests:2:error_raise_exn (in the log).
 
 
 test `error_raise_exn` raised exception `Dune__exe__QCheck_ounit_test.Error`
-on `0 (after 63 shrink steps)`
+on `0 (after 1 shrink steps)`
 
 ------------------------------------------------------------------------------
 ==============================================================================
@@ -18,7 +18,7 @@ Error: tests:3:fail_check_err_message (in the code).
 
 
 test `fail_check_err_message` failed on ≥ 1 cases:
-0 (after 7 shrink steps)
+0 (after 1 shrink steps)
 this
 will
 always
@@ -35,7 +35,7 @@ Error: tests:1:fail_sort_id (in the log).
 Error: tests:1:fail_sort_id (in the code).
 
 
-test `fail_sort_id` failed on ≥ 1 cases: [1; 0] (after 20 shrink steps)
+test `fail_sort_id` failed on ≥ 1 cases: [1; 0] (after 17 shrink steps)
                                            
 
 ------------------------------------------------------------------------------
