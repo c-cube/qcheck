@@ -4,7 +4,7 @@
   (libraries qcheck-core qcheck-core.runner))
 
 (test
-  (name test)
-  (modules test)
+  (name QCheck2_unit_tests)
+  (modules QCheck2_unit_tests)
   (package qcheck-core)
   (libraries qcheck-core alcotest))
