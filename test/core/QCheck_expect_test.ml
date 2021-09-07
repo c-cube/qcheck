@@ -161,7 +161,7 @@ module Shrink = struct
 
   let ints_are_0 =
     Test.make ~name:"ints are 0" ~count:1000
-      int (fun i -> Printf.printf "%i\n" i; i = 0)
+      int (fun i -> i = 0)
 
   (* test from issue #59 *)
   let ints_smaller_209609 =
@@ -190,11 +190,10 @@ module Shrink = struct
       string
       (fun s -> String.to_seq s |> Seq.fold_left (fun acc c -> acc && c <> '\255') true)
 
-  let print_list xs = print_endline Print.(list int xs)
   (* test from issue #64 *)
   let lists_are_empty_issue_64 =
     Test.make ~name:"lists are empty"
-      (list small_int) (fun xs -> print_list xs; xs = [])
+      (list small_int) (fun xs -> xs = [])
 
   let list_shorter_10 =
     Test.make ~name:"lists shorter than 10"
@@ -225,7 +224,7 @@ module Shrink = struct
     Test.make ~name:"lists have unique elems"
       (list small_int)
       (fun xs -> let ys = List.sort_uniq Int.compare xs in
-                 print_list xs; List.length xs = List.length ys)
+                 List.length xs = List.length ys)
 end
 
 (* tests function generator and shrinker *)
