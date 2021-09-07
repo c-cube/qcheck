@@ -52,17 +52,20 @@ holds 80
 holds 8
 holds 0
 fails 5248
+holds 0
 holds 2624
 holds 3936
 holds 4592
 holds 4920
 fails 5084
+holds 0
 holds 2542
 holds 3813
 holds 4449
 holds 4767
 holds 4926
 fails 5005
+holds 0
 holds 2503
 holds 3754
 holds 4380
@@ -73,6 +76,7 @@ holds 4966
 holds 4986
 holds 4996
 fails 5001
+holds 0
 holds 2501
 holds 3751
 holds 4376
@@ -83,5 +87,4 @@ holds 4962
 holds 4982
 holds 4992
 holds 4997
-holds 4999
 holds 5000
