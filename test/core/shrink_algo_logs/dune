@@ -1,0 +1,25 @@
+;;
+;; Adapted from https://tarides.com/blog/2019-05-09-an-introduction-to-ocaml-ppx-ecosystem
+;;
+(include dune.inc)
+
+(executable
+  (name gen_dune_rule)
+  (modules gen_dune_rule)
+)
+
+(rule
+  (targets dune.inc.gen)
+  (deps
+    (:gen gen_dune_rule.exe)
+    (source_tree .)
+  )
+  (action
+    (with-stdout-to %{targets} (run %{gen}))
+  )
+)
+
+(rule
+  (alias runtest)
+  (action (diff dune.inc dune.inc.gen))
+)
