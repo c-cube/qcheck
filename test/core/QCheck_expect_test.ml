@@ -137,7 +137,7 @@ module Shrink = struct
 
   let strings_are_empty =
     Test.make ~name:"strings are empty" ~count:1000
-      string (fun s -> (*Printf.printf "\"%s\"\n" (String.escaped s);*) s = "")
+      string (fun s -> s = "")
 
   let string_never_has_000_char =
     Test.make ~name:"string never has a \\000 char" ~count:1000
@@ -157,7 +157,7 @@ module Shrink = struct
 
   let list_shorter_10 =
     Test.make ~name:"lists shorter than 10"
-      (list small_int) (fun xs -> (*print_list xs;*) List.length xs < 10)
+      (list small_int) (fun xs -> List.length xs < 10)
 
   let length_printer xs =
     Printf.sprintf "[...] list length: %i" (List.length xs)
@@ -166,18 +166,17 @@ module Shrink = struct
 
   let list_shorter_432 =
     Test.make ~name:"lists shorter than 432"
-      (set_print length_printer (list_of_size size_gen small_int)) (*(list small_int)*)
-      (fun xs -> (*print_list xs;*) List.length xs < 432)
+      (set_print length_printer (list_of_size size_gen small_int))
+      (fun xs -> List.length xs < 432)
 
   let list_shorter_4332 =
     Test.make ~name:"lists shorter than 4332"
       (set_shrink Shrink.list_spine (set_print length_printer (list_of_size size_gen small_int)))
-      (fun xs -> (*print_list xs;*) List.length xs < 4332)
+      (fun xs -> List.length xs < 4332)
 
   let list_equal_dupl =
     Test.make ~name:"lists equal to duplication"
       (list_of_size size_gen small_int)
-      (*(list small_int)*)
       (fun xs -> try xs = xs @ xs
                  with Stack_overflow -> false)
 
