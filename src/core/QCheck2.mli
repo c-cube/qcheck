@@ -1701,8 +1701,8 @@ module Test : sig
   val check_result : 'a cell -> 'a TestResult.t -> unit
   (** [check_result cell res] checks that [res] is [Ok _], and returns unit.
       Otherwise, it raises some exception.
-      @raise Test_error if [res = Error _]
-      @raise Test_error if [res = Failed _] *)
+      @raise Test_fail  if [res = Failed _]
+      @raise Test_error if [res = Error _] *)
 
   type res =
     | Success
@@ -1750,14 +1750,14 @@ module Test : sig
     ?step:'a step -> ?handler:'a handler ->
     ?rand:Random.State.t -> 'a cell -> unit
   (** Same as {!check_cell} but calls  {!check_result} on the result.
-      @raise Test_error if [res = Error _]
-      @raise Test_error if [res = Failed _] *)
+      @raise Test_fail  if [res = Failed _]
+      @raise Test_error if [res = Error _] *)
 
   val check_exn : ?long:bool -> ?rand:Random.State.t -> t -> unit
   (** Checks the property against some test cases, and calls {!check_result},
       which might raise an exception in case of failure.
-      @raise Test_error if [res = Error _]
-      @raise Test_error if [res = Failed _] *)
+      @raise Test_fail  if [res = Failed _]
+      @raise Test_error if [res = Error _] *)
 end
 
 (** {2 Sub-tests} *)
