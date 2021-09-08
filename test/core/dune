@@ -3,8 +3,8 @@
   (modules QCheck_expect_test QCheck2_expect_test)
   (libraries qcheck-core qcheck-core.runner))
 
-(test
-  (name QCheck2_unit_tests)
-  (modules QCheck2_unit_tests)
+(tests
+  (names QCheck_unit_tests QCheck2_unit_tests)
+  (modules QCheck_unit_tests QCheck2_unit_tests)
   (package qcheck-core)
   (libraries qcheck-core alcotest))
