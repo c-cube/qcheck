@@ -91,7 +91,7 @@ module Gen = struct
        ])
 end
 
-module Count = struct
+module TestCount = struct
   let test_count_n ?count expected =
     let t = QCheck2.(Test.make ?count Gen.int (fun _ -> true)) in
     let msg = Printf.sprintf "QCheck2.Test.make ~count:%s |> get_count = %d"
@@ -112,7 +112,7 @@ module Count = struct
     Alcotest.(check int) "default count is from QCHECK_COUNT" 5 actual
 
   let tests =
-    ("Test", Alcotest.[
+    ("Test.make ~count", Alcotest.[
          test_case "make with custom count" `Quick test_count_10;
          test_case "make with custom count" `Quick test_count_0;
          test_case "make with default count" `Quick test_count_default;
@@ -131,7 +131,7 @@ end
 
 module Check_exn = struct
 
-  let check_exn = QCheck2.Test.check_exn
+  let check_exn = Test.check_exn
 
   let test_pass_trivial () =
     let run_test () = check_exn QCheck2.(Test.make Gen.int (fun _ -> true)) in
@@ -169,7 +169,7 @@ module Check_exn = struct
     Alcotest.check_raises "MyError" (Test.Test_error (name,counterex_str,MyError,"")) run_test
 
   let tests =
-    ("check_exn", Alcotest.[
+    ("Test.check_exn", Alcotest.[
          test_case "check_exn pass trivial" `Quick test_pass_trivial;
          test_case "check_exn pass random" `Quick test_pass_random;
          test_case "check_exn fail always" `Quick test_fail_always;
@@ -179,11 +179,11 @@ module Check_exn = struct
 end
 
 let () =
-  Alcotest.run "QCheck"
+  Alcotest.run "QCheck2"
     [
       Shrink.tests;
       Gen.tests;
-      Count.tests;
+      TestCount.tests;
       String.tests;
       Check_exn.tests;
     ]
