@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"><head><title>QCheck2 (qcheck-core.QCheck2)</title><link rel="stylesheet" href="../../odoc.css"/><meta charset="utf-8"/><meta name="generator" content="odoc 1.5.3"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script src="../../highlight.pack.js"></script><script>hljs.initHighlightingOnLoad();</script></head><body><div class="content"><header><nav><a href="../index.html">Up</a> – <a href="../index.html">qcheck-core</a> &#x00BB; QCheck2</nav><h1>Module <code>QCheck2</code></h1><h2 id="quickcheck-inspired-property-based-testing"><a href="#quickcheck-inspired-property-based-testing" class="anchor"></a>QuickCheck-inspired property-based testing</h2><nav class="toc"><ul><li><a href="#introduction">Introduction</a></li><li><a href="#examples">Examples</a><ul><li><a href="#assumptions">Assumptions</a></li></ul></li><li><a href="#tests">Tests</a><ul><li><a href="#sub-tests">Sub-tests</a></li></ul></li><li><a href="#migration_qcheck2">Migration to QCheck2</a><ul><li><a href="#minimal-changes">Minimal changes</a></li><li><a href="#recommended-changes">Recommended changes</a></li></ul></li></ul></nav></header><section><header><h2 id="introduction"><a href="#introduction" class="anchor"></a>Introduction</h2><p>This library takes inspiration from Haskell's QuickCheck library. The rough idea is that the programmer describes invariants that values of a certain type need to satisfy (&quot;properties&quot;), as functions from this type to bool. They also need to describe how to generate random values of the type, so that the property is tried and checked on a number of random instances.</p><p>This explains the organization of this module:</p><ul><li><a href="Gen/index.html"><code>Gen</code></a> is used to describe how to generate random values. Auxiliary module <a href="Print/index.html"><code>Print</code></a> can be used along with <a href="Test/index.html#val-make"><code>Test.make</code></a> to build one's own generator instances.</li></ul><ul><li><a href="Test/index.html"><code>Test</code></a> is used to describe a single test, that is, a property of type <code>'a -&gt; bool</code> combined with an <code>'a Gen.t</code> that is used to generate the test cases for this property. Optional parameters allow to specify the random generator state, number of instances to generate and test, etc.</li></ul><p>💡 If you are migrating from QCheck, check the <a href="index.html#migration_qcheck2"><span>migration guide</span></a> below.</p></header></section><section><header><h2 id="examples"><a href="#examples" class="anchor"></a>Examples</h2><ul><li>&quot;<span class="xref-unresolved" title="unresolved reference to &quot;List.rev&quot;"><code>List</code>.rev</span> is involutive&quot; (the test passes so <code>check_exn</code> returns <code>()</code>):</li></ul><pre><code class="ml">let test =
   QCheck2.(Test.make ~count:1000
-            ~pp:Print.(list int)
+            ~print:Print.(list int)
             Gen.(list int)
             (fun l -&gt; List.rev (List.rev l) = l));;
 
@@ -9,7 +9,7 @@ QCheck2.Test.check_exn test;;</code></pre><ul><li><p>&quot;All lists are sorted&
     Test.make
       ~name:&quot;All lists are sorted&quot;
       ~count:10_000
-      ~pp:Print.(list small_nat)
+      ~print:Print.(list int)
       Gen.(list small_nat)
       (fun l -&gt; l = List.sort compare l));;
 
