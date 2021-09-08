@@ -39,7 +39,7 @@ content will appear. *)
     {[
       let test =
         QCheck2.(Test.make ~count:1000
-                  ~pp:Print.(list int)
+                  ~print:Print.(list int)
                   Gen.(list int)
                   (fun l -> List.rev (List.rev l) = l));;
 
@@ -58,7 +58,7 @@ content will appear. *)
           Test.make
             ~name:"All lists are sorted"
             ~count:10_000
-            ~pp:Print.(list small_nat)
+            ~print:Print.(list int)
             Gen.(list small_nat)
             (fun l -> l = List.sort compare l));;
 
