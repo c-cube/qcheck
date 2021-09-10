@@ -223,7 +223,7 @@ let debug_shrinking_choices_aux ~colors out name i cell x =
   Printf.fprintf out "\n~~~ %a %s\n\n"
     (Color.pp_str_c ~colors `Cyan) "Shrink" (String.make 69 '~');
   Printf.fprintf out
-    "Test %s sucessfully shrunk counter example (step %d) to:\n\n%a\n%!"
+    "Test %s successfully shrunk counter example (step %d) to:\n\n%a\n%!"
     name i
     (debug_shrinking_counter_example cell) x
 
