@@ -102,12 +102,15 @@ val run_tests :
     @return an error code, [0] if all tests passed, [1] otherwise.
     @param colors if true (default), colorful output
     @param verbose if true, prints more information about test cases (default: [false])
+    @param long if true, runs the long versions of the tests (default: [false])
     @param debug_shrink [debug_shrink:(Some ch)] writes a log of successful shrink
     attempts to channel [ch], for example [~debug_shrink:(Some (open_out "mylog.txt"))].
     Use together with a non-empty list in [~debug_shrink_list].
     @param debug_shrink_list the test names to log successful shrink attempts for,
     for example [~debug_shrink_list:["list_rev_is_involutive"]].
-    Requires [~debug_shrink] to be [Some ch]. *)
+    Requires [~debug_shrink] to be [Some ch].
+    @param out print output to the provided channel (default: [stdout])
+    @param rand start the test runner in the provided RNG state *)
 
 val run_tests_main : ?argv:string array -> QCheck2.Test.t list -> 'a
 (** Can be used as the main function of a test file. Exits with a non-0 code
