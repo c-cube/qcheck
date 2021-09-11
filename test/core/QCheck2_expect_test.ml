@@ -278,6 +278,7 @@ module Shrink = struct
       (Gen.pair listgen listgen)
       (fun (xs,ys) -> List.rev (xs@ys) = (List.rev xs)@(List.rev ys))
 
+  (* test from issue #36 *)
   let ints_arent_0_mod_3 =
     Test.make ~name:"ints arent 0 mod 3" ~count:1000 ~print:Print.int
       Gen.int (fun i -> i mod 3 <> 0)
