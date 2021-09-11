@@ -133,7 +133,6 @@ module Generator = struct
   let triple_test =
     Test.make ~name:"int triples - associative over +" ~count:1000
       (triple small_nat small_nat small_nat) (fun (i,j,k) -> i+(j+k) = (i+j)+k)
-  (*was: (fun (i,j,k) -> i+(j+k) = (i+j)+i)*)
 
   let quad_test =
     Test.make ~name:"int quadruples - product of sums" ~count:1000
