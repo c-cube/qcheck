@@ -433,6 +433,12 @@ Test forall (a, b, c, d, e, f, g, h, i) in nat: a < b < c < d < e < f < g < h < 
 
 --- Failure --------------------------------------------------------------------
 
+Test tree contains only 42 failed (10 shrink steps):
+
+Leaf 0
+
+--- Failure --------------------------------------------------------------------
+
 Test fail_pred_map_commute failed (127 shrink steps):
 
 ([3], {_ -> 0}, {3 -> false; _ -> true})
@@ -1171,7 +1177,7 @@ stats dist:
    4150517416584649600.. 4611686018427387903: #################                                               189
 ================================================================================
 1 warning(s)
-failure (52 tests failed, 1 tests errored, ran 116 tests)
+failure (53 tests failed, 1 tests errored, ran 117 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
