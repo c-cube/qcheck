@@ -89,6 +89,16 @@ module Overall = struct
       (fun x ->
          QCheck.assume (x mod 100 = 1);
          true)
+
+  let tests = [
+    passing;
+    failing;
+    error;
+    collect;
+    stats;
+    bad_assume_warn;
+    bad_assume_fail;
+  ]
 end
 
 (* positive tests of the various generators *)
@@ -158,6 +168,22 @@ module Generator = struct
     Test.make ~name:"tree_rev_is_involutive" ~count:1000
       (make IntTree.gen_tree)
       (fun tree -> IntTree.(rev_tree (rev_tree tree)) = tree)
+
+  let tests = [
+    char_dist_issue_23;
+    char_test;
+    nat_test;
+    string_test;
+    pair_test;
+    triple_test;
+    quad_test;
+    bind_test;
+    bind_pair_list_length;
+    list_test;
+    list_repeat_test;
+    array_repeat_test;
+    passing_tree_rev;
+  ]
 end
 
 (* negative tests that exercise shrinking behaviour *)
@@ -186,7 +212,7 @@ module Shrink = struct
     Test.make ~name:"long_shrink" (pair listgen listgen)
       (fun (xs,ys) -> List.rev (xs@ys) = (List.rev xs)@(List.rev ys))
 
-  (* test from issue 36 *)
+  (* test from issue #36 *)
   let ints_arent_0_mod_3 =
     Test.make ~name:"ints arent 0 mod 3" ~count:1000
       int (fun i -> i mod 3 <> 0)
@@ -333,6 +359,44 @@ module Shrink = struct
     Test.make ~name:"tree contains only 42"
       IntTree.(make ~print:print_tree ~shrink:shrink_tree gen_tree)
       (fun tree -> IntTree.contains_only_n tree 42)
+
+  let tests = [
+    (*test_fac_issue59;*)
+    big_bound_issue59;
+    long_shrink;
+    ints_arent_0_mod_3;
+    ints_are_0;
+    ints_smaller_209609;
+    nats_smaller_5001;
+    char_is_never_abcdef;
+    strings_are_empty;
+    string_never_has_000_char;
+    string_never_has_255_char;
+    pair_diff_issue_64;
+    pair_same;
+    pair_one_zero;
+    pair_all_zero;
+    pair_ordered;
+    pair_ordered_rev;
+    pair_sum_lt_128;
+    triple_diff;
+    triple_same;
+    triple_ordered;
+    triple_ordered_rev;
+    quad_diff;
+    quad_same;
+    quad_ordered;
+    quad_ordered_rev;
+    bind_pair_ordered;
+    bind_pair_list_size;
+    lists_are_empty_issue_64;
+    list_shorter_10;
+    list_shorter_432;
+    list_shorter_4332;
+    list_equal_dupl;
+    list_unique_elems;
+    tree_contains_only_42;
+  ]
 end
 
 (* tests function generator and shrinker *)
@@ -406,6 +470,15 @@ module Function = struct
          let f = Fn.apply f in
          List.fold_left f acc (is @ js)
          = List.fold_left f (List.fold_left f acc is) is) (*Typo*)
+
+  let tests = [
+    fail_pred_map_commute;
+    fail_pred_strings;
+    prop_foldleft_foldright;
+    prop_foldleft_foldright_uncurry;
+    prop_foldleft_foldright_uncurry_funlast;
+    fold_left_test;
+  ]
 end
 
 (* tests of (inner) find_example(_gen) behaviour *)
@@ -429,6 +502,12 @@ module FindExample = struct
   let find_ex_uncaught_issue_99_2_succeed =
     Test.make ~name:"should_succeed_#99_2" ~count:10
       int (fun i -> i <= max_int)
+
+  let tests = [
+    find_ex;
+    find_ex_uncaught_issue_99_1_fail;
+    find_ex_uncaught_issue_99_2_succeed;
+  ]
 end
 
 (* tests of statistics and histogram display *)
@@ -505,95 +584,39 @@ module Stats = struct
       Test.make ~name:"oneof int dist"                 ~count:1000   (add_stat dist (oneofl[min_int;-1;0;1;max_int])) (fun _ -> true);
     ]
 
+  let tree_depth_test =
+    let depth = ("depth", IntTree.depth) in
+    Test.make ~name:"tree's depth" ~count:1000 (add_stat depth (make IntTree.gen_tree)) (fun _ -> true)
+
   let int_dist_empty_bucket =
     Test.make ~name:"int_dist_empty_bucket" ~count:1_000
       (add_stat ("dist",fun x -> x) (oneof [small_int_corners ();int])) (fun _ -> true)
 
-  let tree_depth_test =
-    let depth = ("depth", IntTree.depth) in
-    Test.make ~name:"tree's depth" ~count:1000 (add_stat depth (make IntTree.gen_tree)) (fun _ -> true)
+  let tests =
+    [ bool_dist;
+      char_dist; ]
+    @ string_len_tests @
+    [ pair_dist;
+      triple_dist;
+      quad_dist;
+      bind_dist; ]
+    @ list_len_tests
+    @ array_len_tests
+    @ int_dist_tests @
+    [ tree_depth_test ]
 end
 
 (* Calling runners *)
 
 let () = QCheck_base_runner.set_seed 1234
 let _ =
-  QCheck_base_runner.run_tests ~colors:false ([
-    Overall.passing;
-    Overall.failing;
-    Overall.error;
-    Overall.collect;
-    Overall.stats;
-    Overall.bad_assume_warn;
-    Overall.bad_assume_fail;
-    Generator.char_dist_issue_23;
-    Generator.char_test;
-    Generator.nat_test;
-    Generator.string_test;
-    Generator.pair_test;
-    Generator.triple_test;
-    Generator.quad_test;
-    Generator.bind_test;
-    Generator.bind_pair_list_length;
-    Generator.list_test;
-    Generator.list_repeat_test;
-    Generator.array_repeat_test;
-    Generator.passing_tree_rev;
-    (*Shrink.test_fac_issue59;*)
-    Shrink.big_bound_issue59;
-    Shrink.long_shrink;
-    Shrink.ints_arent_0_mod_3;
-    Shrink.ints_are_0;
-    Shrink.ints_smaller_209609;
-    Shrink.nats_smaller_5001;
-    Shrink.char_is_never_abcdef;
-    Shrink.strings_are_empty;
-    Shrink.string_never_has_000_char;
-    Shrink.string_never_has_255_char;
-    Shrink.pair_diff_issue_64;
-    Shrink.pair_same;
-    Shrink.pair_one_zero;
-    Shrink.pair_all_zero;
-    Shrink.pair_ordered;
-    Shrink.pair_ordered_rev;
-    Shrink.pair_sum_lt_128;
-    Shrink.triple_diff;
-    Shrink.triple_same;
-    Shrink.triple_ordered;
-    Shrink.triple_ordered_rev;
-    Shrink.quad_diff;
-    Shrink.quad_same;
-    Shrink.quad_ordered;
-    Shrink.quad_ordered_rev;
-    Shrink.bind_pair_ordered;
-    Shrink.bind_pair_list_size;
-    Shrink.lists_are_empty_issue_64;
-    Shrink.list_shorter_10;
-    Shrink.list_shorter_432;
-    Shrink.list_shorter_4332;
-    Shrink.list_equal_dupl;
-    Shrink.list_unique_elems;
-    Shrink.tree_contains_only_42;
-    Function.fail_pred_map_commute;
-    Function.fail_pred_strings;
-    Function.prop_foldleft_foldright;
-    Function.prop_foldleft_foldright_uncurry;
-    Function.prop_foldleft_foldright_uncurry_funlast;
-    Function.fold_left_test;
-    FindExample.find_ex;
-    FindExample.find_ex_uncaught_issue_99_1_fail;
-    FindExample.find_ex_uncaught_issue_99_2_succeed;
-    Stats.bool_dist;
-    Stats.char_dist;
-    Stats.tree_depth_test]
-    @ Stats.string_len_tests
-    @ [Stats.pair_dist;
-       Stats.triple_dist;
-       Stats.quad_dist;
-       Stats.bind_dist;]
-    @ Stats.list_len_tests
-    @ Stats.array_len_tests
-    @ Stats.int_dist_tests)
+  QCheck_base_runner.run_tests ~colors:false
+    (Overall.tests @
+     Generator.tests @
+     Shrink.tests @
+     Function.tests @
+     FindExample.tests @
+     Stats.tests)
 
 let () = QCheck_base_runner.set_seed 153870556
 let _  = QCheck_base_runner.run_tests ~colors:false [Stats.int_dist_empty_bucket]
