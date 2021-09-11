@@ -2,6 +2,8 @@
 
 (** Module representing a tree data structure, used in tests *)
 module IntTree = struct
+  open QCheck
+
   type tree = Leaf of int | Node of tree * tree
 
   let leaf x = Leaf x
@@ -15,7 +17,7 @@ module IntTree = struct
     | Leaf x -> Printf.sprintf "Leaf %d" x
     | Node (x, y) -> Printf.sprintf "Node (%s, %s)" (print_tree x) (print_tree y)
 
-  let gen_tree = QCheck.Gen.(sized @@ fix
+  let gen_tree = Gen.(sized @@ fix
                         (fun self n -> match n with
                            | 0 -> map leaf nat
                            | n ->
@@ -24,15 +26,21 @@ module IntTree = struct
                                 2, map2 node (self (n/2)) (self (n/2))]
                         ))
 
+  let rec shrink_tree t = match t with
+    | Leaf l -> Iter.map (fun l' -> Leaf l') (Shrink.int l)
+    | Node (x,y) ->
+      let open Iter in
+      of_list [x;y]
+      <+> map (fun x' -> Node (x',y)) (shrink_tree x)
+      <+> map (fun y' -> Node (x,y')) (shrink_tree y)
+
   let rec rev_tree = function
     | Node (x, y) -> Node (rev_tree y, rev_tree x)
     | Leaf x -> Leaf x
 
-  let passing_tree_rev =
-    QCheck.Test.make ~count:1000
-      ~name:"tree_rev_is_involutive"
-      QCheck.(make gen_tree)
-      (fun tree -> rev_tree (rev_tree tree) = tree)
+  let rec contains_only_n tree n = match tree with
+    | Leaf n' -> n = n'
+    | Node (x, y) -> contains_only_n x n && contains_only_n y n
 end
 
 (* tests of overall functionality *)
@@ -147,9 +155,8 @@ module Generator = struct
       (make ~print:Print.(pair int (array unit)) gen) (fun (i,l) -> Array.length l = i)
 
   let passing_tree_rev =
-    QCheck.Test.make ~count:1000
-      ~name:"tree_rev_is_involutive"
-      QCheck.(make IntTree.gen_tree)
+    Test.make ~name:"tree_rev_is_involutive" ~count:1000
+      (make IntTree.gen_tree)
       (fun tree -> IntTree.(rev_tree (rev_tree tree)) = tree)
 end
 
@@ -320,6 +327,11 @@ module Shrink = struct
       (list small_int)
       (fun xs -> let ys = List.sort_uniq Int.compare xs in
                  List.length xs = List.length ys)
+
+  let tree_contains_only_42 =
+    Test.make ~name:"tree contains only 42"
+      IntTree.(make ~print:print_tree ~shrink:shrink_tree gen_tree)
+      (fun tree -> IntTree.contains_only_n tree 42)
 end
 
 (* tests function generator and shrinker *)
@@ -560,7 +572,7 @@ let _ =
     Shrink.list_shorter_4332;
     Shrink.list_equal_dupl;
     Shrink.list_unique_elems;
-    (*Shrink.tree_contains_only_42;*)
+    Shrink.tree_contains_only_42;
     Function.fail_pred_map_commute;
     Function.fail_pred_strings;
     Function.prop_foldleft_foldright;

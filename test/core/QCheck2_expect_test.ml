@@ -152,8 +152,7 @@ module Generator = struct
       (fun (i,l) -> Array.length l = i)
 
   let passing_tree_rev =
-    Test.make ~count:1000
-      ~name:"tree_rev_is_involutive"
+    Test.make ~name:"tree_rev_is_involutive" ~count:1000
       IntTree.gen_tree
       (fun tree -> IntTree.(rev_tree (rev_tree tree)) = tree)
 end
