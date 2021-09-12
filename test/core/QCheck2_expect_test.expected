@@ -12,7 +12,7 @@ Test should_error_raise_exn errored on (1 shrink steps):
 
 0
 
-exception Dune__exe__QCheck2_expect_test.Overall.Error
+exception QCheck2_tests.Overall.Error
 
 
 +++ Collect ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

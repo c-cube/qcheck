@@ -1,7 +1,22 @@
+(library
+  (name QCheck_tests)
+  (modules QCheck_tests)
+  (libraries qcheck-core))
+
+(library
+  (name QCheck2_tests)
+  (modules QCheck2_tests)
+  (libraries qcheck-core))
+
 (tests
-  (names QCheck_expect_test QCheck2_expect_test)
-  (modules QCheck_expect_test QCheck2_expect_test)
-  (libraries qcheck-core qcheck-core.runner))
+  (names QCheck_expect_test)
+  (modules QCheck_expect_test)
+  (libraries qcheck-core qcheck-core.runner QCheck_tests))
+
+(tests
+  (names QCheck2_expect_test)
+  (modules QCheck2_expect_test)
+  (libraries qcheck-core qcheck-core.runner QCheck2_tests))
 
 (tests
   (names QCheck_unit_tests QCheck2_unit_tests)
