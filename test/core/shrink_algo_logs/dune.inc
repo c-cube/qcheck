@@ -1,6 +1,8 @@
 
 (tests
   (names
+    bind_list_size_const_qcheck
+    bind_list_size_const_qcheck2
     char_never_abcdef_qcheck
     char_never_abcdef_qcheck2
     fun_first_foldleftright_qcheck
@@ -23,13 +25,31 @@
     list_unique_elems_qcheck2
     nat_smaller_5001_qcheck
     nat_smaller_5001_qcheck2
+    pair_lists_no_overlap_qcheck
+    pair_lists_no_overlap_qcheck2
+    pair_lists_rev_concat_qcheck
+    pair_lists_rev_concat_qcheck2
+    pair_same_components_qcheck
+    pair_same_components_qcheck2
+    pair_sum_lt_128_qcheck
+    pair_sum_lt_128_qcheck2
+    pair_zero_component_qcheck
+    pair_zero_component_qcheck2
+    quad_same_components_qcheck
+    quad_same_components_qcheck2
     string_empty_qcheck
     string_empty_qcheck2
     string_never_has_000_char_qcheck
     string_never_has_000_char_qcheck2
+    tree_contains_only_42_qcheck
+    tree_contains_only_42_qcheck2
+    triple_same_components_qcheck
+    triple_same_components_qcheck2
   )
   (modules
     log
+    bind_list_size_const_qcheck
+    bind_list_size_const_qcheck2
     char_never_abcdef_qcheck
     char_never_abcdef_qcheck2
     fun_first_foldleftright_qcheck
@@ -52,10 +72,26 @@
     list_unique_elems_qcheck2
     nat_smaller_5001_qcheck
     nat_smaller_5001_qcheck2
+    pair_lists_no_overlap_qcheck
+    pair_lists_no_overlap_qcheck2
+    pair_lists_rev_concat_qcheck
+    pair_lists_rev_concat_qcheck2
+    pair_same_components_qcheck
+    pair_same_components_qcheck2
+    pair_sum_lt_128_qcheck
+    pair_sum_lt_128_qcheck2
+    pair_zero_component_qcheck
+    pair_zero_component_qcheck2
+    quad_same_components_qcheck
+    quad_same_components_qcheck2
     string_empty_qcheck
     string_empty_qcheck2
     string_never_has_000_char_qcheck
     string_never_has_000_char_qcheck2
+    tree_contains_only_42_qcheck
+    tree_contains_only_42_qcheck2
+    triple_same_components_qcheck
+    triple_same_components_qcheck2
   )
   (libraries qcheck)
 )
