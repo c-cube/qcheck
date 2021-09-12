@@ -1,0 +1,12 @@
+fails Node (Node (Node (Leaf 128, Leaf 0), Node (Leaf 18, Leaf 1)), Node (Node (Leaf 6, Leaf 838), Node (Leaf 73, Leaf 794)))
+fails Node (Node (Leaf 128, Leaf 0), Node (Leaf 18, Leaf 1))
+fails Node (Leaf 128, Leaf 0)
+fails Leaf 128
+fails Leaf 64
+fails Leaf 32
+fails Leaf 16
+fails Leaf 8
+fails Leaf 4
+fails Leaf 2
+fails Leaf 1
+fails Leaf 0
