@@ -420,6 +420,14 @@ Test bind ordered pairs failed (1 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
+Test bind ordered pairs - gen bug failed:
+
+ERROR: uncaught exception in generator for test bind ordered pairs - gen bug after 100 steps:
+Exception: Invalid_argument("Gen.int_bound")
+Backtrace: 
+
+--- Failure --------------------------------------------------------------------
+
 Test bind list_size constant failed (12 shrink steps):
 
 (4, [0; 0; 0; 0])
@@ -1228,7 +1236,7 @@ stats dist:
    4150517416584649600.. 4611686018427387903: #################                                               189
 ================================================================================
 1 warning(s)
-failure (55 tests failed, 1 tests errored, ran 112 tests)
+failure (56 tests failed, 1 tests errored, ran 113 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++

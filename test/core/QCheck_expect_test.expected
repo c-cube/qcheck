@@ -349,9 +349,17 @@ Test quadruples are ordered reversely failed (251 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test bind ordered pairs failed (123 shrink steps):
+Test bind ordered pairs failed (125 shrink steps):
 
 (0, 0)
+
+--- Failure --------------------------------------------------------------------
+
+Test bind ordered pairs - gen bug failed:
+
+ERROR: uncaught exception in generator for test bind ordered pairs - gen bug after 100 steps:
+Exception: Invalid_argument("Gen.int_bound")
+Backtrace: 
 
 --- Failure --------------------------------------------------------------------
 
@@ -1189,7 +1197,7 @@ stats dist:
    4150517416584649600.. 4611686018427387903: #################                                               189
 ================================================================================
 1 warning(s)
-failure (55 tests failed, 1 tests errored, ran 119 tests)
+failure (56 tests failed, 1 tests errored, ran 120 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
