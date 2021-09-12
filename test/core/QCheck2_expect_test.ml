@@ -140,7 +140,8 @@ module Generator = struct
 
   let bind_pair_list_length =
     Test.make ~name:"bind list length" ~count:1000 ~print:Print.(pair int (list int))
-      Gen.(int_bound 10_000 >>= fun len -> list_size (return len) int >>= fun xs -> return (len,xs))
+      Gen.(int_bound 1000 >>= fun len ->
+           list_size (return len) (int_bound 10) >>= fun xs -> return (len,xs))
       (fun (len,xs) -> len = List.length xs)
 
   let list_test =
@@ -264,15 +265,25 @@ module Shrink = struct
 
   let pair_ordered =
     Test.make ~name:"pairs are ordered" ~print:Print.(pair int int)
-      Gen.(pair int int) (fun (i,j) -> i<=j)
+      Gen.(pair (pint ~origin:0) (pint ~origin:0)) (fun (i,j) -> i<=j)
 
   let pair_ordered_rev =
     Test.make ~name:"pairs are ordered reversely" ~print:Print.(pair int int)
-      Gen.(pair int int) (fun (i,j) -> i>=j)
+      Gen.(pair (pint ~origin:0) (pint ~origin:0)) (fun (i,j) -> i>=j)
 
   let pair_sum_lt_128 =
     Test.make ~name:"pairs sum to less than 128" ~print:Print.(pair int int)
-      Gen.(pair int int) (fun (i,j) -> i+j<128)
+      Gen.(pair (pint ~origin:0) (pint ~origin:0)) (fun (i,j) -> i+j<128)
+
+  let pair_lists_rev_concat =
+    Test.make ~name:"pairs lists rev concat" ~print:Print.(pair (list int) (list int))
+      Gen.(pair (list (pint ~origin:0)) (list (pint ~origin:0)))
+      (fun (xs,ys) -> List.rev (xs@ys) = (List.rev xs)@(List.rev ys))
+
+  let pair_lists_no_overlap =
+    Test.make ~name:"pairs lists no overlap" ~print:Print.(pair (list int) (list int))
+      Gen.(pair (list small_nat) (list small_nat))
+      (fun (xs,ys) -> List.for_all (fun x -> not (List.mem x ys)) xs)
 
   let triple_diff =
     Test.make ~name:"triples have pair-wise different components" ~print:Print.(triple int int int)
@@ -313,8 +324,8 @@ module Shrink = struct
 
   let bind_pair_list_size =
     Test.make ~name:"bind list_size constant" ~print:Print.(pair int (list int))
-      Gen.(int_bound 10_000 >>= fun len ->
-           list_size (return len) int >>= fun xs -> return (len,xs))
+      Gen.(int_bound 1000 >>= fun len ->
+           list_size (return len) (int_bound 1000) >>= fun xs -> return (len,xs))
       (fun (len,xs) -> let len' = List.length xs in len=len' && len' < 4)
 
   (* tests from issue #64 *)
@@ -377,6 +388,8 @@ module Shrink = struct
     pair_ordered;
     pair_ordered_rev;
     pair_sum_lt_128;
+    pair_lists_rev_concat;
+    pair_lists_no_overlap;
     triple_diff;
     triple_same;
     triple_ordered;

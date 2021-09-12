@@ -166,21 +166,33 @@ Test pairs are (0,0) failed (125 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test pairs are ordered failed (125 shrink steps):
+Test pairs are ordered failed (827 shrink steps):
 
-(0, -1)
+(1, 0)
 
 --- Failure --------------------------------------------------------------------
 
-Test pairs are ordered reversely failed (125 shrink steps):
+Test pairs are ordered reversely failed (124 shrink steps):
 
 (0, 1)
 
 --- Failure --------------------------------------------------------------------
 
-Test pairs sum to less than 128 failed (121 shrink steps):
+Test pairs sum to less than 128 failed (116 shrink steps):
 
 (0, 128)
+
+--- Failure --------------------------------------------------------------------
+
+Test pairs lists rev concat failed (140 shrink steps):
+
+([0], [1])
+
+--- Failure --------------------------------------------------------------------
+
+Test pairs lists no overlap failed (22 shrink steps):
+
+([0], [0])
 
 --- Failure --------------------------------------------------------------------
 
@@ -238,7 +250,7 @@ Test bind ordered pairs failed (123 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test bind list_size constant failed (261 shrink steps):
+Test bind list_size constant failed (50 shrink steps):
 
 (4, [0; 0; 0; 0])
 
@@ -998,7 +1010,7 @@ stats depth:
   15:                                                                   4
 ================================================================================
 1 warning(s)
-failure (44 tests failed, 1 tests errored, ran 93 tests)
+failure (46 tests failed, 1 tests errored, ran 95 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
