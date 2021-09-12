@@ -319,8 +319,13 @@ module Shrink = struct
 
   let bind_pair_ordered =
     Test.make ~name:"bind ordered pairs" ~print:Print.(pair int int)
-      Gen.(int >>= fun j -> int_bound j >>= fun i -> return (i,j))
+      Gen.(pint ~origin:0 >>= fun j -> int_bound j >>= fun i -> return (i,j))
       (fun (_i,_j) -> false)
+
+  let bind_pair_ordered_gen_bug =
+    Test.make ~name:"bind ordered pairs - gen bug" ~print:Print.(pair int int)
+      Gen.(int >>= fun j -> int_bound j >>= fun i -> return (i,j)) (* i may be negative, causing int_bound to fail *)
+      (fun (_i,_j) -> true)
 
   let bind_pair_list_size =
     Test.make ~name:"bind list_size constant" ~print:Print.(pair int (list int))
@@ -399,6 +404,7 @@ module Shrink = struct
     quad_ordered;
     quad_ordered_rev;
     bind_pair_ordered;
+    bind_pair_ordered_gen_bug;
     bind_pair_list_size;
     lists_are_empty_issue_64;
     list_shorter_10;
