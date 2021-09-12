@@ -111,7 +111,7 @@ Test should_error_raise_exn errored on (63 shrink steps):
 
 0
 
-exception Dune__exe__QCheck_expect_test.Overall.Error
+exception QCheck_tests.Overall.Error
 
 
 +++ Collect ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
