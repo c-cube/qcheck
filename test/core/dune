@@ -23,3 +23,8 @@
   (modules QCheck_unit_tests QCheck2_unit_tests)
   (package qcheck-core)
   (libraries qcheck-core alcotest))
+
+(executable
+  (name shrink_benchmark)
+  (modules shrink_benchmark)
+  (libraries qcheck-core qcheck-core.runner QCheck_tests QCheck2_tests))
