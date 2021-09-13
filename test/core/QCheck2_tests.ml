@@ -319,6 +319,13 @@ module Shrink = struct
       Gen.string
       (fun s -> String.to_seq s |> Seq.fold_left (fun acc c -> acc && c <> '\255') true)
 
+  let string_unique_chars =
+    Test.make ~name:"strings have unique chars" ~count:1000 ~print:Print.string
+      Gen.string
+      (fun s ->
+         let ch_list = String.to_seq s |> List.of_seq in
+         List.length ch_list = List.length (List.sort_uniq Char.compare ch_list))
+
   (* test from issue #167 *)
   let pair_diff_issue_64 =
     Test.make ~name:"pairs have different components" ~print:Print.(pair int int)
@@ -512,6 +519,7 @@ module Shrink = struct
     strings_are_empty;
     string_never_has_000_char;
     string_never_has_255_char;
+    string_unique_chars;
     pair_diff_issue_64;
     pair_same;
     pair_one_zero;
