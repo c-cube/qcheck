@@ -80,6 +80,11 @@ module Overall = struct
          QCheck.assume (x mod 100 = 1);
          true)
 
+  let bad_gen_fail =
+    Test.make ~name:"FAIL_bad_gen"
+      Gen.(int >>= fun j -> int_bound j >>= fun i -> return (i,j))
+      (fun (_i,_j) -> true) (* i may be negative, causing int_bound to fail *)
+
   let tests = [
     passing;
     failing;
@@ -88,6 +93,7 @@ module Overall = struct
     stats;
     bad_assume_warn;
     bad_assume_fail;
+    bad_gen_fail;
   ]
 end
 
@@ -322,11 +328,6 @@ module Shrink = struct
       Gen.(pint ~origin:0 >>= fun j -> int_bound j >>= fun i -> return (i,j))
       (fun (_i,_j) -> false)
 
-  let bind_pair_ordered_gen_bug =
-    Test.make ~name:"bind ordered pairs - gen bug" ~print:Print.(pair int int)
-      Gen.(int >>= fun j -> int_bound j >>= fun i -> return (i,j)) (* i may be negative, causing int_bound to fail *)
-      (fun (_i,_j) -> true)
-
   let bind_pair_list_size =
     Test.make ~name:"bind list_size constant" ~print:Print.(pair int (list int))
       Gen.(int_bound 1000 >>= fun len ->
@@ -404,7 +405,6 @@ module Shrink = struct
     quad_ordered;
     quad_ordered_rev;
     bind_pair_ordered;
-    bind_pair_ordered_gen_bug;
     bind_pair_list_size;
     lists_are_empty_issue_64;
     list_shorter_10;

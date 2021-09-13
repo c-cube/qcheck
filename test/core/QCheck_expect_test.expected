@@ -76,6 +76,14 @@ NOTE: it is likely that the precondition is too strong, or that the generator is
 
 --- Failure --------------------------------------------------------------------
 
+Test FAIL_bad_gen failed:
+
+ERROR: uncaught exception in generator for test FAIL_bad_gen after 100 steps:
+Exception: Invalid_argument("Gen.int_bound")
+Backtrace: 
+
+--- Failure --------------------------------------------------------------------
+
 Test char never produces '\255' failed (0 shrink steps):
 
 '\255'
@@ -247,14 +255,6 @@ Test quadruples are ordered reversely failed (251 shrink steps):
 Test bind ordered pairs failed (125 shrink steps):
 
 (0, 0)
-
---- Failure --------------------------------------------------------------------
-
-Test bind ordered pairs - gen bug failed:
-
-ERROR: uncaught exception in generator for test bind ordered pairs - gen bug after 100 steps:
-Exception: Invalid_argument("Gen.int_bound")
-Backtrace: 
 
 --- Failure --------------------------------------------------------------------
 
