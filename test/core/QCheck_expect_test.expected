@@ -150,6 +150,12 @@ Test string never has a \255 char failed (249 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
+Test strings have unique chars failed (248 shrink steps):
+
+"\206\206"
+
+--- Failure --------------------------------------------------------------------
+
 Test pairs have different components failed (0 shrink steps):
 
 (4, 4)
@@ -1018,7 +1024,7 @@ stats depth:
   15:                                                                   4
 ================================================================================
 1 warning(s)
-failure (47 tests failed, 1 tests errored, ran 96 tests)
+failure (48 tests failed, 1 tests errored, ran 97 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
