@@ -129,8 +129,24 @@ module Tuple = struct
     | [ a ] -> Elem a
     | l ->
         let n = List.length l / 2 in
-        let l1 = List.filteri (fun i _ -> i < n) l in
-        let l2 = List.filteri (fun i _ -> i >= n) l in
+        let i = ref 0 in
+        let l1 =
+          List.filter
+            (fun _ ->
+              let x = !i in
+              i := x + 1;
+              x < n)
+            l
+        in
+        i := 0;
+        let l2 =
+          List.filter
+            (fun _ ->
+              let x = !i in
+              i := x + 1;
+              x >= n)
+            l
+        in
         Pair (from_list l1, from_list l2)
 
   let rec to_list = function
