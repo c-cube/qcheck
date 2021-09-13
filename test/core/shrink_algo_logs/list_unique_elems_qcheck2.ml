@@ -6,5 +6,6 @@ let list_unique_elems =
     (Log.shrinks Print.(list int) @@
      fun xs -> let ys = List.sort_uniq Int.compare xs in
                List.length xs = List.length ys)
-;;
-try Test.check_exn list_unique_elems with Test.Test_fail _ -> ()
+
+let rand = Random.State.make [|1234|];;
+try Test.check_exn ~rand list_unique_elems with Test.Test_fail _ -> ()

@@ -32,5 +32,6 @@ let tree_contains_only_42 =
   Test.make ~name:"tree contains only 42"
     IntTree.gen_tree
     (Log.shrinks IntTree.print_tree @@ fun tree -> IntTree.contains_only_n tree 42)
-;;
-try Test.check_exn tree_contains_only_42 with Test.Test_fail _ -> ()
+
+let rand = Random.State.make [|1234|];;
+try Test.check_exn ~rand tree_contains_only_42 with Test.Test_fail _ -> ()

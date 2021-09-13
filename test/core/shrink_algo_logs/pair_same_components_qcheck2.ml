@@ -5,5 +5,6 @@ let pair_same =
     Gen.(pair int int)
     (Log.shrinks Print.(pair int int) @@
       fun (i,j) -> i=j)
-;;
-try Test.check_exn pair_same with Test.Test_fail _ -> ()
+
+let rand = Random.State.make [|1234|];;
+try Test.check_exn ~rand pair_same with Test.Test_fail _ -> ()

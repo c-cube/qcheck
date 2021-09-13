@@ -4,5 +4,6 @@ let quad_same =
   Test.make ~name:"quadruples have same components"
     (quad int int int int)
     (Log.shrinks Print.(quad int int int int) @@ fun (h,i,j,k) -> h=i || i=j || j=k)
-;;
-try Test.check_exn quad_same with Test.Test_fail _ -> ()
+
+let rand = Random.State.make [|1234|];;
+try Test.check_exn ~rand quad_same with Test.Test_fail _ -> ()
