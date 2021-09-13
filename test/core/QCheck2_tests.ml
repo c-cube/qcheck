@@ -85,6 +85,13 @@ module Overall = struct
       Gen.(int >>= fun j -> int_bound j >>= fun i -> return (i,j))
       (fun (_i,_j) -> true) (* i may be negative, causing int_bound to fail *)
 
+  let bad_shrinker_fail =
+    Test.make ~name:"FAIL_bad_shrinker"
+      (Gen.make_primitive
+        ~shrink:(fun _i -> raise Error)
+        ~gen:(fun rs -> Random.State.int rs))
+      (fun _i -> false)
+
   let tests = [
     passing;
     failing;
@@ -94,6 +101,7 @@ module Overall = struct
     bad_assume_warn;
     bad_assume_fail;
     bad_gen_fail;
+    (*bad_shrinker_fail;*)
   ]
 end
 
