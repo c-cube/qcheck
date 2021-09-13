@@ -99,6 +99,13 @@ module Overall = struct
       (make Gen.(int >>= fun j -> int_bound j >>= fun i -> return (i,j)))
       (fun (_i,_j) -> true) (* i may be negative, causing int_bound to fail *)
 
+  let bad_shrinker_fail =
+    Test.make ~name:"FAIL_bad_shrinker"
+      (make
+        ~shrink:(fun _i -> raise Error)
+         Gen.int)
+      (fun _i -> false)
+
   let tests = [
     passing;
     failing;
@@ -109,6 +116,7 @@ module Overall = struct
     bad_assume_warn;
     bad_assume_fail;
     bad_gen_fail;
+    (*bad_shrinker_fail;*)
   ]
 end
 
@@ -702,7 +710,7 @@ module Function = struct
 
   (* test from issue #64 *)
   let fold_left_test =
-    Test.make ~name:"false fold, fun first"
+    Test.make ~name:"fold_left test, fun first"
       (quad  (* string -> int -> string *)
          (fun2 Observable.string Observable.int small_string)
          small_string

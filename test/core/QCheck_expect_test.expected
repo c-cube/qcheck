@@ -502,7 +502,7 @@ Test fold_left fold_right uncurried fun last failed (26 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test false fold, fun first failed (40 shrink steps):
+Test fold_left test, fun first failed (40 shrink steps):
 
 ({_ -> ""}, "z", [], [0])
 
