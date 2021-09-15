@@ -600,6 +600,27 @@ module Gen = struct
   let quad (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) (g4 : 'd t) : ('a * 'b * 'c * 'd) t =
     (fun a b c d -> (a, b, c, d)) <$> g1 <*> g2 <*> g3 <*> g4
 
+  let tup2 = pair
+
+  let tup3 = triple
+
+  let tup4 = quad
+
+  let tup5 (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) (g4 : 'd t) (g5 : 'e t) : ('a * 'b * 'c * 'd * 'e) t =
+    (fun a b c d e -> (a, b, c, d, e)) <$> g1 <*> g2 <*> g3 <*> g4 <*> g5
+
+  let tup6 (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) (g4 : 'd t) (g5 : 'e t) (g6 : 'f t) : ('a * 'b * 'c * 'd * 'e * 'f) t =
+    (fun a b c d e f -> (a, b, c, d, e, f)) <$> g1 <*> g2 <*> g3 <*> g4 <*> g5 <*> g6
+
+  let tup7 (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) (g4 : 'd t) (g5 : 'e t) (g6 : 'f t) (g7 : 'g t) : ('a * 'b * 'c * 'd * 'e * 'f * 'g) t =
+    (fun a b c d e f g -> (a, b, c, d, e, f, g)) <$> g1 <*> g2 <*> g3 <*> g4 <*> g5 <*> g6 <*> g7
+
+  let tup8 (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) (g4 : 'd t) (g5 : 'e t) (g6 : 'f t) (g7 : 'g t) (g8 : 'h t) : ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h) t =
+    (fun a b c d e f g h -> (a, b, c, d, e, f, g, h)) <$> g1 <*> g2 <*> g3 <*> g4 <*> g5 <*> g6 <*> g7 <*> g8
+
+  let tup9 (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) (g4 : 'd t) (g5 : 'e t) (g6 : 'f t) (g7 : 'g t) (g8 : 'h t) (g9 : 'i t) : ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h * 'i) t =
+    (fun a b c d e f g h i -> (a, b, c, d, e, f, g, h, i)) <$> g1 <*> g2 <*> g3 <*> g4 <*> g5 <*> g6 <*> g7 <*> g8 <*> g9
+
   (** Don't reuse {!int_range} which is much less performant (many more checks because of the possible range and origins). As a [string] generator may call this hundreds or even thousands of times for a single value, it's worth optimizing. *)
   let char : char t = fun st ->
     let c = RS.int st 256 in
@@ -768,6 +789,121 @@ module Print = struct
   let contramap f p x = p (f x)
 
   let comap = contramap
+
+  let default = fun _ -> "<no printer>"
+
+  let tup2 p_a p_b (a, b) =
+    Printf.sprintf "(%s, %s)" (p_a a) (p_b b)
+
+  let tup2_opt p_a p_b (a, b) =
+    let p_a = Option.value ~default p_a in
+    let p_b = Option.value ~default p_b in
+    tup2 p_a p_b (a, b)
+
+  let tup3 p_a p_b (p_c) (a, b, c) =
+    Printf.sprintf "(%s, %s, %s)" (p_a a) (p_b b) (p_c c)
+
+  let tup3_opt p_a p_b p_c (a, b, c) =
+    let p_a = Option.value ~default p_a in
+    let p_b = Option.value ~default p_b in
+    let p_c = Option.value ~default p_c in
+    tup3 p_a p_b p_c (a, b, c)
+
+  let tup4 p_a p_b p_c p_d (a, b, c, d) =
+    Printf.sprintf "(%s, %s, %s, %s)"
+      (p_a a) (p_b b)
+      (p_c c) (p_d d)
+
+  let tup4_opt p_a p_b p_c p_d (a, b, c, d) =
+    let p_a = Option.value ~default p_a in
+    let p_b = Option.value ~default p_b in
+    let p_c = Option.value ~default p_c in
+    let p_d = Option.value ~default p_d in
+    tup4 p_a p_b p_c p_d (a, b, c, d)
+
+  let tup5 p_a p_b p_c p_d p_e (a, b, c, d, e) =
+    Printf.sprintf "(%s, %s, %s, %s, %s)"
+      (p_a a) (p_b b)
+      (p_c c) (p_d d)
+      (p_e e)
+
+  let tup5_opt p_a p_b p_c p_d p_e (a, b, c, d, e) =
+    let p_a = Option.value ~default p_a in
+    let p_b = Option.value ~default p_b in
+    let p_c = Option.value ~default p_c in
+    let p_d = Option.value ~default p_d in
+    let p_e = Option.value ~default p_e in
+    tup5 p_a p_b p_c p_d p_e (a, b, c, d, e)
+
+  let tup6 p_a p_b p_c p_d p_e p_f (a, b, c, d, e, f) =
+    Printf.sprintf "(%s, %s, %s, %s, %s, %s)"
+      (p_a a) (p_b b)
+      (p_c c) (p_d d)
+      (p_e e) (p_f f)
+
+  let tup6_opt p_a p_b p_c p_d p_e p_f (a, b, c, d, e, f) =
+    let p_a = Option.value ~default p_a in
+    let p_b = Option.value ~default p_b in
+    let p_c = Option.value ~default p_c in
+    let p_d = Option.value ~default p_d in
+    let p_e = Option.value ~default p_e in
+    let p_f = Option.value ~default p_f in
+    tup6 p_a p_b p_c p_d p_e p_f (a, b, c, d, e, f)
+
+  let tup7 p_a p_b p_c p_d p_e p_f p_g (a, b, c, d, e, f, g) =
+    Printf.sprintf "(%s, %s, %s, %s, %s, %s, %s)"
+      (p_a a) (p_b b)
+      (p_c c) (p_d d)
+      (p_e e) (p_f f)
+      (p_g g)
+
+  let tup7_opt p_a p_b p_c p_d p_e p_f p_g (a, b, c, d, e, f, g) =
+    let p_a = Option.value ~default p_a in
+    let p_b = Option.value ~default p_b in
+    let p_c = Option.value ~default p_c in
+    let p_d = Option.value ~default p_d in
+    let p_e = Option.value ~default p_e in
+    let p_f = Option.value ~default p_f in
+    let p_g = Option.value ~default p_g in
+    tup7 p_a p_b p_c p_d p_e p_f p_g (a, b, c, d, e, f, g)
+
+  let tup8 p_a p_b p_c p_d p_e p_f p_g p_h (a, b, c, d, e, f, g, h) =
+    Printf.sprintf "(%s, %s, %s, %s, %s, %s, %s, %s)"
+      (p_a a) (p_b b)
+      (p_c c) (p_d d)
+      (p_e e) (p_f f)
+      (p_g g) (p_h h)
+
+  let tup8_opt p_a p_b p_c p_d p_e p_f p_g p_h (a, b, c, d, e, f, g, h) =
+    let p_a = Option.value ~default p_a in
+    let p_b = Option.value ~default p_b in
+    let p_c = Option.value ~default p_c in
+    let p_d = Option.value ~default p_d in
+    let p_e = Option.value ~default p_e in
+    let p_f = Option.value ~default p_f in
+    let p_g = Option.value ~default p_g in
+    let p_h = Option.value ~default p_h in
+    tup8 p_a p_b p_c p_d p_e p_f p_g p_h (a, b, c, d, e, f, g, h)
+
+  let tup9 p_a p_b p_c p_d p_e p_f p_g p_h p_i (a, b, c, d, e, f, g, h, i) =
+    Printf.sprintf "(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+      (p_a a) (p_b b)
+      (p_c c) (p_d d)
+      (p_e e) (p_f f)
+      (p_g g) (p_h h)
+      (p_i i)
+
+  let tup9_opt p_a p_b p_c p_d p_e p_f p_g p_h p_i (a, b, c, d, e, f, g, h, i) =
+    let p_a = Option.value ~default p_a in
+    let p_b = Option.value ~default p_b in
+    let p_c = Option.value ~default p_c in
+    let p_d = Option.value ~default p_d in
+    let p_e = Option.value ~default p_e in
+    let p_f = Option.value ~default p_f in
+    let p_g = Option.value ~default p_g in
+    let p_h = Option.value ~default p_h in
+    let p_i = Option.value ~default p_i in
+    tup9 p_a p_b p_c p_d p_e p_f p_g p_h p_i (a, b, c, d, e, f, g, h, i)
 end
 
 (** {2 Observe Values} *)

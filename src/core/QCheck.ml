@@ -42,6 +42,28 @@ let _opt_map_4 ~f a b c d = match a, b, c, d with
   | Some x, Some y, Some z, Some w -> Some (f x y z w)
   | _ -> None
 
+let _opt_map_5 ~f a b c d e = match a, b, c, d, e with
+  | Some x, Some y, Some z, Some u, Some v -> Some (f x y z u v)
+  | _ -> None
+
+let _opt_map_6 ~f a b c d e g = match a, b, c, d, e, g with
+  | Some a, Some b, Some c, Some d, Some e, Some g -> Some (f a b c d e g)
+  | _ -> None
+
+let _opt_map_7 ~f a b c d e g h = match a, b, c, d, e, g, h with
+  | Some a, Some b, Some c, Some d, Some e, Some g, Some h -> Some (f a b c d e g h)
+  | _ -> None
+
+let _opt_map_8 ~f a b c d e g h i = match a, b, c, d, e, g, h, i with
+  | Some a, Some b, Some c, Some d, Some e, Some g, Some h, Some i ->
+    Some (f a b c d e g h i)
+  | _ -> None
+
+let _opt_map_9 ~f a b c d e g h i j = match a, b, c, d, e, g, h, i, j with
+  | Some a, Some b, Some c, Some d, Some e, Some g, Some h, Some i, Some j ->
+    Some (f a b c d e g h i j)
+  | _ -> None
+
 let _opt_sum a b = match a, b with
   | Some _, _ -> a
   | None, _ -> b
@@ -283,6 +305,27 @@ module Gen = struct
 
   let char st = char_of_int (RS.int st 256)
 
+  let tup2 = pair
+
+  let tup3 = triple
+
+  let tup4 = quad
+
+  let tup5 (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) (g4 : 'd t) (g5 : 'e t) : ('a * 'b * 'c * 'd * 'e) t =
+    (fun a b c d e -> (a, b, c, d, e)) <$> g1 <*> g2 <*> g3 <*> g4 <*> g5
+
+  let tup6 (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) (g4 : 'd t) (g5 : 'e t) (g6 : 'f t) : ('a * 'b * 'c * 'd * 'e * 'f) t =
+    (fun a b c d e f -> (a, b, c, d, e, f)) <$> g1 <*> g2 <*> g3 <*> g4 <*> g5 <*> g6
+
+  let tup7 (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) (g4 : 'd t) (g5 : 'e t) (g6 : 'f t) (g7 : 'g t) : ('a * 'b * 'c * 'd * 'e * 'f * 'g) t =
+    (fun a b c d e f g -> (a, b, c, d, e, f, g)) <$> g1 <*> g2 <*> g3 <*> g4 <*> g5 <*> g6 <*> g7
+
+  let tup8 (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) (g4 : 'd t) (g5 : 'e t) (g6 : 'f t) (g7 : 'g t) (g8 : 'h t) : ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h) t =
+    (fun a b c d e f g h -> (a, b, c, d, e, f, g, h)) <$> g1 <*> g2 <*> g3 <*> g4 <*> g5 <*> g6 <*> g7 <*> g8
+
+  let tup9 (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) (g4 : 'd t) (g5 : 'e t) (g6 : 'f t) (g7 : 'g t) (g8 : 'h t) (g9 : 'i t) : ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h * 'i) t =
+    (fun a b c d e f g h i -> (a, b, c, d, e, f, g, h, i)) <$> g1 <*> g2 <*> g3 <*> g4 <*> g5 <*> g6 <*> g7 <*> g8 <*> g9
+
   let printable_chars =
     let l = 126-32+1 in
     let s = Bytes.create l in
@@ -403,6 +446,121 @@ module Print = struct
   let triple a b c (x,y,z) = Printf.sprintf "(%s, %s, %s)" (a x) (b y) (c z)
   let quad a b c d (x,y,z,w) =
     Printf.sprintf "(%s, %s, %s, %s)" (a x) (b y) (c z) (d w)
+
+  let default = fun _ -> "<no printer>"
+
+  let tup2 p_a p_b (a, b) =
+    Printf.sprintf "(%s, %s)" (p_a a) (p_b b)
+
+  let tup2_opt p_a p_b (a, b) =
+    let p_a = Option.value ~default p_a in
+    let p_b = Option.value ~default p_b in
+    tup2 p_a p_b (a, b)
+
+  let tup3 p_a p_b (p_c) (a, b, c) =
+    Printf.sprintf "(%s, %s, %s)" (p_a a) (p_b b) (p_c c)
+
+  let tup3_opt p_a p_b p_c (a, b, c) =
+    let p_a = Option.value ~default p_a in
+    let p_b = Option.value ~default p_b in
+    let p_c = Option.value ~default p_c in
+    tup3 p_a p_b p_c (a, b, c)
+
+  let tup4 p_a p_b p_c p_d (a, b, c, d) =
+    Printf.sprintf "(%s, %s, %s, %s)"
+      (p_a a) (p_b b)
+      (p_c c) (p_d d)
+
+  let tup4_opt p_a p_b p_c p_d (a, b, c, d) =
+    let p_a = Option.value ~default p_a in
+    let p_b = Option.value ~default p_b in
+    let p_c = Option.value ~default p_c in
+    let p_d = Option.value ~default p_d in
+    tup4 p_a p_b p_c p_d (a, b, c, d)
+
+  let tup5 p_a p_b p_c p_d p_e (a, b, c, d, e) =
+    Printf.sprintf "(%s, %s, %s, %s, %s)"
+      (p_a a) (p_b b)
+      (p_c c) (p_d d)
+      (p_e e)
+
+  let tup5_opt p_a p_b p_c p_d p_e (a, b, c, d, e) =
+    let p_a = Option.value ~default p_a in
+    let p_b = Option.value ~default p_b in
+    let p_c = Option.value ~default p_c in
+    let p_d = Option.value ~default p_d in
+    let p_e = Option.value ~default p_e in
+    tup5 p_a p_b p_c p_d p_e (a, b, c, d, e)
+
+  let tup6 p_a p_b p_c p_d p_e p_f (a, b, c, d, e, f) =
+    Printf.sprintf "(%s, %s, %s, %s, %s, %s)"
+      (p_a a) (p_b b)
+      (p_c c) (p_d d)
+      (p_e e) (p_f f)
+
+  let tup6_opt p_a p_b p_c p_d p_e p_f (a, b, c, d, e, f) =
+    let p_a = Option.value ~default p_a in
+    let p_b = Option.value ~default p_b in
+    let p_c = Option.value ~default p_c in
+    let p_d = Option.value ~default p_d in
+    let p_e = Option.value ~default p_e in
+    let p_f = Option.value ~default p_f in
+    tup6 p_a p_b p_c p_d p_e p_f (a, b, c, d, e, f)
+
+  let tup7 p_a p_b p_c p_d p_e p_f p_g (a, b, c, d, e, f, g) =
+    Printf.sprintf "(%s, %s, %s, %s, %s, %s, %s)"
+      (p_a a) (p_b b)
+      (p_c c) (p_d d)
+      (p_e e) (p_f f)
+      (p_g g)
+
+  let tup7_opt p_a p_b p_c p_d p_e p_f p_g (a, b, c, d, e, f, g) =
+    let p_a = Option.value ~default p_a in
+    let p_b = Option.value ~default p_b in
+    let p_c = Option.value ~default p_c in
+    let p_d = Option.value ~default p_d in
+    let p_e = Option.value ~default p_e in
+    let p_f = Option.value ~default p_f in
+    let p_g = Option.value ~default p_g in
+    tup7 p_a p_b p_c p_d p_e p_f p_g (a, b, c, d, e, f, g)
+
+  let tup8 p_a p_b p_c p_d p_e p_f p_g p_h (a, b, c, d, e, f, g, h) =
+    Printf.sprintf "(%s, %s, %s, %s, %s, %s, %s, %s)"
+      (p_a a) (p_b b)
+      (p_c c) (p_d d)
+      (p_e e) (p_f f)
+      (p_g g) (p_h h)
+
+  let tup8_opt p_a p_b p_c p_d p_e p_f p_g p_h (a, b, c, d, e, f, g, h) =
+    let p_a = Option.value ~default p_a in
+    let p_b = Option.value ~default p_b in
+    let p_c = Option.value ~default p_c in
+    let p_d = Option.value ~default p_d in
+    let p_e = Option.value ~default p_e in
+    let p_f = Option.value ~default p_f in
+    let p_g = Option.value ~default p_g in
+    let p_h = Option.value ~default p_h in
+    tup8 p_a p_b p_c p_d p_e p_f p_g p_h (a, b, c, d, e, f, g, h)
+
+  let tup9 p_a p_b p_c p_d p_e p_f p_g p_h p_i (a, b, c, d, e, f, g, h, i) =
+    Printf.sprintf "(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+      (p_a a) (p_b b)
+      (p_c c) (p_d d)
+      (p_e e) (p_f f)
+      (p_g g) (p_h h)
+      (p_i i)
+
+  let tup9_opt p_a p_b p_c p_d p_e p_f p_g p_h p_i (a, b, c, d, e, f, g, h, i) =
+    let p_a = Option.value ~default p_a in
+    let p_b = Option.value ~default p_b in
+    let p_c = Option.value ~default p_c in
+    let p_d = Option.value ~default p_d in
+    let p_e = Option.value ~default p_e in
+    let p_f = Option.value ~default p_f in
+    let p_g = Option.value ~default p_g in
+    let p_h = Option.value ~default p_h in
+    let p_i = Option.value ~default p_i in
+    tup9 p_a p_b p_c p_d p_e p_f p_g p_h p_i (a, b, c, d, e, f, g, h, i)
 
   let list pp l =
     let b = Buffer.create 25 in
@@ -613,6 +771,127 @@ module Shrink = struct
     b y (fun y' -> yield (x,y',z,w));
     c z (fun z' -> yield (x,y,z',w));
     d w (fun w' -> yield (x,y,z,w'))
+
+  let default = nil
+
+  let tup2 = pair
+
+  let tup2_opt a b =
+    let a = Option.value ~default a in
+    let b = Option.value ~default b in
+    tup2 a b
+
+  let tup3 = triple
+
+  let tup3_opt a b c =
+    let a = Option.value ~default a in
+    let b = Option.value ~default b in
+    let c = Option.value ~default c in
+    tup3 a b c
+
+  let tup4 = quad
+
+  let tup4_opt a b c d =
+    let a = Option.value ~default a in
+    let b = Option.value ~default b in
+    let c = Option.value ~default c in
+    let d = Option.value ~default d in
+    tup4 a b c d
+
+  let tup5 a b c d e (a', b', c', d', e') yield =
+    a a' (fun x -> yield (x,b',c',d',e'));
+    b b' (fun x -> yield (a',x,c',d',e'));
+    c c' (fun x -> yield (a',b',x,d',e'));
+    d d' (fun x -> yield (a',b',c',x,e'));
+    e e' (fun x -> yield (a',b',c',d',x))
+
+  let tup5_opt a b c d e =
+    let a = Option.value ~default a in
+    let b = Option.value ~default b in
+    let c = Option.value ~default c in
+    let d = Option.value ~default d in
+    let e = Option.value ~default e in
+    tup5 a b c d e
+
+  let tup6 a b c d e f (a', b', c', d', e', f') yield =
+    a a' (fun x -> yield (x,b',c',d',e',f'));
+    b b' (fun x -> yield (a',x,c',d',e',f'));
+    c c' (fun x -> yield (a',b',x,d',e',f'));
+    d d' (fun x -> yield (a',b',c',x,e',f'));
+    e e' (fun x -> yield (a',b',c',d',x,f'));
+    f f' (fun x -> yield (a',b',c',d',e',x))
+
+  let tup6_opt a b c d e f =
+    let a = Option.value ~default a in
+    let b = Option.value ~default b in
+    let c = Option.value ~default c in
+    let d = Option.value ~default d in
+    let e = Option.value ~default e in
+    let f = Option.value ~default f in
+    tup6 a b c d e f
+
+  let tup7 a b c d e f g (a', b', c', d', e', f', g') yield =
+    a a' (fun x -> yield (x,b',c',d',e',f',g'));
+    b b' (fun x -> yield (a',x,c',d',e',f',g'));
+    c c' (fun x -> yield (a',b',x,d',e',f',g'));
+    d d' (fun x -> yield (a',b',c',x,e',f',g'));
+    e e' (fun x -> yield (a',b',c',d',x,f',g'));
+    f f' (fun x -> yield (a',b',c',d',e',x,g'));
+    g g' (fun x -> yield (a',b',c',d',e',f',x))
+
+  let tup7_opt a b c d e f g =
+    let a = Option.value ~default a in
+    let b = Option.value ~default b in
+    let c = Option.value ~default c in
+    let d = Option.value ~default d in
+    let e = Option.value ~default e in
+    let f = Option.value ~default f in
+    let g = Option.value ~default g in
+    tup7 a b c d e f g
+
+  let tup8 a b c d e f g h (a', b', c', d', e', f', g', h') yield =
+    a a' (fun x -> yield (x,b',c',d',e',f',g',h'));
+    b b' (fun x -> yield (a',x,c',d',e',f',g',h'));
+    c c' (fun x -> yield (a',b',x,d',e',f',g',h'));
+    d d' (fun x -> yield (a',b',c',x,e',f',g',h'));
+    e e' (fun x -> yield (a',b',c',d',x,f',g',h'));
+    f f' (fun x -> yield (a',b',c',d',e',x,g',h'));
+    g g' (fun x -> yield (a',b',c',d',e',f',x,h'));
+    h h' (fun x -> yield (a',b',c',d',e',f',g',x))
+
+  let tup8_opt a b c d e f g h =
+    let a = Option.value ~default a in
+    let b = Option.value ~default b in
+    let c = Option.value ~default c in
+    let d = Option.value ~default d in
+    let e = Option.value ~default e in
+    let f = Option.value ~default f in
+    let g = Option.value ~default g in
+    let h = Option.value ~default h in
+    tup8 a b c d e f g h
+
+  let tup9 a b c d e f g h i (a', b', c', d', e', f', g', h', i') yield =
+    a a' (fun x -> yield (x,b',c',d',e',f',g',h',i'));
+    b b' (fun x -> yield (a',x,c',d',e',f',g',h',i'));
+    c c' (fun x -> yield (a',b',x,d',e',f',g',h',i'));
+    d d' (fun x -> yield (a',b',c',x,e',f',g',h',i'));
+    e e' (fun x -> yield (a',b',c',d',x,f',g',h',i'));
+    f f' (fun x -> yield (a',b',c',d',e',x,g',h',i'));
+    g g' (fun x -> yield (a',b',c',d',e',f',x,h',i'));
+    h h' (fun x -> yield (a',b',c',d',e',f',g',x,i'));
+    i i' (fun x -> yield (a',b',c',d',e',f',g',h',x))
+
+  let tup9_opt a b c d e f g h i =
+    let a = Option.value ~default a in
+    let b = Option.value ~default b in
+    let c = Option.value ~default c in
+    let d = Option.value ~default d in
+    let e = Option.value ~default e in
+    let f = Option.value ~default f in
+    let g = Option.value ~default g in
+    let h = Option.value ~default h in
+    let i = Option.value ~default i in
+    tup9 a b c d e f g h i
 end
 
 (** {2 Observe Values} *)
@@ -875,6 +1154,78 @@ let quad a b c d =
        (_opt_or c.shrink Shrink.nil)
        (_opt_or d.shrink Shrink.nil))
     (Gen.quad a.gen b.gen c.gen d.gen)
+
+let tup2 a b=
+  make
+    ?small:(_opt_map_2 ~f:(fun a b (a', b') -> a a'+b b') a.small b.small)
+    ~print:(Print.tup2_opt a.print b.print)
+    ~shrink:(Shrink.pair (_opt_or a.shrink Shrink.nil) (_opt_or b.shrink Shrink.nil))
+    (Gen.tup2 a.gen b.gen)
+
+let tup3 a b c =
+  make
+    ?small:(_opt_map_3 ~f:(fun a b c (a', b', c') ->
+        a a'+b b'+c c') a.small b.small c.small)
+    ~print:(Print.tup3_opt a.print b.print c.print)
+    ~shrink:(Shrink.tup3_opt a.shrink b.shrink c.shrink)
+    (Gen.tup3 a.gen b.gen c.gen)
+
+let tup4 a b c d =
+  make
+    ?small:(_opt_map_4 ~f:(fun a b c d (a', b', c', d') ->
+        a a'+b b'+c c'+d d') a.small b.small c.small d.small)
+    ~print:(Print.tup4_opt a.print b.print c.print d.print)
+    ~shrink:(Shrink.tup4_opt a.shrink b.shrink c.shrink d.shrink)
+    (Gen.tup4 a.gen b.gen c.gen d.gen)
+
+let tup5 a b c d e =
+  make
+    ?small:(_opt_map_5 ~f:(fun a b c d e (a', b', c', d', e') ->
+        a a'+b b'+c c'+d d'+e e') a.small b.small c.small d.small e.small)
+    ~print:(Print.tup5_opt a.print b.print c.print d.print e.print)
+    ~shrink:(Shrink.tup5_opt a.shrink b.shrink c.shrink d.shrink e.shrink)
+    (Gen.tup5 a.gen b.gen c.gen d.gen e.gen)
+
+let tup6 a b c d e f =
+  make
+    ?small:(_opt_map_6 ~f:(fun a b c d e f (a', b', c', d', e', f') ->
+        a a'+b b'+c c'+d d'+e e'+f f') a.small b.small c.small d.small e.small f.small)
+    ~print:(Print.tup6_opt a.print b.print c.print d.print e.print f.print)
+    ~shrink:(Shrink.tup6_opt a.shrink b.shrink c.shrink d.shrink e.shrink f.shrink)
+    (Gen.tup6 a.gen b.gen c.gen d.gen e.gen f.gen)
+
+let tup7 a b c d e f g =
+  make
+    ?small:(_opt_map_7 ~f:(fun a b c d e f g (a', b', c', d', e', f', g') ->
+        a a'+b b'+c c'+d d'+e e'+f f'+g g')
+        a.small b.small c.small d.small e.small f.small g.small)
+    ~print:(Print.tup7_opt
+              a.print b.print c.print d.print e.print f.print g.print)
+    ~shrink:(Shrink.tup7_opt
+               a.shrink b.shrink c.shrink d.shrink e.shrink f.shrink g.shrink)
+    (Gen.tup7 a.gen b.gen c.gen d.gen e.gen f.gen g.gen)
+
+let tup8 a b c d e f g h =
+  make
+    ?small:(_opt_map_8 ~f:(fun a b c d e f g h (a', b', c', d', e', f', g', h') ->
+        a a'+b b'+c c'+d d'+e e'+f f'+g g'+h h')
+        a.small b.small c.small d.small e.small f.small g.small h.small)
+    ~print:(Print.tup8_opt
+              a.print b.print c.print d.print e.print f.print g.print h.print)
+    ~shrink:(Shrink.tup8_opt
+               a.shrink b.shrink c.shrink d.shrink e.shrink f.shrink g.shrink h.shrink)
+    (Gen.tup8 a.gen b.gen c.gen d.gen e.gen f.gen g.gen h.gen)
+
+let tup9 a b c d e f g h i =
+  make
+    ?small:(_opt_map_9 ~f:(fun a b c d e f g h i (a', b', c', d', e', f', g', h', i') ->
+        a a'+b b'+c c'+d d'+e e'+f f'+g g'+h h'+i i')
+        a.small b.small c.small d.small e.small f.small g.small h.small i.small)
+    ~print:(Print.tup9_opt
+              a.print b.print c.print d.print e.print f.print g.print h.print i.print)
+    ~shrink:(Shrink.tup9_opt
+               a.shrink b.shrink c.shrink d.shrink e.shrink f.shrink g.shrink h.shrink i.shrink)
+    (Gen.tup9 a.gen b.gen c.gen d.gen e.gen f.gen g.gen h.gen i.gen)
 
 let option ?ratio a =
   let g = Gen.opt ?ratio a.gen

@@ -626,6 +626,26 @@ module Gen : sig
       @since 0.5.1
   *)
 
+  (** {3 Tuple of generators} *)
+
+  (** {4 Shrinks on [gen1], then [gen2], then ... } *)
+
+  val tup2 : 'a t -> 'b t -> ('a * 'b) t
+
+  val tup3 : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
+
+  val tup4 : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
+
+  val tup5 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> ('a * 'b * 'c * 'd * 'e) t
+
+  val tup6 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> ('a * 'b * 'c * 'd * 'e * 'f) t
+
+  val tup7 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> ('a * 'b * 'c * 'd * 'e * 'f * 'g) t
+
+  val tup8 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t -> ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h) t
+
+  val tup9 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t -> 'i t -> ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h * 'i) t
+
   (** {3 Convert a structure of generator to a generator of structure} *)
 
   val flatten_l : 'a t list -> 'a list t
@@ -1036,6 +1056,34 @@ module Print : sig
 
   val comap : ('b -> 'a) -> 'a t -> 'b t
   (** @deprecated use {!contramap} instead. *)
+
+  val tup2 : 'a t -> 'b t -> ('a * 'b) t
+  (** 2-tuple printer. Expects printers for each component. *)
+
+  val tup3 : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
+  (** 3-tuple printer. Expects printers for each component. *)
+
+  val tup4 : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
+  (** 4-tuple printer. Expects printers for each component. *)
+
+  val tup5 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> ('a * 'b * 'c * 'd * 'e) t
+  (** 5-tuple printer. Expects printers for each component. *)
+
+  val tup6 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t ->
+    ('a * 'b * 'c * 'd * 'e * 'f) t
+  (** 6-tuple printer. Expects printers for each component. *)
+
+  val tup7 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t ->
+    ('a * 'b * 'c * 'd * 'e * 'f * 'g) t
+  (** 7-tuple printer. Expects printers for each component. *)
+
+  val tup8 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t ->
+    ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h) t
+  (** 8-tuple printer. Expects printers for each component. *)
+
+  val tup9 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t -> 'i t ->
+    ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h * 'i) t
+  (** 9-tuple printer. Expects printers for each component. *)
 end
 
 (** Shrinking helper functions. *)

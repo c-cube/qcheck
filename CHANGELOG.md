@@ -1,5 +1,9 @@
 # Changes
 
+## 0.19
+
+- add tup2 to tup9 for generators
+
 ## 0.18
 
 This releases marks the addition of `QCheck2`, a module where generation
