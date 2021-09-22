@@ -863,7 +863,7 @@ stats dist:
    4150517416584649600.. 4611686018427387903: #################                                               189
 ================================================================================
 1 warning(s)
-failure (26 tests failed, 1 tests errored, ran 66 tests)
+failure (26 tests failed, 1 tests errored, ran 71 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
