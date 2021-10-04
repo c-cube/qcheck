@@ -402,6 +402,18 @@ describe("qcheck-rely", ({test}) => {
 
 ----
 
+=== Deriver
+
+A ppx_deriver is provided to derive QCheck generators from a type declaration.
+
+```ocaml
+type tree = Leaf of int | Node of tree * tree
+[@@deriving qcheck]
+```
+
+See the according https://github.com/c-cube/qcheck/tree/master/src/ppx_deriving_qcheck/[README]
+for more information and examples.
+
 === Compatibility notes
 
 Starting with 0.9, the library is split into several components:
