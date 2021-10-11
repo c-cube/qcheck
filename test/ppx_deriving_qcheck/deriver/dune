@@ -1,0 +1,4 @@
+(test
+ (name test)
+ (libraries alcotest ppxlib ppx_deriving_qcheck qcheck)
+ (preprocess (pps ppxlib.metaquot)))
