@@ -165,7 +165,7 @@ module Shrink = struct
 
   let ints_are_0 =
     Test.make ~name:"ints are 0" ~count:1000 ~print:Print.int
-      Gen.int (fun i -> Printf.printf "%i\n" i; i = 0)
+      Gen.int (fun i -> i = 0)
 
   (* test from issue #59 *)
   let ints_smaller_209609 =
@@ -177,7 +177,7 @@ module Shrink = struct
       Gen.nat (fun n -> n < 5001)
 
   let char_is_never_abcdef =
-    Test.make ~name:"char is never produces 'abcdef'" ~count:1000 ~print:Print.char
+    Test.make ~name:"char is never 'abcdef'" ~count:1000 ~print:Print.char
       Gen.char (fun c -> not (List.mem c ['a';'b';'c';'d';'e';'f']))
 
   let strings_are_empty =
@@ -195,11 +195,9 @@ module Shrink = struct
       (fun s -> String.to_seq s |> Seq.fold_left (fun acc c -> acc && c <> '\255') true)
 
   (* tests from issue #64 *)
-  let print_list xs = print_endline Print.(list int xs)
-
   let lists_are_empty_issue_64 =
     Test.make ~name:"lists are empty" ~print:Print.(list int)
-      Gen.(list small_int) (fun xs -> print_list xs; xs = [])
+      Gen.(list small_int) (fun xs -> xs = [])
 
   let list_shorter_10 =
     Test.make ~name:"lists shorter than 10" ~print:Print.(list int)
@@ -230,7 +228,7 @@ module Shrink = struct
     Test.make ~name:"lists have unique elems" ~print:Print.(list int)
       Gen.(list small_int)
       (fun xs -> let ys = List.sort_uniq Int.compare xs in
-                 print_list xs; List.length xs = List.length ys)
+                 List.length xs = List.length ys)
 
   let tree_contains_only_42 =
     Test.make ~name:"tree contains only 42" ~print:IntTree.print_tree

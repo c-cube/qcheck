@@ -1,0 +1,7 @@
+fails [9; 3; 94; 3]
+holds []
+fails [7; 5]
+holds []
+fails [1]
+holds []
+fails [0]

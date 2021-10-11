@@ -1,45 +1,10 @@
-
-(test
-  (name test)
-  (modules test)
-  (package qcheck-core)
-  (libraries qcheck-core alcotest))
-
-(executables
+(tests
   (names QCheck_expect_test QCheck2_expect_test)
   (modules QCheck_expect_test QCheck2_expect_test)
   (libraries qcheck-core qcheck-core.runner))
 
-;; rules for QCheck_expect_test
-(rule
-  (targets qcheck_output.txt)
-  (deps ./QCheck_expect_test.exe)
+(test
+  (name QCheck2_unit_tests)
+  (modules QCheck2_unit_tests)
   (package qcheck-core)
-  (enabled_if (= %{os_type} "Unix"))
-  (action
-    (with-stdout-to
-      %{targets}
-      (run ./QCheck_expect_test.exe --no-colors))))
-
-(rule
-  (alias runtest)
-  (package qcheck-core)
-  (enabled_if (= %{os_type} "Unix"))
-  (action (diff qcheck_output.txt.expected qcheck_output.txt)))
-
-;; rules for QCheck2_expect_test
-(rule
-  (targets qcheck2_output.txt)
-  (deps ./QCheck2_expect_test.exe)
-  (package qcheck-core)
-  (enabled_if (= %{os_type} "Unix"))
-  (action
-    (with-stdout-to
-      %{targets}
-      (run ./QCheck2_expect_test.exe --no-colors))))
-
-(rule
-  (alias runtest)
-  (package qcheck-core)
-  (enabled_if (= %{os_type} "Unix"))
-  (action (diff qcheck2_output.txt.expected qcheck2_output.txt)))
+  (libraries qcheck-core alcotest))
