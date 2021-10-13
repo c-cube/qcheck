@@ -347,6 +347,7 @@ and gen_from_variant ~loc typ_name rws =
   *)
   let gen = sized ~loc ~env:TypeGen.empty typ_name is_rec to_gen rws in
   let typ_t = A.ptyp_constr (A.Located.mk @@ Lident typ_name) [] in
+  (* TODO: mutualize this ident for https://github.com/c-cube/qcheck/issues/190 *)
   let typ_gen = A.Located.mk @@ Lident "QCheck.Gen.t" in
   let typ = A.ptyp_constr typ_gen [ typ_t ] in
   [%expr ([%e gen] : [%t typ])]
