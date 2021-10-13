@@ -44,6 +44,12 @@ let rec longident_to_str = function
   | Lapply (lg1, lg2) ->
       Printf.sprintf "%s %s" (longident_to_str lg1) (longident_to_str lg2)
 
+let rec is_rec_typ typ_name = function
+  | { ptyp_desc = Ptyp_constr ({ txt = x; _ }, _); _ } ->
+      longident_to_str x = typ_name
+  | { ptyp_desc = Ptyp_tuple xs; _ } -> List.exists (is_rec_typ typ_name) xs
+  | _ -> false
+
 let name s =
   let prefix = "gen" in
   match s with "t" -> prefix | s -> prefix ^ "_" ^ s
@@ -309,13 +315,7 @@ and gen_from_variant ~loc typ_name rws =
   let is_rec (row : row_field) : bool =
     match row.prf_desc with
     | Rinherit _ -> false
-    | Rtag (_, _, typs) ->
-        List.exists
-          (function
-            | { ptyp_desc = Ptyp_constr ({ txt = x; _ }, _); _ } ->
-                longident_to_str x = typ_name
-            | _ -> false)
-          typs
+    | Rtag (_, _, typs) -> List.exists (is_rec_typ typ_name) typs
   in
   let to_gen ?env (row : row_field) : expression =
     let w =
@@ -385,12 +385,6 @@ and gen_from_arrow ~loc ~env left right =
   [%expr
     QCheck.fun_nary QCheck.Tuple.([%e observable left] @-> [%e obs]) [%e arb]
     |> QCheck.gen]
-
-let rec is_rec_typ typ_name = function
-  | { ptyp_desc = Ptyp_constr ({ txt = x; _ }, _); _ } ->
-      longident_to_str x = typ_name
-  | { ptyp_desc = Ptyp_tuple xs; _ } -> List.exists (is_rec_typ typ_name) xs
-  | _ -> false
 
 let gen_from_kind_variant ~loc ~env typ_name xs =
   let (module A) = Ast_builder.make loc in

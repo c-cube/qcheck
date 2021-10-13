@@ -261,7 +261,22 @@ type tree = [ `Leaf of int | `Node of tree * tree ]
 
 (* ==> *)
 
-/!\ FIXME: https://github.com/vch9/ppx_deriving_qcheck/issues/7 /!\
+let gen_tree =
+  (QCheck.Gen.sized @@ QCheck.Gen.fix (fun self -> function
+  | 0 ->
+    QCheck.Gen.frequency [
+	  ( 1, QCheck.Gen.map (fun gen0 -> `Leaf gen0) QCheck.Gen.int);
+    ]
+  | n ->
+    QCheck.Gen.frequency [
+      ( 1, QCheck.Gen.map (fun gen0 -> `Leaf gen0) QCheck.Gen.int);
+      ( 1,
+           QCheck.Gen.map (fun gen0 -> `Node gen0)
+             (QCheck.Gen.map
+               (fun (gen0, gen1) -> (gen0, gen1))
+                 (QCheck.Gen.pair (self (n / 2)) (self (n / 2)))))
+                      ])
+            : tree QCheck.Gen.t)
 ```
 
 ## Mutual recursive types

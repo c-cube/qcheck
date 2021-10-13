@@ -792,6 +792,43 @@ let test_weight_konstrs () =
   in
   check_eq ~expected ~actual "deriving weight konstrs"
 
+(* Regression test: https://github.com/c-cube/qcheck/issues/187 *)
+let test_recursive_poly_variant () =
+  let expected =
+    [
+      [%stri
+        let gen_tree =
+          (QCheck.Gen.sized
+           @@ QCheck.Gen.fix (fun self -> function
+                | 0 ->
+                    QCheck.Gen.frequency
+                      [
+                        ( 1,
+                          QCheck.Gen.map (fun gen0 -> `Leaf gen0) QCheck.Gen.int
+                        );
+                      ]
+                | n ->
+                    QCheck.Gen.frequency
+                      [
+                        ( 1,
+                          QCheck.Gen.map (fun gen0 -> `Leaf gen0) QCheck.Gen.int
+                        );
+                        ( 1,
+                          QCheck.Gen.map
+                            (fun gen0 -> `Node gen0)
+                            (QCheck.Gen.map
+                               (fun (gen0, gen1) -> (gen0, gen1))
+                               (QCheck.Gen.pair (self (n / 2)) (self (n / 2))))
+                        );
+                      ])
+            : tree QCheck.Gen.t)];
+    ]
+  in
+  let actual =
+    f @@ extract [%stri type tree = [ `Leaf of int | `Node of tree * tree ]]
+  in
+  check_eq ~expected ~actual "deriving recursive polymorphic variants"
+
 let () =
   Alcotest.(
     run
@@ -830,5 +867,9 @@ let () =
             test_case "deriving fun list" `Quick test_fun_list;
             test_case "deriving fun n" `Quick test_fun_n;
             test_case "deriving fun tuple" `Quick test_fun_tuple;
+            test_case
+              "deriving rec poly variants"
+              `Quick
+              test_recursive_poly_variant;
           ] );
       ])
