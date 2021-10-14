@@ -167,19 +167,12 @@ let test_alpha () =
     [
       [%stri let gen gen_a = gen_a];
       [%stri let gen gen_a = QCheck.Gen.list gen_a];
-      [%stri
-        let gen gen_a =
-          QCheck.Gen.frequency
-            [ (1, QCheck.Gen.map (fun gen0 -> A gen0) gen_a) ]];
+      [%stri let gen gen_a = QCheck.Gen.map (fun gen0 -> A gen0) gen_a];
       [%stri
         let gen gen_a gen_b =
-          QCheck.Gen.frequency
-            [
-              ( 1,
-                QCheck.Gen.map
-                  (fun (gen0, gen1) -> A (gen0, gen1))
-                  (QCheck.Gen.pair gen_a gen_b) );
-            ]];
+          QCheck.Gen.map
+            (fun (gen0, gen1) -> A (gen0, gen1))
+            (QCheck.Gen.pair gen_a gen_b)];
       [%stri
         let gen gen_left gen_right =
           QCheck.Gen.map
@@ -189,9 +182,7 @@ let test_alpha () =
         let gen_tree gen_a =
           QCheck.Gen.sized
           @@ QCheck.Gen.fix (fun self -> function
-               | 0 ->
-                   QCheck.Gen.frequency
-                     [ (1, QCheck.Gen.map (fun gen0 -> Leaf gen0) gen_a) ]
+               | 0 -> QCheck.Gen.map (fun gen0 -> Leaf gen0) gen_a
                | n ->
                    QCheck.Gen.frequency
                      [
@@ -278,10 +269,7 @@ let test_dependencies () =
 let test_konstr () =
   let expected =
     [
-      [%stri
-        let gen =
-          QCheck.Gen.frequency
-            [ (1, QCheck.Gen.map (fun gen0 -> A gen0) QCheck.Gen.int) ]];
+      [%stri let gen = QCheck.Gen.map (fun gen0 -> A gen0) QCheck.Gen.int];
       [%stri
         let gen =
           QCheck.Gen.frequency
@@ -433,7 +421,7 @@ let test_tree () =
         let gen_tree =
           QCheck.Gen.sized
           @@ QCheck.Gen.fix (fun self -> function
-               | 0 -> QCheck.Gen.frequency [ (1, QCheck.Gen.pure Leaf) ]
+               | 0 -> QCheck.Gen.pure Leaf
                | n ->
                    QCheck.Gen.frequency
                      [
@@ -450,13 +438,7 @@ let test_tree () =
         let gen_expr =
           QCheck.Gen.sized
           @@ QCheck.Gen.fix (fun self -> function
-               | 0 ->
-                   QCheck.Gen.frequency
-                     [
-                       ( 1,
-                         QCheck.Gen.map (fun gen0 -> Value gen0) QCheck.Gen.int
-                       );
-                     ]
+               | 0 -> QCheck.Gen.map (fun gen0 -> Value gen0) QCheck.Gen.int
                | n ->
                    QCheck.Gen.frequency
                      [
@@ -503,13 +485,7 @@ let test_recursive () =
         let rec gen_expr () =
           QCheck.Gen.sized
           @@ QCheck.Gen.fix (fun self -> function
-               | 0 ->
-                   QCheck.Gen.frequency
-                     [
-                       ( 1,
-                         QCheck.Gen.map (fun gen0 -> Value gen0) (gen_value ())
-                       );
-                     ]
+               | 0 -> QCheck.Gen.map (fun gen0 -> Value gen0) (gen_value ())
                | n ->
                    QCheck.Gen.frequency
                      [
@@ -563,20 +539,16 @@ let test_forest () =
     [
       [%stri
         let rec gen_tree () =
-          QCheck.Gen.frequency
-            [
-              ( 1,
-                QCheck.Gen.map
-                  (fun gen0 -> Node gen0)
-                  (QCheck.Gen.map
-                     (fun (gen0, gen1) -> (gen0, gen1))
-                     (QCheck.Gen.pair QCheck.Gen.int (gen_forest ()))) );
-            ]
+          QCheck.Gen.map
+            (fun gen0 -> Node gen0)
+            (QCheck.Gen.map
+               (fun (gen0, gen1) -> (gen0, gen1))
+               (QCheck.Gen.pair QCheck.Gen.int (gen_forest ())))
 
         and gen_forest () =
           QCheck.Gen.sized
           @@ QCheck.Gen.fix (fun self -> function
-               | 0 -> QCheck.Gen.frequency [ (1, QCheck.Gen.pure Nil) ]
+               | 0 -> QCheck.Gen.pure Nil
                | n ->
                    QCheck.Gen.frequency
                      [
@@ -800,13 +772,7 @@ let test_recursive_poly_variant () =
         let gen_tree =
           (QCheck.Gen.sized
            @@ QCheck.Gen.fix (fun self -> function
-                | 0 ->
-                    QCheck.Gen.frequency
-                      [
-                        ( 1,
-                          QCheck.Gen.map (fun gen0 -> `Leaf gen0) QCheck.Gen.int
-                        );
-                      ]
+                | 0 -> QCheck.Gen.map (fun gen0 -> `Leaf gen0) QCheck.Gen.int
                 | n ->
                     QCheck.Gen.frequency
                       [

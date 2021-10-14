@@ -242,9 +242,7 @@ let gen_tree =
   QCheck.Gen.sized @@
     (QCheck.Gen.fix
       (fun self -> function
-        | 0 ->
-          QCheck.Gen.frequency
-            [(1, (QCheck.Gen.map (fun gen0 -> Leaf gen0) QCheck.Gen.int))]
+        | 0 -> QCheck.Gen.map (fun gen0 -> Leaf gen0) QCheck.Gen.int
         | n ->
           QCheck.Gen.frequency
             [(1,

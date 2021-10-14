@@ -35,7 +35,11 @@ let array ~loc e = [%expr QCheck.Gen.array [%e e]]
 
 let pure ~loc x = [%expr QCheck.Gen.pure [%e x]] 
 
-let frequency ~loc l = [%expr QCheck.Gen.frequency [%e l]]
+let frequency ~loc l =
+  match l with
+  | [%expr [([%e? _], [%e? x])]] -> x
+  | _ ->
+     [%expr QCheck.Gen.frequency [%e l]]
 
 let map ~loc pat expr gen =
   [%expr QCheck.Gen.map (fun [%p pat] -> [%e expr]) [%e gen]]

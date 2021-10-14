@@ -38,7 +38,7 @@ module O = G.Observable
       let open Gen in
       sized
         @@ fix (fun self -> function
-             | 0 -> frequency [ (1, pure Leaf) ]
+             | 0 -> pure Leaf
              | n ->
                  frequency
                    [
