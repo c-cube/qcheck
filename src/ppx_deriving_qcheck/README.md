@@ -9,7 +9,7 @@ type tree = Leaf of int | Node of tree * tree
 
 let rec rev tree = match tree with
 | Leaf _ -> tree
-| Node (left, right) -> Node (rev left, rev right)
+| Node (left, right) -> Node (rev right, rev left)
 
 let test =
   QCheck.Test.make
