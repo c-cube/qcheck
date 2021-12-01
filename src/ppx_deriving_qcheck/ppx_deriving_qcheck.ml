@@ -58,7 +58,7 @@ let gen ~loc ?(env = TypeGen.empty) lg =
   match lg with
   | Lident s ->
       Option.value ~default:(name s |> A.evar) @@ TypeGen.find_opt s env
-  | Ldot (lg, s) -> A.(pexp_construct (Located.mk @@ Ldot (lg, name s)) None)
+  | Ldot (lg, s) -> A.(pexp_ident (Located.mk @@ Ldot (lg, name s)))
   | Lapply (_, _) -> raise (Invalid_argument "gen received an Lapply")
 
 let frequency ~loc l = [%expr QCheck.Gen.frequency [%e l]]
