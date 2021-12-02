@@ -16,7 +16,6 @@ test `fail_sort_id` failed on ≥ 1 cases: [1; 0] (after 20 shrink steps)
 [exception] test `fail_sort_id` failed on ≥ 1 cases: [1; 0] (after 20 shrink steps)
                                            
             
-
  ──────────────────────────────────────────────────────────────────────────────
 
 3 failures! 5 tests run.
