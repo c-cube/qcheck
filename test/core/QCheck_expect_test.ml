@@ -177,14 +177,26 @@ module Generator = struct
                (Array.init (size - 1) (fun k -> arr.(k), arr.(k+1)))
            && arr.(size - 1) <= high)
 
-  let nat_split =
-    Test.make ~name:"nat_split"
+  let nat_split_n_way =
+    Test.make ~name:"nat_split n-way"
       (make
          ~print:Print.(pair int (array int))
          Gen.(small_nat >>= fun n ->
               pair (return n) (nat_split ~size:n n)))
       (fun (n, arr) ->
          Array.length arr = n
+         && Array.for_all (fun k -> 0 <= k) arr
+         && Array.fold_left (+) 0 arr = n)
+
+  let nat_split_smaller =
+    Test.make ~name:"nat_split smaller"
+      (make
+         ~print:Print.(triple int int (array int))
+         Gen.(small_nat >>= fun size ->
+              int_bound size >>= fun n ->
+              triple (return size) (return n) (nat_split ~size n)))
+      (fun (m, n, arr) ->
+         Array.length arr = m
          && Array.for_all (fun k -> 0 <= k) arr
          && Array.fold_left (+) 0 arr = n)
 
@@ -458,6 +470,11 @@ module Stats = struct
   let tree_depth_test =
     let depth = ("depth", IntTree.depth) in
     Test.make ~name:"tree's depth" ~count:1000 (add_stat depth (make IntTree.gen_tree)) (fun _ -> true)
+
+  let range_subset_test =
+    Test.make ~name:"range_subset_spec" ~count:5_000
+      (add_stat ("dist", fun a -> a.(0)) (make (Gen.range_subset ~size:1 0 20)))
+      (fun a -> Array.length a = 1)
 end
 
 (* Calling runners *)
@@ -483,7 +500,8 @@ let _ =
     Generator.nat_split2_spec;
     Generator.pos_split2_spec;
     Generator.range_subset_spec;
-    Generator.nat_split;
+    Generator.nat_split_n_way;
+    Generator.nat_split_smaller;
     Generator.pos_split;
     (*Shrink.test_fac_issue59;*)
     Shrink.big_bound_issue59;
@@ -513,7 +531,8 @@ let _ =
     FindExample.find_ex_uncaught_issue_99_2_succeed;
     Stats.bool_dist;
     Stats.char_dist;
-    Stats.tree_depth_test]
+    Stats.tree_depth_test;
+    Stats.range_subset_test]
     @ Stats.string_len_tests
     @ Stats.list_len_tests
     @ Stats.array_len_tests
