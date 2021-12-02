@@ -83,7 +83,16 @@ module Overall = struct
          true)
 end
 
-(* positive tests of the various generators *)
+(* positive tests of the various generators
+
+   Note: it is important to disable shrinking for these tests, as the
+   shrinkers will suggest inputs that are coming from the generator
+   themselves -- which we want to test -- so their reduced
+   counter-example are confusing rather than helpful.
+
+   This is achieved by using (Test.make ~print ...), without a ~shrink
+   argument.
+*)
 module Generator = struct
   open QCheck
 
@@ -127,6 +136,82 @@ module Generator = struct
       ~name:"tree_rev_is_involutive"
       QCheck.(make IntTree.gen_tree)
       (fun tree -> IntTree.(rev_tree (rev_tree tree)) = tree)
+
+  let nat_split2_spec =
+    Test.make ~name:"nat_split2 spec"
+      (make
+        ~print:Print.(pair int (pair int int))
+         Gen.(small_nat >>= fun n ->
+              pair (return n) (nat_split2 n)))
+      (fun (n, (a, b)) ->
+         0 <= a && 0 <= b && a + b = n)
+
+  let pos_split2_spec =
+    Test.make ~name:"pos_split2 spec"
+      (make
+        ~print:Print.(pair int (pair int int))
+         Gen.(small_nat >>= fun n ->
+              (* we need n > 2 *)
+              let n = n + 2 in
+              pair (return n) (pos_split2 n)))
+      (fun (n, (a, b)) ->
+         (0 < a && 0 < b && a + b = n))
+
+  let range_subset_spec =
+    Test.make ~name:"range_subset_spec"
+      (make
+         ~print:Print.(quad int int int (array int))
+         Gen.(pair small_nat small_nat >>= fun (m, n) ->
+              (* we must guarantee [low <= high]
+                 and [size <= high - low + 1] *)
+              let low = m and high = m + n in
+              int_range 0 (high - low + 1) >>= fun size ->
+              quad (return size) (return low) (return high)
+                (range_subset ~size low high)))
+      (fun (size, low, high, arr) ->
+         if size = 0 then arr = [||]
+         else
+           Array.length arr = size
+           && low <= arr.(0)
+           && Array.for_all (fun (a, b) -> a < b)
+               (Array.init (size - 1) (fun k -> arr.(k), arr.(k+1)))
+           && arr.(size - 1) <= high)
+
+  let nat_split_n_way =
+    Test.make ~name:"nat_split n-way"
+      (make
+         ~print:Print.(pair int (array int))
+         Gen.(small_nat >>= fun n ->
+              pair (return n) (nat_split ~size:n n)))
+      (fun (n, arr) ->
+         Array.length arr = n
+         && Array.for_all (fun k -> 0 <= k) arr
+         && Array.fold_left (+) 0 arr = n)
+
+  let nat_split_smaller =
+    Test.make ~name:"nat_split smaller"
+      (make
+         ~print:Print.(triple int int (array int))
+         Gen.(small_nat >>= fun size ->
+              int_bound size >>= fun n ->
+              triple (return size) (return n) (nat_split ~size n)))
+      (fun (m, n, arr) ->
+         Array.length arr = m
+         && Array.for_all (fun k -> 0 <= k) arr
+         && Array.fold_left (+) 0 arr = n)
+
+  let pos_split =
+    Test.make ~name:"pos_split"
+      (make
+         ~print:Print.(triple int int (array int))
+         Gen.(pair small_nat small_nat >>= fun (m, n) ->
+              (* we need both size>0 and n>0 and size <= n *)
+              let size = 1 + min m n and n = 1 + max m n in
+              triple (return size) (return n) (pos_split ~size n)))
+      (fun (m, n, arr) ->
+         Array.length arr = m
+         && Array.for_all (fun k -> 0 < k) arr
+         && Array.fold_left (+) 0 arr = n)
 end
 
 (* negative tests that exercise shrinking behaviour *)
@@ -385,6 +470,11 @@ module Stats = struct
   let tree_depth_test =
     let depth = ("depth", IntTree.depth) in
     Test.make ~name:"tree's depth" ~count:1000 (add_stat depth (make IntTree.gen_tree)) (fun _ -> true)
+
+  let range_subset_test =
+    Test.make ~name:"range_subset_spec" ~count:5_000
+      (add_stat ("dist", fun a -> a.(0)) (make (Gen.range_subset ~size:1 0 20)))
+      (fun a -> Array.length a = 1)
 end
 
 (* Calling runners *)
@@ -407,6 +497,12 @@ let _ =
     Generator.list_repeat_test;
     Generator.array_repeat_test;
     Generator.passing_tree_rev;
+    Generator.nat_split2_spec;
+    Generator.pos_split2_spec;
+    Generator.range_subset_spec;
+    Generator.nat_split_n_way;
+    Generator.nat_split_smaller;
+    Generator.pos_split;
     (*Shrink.test_fac_issue59;*)
     Shrink.big_bound_issue59;
     Shrink.long_shrink;
@@ -435,7 +531,8 @@ let _ =
     FindExample.find_ex_uncaught_issue_99_2_succeed;
     Stats.bool_dist;
     Stats.char_dist;
-    Stats.tree_depth_test]
+    Stats.tree_depth_test;
+    Stats.range_subset_test]
     @ Stats.string_len_tests
     @ Stats.list_len_tests
     @ Stats.array_len_tests

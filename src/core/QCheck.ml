@@ -248,27 +248,27 @@ module Gen = struct
     List.sort (fun (w1, _) (w2, _) -> poly_compare w1 w2) samples |> List.rev_map snd
 
   let range_subset ~size low high st =
-    if not (low <= high && size <= high - low + 1) then invalid_arg "Gen.range_subset";
+    let range_size = high - low + 1 in
+    if not (0 <= size && size <= range_size) then
+      invalid_arg "Gen.range_subset";
     (* The algorithm below is attributed to Floyd, see for example
        https://eyalsch.wordpress.com/2010/04/01/random-sample/
        https://math.stackexchange.com/questions/178690
 
-       Note: the code be made faster by checking membership in [arr]
-       directly instead of using an additional Set. None of our
-       dependencies implements dichotomic search, so using Set is
-       easier.
+       Note: the code is easier to read when drawing from [0..range_size-1]
+       rather than [low..high]. We draw in [0..bound], and shift the
+       results by adding [low] when writing them to the result array.
     *)
     let module ISet = Set.Make(Int) in
     let s = ref ISet.empty in
-    let arr = Array.make size 0 in
-    for i = high - size to high do
-      let pos = int_range high i st in
-      let choice =
-        if ISet.mem pos !s then i else pos
-      in
-      arr.(i - low) <- choice;
+    for i = range_size - size to range_size - 1 do
+      let pos = int_range 0 i st in
+      let choice = if ISet.mem pos !s then i else pos in
       s := ISet.add choice !s;
     done;
+    let arr = Array.make size 0 in
+    let idx = ref 0 in
+    ISet.iter (fun choice -> arr.(!idx) <- low + choice; incr idx) !s;
     arr
 
   let array_subset size arr st =
@@ -334,31 +334,38 @@ module Gen = struct
 
   (* nat splitting *)
 
-  let nat_split2 n st =
-    if (n < 2) then invalid_arg "nat_split2";
+  let pos_split2 n st =
+    if (n < 2) then invalid_arg "pos_split2";
     let n1 = int_range 1 (n - 1) st in
     (n1, n - n1)
 
-  let pos_split2 n st =
+  let nat_split2 n st =
+    if (n < 0) then invalid_arg "nat_split2";
     let n1 = int_range 0 n st in
     (n1, n - n1)
 
   let pos_split ~size:k n st =
-    if (k > n) then invalid_arg "nat_split";
-    (* To split n into n{0}+n{1}+..+n{k-1}, we draw distinct "boundaries"
-       b{-1}..b{k-1}, with b{-1}=0 and b{k-1} = n
-       and the k-1 intermediate boundaries b{0}..b{k-2}
-       chosen randomly distinct in [1;n-1].
+    if (n < 0) then invalid_arg "pos_split";
+    if 0 = k && 0 = n then [||]
+    else begin
+      if not (0 < k && k <= n) then invalid_arg "pos_split";
+      (* To split n into n{0}+n{1}+..+n{k-1}, we draw distinct "boundaries"
+         b{-1}..b{k-1}, with b{-1}=0 and b{k-1} = n
+         and the k-1 intermediate boundaries b{0}..b{k-2}
+         chosen randomly distinct in [1;n-1].
 
-       Then each n{i} is defined as b{i}-b{i-1}. *)
-    let b = range_subset ~size:(k-1) 1 (n - 1) st in
-    Array.init k (fun i ->
-      if i = 0 then b.(0)
-      else if i = k-1 then n - b.(i-1)
-      else b.(i) - b.(i-1)
-    )
+         Then each n{i} is defined as b{i}-b{i-1}. *)
+      let b = range_subset ~size:(k-1) 1 (n - 1) st in
+      if k = 1 then [|n|]
+      else Array.init k (fun i ->
+        if i = 0 then b.(0)
+        else if i = k-1 then n - b.(i-1)
+        else b.(i) - b.(i-1)
+      )
+    end
 
   let nat_split ~size:k n st =
+    if not (0 <= k && 0 <= n) then invalid_arg "nat_split";
     pos_split ~size:k (n+k) st
     |> Array.map (fun v -> v - 1)
 

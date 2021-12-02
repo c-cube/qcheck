@@ -467,14 +467,14 @@ module Gen : sig
 
       This is useful to split sizes to combine sized generators.
 
-      @raise Invalid_argument unless [n >= 2].
-
       @since 0.18
   *)
 
   val pos_split2 : int -> (int * int) t
-  (** [nat_split2 n] generates pairs [(n1, n2)] of strictly positive
+  (** [pos_split2 n] generates pairs [(n1, n2)] of strictly positive
       (nonzero) natural numbers with [n1 + n2 = n].
+
+      @raise Invalid_argument unless [n >= 2].
 
       This is useful to split sizes to combine sized generators.
 
@@ -482,7 +482,7 @@ module Gen : sig
   *)
 
   val nat_split : size:int -> int -> int array t
-  (** [nat_split2 ~size:k n] generates [k]-sized arrays [n1,n2,..nk]
+  (** [nat_split ~size:k n] generates [k]-sized arrays [n1,n2,..nk]
       of natural numbers in [[0;n]] with [n1 + n2 + ... + nk = n].
 
       This is useful to split sizes to combine sized generators.
@@ -493,7 +493,7 @@ module Gen : sig
   *)
 
   val pos_split : size:int -> int -> int array t
-  (** [nat_split2 ~size:k n] generates [k]-sized arrays [n1,n2,..nk]
+  (** [pos_split ~size:k n] generates [k]-sized arrays [n1,n2,..nk]
       of strictly positive (non-zero) natural numbers with
       [n1 + n2 + ... + nk = n].
 
@@ -501,7 +501,7 @@ module Gen : sig
 
       Complexity O(k log k).
 
-      @raise Invalid_argument unless [k <= n].
+      @raise Invalid_argument unless [0 < k <= n] or [0 = k = n].
 
       @since 0.18
   *)
