@@ -8,11 +8,12 @@ maintainer: "valentin.chb@gmail.com"
 author: [ "the qcheck contributors" ]
 
 depends: [
-  "dune" {>= "2.8.0"}
+  "dune" {>= "2.7.0"}
   "ocaml" {>= "4.08.0"}
   "qcheck" {>= "0.17"}
   "ppxlib" {>= "0.22.0"}
   "odoc" {with-doc}
+  "bisect_ppx" {with-test}
   "alcotest" {with-test & >= "1.4.0" }
 ]
 

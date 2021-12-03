@@ -3,6 +3,7 @@
   (name qcheck_ounit)
   (public_name qcheck-ounit)
   (wrapped false)
+  (instrumentation (backend bisect_ppx))
   (libraries unix bytes qcheck-core qcheck-core.runner ounit2)
   (flags :standard -w +a-4-42-44-48-50-58-32-60@8 -safe-string)
   )
