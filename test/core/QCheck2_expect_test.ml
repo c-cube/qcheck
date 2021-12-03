@@ -142,6 +142,60 @@ module Generator = struct
       IntTree.gen_tree
       (fun tree -> IntTree.(rev_tree (rev_tree tree)) = tree)
 
+  let test_tup2 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1): x = (0, 1)"
+      Gen.(tup2 (pure 0) (pure 1))
+      (fun x -> x = (0, 1))
+
+  let test_tup3 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1, 2): x = (0, 1, 2)"
+      Gen.(tup3 (pure 0) (pure 1) (pure 2))
+      (fun x -> x = (0, 1, 2))
+
+  let test_tup4 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1, 2, 3): x = (0, 1, 2, 3)"
+      Gen.(tup4 (pure 0) (pure 1) (pure 2) (pure 3))
+      (fun x -> x = (0, 1, 2, 3))
+
+  let test_tup5 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1, 2, 3, 4): x = (0, 1, 2, 3, 4)"
+      Gen.(tup5 (pure 0) (pure 1) (pure 2) (pure 3) (pure 4))
+      (fun x -> x = (0, 1, 2, 3, 4))
+
+  let test_tup6 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1, 2, 3, 4, 5): x = (0, 1, 2, 3, 4, 5)"
+      Gen.(tup6 (pure 0) (pure 1) (pure 2) (pure 3) (pure 4) (pure 5))
+      (fun x -> x = (0, 1, 2, 3, 4, 5))
+
+  let test_tup7 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1, 2, 3, 4, 5, 6): x = (0, 1, 2, 3, 4, 5, 6)"
+      Gen.(tup7
+         (pure 0) (pure 1) (pure 2) (pure 3) (pure 4)
+         (pure 5) (pure 6))
+      (fun x -> x = (0, 1, 2, 3, 4, 5, 6))
+
+  let test_tup8 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1, 2, 3, 4, 5, 6, 7): x = (0, 1, 2, 3, 4, 5, 6, 7)"
+      Gen.(tup8
+         (pure 0) (pure 1) (pure 2) (pure 3) (pure 4)
+         (pure 5) (pure 6) (pure 7))
+      (fun x -> x = (0, 1, 2, 3, 4, 5, 6, 7))
+
+  let test_tup9 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1, 2, 3, 4, 5, 6, 7, 8): x = (0, 1, 2, 3, 4, 5, 6, 7, 8)"
+      Gen.(tup9
+         (pure 0) (pure 1) (pure 2) (pure 3) (pure 4)
+         (pure 5) (pure 6) (pure 7) (pure 8))
+      (fun x -> x = (0, 1, 2, 3, 4, 5, 6, 7, 8))
+
   let tests = [
     char_dist_issue_23;
     char_test;
@@ -151,6 +205,14 @@ module Generator = struct
     list_repeat_test;
     array_repeat_test;
     passing_tree_rev;
+    test_tup2;
+    test_tup3;
+    test_tup4;
+    test_tup5;
+    test_tup6;
+    test_tup7;
+    test_tup8;
+    test_tup9;
   ]
 end
 
@@ -259,6 +321,62 @@ module Shrink = struct
       IntTree.gen_tree
       (fun tree -> IntTree.contains_only_n tree 42)
 
+  let test_tup2 =
+    Test.make
+      ~print:Print.(tup2 int int)
+      ~name:"forall (a, b) in nat: a < b"
+      Gen.(tup2 small_int small_int)
+      (fun (a, b) -> a < b)
+
+  let test_tup3 =
+    Test.make
+      ~print:Print.(tup3 int int int)
+      ~name:"forall (a, b, c) in nat: a < b < c"
+      Gen.(tup3 small_int small_int small_int)
+      (fun (a, b, c) -> a < b && b < c)
+
+  let test_tup4 =
+    Test.make
+      ~print:Print.(tup4 int int int int)
+      ~name:"forall (a, b, c, d) in nat: a < b < c < d"
+      Gen.(tup4 small_int small_int small_int small_int)
+      (fun (a, b, c, d) -> a < b && b < c && c < d)
+
+  let test_tup5 =
+    Test.make
+      ~print:Print.(tup5 int int int int int)
+      ~name:"forall (a, b, c, d, e) in nat: a < b < c < d < e"
+      Gen.(tup5 small_int small_int small_int small_int small_int)
+      (fun (a, b, c, d, e) -> a < b && b < c && c < d && d < e)
+
+  let test_tup6 =
+    Test.make
+      ~print:Print.(tup6 int int int int int int)
+      ~name:"forall (a, b, c, d, e, f) in nat: a < b < c < d < e < f"
+      Gen.(tup6 small_int small_int small_int small_int small_int small_int)
+      (fun (a, b, c, d, e, f) -> a < b && b < c && c < d && d < e && e < f)
+
+  let test_tup7 =
+    Test.make
+      ~print:Print.(tup7 int int int int int int int)
+      ~name:"forall (a, b, c, d, e, f, g) in nat: a < b < c < d < e < f < g"
+      Gen.(tup7 small_int small_int small_int small_int small_int small_int small_int)
+      (fun (a, b, c, d, e, f, g) -> a < b && b < c && c < d && d < e && e < f && f < g)
+
+  let test_tup8 =
+    Test.make
+      ~print:Print.(tup8 int int int int int int int int)
+      ~name:"forall (a, b, c, d, e, f, g, h) in nat: a < b < c < d < e < f < g < h"
+      Gen.(tup8 small_int small_int small_int small_int small_int small_int small_int small_int)
+      (fun (a, b, c, d, e, f, g, h) -> a < b && b < c && c < d && d < e && e < f && f < g && g < h)
+
+  let test_tup9 =
+    Test.make
+      ~print:Print.(tup9 int int int int int int int int int)
+      ~name:"forall (a, b, c, d, e, f, g, h, i) in nat: a < b < c < d < e < f < g < h < i"
+      Gen.(tup9 small_int small_int small_int small_int small_int small_int small_int small_int small_int)
+      (fun (a, b, c, d, e, f, g, h, i) -> a < b && b < c && c < d && d < e && e < f && f < g && g < h && h < i)
+
   let tests = [
     (*test_fac_issue59;*)
     big_bound_issue59;
@@ -278,6 +396,14 @@ module Shrink = struct
     list_equal_dupl;
     list_unique_elems;
     tree_contains_only_42;
+    test_tup2;
+    test_tup3;
+    test_tup4;
+    test_tup5;
+    test_tup6;
+    test_tup7;
+    test_tup8;
+    test_tup9;
   ]
 end
 

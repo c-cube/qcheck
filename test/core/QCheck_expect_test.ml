@@ -223,6 +223,60 @@ module Generator = struct
          && Array.for_all (fun k -> 0 < k) arr
          && Array.fold_left (+) 0 arr = n)
 
+  let test_tup2 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1): x = (0, 1)"
+      (tup2 (always 0) (always 1))
+      (fun x -> x = (0, 1))
+
+  let test_tup3 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1, 2): x = (0, 1, 2)"
+      (tup3 (always 0) (always 1) (always 2))
+      (fun x -> x = (0, 1, 2))
+
+  let test_tup4 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1, 2, 3): x = (0, 1, 2, 3)"
+      (tup4 (always 0) (always 1) (always 2) (always 3))
+      (fun x -> x = (0, 1, 2, 3))
+
+  let test_tup5 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1, 2, 3, 4): x = (0, 1, 2, 3, 4)"
+      (tup5 (always 0) (always 1) (always 2) (always 3) (always 4))
+      (fun x -> x = (0, 1, 2, 3, 4))
+
+  let test_tup6 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1, 2, 3, 4, 5): x = (0, 1, 2, 3, 4, 5)"
+      (tup6 (always 0) (always 1) (always 2) (always 3) (always 4) (always 5))
+      (fun x -> x = (0, 1, 2, 3, 4, 5))
+
+  let test_tup7 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1, 2, 3, 4, 5, 6): x = (0, 1, 2, 3, 4, 5, 6)"
+      (tup7
+         (always 0) (always 1) (always 2) (always 3) (always 4)
+         (always 5) (always 6))
+      (fun x -> x = (0, 1, 2, 3, 4, 5, 6))
+
+  let test_tup8 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1, 2, 3, 4, 5, 6, 7): x = (0, 1, 2, 3, 4, 5, 6, 7)"
+      (tup8
+         (always 0) (always 1) (always 2) (always 3) (always 4)
+         (always 5) (always 6) (always 7))
+      (fun x -> x = (0, 1, 2, 3, 4, 5, 6, 7))
+
+  let test_tup9 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1, 2, 3, 4, 5, 6, 7, 8): x = (0, 1, 2, 3, 4, 5, 6, 7, 8)"
+      (tup9
+         (always 0) (always 1) (always 2) (always 3) (always 4)
+         (always 5) (always 6) (always 7) (always 8))
+      (fun x -> x = (0, 1, 2, 3, 4, 5, 6, 7, 8))
+
   let tests = [
     char_dist_issue_23;
     char_test;
@@ -238,6 +292,14 @@ module Generator = struct
     nat_split_n_way;
     nat_split_smaller;
     pos_split;
+    test_tup2;
+    test_tup3;
+    test_tup4;
+    test_tup5;
+    test_tup6;
+    test_tup7;
+    test_tup8;
+    test_tup9;
   ]
 end
 
@@ -339,6 +401,54 @@ module Shrink = struct
       (fun xs -> let ys = List.sort_uniq Int.compare xs in
                  print_list xs; List.length xs = List.length ys)
 
+  let test_tup2 =
+    Test.make
+      ~name:"forall (a, b) in nat: a < b"
+      (tup2 small_int small_int)
+      (fun (a, b) -> a < b)
+
+  let test_tup3 =
+    Test.make
+      ~name:"forall (a, b, c) in nat: a < b < c"
+      (tup3 small_int small_int small_int)
+      (fun (a, b, c) -> a < b && b < c)
+
+  let test_tup4 =
+    Test.make
+      ~name:"forall (a, b, c, d) in nat: a < b < c < d"
+      (tup4 small_int small_int small_int small_int)
+      (fun (a, b, c, d) -> a < b && b < c && c < d)
+
+  let test_tup5 =
+    Test.make
+      ~name:"forall (a, b, c, d, e) in nat: a < b < c < d < e"
+      (tup5 small_int small_int small_int small_int small_int)
+      (fun (a, b, c, d, e) -> a < b && b < c && c < d && d < e)
+
+  let test_tup6 =
+    Test.make
+      ~name:"forall (a, b, c, d, e, f) in nat: a < b < c < d < e < f"
+      (tup6 small_int small_int small_int small_int small_int small_int)
+      (fun (a, b, c, d, e, f) -> a < b && b < c && c < d && d < e && e < f)
+
+  let test_tup7 =
+    Test.make
+      ~name:"forall (a, b, c, d, e, f, g) in nat: a < b < c < d < e < f < g"
+      (tup7 small_int small_int small_int small_int small_int small_int small_int)
+      (fun (a, b, c, d, e, f, g) -> a < b && b < c && c < d && d < e && e < f && f < g)
+
+  let test_tup8 =
+    Test.make
+      ~name:"forall (a, b, c, d, e, f, g, h) in nat: a < b < c < d < e < f < g < h"
+      (tup8 small_int small_int small_int small_int small_int small_int small_int small_int)
+      (fun (a, b, c, d, e, f, g, h) -> a < b && b < c && c < d && d < e && e < f && f < g && g < h)
+
+  let test_tup9 =
+    Test.make
+      ~name:"forall (a, b, c, d, e, f, g, h, i) in nat: a < b < c < d < e < f < g < h < i"
+      (tup9 small_int small_int small_int small_int small_int small_int small_int small_int small_int)
+      (fun (a, b, c, d, e, f, g, h, i) -> a < b && b < c && c < d && d < e && e < f && f < g && g < h && h < i)
+
   let tests = [
     (*test_fac_issue59;*)
     big_bound_issue59;
@@ -357,6 +467,14 @@ module Shrink = struct
     list_shorter_4332;
     list_equal_dupl;
     list_unique_elems;
+    test_tup2;
+    test_tup3;
+    test_tup4;
+    test_tup5;
+    test_tup6;
+    test_tup7;
+    test_tup8;
+    test_tup9;
   ]
 end
 

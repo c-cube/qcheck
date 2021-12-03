@@ -277,6 +277,54 @@ Test lists have unique elems failed (7 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
+Test forall (a, b) in nat: a < b failed (13 shrink steps):
+
+(0, 0)
+
+--- Failure --------------------------------------------------------------------
+
+Test forall (a, b, c) in nat: a < b < c failed (15 shrink steps):
+
+(0, 0, 0)
+
+--- Failure --------------------------------------------------------------------
+
+Test forall (a, b, c, d) in nat: a < b < c < d failed (23 shrink steps):
+
+(0, 0, 0, 0)
+
+--- Failure --------------------------------------------------------------------
+
+Test forall (a, b, c, d, e) in nat: a < b < c < d < e failed (28 shrink steps):
+
+(0, 0, 0, 0, 0)
+
+--- Failure --------------------------------------------------------------------
+
+Test forall (a, b, c, d, e, f) in nat: a < b < c < d < e < f failed (30 shrink steps):
+
+(0, 0, 0, 0, 0, 0)
+
+--- Failure --------------------------------------------------------------------
+
+Test forall (a, b, c, d, e, f, g) in nat: a < b < c < d < e < f < g failed (31 shrink steps):
+
+(0, 0, 0, 0, 0, 0, 0)
+
+--- Failure --------------------------------------------------------------------
+
+Test forall (a, b, c, d, e, f, g, h) in nat: a < b < c < d < e < f < g < h failed (35 shrink steps):
+
+(0, 0, 0, 0, 0, 0, 0, 0)
+
+--- Failure --------------------------------------------------------------------
+
+Test forall (a, b, c, d, e, f, g, h, i) in nat: a < b < c < d < e < f < g < h < i failed (42 shrink steps):
+
+(0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+--- Failure --------------------------------------------------------------------
+
 Test fail_pred_map_commute failed (127 shrink steps):
 
 ([3], {_ -> 0}, {3 -> false; _ -> true})
@@ -889,7 +937,7 @@ stats dist:
    4150517416584649600.. 4611686018427387903: #################                                               189
 ================================================================================
 1 warning(s)
-failure (26 tests failed, 1 tests errored, ran 73 tests)
+failure (34 tests failed, 1 tests errored, ran 89 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
