@@ -11,5 +11,7 @@ echo "$OUT" | grep -v 'This run has ID' \
   | grep -v 'Logs saved to' \
   | grep -v 'Raised at ' \
   | grep -v 'Called from ' \
-  | sed 's/! in .*s\./!/'
+  | sed 's/! in .*s\./!/' \
+  | sed 's/[ \t]*$//g' \
+  | tr -s "\n"
 exit $CODE

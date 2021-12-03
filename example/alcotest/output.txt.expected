@@ -1,22 +1,14 @@
 qcheck random seed: 1234
 Testing `my test'.
-
   [OK]          suite          0   list_rev_is_involutive.
 > [FAIL]        suite          1   fail_sort_id.
   [FAIL]        suite          2   error_raise_exn.
   [FAIL]        suite          3   fail_check_err_message.
   [OK]          suite          4   tree_rev_is_involutive.
-
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │ [FAIL]        suite          1   fail_sort_id.                               │
 └──────────────────────────────────────────────────────────────────────────────┘
-
 test `fail_sort_id` failed on ≥ 1 cases: [1; 0] (after 20 shrink steps)
-                                           
 [exception] test `fail_sort_id` failed on ≥ 1 cases: [1; 0] (after 20 shrink steps)
-                                           
-            
-
  ──────────────────────────────────────────────────────────────────────────────
-
 3 failures! 5 tests run.
