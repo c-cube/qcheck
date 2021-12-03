@@ -353,6 +353,30 @@ module Gen : sig
   (** Generates quadruples.
       @since 0.5.1 *)
 
+   (** {3 Tuple of generators} *)
+
+  (** {4 Shrinks on [gen1], then [gen2], then ... } *)
+
+  val tup2 : 'a t -> 'b t -> ('a * 'b) t
+
+  val tup3 : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
+
+  val tup4 : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
+
+  val tup5 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> ('a * 'b * 'c * 'd * 'e) t
+
+  val tup6 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t ->
+    ('a * 'b * 'c * 'd * 'e * 'f) t
+
+  val tup7 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t ->
+    ('a * 'b * 'c * 'd * 'e * 'f * 'g) t
+
+  val tup8 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t ->
+    ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h) t
+
+  val tup9 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t -> 'i t ->
+    ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h * 'i) t
+
   val char : char t
   (** Generates characters upto character code 255. *)
 
@@ -567,6 +591,34 @@ module Print : sig
   val comap : ('a -> 'b) -> 'b t -> 'a t
   (** [comap f p] maps [p], a printer of type ['b], to a printer of type ['a] by
       first converting a printed value using [f : 'a -> 'b]. *)
+
+  val tup2 : 'a t -> 'b t -> ('a * 'b) t
+  (** 2-tuple printer. Expects printers for each component. *)
+
+  val tup3 : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
+  (** 3-tuple printer. Expects printers for each component. *)
+
+  val tup4 : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
+  (** 4-tuple printer. Expects printers for each component. *)
+
+  val tup5 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> ('a * 'b * 'c * 'd * 'e) t
+  (** 5-tuple printer. Expects printers for each component. *)
+
+  val tup6 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t ->
+    ('a * 'b * 'c * 'd * 'e * 'f) t
+  (** 6-tuple printer. Expects printers for each component. *)
+
+  val tup7 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t ->
+    ('a * 'b * 'c * 'd * 'e * 'f * 'g) t
+  (** 7-tuple printer. Expects printers for each component. *)
+
+  val tup8 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t ->
+    ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h) t
+  (** 8-tuple printer. Expects printers for each component. *)
+
+  val tup9 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t -> 'i t ->
+    ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h * 'i) t
+  (** 9-tuple printer. Expects printers for each component. *)
 end
 
 (** {2 Iterators}
@@ -682,6 +734,38 @@ module Shrink : sig
 
   val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
   (** Similar to {!pair} *)
+
+  val tup2 : 'a t -> 'b t -> ('a * 'b) t
+  (** [tup2 a b] uses [a] to shrink the first element of tuples,
+      then tries to shrink the second element using [b].
+      It is often better, when generating tuples, to put the "simplest"
+      element first (atomic type rather than list, etc.) because it will be
+      shrunk earlier. In particular, putting functions last might help. *)
+
+  val tup3 : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
+  (** Similar to {!tup2} *)
+
+  val tup4 : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
+  (** Similar to {!tup2} *)
+
+  val tup5 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> ('a * 'b * 'c * 'd * 'e) t
+  (** Similar to {!tup2} *)
+
+  val tup6 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t ->
+    ('a * 'b * 'c * 'd * 'e * 'f) t
+  (** Similar to {!tup2} *)
+
+  val tup7 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t ->
+    ('a * 'b * 'c * 'd * 'e * 'f * 'g) t
+  (** Similar to {!tup2} *)
+
+  val tup8 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t ->
+    ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h) t
+  (** Similar to {!tup2} *)
+
+  val tup9 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t -> 'i t ->
+    ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h * 'i) t
+  (** Similar to {!tup2} *)
 end
 
 (** {2 Observe Values} *)
@@ -1173,6 +1257,101 @@ val triple : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> ('a * 'b * 'c) arbi
 val quad : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> 'd arbitrary -> ('a * 'b * 'c * 'd) arbitrary
 (** Combines four generators into a generator of 4-tuples.
     Order matters for shrinking, see {!Shrink.pair} and the likes *)
+
+(** {3 Tuple of generators} *)
+
+(** {4 Shrinks on [gen1], then [gen2], then ... } *)
+
+val tup2 :
+  'a arbitrary ->
+  'b arbitrary ->
+  ('a * 'b) arbitrary
+(** Combines two generators into a 2-tuple generator.
+    Order of elements can matter (w.r.t shrinking, see {!Shrink.tup2})
+    Prints as many elements as available printers *)
+
+val tup3 :
+  'a arbitrary ->
+  'b arbitrary ->
+  'c arbitrary ->
+  ('a * 'b * 'c) arbitrary
+(** Combines two generators into a 3-tuple generator.
+    Order of elements can matter (w.r.t shrinking, see {!Shrink.tup2})
+    Prints as many elements as available printers *)
+
+val tup4 :
+  'a arbitrary ->
+  'b arbitrary ->
+  'c arbitrary ->
+  'd arbitrary ->
+  ('a * 'b * 'c * 'd) arbitrary
+(** Combines two generators into a 4-tuple generator.
+    Order of elements can matter (w.r.t shrinking, see {!Shrink.tup2})
+    Prints as many elements as available printers *)
+
+val tup5 : 'a arbitrary ->
+  'b arbitrary ->
+  'c arbitrary ->
+  'd arbitrary ->
+  'e arbitrary ->
+  ('a * 'b * 'c * 'd * 'e) arbitrary
+(** Combines two generators into a 5-tuple generator.
+    Order of elements can matter (w.r.t shrinking, see {!Shrink.tup2})
+    Prints as many elements as available printers *)
+
+val tup6 :
+  'a arbitrary ->
+  'b arbitrary ->
+  'c arbitrary ->
+  'd arbitrary ->
+  'e arbitrary ->
+  'f arbitrary ->
+  ('a * 'b * 'c * 'd * 'e * 'f) arbitrary
+(** Combines two generators into a 6-tuple generator.
+    Order of elements can matter (w.r.t shrinking, see {!Shrink.tup2})
+    Prints as many elements as available printers *)
+
+val tup7 :
+  'a arbitrary ->
+  'b arbitrary ->
+  'c arbitrary ->
+  'd arbitrary ->
+  'e arbitrary ->
+  'f arbitrary ->
+  'g arbitrary ->
+  ('a * 'b * 'c * 'd * 'e * 'f * 'g) arbitrary
+(** Combines two generators into a 7-tuple generator.
+    Order of elements can matter (w.r.t shrinking, see {!Shrink.tup2})
+    Prints as many elements as available printers *)
+
+val tup8 :
+  'a arbitrary ->
+  'b arbitrary ->
+  'c arbitrary ->
+  'd arbitrary ->
+  'e arbitrary ->
+  'f arbitrary ->
+  'g arbitrary ->
+  'h arbitrary ->
+  ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h) arbitrary
+(** Combines two generators into a 8-tuple generator.
+    Order of elements can matter (w.r.t shrinking, see {!Shrink.tup2})
+    Prints as many elements as available printers *)
+
+val tup9 :
+  'a arbitrary ->
+  'b arbitrary ->
+  'c arbitrary ->
+  'd arbitrary ->
+  'e arbitrary ->
+  'f arbitrary ->
+  'g arbitrary ->
+  'h arbitrary ->
+  'i arbitrary ->
+  ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h * 'i) arbitrary
+(** Combines two generators into a 9-tuple generator.
+    Order of elements can matter (w.r.t shrinking, see {!Shrink.tup2})
+    Prints as many elements as available printers *)
 
 val option : ?ratio:float -> 'a arbitrary -> 'a option arbitrary
 (** Choose between returning Some random value with optional ratio, or None. *)

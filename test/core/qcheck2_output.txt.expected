@@ -348,6 +348,54 @@ Leaf 0
 
 --- Failure --------------------------------------------------------------------
 
+Test forall (a, b) in nat: a < b failed (6 shrink steps):
+
+(0, 0)
+
+--- Failure --------------------------------------------------------------------
+
+Test forall (a, b, c) in nat: a < b < c failed (3 shrink steps):
+
+(0, 0, 0)
+
+--- Failure --------------------------------------------------------------------
+
+Test forall (a, b, c, d) in nat: a < b < c < d failed (4 shrink steps):
+
+(0, 0, 0, 0)
+
+--- Failure --------------------------------------------------------------------
+
+Test forall (a, b, c, d, e) in nat: a < b < c < d < e failed (5 shrink steps):
+
+(0, 0, 0, 0, 0)
+
+--- Failure --------------------------------------------------------------------
+
+Test forall (a, b, c, d, e, f) in nat: a < b < c < d < e < f failed (6 shrink steps):
+
+(0, 0, 0, 0, 0, 0)
+
+--- Failure --------------------------------------------------------------------
+
+Test forall (a, b, c, d, e, f, g) in nat: a < b < c < d < e < f < g failed (7 shrink steps):
+
+(0, 0, 0, 0, 0, 0, 0)
+
+--- Failure --------------------------------------------------------------------
+
+Test forall (a, b, c, d, e, f, g, h) in nat: a < b < c < d < e < f < g < h failed (8 shrink steps):
+
+(0, 0, 0, 0, 0, 0, 0, 0)
+
+--- Failure --------------------------------------------------------------------
+
+Test forall (a, b, c, d, e, f, g, h, i) in nat: a < b < c < d < e < f < g < h < i failed (9 shrink steps):
+
+(0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+--- Failure --------------------------------------------------------------------
+
 Test fail_pred_map_commute failed (16 shrink steps):
 
 ([2], {_ -> 0}, {1 -> false; 2 -> true; _ -> false})
@@ -934,7 +982,7 @@ stats dist:
    4150517416584649600.. 4611686018427387903: #################                                               189
 ================================================================================
 1 warning(s)
-failure (27 tests failed, 1 tests errored, ran 67 tests)
+failure (35 tests failed, 1 tests errored, ran 83 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++

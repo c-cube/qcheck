@@ -81,6 +81,16 @@ module Overall = struct
       (fun x ->
          QCheck.assume (x mod 100 = 1);
          true)
+
+  let tests = [
+    passing;
+    failing;
+    error;
+    collect;
+    stats;
+    bad_assume_warn;
+    bad_assume_fail;
+  ]
 end
 
 (* positive tests of the various generators
@@ -212,6 +222,85 @@ module Generator = struct
          Array.length arr = m
          && Array.for_all (fun k -> 0 < k) arr
          && Array.fold_left (+) 0 arr = n)
+
+  let test_tup2 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1): x = (0, 1)"
+      (tup2 (always 0) (always 1))
+      (fun x -> x = (0, 1))
+
+  let test_tup3 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1, 2): x = (0, 1, 2)"
+      (tup3 (always 0) (always 1) (always 2))
+      (fun x -> x = (0, 1, 2))
+
+  let test_tup4 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1, 2, 3): x = (0, 1, 2, 3)"
+      (tup4 (always 0) (always 1) (always 2) (always 3))
+      (fun x -> x = (0, 1, 2, 3))
+
+  let test_tup5 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1, 2, 3, 4): x = (0, 1, 2, 3, 4)"
+      (tup5 (always 0) (always 1) (always 2) (always 3) (always 4))
+      (fun x -> x = (0, 1, 2, 3, 4))
+
+  let test_tup6 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1, 2, 3, 4, 5): x = (0, 1, 2, 3, 4, 5)"
+      (tup6 (always 0) (always 1) (always 2) (always 3) (always 4) (always 5))
+      (fun x -> x = (0, 1, 2, 3, 4, 5))
+
+  let test_tup7 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1, 2, 3, 4, 5, 6): x = (0, 1, 2, 3, 4, 5, 6)"
+      (tup7
+         (always 0) (always 1) (always 2) (always 3) (always 4)
+         (always 5) (always 6))
+      (fun x -> x = (0, 1, 2, 3, 4, 5, 6))
+
+  let test_tup8 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1, 2, 3, 4, 5, 6, 7): x = (0, 1, 2, 3, 4, 5, 6, 7)"
+      (tup8
+         (always 0) (always 1) (always 2) (always 3) (always 4)
+         (always 5) (always 6) (always 7))
+      (fun x -> x = (0, 1, 2, 3, 4, 5, 6, 7))
+
+  let test_tup9 =
+    Test.make ~count:10
+      ~name:"forall x in (0, 1, 2, 3, 4, 5, 6, 7, 8): x = (0, 1, 2, 3, 4, 5, 6, 7, 8)"
+      (tup9
+         (always 0) (always 1) (always 2) (always 3) (always 4)
+         (always 5) (always 6) (always 7) (always 8))
+      (fun x -> x = (0, 1, 2, 3, 4, 5, 6, 7, 8))
+
+  let tests = [
+    char_dist_issue_23;
+    char_test;
+    nat_test;
+    string_test;
+    list_test;
+    list_repeat_test;
+    array_repeat_test;
+    passing_tree_rev;
+    nat_split2_spec;
+    pos_split2_spec;
+    range_subset_spec;
+    nat_split_n_way;
+    nat_split_smaller;
+    pos_split;
+    test_tup2;
+    test_tup3;
+    test_tup4;
+    test_tup5;
+    test_tup6;
+    test_tup7;
+    test_tup8;
+    test_tup9;
+  ]
 end
 
 (* negative tests that exercise shrinking behaviour *)
@@ -311,6 +400,82 @@ module Shrink = struct
       (list small_int)
       (fun xs -> let ys = List.sort_uniq Int.compare xs in
                  print_list xs; List.length xs = List.length ys)
+
+  let test_tup2 =
+    Test.make
+      ~name:"forall (a, b) in nat: a < b"
+      (tup2 small_int small_int)
+      (fun (a, b) -> a < b)
+
+  let test_tup3 =
+    Test.make
+      ~name:"forall (a, b, c) in nat: a < b < c"
+      (tup3 small_int small_int small_int)
+      (fun (a, b, c) -> a < b && b < c)
+
+  let test_tup4 =
+    Test.make
+      ~name:"forall (a, b, c, d) in nat: a < b < c < d"
+      (tup4 small_int small_int small_int small_int)
+      (fun (a, b, c, d) -> a < b && b < c && c < d)
+
+  let test_tup5 =
+    Test.make
+      ~name:"forall (a, b, c, d, e) in nat: a < b < c < d < e"
+      (tup5 small_int small_int small_int small_int small_int)
+      (fun (a, b, c, d, e) -> a < b && b < c && c < d && d < e)
+
+  let test_tup6 =
+    Test.make
+      ~name:"forall (a, b, c, d, e, f) in nat: a < b < c < d < e < f"
+      (tup6 small_int small_int small_int small_int small_int small_int)
+      (fun (a, b, c, d, e, f) -> a < b && b < c && c < d && d < e && e < f)
+
+  let test_tup7 =
+    Test.make
+      ~name:"forall (a, b, c, d, e, f, g) in nat: a < b < c < d < e < f < g"
+      (tup7 small_int small_int small_int small_int small_int small_int small_int)
+      (fun (a, b, c, d, e, f, g) -> a < b && b < c && c < d && d < e && e < f && f < g)
+
+  let test_tup8 =
+    Test.make
+      ~name:"forall (a, b, c, d, e, f, g, h) in nat: a < b < c < d < e < f < g < h"
+      (tup8 small_int small_int small_int small_int small_int small_int small_int small_int)
+      (fun (a, b, c, d, e, f, g, h) -> a < b && b < c && c < d && d < e && e < f && f < g && g < h)
+
+  let test_tup9 =
+    Test.make
+      ~name:"forall (a, b, c, d, e, f, g, h, i) in nat: a < b < c < d < e < f < g < h < i"
+      (tup9 small_int small_int small_int small_int small_int small_int small_int small_int small_int)
+      (fun (a, b, c, d, e, f, g, h, i) -> a < b && b < c && c < d && d < e && e < f && f < g && g < h && h < i)
+
+  let tests = [
+    (*test_fac_issue59;*)
+    big_bound_issue59;
+    long_shrink;
+    ints_arent_0_mod_3;
+    ints_are_0;
+    ints_smaller_209609;
+    nats_smaller_5001;
+    char_is_never_abcdef;
+    strings_are_empty;
+    string_never_has_000_char;
+    string_never_has_255_char;
+    lists_are_empty_issue_64;
+    list_shorter_10;
+    list_shorter_432;
+    list_shorter_4332;
+    list_equal_dupl;
+    list_unique_elems;
+    test_tup2;
+    test_tup3;
+    test_tup4;
+    test_tup5;
+    test_tup6;
+    test_tup7;
+    test_tup8;
+    test_tup9;
+  ]
 end
 
 (* tests function generator and shrinker *)
@@ -384,6 +549,15 @@ module Function = struct
          let f = Fn.apply f in
          List.fold_left f acc (is @ js)
          = List.fold_left f (List.fold_left f acc is) is) (*Typo*)
+
+  let tests = [
+    fail_pred_map_commute;
+    fail_pred_strings;
+    prop_foldleft_foldright;
+    prop_foldleft_foldright_uncurry;
+    prop_foldleft_foldright_uncurry_funlast;
+    fold_left_test;
+  ]
 end
 
 (* tests of (inner) find_example(_gen) behaviour *)
@@ -407,6 +581,12 @@ module FindExample = struct
   let find_ex_uncaught_issue_99_2_succeed =
     Test.make ~name:"should_succeed_#99_2" ~count:10
       int (fun i -> i <= max_int)
+
+  let tests = [
+    find_ex;
+    find_ex_uncaught_issue_99_1_fail;
+    find_ex_uncaught_issue_99_2_succeed;
+  ]
 end
 
 (* tests of statistics and histogram display *)
@@ -475,68 +655,31 @@ module Stats = struct
     Test.make ~name:"range_subset_spec" ~count:5_000
       (add_stat ("dist", fun a -> a.(0)) (make (Gen.range_subset ~size:1 0 20)))
       (fun a -> Array.length a = 1)
+
+  let tests =
+    [
+      bool_dist;
+      char_dist;
+      tree_depth_test;
+      range_subset_test
+    ]
+    @ string_len_tests
+    @ list_len_tests
+    @ array_len_tests
+    @ int_dist_tests
 end
 
 (* Calling runners *)
 
 let () = QCheck_base_runner.set_seed 1234
 let _ =
-  QCheck_base_runner.run_tests ~colors:false ([
-    Overall.passing;
-    Overall.failing;
-    Overall.error;
-    Overall.collect;
-    Overall.stats;
-    Overall.bad_assume_warn;
-    Overall.bad_assume_fail;
-    Generator.char_dist_issue_23;
-    Generator.char_test;
-    Generator.nat_test;
-    Generator.string_test;
-    Generator.list_test;
-    Generator.list_repeat_test;
-    Generator.array_repeat_test;
-    Generator.passing_tree_rev;
-    Generator.nat_split2_spec;
-    Generator.pos_split2_spec;
-    Generator.range_subset_spec;
-    Generator.nat_split_n_way;
-    Generator.nat_split_smaller;
-    Generator.pos_split;
-    (*Shrink.test_fac_issue59;*)
-    Shrink.big_bound_issue59;
-    Shrink.long_shrink;
-    Shrink.ints_arent_0_mod_3;
-    Shrink.ints_are_0;
-    Shrink.ints_smaller_209609;
-    Shrink.nats_smaller_5001;
-    Shrink.char_is_never_abcdef;
-    Shrink.strings_are_empty;
-    Shrink.string_never_has_000_char;
-    Shrink.string_never_has_255_char;
-    Shrink.lists_are_empty_issue_64;
-    Shrink.list_shorter_10;
-    Shrink.list_shorter_432;
-    Shrink.list_shorter_4332;
-    Shrink.list_equal_dupl;
-    Shrink.list_unique_elems;
-    Function.fail_pred_map_commute;
-    Function.fail_pred_strings;
-    Function.prop_foldleft_foldright;
-    Function.prop_foldleft_foldright_uncurry;
-    Function.prop_foldleft_foldright_uncurry_funlast;
-    Function.fold_left_test;
-    FindExample.find_ex;
-    FindExample.find_ex_uncaught_issue_99_1_fail;
-    FindExample.find_ex_uncaught_issue_99_2_succeed;
-    Stats.bool_dist;
-    Stats.char_dist;
-    Stats.tree_depth_test;
-    Stats.range_subset_test]
-    @ Stats.string_len_tests
-    @ Stats.list_len_tests
-    @ Stats.array_len_tests
-    @ Stats.int_dist_tests)
+  QCheck_base_runner.run_tests ~colors:false (
+    Overall.tests @
+    Generator.tests @
+    Shrink.tests @
+    Function.tests @
+    FindExample.tests @
+    Stats.tests)
 
 let () = QCheck_base_runner.set_seed 153870556
 let _  = QCheck_base_runner.run_tests ~colors:false [Stats.int_dist_empty_bucket]
