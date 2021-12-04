@@ -1275,7 +1275,7 @@ val tup3 :
   'b arbitrary ->
   'c arbitrary ->
   ('a * 'b * 'c) arbitrary
-(** Combines two generators into a 3-tuple generator.
+(** Combines three generators into a 3-tuple generator.
     Order of elements can matter (w.r.t shrinking, see {!Shrink.tup2})
     Prints as many elements as available printers *)
 
@@ -1285,7 +1285,7 @@ val tup4 :
   'c arbitrary ->
   'd arbitrary ->
   ('a * 'b * 'c * 'd) arbitrary
-(** Combines two generators into a 4-tuple generator.
+(** Combines four generators into a 4-tuple generator.
     Order of elements can matter (w.r.t shrinking, see {!Shrink.tup2})
     Prints as many elements as available printers *)
 
@@ -1295,7 +1295,7 @@ val tup5 : 'a arbitrary ->
   'd arbitrary ->
   'e arbitrary ->
   ('a * 'b * 'c * 'd * 'e) arbitrary
-(** Combines two generators into a 5-tuple generator.
+(** Combines five generators into a 5-tuple generator.
     Order of elements can matter (w.r.t shrinking, see {!Shrink.tup2})
     Prints as many elements as available printers *)
 
@@ -1307,7 +1307,7 @@ val tup6 :
   'e arbitrary ->
   'f arbitrary ->
   ('a * 'b * 'c * 'd * 'e * 'f) arbitrary
-(** Combines two generators into a 6-tuple generator.
+(** Combines six generators into a 6-tuple generator.
     Order of elements can matter (w.r.t shrinking, see {!Shrink.tup2})
     Prints as many elements as available printers *)
 
@@ -1320,7 +1320,7 @@ val tup7 :
   'f arbitrary ->
   'g arbitrary ->
   ('a * 'b * 'c * 'd * 'e * 'f * 'g) arbitrary
-(** Combines two generators into a 7-tuple generator.
+(** Combines seven generators into a 7-tuple generator.
     Order of elements can matter (w.r.t shrinking, see {!Shrink.tup2})
     Prints as many elements as available printers *)
 
@@ -1334,7 +1334,7 @@ val tup8 :
   'g arbitrary ->
   'h arbitrary ->
   ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h) arbitrary
-(** Combines two generators into a 8-tuple generator.
+(** Combines eight generators into a 8-tuple generator.
     Order of elements can matter (w.r.t shrinking, see {!Shrink.tup2})
     Prints as many elements as available printers *)
 
@@ -1349,7 +1349,7 @@ val tup9 :
   'h arbitrary ->
   'i arbitrary ->
   ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h * 'i) arbitrary
-(** Combines two generators into a 9-tuple generator.
+(** Combines nine generators into a 9-tuple generator.
     Order of elements can matter (w.r.t shrinking, see {!Shrink.tup2})
     Prints as many elements as available printers *)
 
