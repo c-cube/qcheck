@@ -21,11 +21,11 @@ let bool loc = [%expr QCheck.Gen.bool]
 
 let float loc = [%expr QCheck.Gen.float]
 
-let int32 loc = [%expr QCheck.Gen.int32]
+let int32 loc = [%expr QCheck.Gen.ui32]
 
-let int64 loc = [%expr QCheck.Gen.int64]
+let int64 loc = [%expr QCheck.Gen.ui64]
 
-let option ~loc e = [%expr QCheck.Gen.option [%e e]]
+let option ~loc e = [%expr QCheck.Gen.opt [%e e]]
 
 let list ~loc e = [%expr QCheck.Gen.list [%e e]]
 
