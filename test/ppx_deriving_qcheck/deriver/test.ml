@@ -179,19 +179,8 @@ let test_alpha () =
             (fun (gen0, gen1) -> (gen0, gen1))
             (QCheck.Gen.pair gen_left gen_right)];
       [%stri
-        let gen_tree gen_a =
-          QCheck.Gen.sized
-          @@ QCheck.Gen.fix (fun self -> function
-               | 0 -> QCheck.Gen.map (fun gen0 -> Leaf gen0) gen_a
-               | n ->
-                   QCheck.Gen.frequency
-                     [
-                       (1, QCheck.Gen.map (fun gen0 -> Leaf gen0) gen_a);
-                       ( 1,
-                         QCheck.Gen.map
-                           (fun (gen0, gen1) -> Node (gen0, gen1))
-                           (QCheck.Gen.pair (self (n / 2)) (self (n / 2))) );
-                     ])];
+       let gen_int_tree = gen_tree QCheck.Gen.int
+      ]
     ]
   in
   let actual =
@@ -203,7 +192,7 @@ let test_alpha () =
            [%stri type 'a t = A of 'a];
            [%stri type ('a, 'b) t = A of 'a * 'b];
            [%stri type ('left, 'right) t = 'left * 'right];
-           [%stri type 'a tree = Leaf of 'a | Node of 'a tree * 'a tree];
+           [%stri type int_tree = int tree]
          ]
   in
   check_eq ~expected ~actual "deriving alpha"
@@ -374,30 +363,6 @@ let test_variant () =
              ]
             : t QCheck.Gen.t)];
       [%stri
-        let gen =
-          (QCheck.Gen.sized
-           @@ QCheck.Gen.fix (fun self -> function
-                | 0 ->
-                    QCheck.Gen.frequency
-                      [
-                        (1, QCheck.Gen.pure `A);
-                        (1, QCheck.Gen.map (fun gen0 -> `B gen0) QCheck.Gen.int);
-                        ( 1,
-                          QCheck.Gen.map (fun gen0 -> `C gen0) QCheck.Gen.string
-                        );
-                      ]
-                | n ->
-                    QCheck.Gen.frequency
-                      [
-                        (1, QCheck.Gen.pure `A);
-                        (1, QCheck.Gen.map (fun gen0 -> `B gen0) QCheck.Gen.int);
-                        ( 1,
-                          QCheck.Gen.map (fun gen0 -> `C gen0) QCheck.Gen.string
-                        );
-                        (1, QCheck.Gen.map (fun gen0 -> `D gen0) (self (n / 2)));
-                      ])
-            : t QCheck.Gen.t)];
-      [%stri
         let gen_t' =
           (QCheck.Gen.frequency [ (1, QCheck.Gen.pure `B); (1, gen) ]
             : t' QCheck.Gen.t)];
@@ -408,7 +373,6 @@ let test_variant () =
     @@ extract'
          [
            [%stri type t = [ `A | `B of int | `C of string ]];
-           [%stri type t = [ `A | `B of int | `C of string | `D of t ]];
            [%stri type t' = [ `B | t ]];
          ]
   in
@@ -418,159 +382,118 @@ let test_tree () =
   let expected =
     [
       [%stri
-        let gen_tree =
-          QCheck.Gen.sized
-          @@ QCheck.Gen.fix (fun self -> function
-               | 0 -> QCheck.Gen.pure Leaf
-               | n ->
-                   QCheck.Gen.frequency
-                     [
-                       (1, QCheck.Gen.pure Leaf);
-                       ( 1,
-                         QCheck.Gen.map
-                           (fun (gen0, gen1, gen2) -> Node (gen0, gen1, gen2))
-                           (QCheck.Gen.triple
-                              QCheck.Gen.int
-                              (self (n / 2))
-                              (self (n / 2))) );
-                     ])];
+       let rec gen_tree_sized gen_a n =
+         match n with
+         | 0 -> QCheck.Gen.pure Leaf
+         | n ->
+            QCheck.Gen.frequency
+              [
+                (1, QCheck.Gen.pure Leaf);
+                ( 1,
+                  QCheck.Gen.map
+                    (fun (gen0, gen1, gen2) -> Node (gen0, gen1, gen2))
+                    (QCheck.Gen.triple
+                       gen_a
+                       ((gen_tree_sized gen_a) (n / 2))
+                       ((gen_tree_sized gen_a) (n / 2))) );
+              ]
+      ];
       [%stri
-        let gen_expr =
-          QCheck.Gen.sized
-          @@ QCheck.Gen.fix (fun self -> function
-               | 0 -> QCheck.Gen.map (fun gen0 -> Value gen0) QCheck.Gen.int
-               | n ->
-                   QCheck.Gen.frequency
-                     [
-                       ( 1,
-                         QCheck.Gen.map (fun gen0 -> Value gen0) QCheck.Gen.int
-                       );
-                       ( 1,
-                         QCheck.Gen.map
-                           (fun (gen0, gen1, gen2) -> If (gen0, gen1, gen2))
-                           (QCheck.Gen.triple
-                              (self (n / 2))
-                              (self (n / 2))
-                              (self (n / 2))) );
-                       ( 1,
-                         QCheck.Gen.map
-                           (fun (gen0, gen1) -> Eq (gen0, gen1))
-                           (QCheck.Gen.pair (self (n / 2)) (self (n / 2))) );
-                       ( 1,
-                         QCheck.Gen.map
-                           (fun (gen0, gen1) -> Lt (gen0, gen1))
-                           (QCheck.Gen.pair (self (n / 2)) (self (n / 2))) );
-                     ])];
+       let gen_tree gen_a = QCheck.Gen.sized @@ (gen_tree_sized gen_a)
+      ];
     ]
   in
   let actual =
-    f'
-    @@ extract'
-         [
-           [%stri type tree = Leaf | Node of int * tree * tree];
-           [%stri
-             type expr =
-               | Value of int
-               | If of expr * expr * expr
-               | Eq of expr * expr
-               | Lt of expr * expr];
-         ]
+    f
+    @@ extract [%stri type 'a tree = Leaf | Node of 'a * 'a tree * 'a tree];
   in
   check_eq ~expected ~actual "deriving tree"
 
-let test_recursive () =
+let test_expr () =
   let expected =
     [
       [%stri
-        let rec gen_expr () =
-          QCheck.Gen.sized
-          @@ QCheck.Gen.fix (fun self -> function
-               | 0 -> QCheck.Gen.map (fun gen0 -> Value gen0) (gen_value ())
-               | n ->
-                   QCheck.Gen.frequency
-                     [
-                       ( 1,
-                         QCheck.Gen.map (fun gen0 -> Value gen0) (gen_value ())
-                       );
-                       ( 1,
-                         QCheck.Gen.map
-                           (fun (gen0, gen1, gen2) -> If (gen0, gen1, gen2))
-                           (QCheck.Gen.triple
-                              (self (n / 2))
-                              (self (n / 2))
-                              (self (n / 2))) );
-                       ( 1,
-                         QCheck.Gen.map
-                           (fun (gen0, gen1) -> Eq (gen0, gen1))
-                           (QCheck.Gen.pair (self (n / 2)) (self (n / 2))) );
-                       ( 1,
-                         QCheck.Gen.map
-                           (fun (gen0, gen1) -> Lt (gen0, gen1))
-                           (QCheck.Gen.pair (self (n / 2)) (self (n / 2))) );
-                     ])
-
-        and gen_value () =
-          QCheck.Gen.frequency
-            [
-              (1, QCheck.Gen.map (fun gen0 -> Bool gen0) QCheck.Gen.bool);
-              (1, QCheck.Gen.map (fun gen0 -> Int gen0) QCheck.Gen.int);
-            ]];
-      [%stri let gen_expr = gen_expr ()];
-      [%stri let gen_value = gen_value ()];
+       let rec gen_expr_sized n =
+         match n with
+         | 0 -> QCheck.Gen.map (fun gen0 -> Value gen0) QCheck.Gen.int
+         | n ->
+            QCheck.Gen.frequency
+              [
+                ( 1,
+                  QCheck.Gen.map (fun gen0 -> Value gen0) QCheck.Gen.int
+                );
+                ( 1,
+                  QCheck.Gen.map
+                    (fun (gen0, gen1, gen2) -> If (gen0, gen1, gen2))
+                    (QCheck.Gen.triple
+                       (gen_expr_sized (n / 2))
+                       (gen_expr_sized (n / 2))
+                       (gen_expr_sized (n / 2))) );
+                ( 1,
+                  QCheck.Gen.map
+                    (fun (gen0, gen1) -> Eq (gen0, gen1))
+                    (QCheck.Gen.pair (gen_expr_sized (n / 2)) (gen_expr_sized (n / 2))) );
+                ( 1,
+                  QCheck.Gen.map
+                    (fun (gen0, gen1) -> Lt (gen0, gen1))
+                    (QCheck.Gen.pair (gen_expr_sized (n / 2)) (gen_expr_sized (n / 2))) );
+              ]
+      ];
+      [%stri
+       let gen_expr = QCheck.Gen.sized @@ gen_expr_sized
+      ]
     ]
   in
-
   let actual =
-    f
-    @@ extract
-         [%stri
-           type expr =
-             | Value of value
-             | If of expr * expr * expr
-             | Eq of expr * expr
-             | Lt of expr * expr
-
-           and value = Bool of bool | Int of int]
+    f @@ extract
+           [%stri
+            type expr =
+              | Value of int
+              | If of expr * expr * expr
+              | Eq of expr * expr
+              | Lt of expr * expr]
   in
-  check_eq ~expected ~actual "deriving recursive"
-
+  check_eq ~expected ~actual "deriving expr"
+  
 let test_forest () =
   let expected =
     [
       [%stri
-        let rec gen_tree () =
+        let rec gen_tree_sized gen_a n =
           QCheck.Gen.map
             (fun gen0 -> Node gen0)
             (QCheck.Gen.map
                (fun (gen0, gen1) -> (gen0, gen1))
-               (QCheck.Gen.pair QCheck.Gen.int (gen_forest ())))
+               (QCheck.Gen.pair gen_a ((gen_forest_sized gen_a) (n / 2))))
 
-        and gen_forest () =
-          QCheck.Gen.sized
-          @@ QCheck.Gen.fix (fun self -> function
-               | 0 -> QCheck.Gen.pure Nil
-               | n ->
-                   QCheck.Gen.frequency
-                     [
-                       (1, QCheck.Gen.pure Nil);
-                       ( 1,
-                         QCheck.Gen.map
-                           (fun gen0 -> Cons gen0)
-                           (QCheck.Gen.map
-                              (fun (gen0, gen1) -> (gen0, gen1))
-                              (QCheck.Gen.pair (gen_tree ()) (self (n / 2)))) );
-                     ])];
-      [%stri let gen_tree = gen_tree ()];
-      [%stri let gen_forest = gen_forest ()];
+        and gen_forest_sized gen_a n =
+          match n with
+          | 0 -> QCheck.Gen.pure Nil
+          | n ->
+             QCheck.Gen.frequency
+               [
+                 (1, QCheck.Gen.pure Nil);
+                 ( 1,
+                   QCheck.Gen.map
+                     (fun gen0 -> Cons gen0)
+                     (QCheck.Gen.map
+                        (fun (gen0, gen1) -> (gen0, gen1))
+                        (QCheck.Gen.pair
+                           ((gen_tree_sized gen_a) (n / 2))
+                           ((gen_forest_sized gen_a) (n / 2)))) );
+               ]
+      ];
+      [%stri let gen_tree gen_a = QCheck.Gen.sized @@ (gen_tree_sized gen_a)];
+      [%stri let gen_forest gen_a = QCheck.Gen.sized @@ (gen_forest_sized gen_a)];
     ]
   in
   let actual =
     f
     @@ extract
          [%stri
-           type tree = Node of (int * forest)
+           type 'a tree = Node of ('a * 'a forest)
 
-           and forest = Nil | Cons of (tree * forest)]
+           and 'a forest = Nil | Cons of ('a tree * 'a forest)]
   in
   check_eq ~expected ~actual "deriving forest"
 
@@ -769,29 +692,33 @@ let test_recursive_poly_variant () =
   let expected =
     [
       [%stri
-        let gen_tree =
-          (QCheck.Gen.sized
-           @@ QCheck.Gen.fix (fun self -> function
-                | 0 -> QCheck.Gen.map (fun gen0 -> `Leaf gen0) QCheck.Gen.int
-                | n ->
-                    QCheck.Gen.frequency
-                      [
-                        ( 1,
-                          QCheck.Gen.map (fun gen0 -> `Leaf gen0) QCheck.Gen.int
-                        );
-                        ( 1,
-                          QCheck.Gen.map
-                            (fun gen0 -> `Node gen0)
-                            (QCheck.Gen.map
-                               (fun (gen0, gen1) -> (gen0, gen1))
-                               (QCheck.Gen.pair (self (n / 2)) (self (n / 2))))
-                        );
-                      ])
+       let rec gen_tree_sized gen_a n =
+         (match n with
+         | 0 -> QCheck.Gen.map (fun gen0 -> `Leaf gen0) gen_a
+         | n ->
+            QCheck.Gen.frequency
+              [
+                ( 1,
+                  QCheck.Gen.map (fun gen0 -> `Leaf gen0) gen_a
+                );
+                ( 1,
+                  QCheck.Gen.map
+                    (fun gen0 -> `Node gen0)
+                    (QCheck.Gen.map
+                       (fun (gen0, gen1) -> (gen0, gen1))
+                       (QCheck.Gen.pair
+                          ((gen_tree_sized gen_a) (n / 2))
+                          ((gen_tree_sized gen_a) (n / 2))))
+                );
+              ]
             : tree QCheck.Gen.t)];
+      [%stri
+       let gen_tree gen_a = QCheck.Gen.sized @@ (gen_tree_sized gen_a)
+      ]
     ]
   in
   let actual =
-    f @@ extract [%stri type tree = [ `Leaf of int | `Node of tree * tree ]]
+    f @@ extract [%stri type 'a tree = [ `Leaf of 'a | `Node of 'a tree * 'a tree ]]
   in
   check_eq ~expected ~actual "deriving recursive polymorphic variants"
 
@@ -822,10 +749,10 @@ let () =
             test_case "deriving record" `Quick test_record;
             test_case "deriving equal" `Quick test_equal;
             test_case "deriving tree like" `Quick test_tree;
+            test_case "deriving expr like" `Quick test_expr;
             test_case "deriving alpha" `Quick test_alpha;
             test_case "deriving variant" `Quick test_variant;
             test_case "deriving weight constructors" `Quick test_weight_konstrs;
-            test_case "deriving recursive" `Quick test_recursive;
             test_case "deriving forest" `Quick test_forest;
             test_case "deriving fun primitives" `Quick test_fun_primitives;
             test_case "deriving fun option" `Quick test_fun_option;

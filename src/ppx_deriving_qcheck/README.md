@@ -238,18 +238,19 @@ let gen_color =
 type tree = Leaf of int | Node of tree * tree
 [@@deriving qcheck]
 
-let gen_tree =
-  QCheck.Gen.sized @@
-    (QCheck.Gen.fix
-      (fun self -> function
-        | 0 -> QCheck.Gen.map (fun gen0 -> Leaf gen0) QCheck.Gen.int
-        | n ->
-          QCheck.Gen.frequency
-            [(1,
-               (QCheck.Gen.map (fun gen0 -> Leaf gen0) QCheck.Gen.int));
-             (1,
-               (QCheck.Gen.map (fun (gen0, gen1) -> Node (gen0, gen1))
-                 (QCheck.Gen.pair (self (n / 2)) (self (n / 2)))))]))
+(* ==> *)
+
+let rec gen_tree_sized n =
+  match n with
+  | 0 -> QCheck.Gen.map (fun gen0 -> Leaf gen0) QCheck.Gen.int
+  | n ->
+    QCheck.Gen.frequency
+      [(1, (QCheck.Gen.map (fun gen0 -> Leaf gen0) QCheck.Gen.int));
+       (1,
+		   (QCheck.Gen.map (fun (gen0, gen1) -> Node (gen0, gen1))
+             (QCheck.Gen.pair (self (n / 2)) (self (n / 2)))))]))
+
+let gen_tree = QCheck.Gen.sized @@ gen_tree_sized
 ```
 
 * Recursive polymorphic variants
