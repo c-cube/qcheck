@@ -2,6 +2,23 @@ open Ppxlib
 module G = Qcheck_generators
 module O = G.Observable
 
+(** {1. ppx_deriving_qcheck} *)
+
+(** ppx_deriving_qcheck is a ppx deriver for QCheck generators. It does a traversal
+    map on type declarations annoted with [QCheck].
+
+    Example:
+    {[
+    module Tree : sig
+      type t
+
+      val gen : t QCheck.Gen.t
+    end = struct
+      type t = Leaf | Node of int * tree * tree
+      [@@deriving qcheck]
+    end
+    ]}
+*)
 
 (** TypeGen can serve as a derivation environment. The map can be used
     to remember how a type should be translated.
@@ -29,7 +46,7 @@ module O = G.Observable
                      ( 1,
                        map
                          (fun (gen0, gen1, gen2) -> Node (gen0, gen1, gen2))
-                         (triple int (self (n / 1)) (self (n / 1))) );])
+                         (triple int (self (n / 2)) (self (n / 2))) );])
     ]}
 
     The type [tree] is stored in a TypeGen.t with tree <- [%expr self (n/2)]. This
@@ -41,59 +58,32 @@ module TypeGen = Map.Make (struct
   let compare = compare
 end)
 
+(** {2. Misc. helpers} *)
+
 let rec longident_to_str = function
   | Lident s -> s
   | Ldot (lg, s) -> Printf.sprintf "%s.%s" (longident_to_str lg) s
   | Lapply (lg1, lg2) ->
       Printf.sprintf "%s %s" (longident_to_str lg1) (longident_to_str lg2)
 
+(** [is_rec_typ ty typ] looks for [ty] recursively in [typ].
+    It for now only finds in constr and tuples. *)
 let rec is_rec_typ typ_name = function
   | { ptyp_desc = Ptyp_constr ({ txt = x; _ }, _); _ } ->
       longident_to_str x = typ_name
   | { ptyp_desc = Ptyp_tuple xs; _ } -> List.exists (is_rec_typ typ_name) xs
   | _ -> false
 
+(** [name s] produces the generator name based on [s] *)
 let name s =
   let prefix = "gen" in
   match s with "t" -> prefix | s -> prefix ^ "_" ^ s
 
+(** [pat ~loc s] creates a pattern for a generator based on {!name}. *)
 let pat ~loc s =
   let (module A) = Ast_builder.make loc in
   let s = name s in
   A.pvar s
-
-let gen ~loc ?(env = TypeGen.empty) lg =
-  let (module A) = Ast_builder.make loc in
-  match lg with
-  | Lident s ->
-      Option.value ~default:(name s |> A.evar) @@ TypeGen.find_opt s env
-  | Ldot (lg, s) -> A.(pexp_ident (Located.mk @@ Ldot (lg, name s)))
-  | Lapply (_, _) -> raise (Invalid_argument "gen received an Lapply")
-
-let tree ~loc nodes leaves =
-  (G.sized ~loc) @@ (G.fix ~loc) @@
-    [%expr
-        fun self ->
-        function
-        | 0 -> [%e leaves] | n -> [%e nodes]]
-
-let sized ~loc ~env typ_name (is_rec : 'a -> bool)
-    (to_gen : ?env:expression TypeGen.t -> 'a -> expression) (xs : 'a list) =
-  let (module A) = Ast_builder.make loc in
-  let new_env = TypeGen.add typ_name [%expr self (n / 2)] env in
-  let leaves =
-    List.filter (fun x -> not (is_rec x)) xs |> List.map (to_gen ~env)
-  in
-  let nodes = List.filter is_rec xs in
-
-  if List.length nodes > 0 then
-    let nodes = List.map (to_gen ~env:new_env) nodes in
-    let leaves = A.elist leaves |> G.frequency ~loc
-    and nodes = A.elist (leaves @ nodes) |> G.frequency ~loc in
-    tree ~loc nodes leaves
-  else
-    let gens = A.elist leaves in
-    G.frequency ~loc gens
 
 let mutually_recursive_gens ~loc gens =
   let (module A) = Ast_builder.make loc in
@@ -121,6 +111,70 @@ let mutually_recursive_gens ~loc gens =
   let mutual_gens = A.pstr_value Recursive fake_gens in
   mutual_gens :: real_gens
 
+(** {2. Generator constructors} *)
+
+(** [gen lg] creates a generator using [lg].
+
+    The longident can either be a:
+    - Lident s: We transform to gen_s (or gen if s = "t")
+    - Ldot (lg, s): We transform to qualified generator (e.g. B.gen)
+*)
+let gen ~loc ?(env = TypeGen.empty) lg =
+  let (module A) = Ast_builder.make loc in
+  match lg with
+  | Lident s ->
+      Option.value ~default:(name s |> A.evar) @@ TypeGen.find_opt s env
+  | Ldot (lg, s) -> A.(pexp_ident (Located.mk @@ Ldot (lg, name s)))
+  | Lapply (_, _) -> raise (Invalid_argument "gen received an Lapply")
+
+(** [tree nodes leaves] creates a tree like generator *)
+let tree ~loc nodes leaves =
+  (G.sized ~loc) @@ (G.fix ~loc) @@
+    [%expr
+        fun self ->
+        function
+        | 0 -> [%e leaves] | n -> [%e nodes]]
+
+(** [sized typ_name is_rec to_gen xs] uses [is_rec] to determine recursive
+    nodes in [xs].
+
+    If no recursive node is found, the type is _not_ recursive, we build a
+    generator using frequency.
+
+    However, if recursive nodes are found, we build a tree like generator using
+    {!tree}.
+
+    The function is generalized for variants and polymorphic variants:
+
+    {[
+    type t = Leaf | Node of int * t * t
+
+    (* or *)
+
+    type t = [`Leaf | `Node of int * t * t]
+    ]}
+
+    Therefore, [is_rec] and [to_gen] are different for variants and polymorphic
+    variants. *)
+let sized ~loc ~env typ_name (is_rec : 'a -> bool)
+    (to_gen : ?env:expression TypeGen.t -> 'a -> expression) (xs : 'a list) =
+  let (module A) = Ast_builder.make loc in
+  let new_env = TypeGen.add typ_name [%expr self (n / 2)] env in
+  let leaves =
+    List.filter (fun x -> not (is_rec x)) xs |> List.map (to_gen ~env)
+  in
+  let nodes = List.filter is_rec xs in
+
+  if List.length nodes > 0 then
+    let nodes = List.map (to_gen ~env:new_env) nodes in
+    let leaves = A.elist leaves |> G.frequency ~loc
+    and nodes = A.elist (leaves @ nodes) |> G.frequency ~loc in
+    tree ~loc nodes leaves
+  else
+    let gens = A.elist leaves in
+    G.frequency ~loc gens
+
+
 (** [tuple ~loc ?f tys] transforms list of type [tys] into a tuple generator.
 
     [f] can be used to transform tuples, for instance:
@@ -145,11 +199,31 @@ let tuple ~loc ?(f = fun x -> x) tys =
   let pat = Tuple.to_pat ~loc tuple in
   G.map ~loc pat expr gen
 
+(** [record loc gens ?f label_decls] transforms [gens] and [label_decls] to
+    a record generator.
+
+    Similarly to {!gen_tuple}, we can use [f] to transform records, for instance:
+    {[
+    type t = Foo of { left : int; right : int }
+    ]}
+
+    Without [f]:
+    {[
+    let gen = QCheck.Gen.(map (fun (x, y) -> {left = x; right = y}) (pair int int))
+    ]}
+
+    With [f], building Foo:
+    {[
+    let gen = QCheck.Gen.(map (fun (x, y) -> Foo {left = x; right = y}) (pair int int))
+    ]}
+
+*)
 let record ~loc ~gens ?(f = fun x -> x) xs =
   let (module A) = Ast_builder.make loc in
   let tuple = Tuple.from_list gens in
   let gen = Tuple.to_gen ~loc tuple in
   let pat = Tuple.to_pat ~loc tuple in
+  (* TODO: this should be handled in {!Tuple} *)
   let gens =
     List.mapi
       (fun i _ ->
@@ -167,6 +241,9 @@ let record ~loc ~gens ?(f = fun x -> x) xs =
 
   G.map ~loc pat expr gen
 
+(** {2. Core derivation} *)
+
+(** [gen_from_type typ] performs the AST traversal and derivation to qcheck generators *)
 let rec gen_from_type ~loc ?(env = TypeGen.empty) ?(typ_name = "") typ =
   Option.value (Attributes.gen typ)
     ~default:
@@ -347,6 +424,8 @@ let derive_gen ~loc xs : structure =
       in
       let gens = List.map (gen_from_type_declaration ~loc ~env) xs in
       mutually_recursive_gens ~loc gens
+
+(** {2. Ppxlib machinery} *)
 
 let create_gen ~ctxt (decls : rec_flag * type_declaration list) : structure =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
