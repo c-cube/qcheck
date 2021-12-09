@@ -1,4 +1,7 @@
 open Ppxlib
+module G = Qcheck_generators
+module O = G.Observable
+
 
 (** TypeGen can serve as a derivation environment. The map can be used
     to remember how a type should be translated.
@@ -67,15 +70,12 @@ let gen ~loc ?(env = TypeGen.empty) lg =
   | Ldot (lg, s) -> A.(pexp_ident (Located.mk @@ Ldot (lg, name s)))
   | Lapply (_, _) -> raise (Invalid_argument "gen received an Lapply")
 
-let frequency ~loc l = [%expr QCheck.Gen.frequency [%e l]]
-
-let pure ~loc x = [%expr QCheck.Gen.pure [%e x]]
-
 let tree ~loc nodes leaves =
-  [%expr
-    QCheck.Gen.sized
-    @@ QCheck.Gen.fix (fun self -> function
-         | 0 -> [%e leaves] | n -> [%e nodes])]
+  (G.sized ~loc) @@ (G.fix ~loc) @@
+    [%expr
+        fun self ->
+        function
+        | 0 -> [%e leaves] | n -> [%e nodes]]
 
 let sized ~loc ~env typ_name (is_rec : 'a -> bool)
     (to_gen : ?env:expression TypeGen.t -> 'a -> expression) (xs : 'a list) =
@@ -88,12 +88,12 @@ let sized ~loc ~env typ_name (is_rec : 'a -> bool)
 
   if List.length nodes > 0 then
     let nodes = List.map (to_gen ~env:new_env) nodes in
-    let leaves = A.elist leaves |> frequency ~loc
-    and nodes = A.elist (leaves @ nodes) |> frequency ~loc in
+    let leaves = A.elist leaves |> G.frequency ~loc
+    and nodes = A.elist (leaves @ nodes) |> G.frequency ~loc in
     tree ~loc nodes leaves
   else
     let gens = A.elist leaves in
-    frequency ~loc gens
+    G.frequency ~loc gens
 
 let mutually_recursive_gens ~loc gens =
   let (module A) = Ast_builder.make loc in
@@ -121,16 +121,29 @@ let mutually_recursive_gens ~loc gens =
   let mutual_gens = A.pstr_value Recursive fake_gens in
   mutual_gens :: real_gens
 
+(** [tuple ~loc ?f tys] transforms list of type [tys] into a tuple generator.
 
-let map ~loc pat expr gen =
-  [%expr QCheck.Gen.map (fun [%p pat] -> [%e expr]) [%e gen]]
+    [f] can be used to transform tuples, for instance:
+    {[
+    type t = Foo of int * int
+    ]}
 
+    Without [f]:
+    {[
+    let gen = QCheck.Gen.(map (fun (x, y) -> (x, y)) (pair int int))
+    ]}
+
+    With [f], building Foo:
+    {[
+    let gen = QCheck.Gen.(map (fun (x, y) -> Foo (x, y)) (pair int int))
+    ]}
+*)
 let tuple ~loc ?(f = fun x -> x) tys =
   let tuple = Tuple.from_list tys in
   let gen = Tuple.to_gen ~loc tuple in
   let expr = Tuple.to_expr ~loc tuple |> f in
   let pat = Tuple.to_pat ~loc tuple in
-  map ~loc pat expr gen
+  G.map ~loc pat expr gen
 
 let record ~loc ~gens ?(f = fun x -> x) xs =
   let (module A) = Ast_builder.make loc in
@@ -152,26 +165,23 @@ let record ~loc ~gens ?(f = fun x -> x) xs =
   in
   let expr = A.pexp_record fields None |> f in
 
-  map ~loc pat expr gen
+  G.map ~loc pat expr gen
 
 let rec gen_from_type ~loc ?(env = TypeGen.empty) ?(typ_name = "") typ =
   Option.value (Attributes.gen typ)
     ~default:
       (match typ with
-      | [%type: unit] -> [%expr QCheck.Gen.unit]
-      | [%type: int] -> [%expr QCheck.Gen.int]
-      | [%type: string] | [%type: String.t] -> [%expr QCheck.Gen.string]
-      | [%type: char] -> [%expr QCheck.Gen.char]
-      | [%type: bool] -> [%expr QCheck.Gen.bool]
-      | [%type: float] -> [%expr QCheck.Gen.float]
-      | [%type: int32] | [%type: Int32.t] -> [%expr QCheck.Gen.int32]
-      | [%type: int64] | [%type: Int64.t] -> [%expr QCheck.Gen.int64]
-      | [%type: [%t? typ] option] ->
-          [%expr QCheck.Gen.option [%e gen_from_type ~loc ~env typ]]
-      | [%type: [%t? typ] list] ->
-          [%expr QCheck.Gen.list [%e gen_from_type ~loc ~env typ]]
-      | [%type: [%t? typ] array] ->
-          [%expr QCheck.Gen.array [%e gen_from_type ~loc ~env typ]]
+      | [%type: unit] -> G.unit loc
+      | [%type: int] -> G.int loc
+      | [%type: string] | [%type: String.t] -> G.string loc
+      | [%type: char] -> G.char loc
+      | [%type: bool] -> G.bool loc
+      | [%type: float] -> G.float loc
+      | [%type: int32] | [%type: Int32.t] -> G.int32 loc
+      | [%type: int64] | [%type: Int64.t] -> G.int64 loc
+      | [%type: [%t? typ] option] -> G.option ~loc (gen_from_type ~loc ~env typ)
+      | [%type: [%t? typ] list] -> G.list ~loc (gen_from_type ~loc ~env typ)
+      | [%type: [%t? typ] array] -> G.array ~loc (gen_from_type ~loc ~env typ)
       | { ptyp_desc = Ptyp_tuple typs; _ } ->
           let tys = List.map (gen_from_type ~loc ~env) typs in
           tuple ~loc tys
@@ -198,7 +208,7 @@ and gen_from_constr ~loc ?(env = TypeGen.empty)
   let gen =
     match pcd_args with
     | Pcstr_tuple [] | Pcstr_record [] ->
-        pure ~loc @@ A.econstruct constr_decl None
+        G.pure ~loc @@ A.econstruct constr_decl None
     | Pcstr_tuple xs ->
         let tys = List.map (gen_from_type ~loc ~env) xs in
         tuple ~loc ~f:mk_constr tys
@@ -223,7 +233,7 @@ and gen_from_variant ~loc typ_name rws =
     let gen =
       match row.prf_desc with
       | Rinherit typ -> gen_from_type ~loc typ
-      | Rtag (label, _, []) -> pure ~loc @@ A.pexp_variant label.txt None
+      | Rtag (label, _, []) -> G.pure ~loc @@ A.pexp_variant label.txt None
       | Rtag (label, _, typs) ->
           let f expr = A.pexp_variant label.txt (Some expr) in
           tuple ~loc ~f (List.map (gen_from_type ~loc ?env) typs)
@@ -246,25 +256,21 @@ and gen_from_variant ~loc typ_name rws =
   *)
   let gen = sized ~loc ~env:TypeGen.empty typ_name is_rec to_gen rws in
   let typ_t = A.ptyp_constr (A.Located.mk @@ Lident typ_name) [] in
-  (* TODO: mutualize this ident for https://github.com/c-cube/qcheck/issues/190 *)
-  let typ_gen = A.Located.mk @@ Lident "QCheck.Gen.t" in
+  let typ_gen = A.Located.mk @@ Lident G.ty in
   let typ = A.ptyp_constr typ_gen [ typ_t ] in
   [%expr ([%e gen] : [%t typ])]
 
 and gen_from_arrow ~loc ~env left right =
   let rec observable = function
-    | [%type: unit] -> [%expr QCheck.Observable.unit]
-    | [%type: bool] -> [%expr QCheck.Observable.bool]
-    | [%type: int] -> [%expr QCheck.Observable.int]
-    | [%type: float] -> [%expr QCheck.Observable.float]
-    | [%type: string] -> [%expr QCheck.Observable.string]
-    | [%type: char] -> [%expr QCheck.Observable.char]
-    | [%type: [%t? typ] option] ->
-        [%expr QCheck.Observable.option [%e observable typ]]
-    | [%type: [%t? typ] array] ->
-        [%expr QCheck.Observable.array [%e observable typ]]
-    | [%type: [%t? typ] list] ->
-        [%expr QCheck.Observable.list [%e observable typ]]
+    | [%type: unit] -> O.unit loc
+    | [%type: bool] -> O.bool loc
+    | [%type: int] -> O.int loc
+    | [%type: float] -> O.float loc
+    | [%type: string] -> O.string loc
+    | [%type: char] -> O.char loc
+    | [%type: [%t? typ] option] -> O.option ~loc (observable typ)
+    | [%type: [%t? typ] array] -> O.array ~loc (observable typ)
+    | [%type: [%t? typ] list] -> O.list ~loc (observable typ)
     | { ptyp_desc = Ptyp_tuple xs; _ } ->
         let obs = List.map observable xs in
         Tuple.from_list obs |> Tuple.to_obs ~loc
@@ -280,6 +286,7 @@ and gen_from_arrow ~loc ~env left right =
     | x -> (gen_from_type ~loc ~env x, [%expr o_nil])
   in
   let x, obs = aux right in
+  (* TODO: export this in qcheck_generators for https://github.com/c-cube/qcheck/issues/190 *)
   let arb = [%expr QCheck.make [%e x]] in
   [%expr
     QCheck.fun_nary QCheck.Tuple.([%e observable left] @-> [%e obs]) [%e arb]

@@ -1,4 +1,6 @@
 open Ppxlib
+module G = Qcheck_generators
+module O = Qcheck_generators.Observable
 
 (** {1. Tuple } *)
 
@@ -86,29 +88,22 @@ let to_expr ~loc t =
     - [triple] to combine Triple (_, _, )
     - [quad] to combine Quad (_, _, _, _)
 *)
-let rec nest ~loc ~pair ~triple ~quad = function
-  | Quad (a, b, c, d) -> [%expr [%e quad] [%e a] [%e b] [%e c] [%e d]]
-  | Triple (a, b, c) -> [%expr [%e triple] [%e a] [%e b] [%e c]]
+let rec nest ~pair ~triple ~quad = function
+  | Quad (a, b, c, d) -> quad a b c d
+  | Triple (a, b, c) -> triple a b c
   | Pair (a, b) ->
-     [%expr
-         [%e pair]
-         [%e nest ~loc ~pair ~triple ~quad a]
-         [%e nest ~loc ~pair ~triple ~quad b]]
+     pair
+       (nest ~pair ~triple ~quad a)
+       (nest ~pair ~triple ~quad b)
   | Elem a -> a
 
 (** [to_gen t] creates a Gen.t with generators' combinators *)
 let to_gen ~loc t =
-  let pair = [%expr QCheck.Gen.pair] in
-  let triple = [%expr QCheck.Gen.triple] in
-  let quad = [%expr QCheck.Gen.quad] in
-  nest ~loc ~pair ~triple ~quad t
+  nest ~pair:(G.pair ~loc) ~triple:(G.triple ~loc) ~quad:(G.quad ~loc) t
 
 (** [to_obs t] creates a Obs.t with obsersvables' combinators *)
 let to_obs ~loc t =
-  let pair = [%expr QCheck.Observable.pair] in
-  let triple = [%expr QCheck.Observable.triple] in
-  let quad = [%expr QCheck.Observable.quad] in
-  nest ~loc ~pair ~triple ~quad t
+  nest ~pair:(O.pair ~loc) ~triple:(O.triple ~loc) ~quad:(O.quad ~loc) t
 
 let to_pat ~loc t =
   let fresh_id =
