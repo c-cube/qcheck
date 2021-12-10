@@ -155,7 +155,7 @@ let gen_longident ~loc lg args =
     generator using frequency.
 
     However, if recursive nodes are found, we build a tree like generator using
-    {!tree}.
+    {!gen_sized}.
 
     The function is generalized for variants and polymorphic variants:
 

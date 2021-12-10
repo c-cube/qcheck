@@ -18,6 +18,16 @@ let test =
 	(fun tree -> rev (rev tree) = tree)
 ```
 
+For `type tree` we derive two generators:
+- `val gen_tree : tree Gen.t` and
+- `val gen_tree_sized : int -> tree Gen.t`
+
+For non-recursive types the latter is however not derived.
+
+For types with the name `t` (i.e. `type t = ...`) which is a common idiom in OCaml code,
+the deriver omits the name from the derived generators,
+thus producing `val gen : t Gen.t` and optionally `val gen_sized : int -> t Gen.t`.
+
 ### Overwrite generator
 If you wan't to specify your own `generator` for any type you can
 add an attribute to the type:
