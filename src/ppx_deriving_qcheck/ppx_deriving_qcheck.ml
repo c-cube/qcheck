@@ -266,9 +266,10 @@ let rec gen_from_type ~loc ~env typ =
           let tys = List.map (gen_from_type ~loc ~env) typs in
           gen_tuple ~loc tys
       | { ptyp_desc = Ptyp_constr ({ txt = ty; _ }, args); _ } ->
-         let args = List.map (gen_from_type ~loc ~env) args in
-         gen_longident ~loc ~env ty args
-      | { ptyp_desc = Ptyp_var s; _ } -> gen_longident ~loc ~env (Lident s) []
+          let args = List.map (gen_from_type ~loc ~env) args in
+          gen_longident ~loc ~env ty args
+      | { ptyp_desc = Ptyp_var s; _ } ->
+          gen_longident ~loc ~env (Lident s) []
       | { ptyp_desc = Ptyp_variant (rws, _, _); _ } ->
           gen_from_variant ~loc ~env rws
       | { ptyp_desc = Ptyp_arrow (_, left, right); _ } ->
@@ -383,8 +384,8 @@ let gen_from_type_declaration ~loc ~env td =
   let gen =
     match td.ptype_kind with
     | Ptype_variant xs ->
-       let is_rec cd = is_rec_constr_decl env cd in
-       gen_sized ~loc is_rec (gen_from_constr ~loc ~env) xs
+        let is_rec cd = is_rec_constr_decl env cd in
+        gen_sized ~loc is_rec (gen_from_constr ~loc ~env) xs
     | Ptype_record xs ->
         let gens = List.map (fun x -> gen_from_type ~loc ~env x.pld_type) xs in
         gen_record ~loc ~gens xs
