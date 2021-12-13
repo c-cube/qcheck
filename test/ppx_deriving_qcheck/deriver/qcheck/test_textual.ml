@@ -4,7 +4,7 @@ open Ppxlib
 (** Primitive types tests *)
 let loc = Location.none
 
-let f = Ppx_deriving_qcheck.derive_gen ~loc
+let f = Ppx_deriving_qcheck.derive_gen ~version:`QCheck ~loc
 
 let f' xs = List.map f xs |> List.concat
 
@@ -735,10 +735,13 @@ let test_unused_variable () =
               [(1, (QCheck.Gen.pure A));
                (1, (QCheck.Gen.map (fun gen0 -> B gen0) gen_myint))]
         and gen_myint = QCheck.Gen.nat
-     ];
-      [%stri
-       let gen_c = QCheck.Gen.sized @@ gen_c_sized
       ];
+      [%stri
+       let gen_c = QCheck.Gen.sized gen_c_sized
+      ];
+      [%stri let arb_c_sized n = QCheck.make @@ (gen_c_sized n)];
+      [%stri let arb_myint = QCheck.make @@ gen_myint];
+      [%stri let arb_c = QCheck.make @@ gen_c];
       [%stri
         let rec gen_c_sized _n =
           QCheck.Gen.frequency
@@ -747,8 +750,11 @@ let test_unused_variable () =
         and gen_myint = QCheck.Gen.nat
       ];
       [%stri
-       let gen_c = QCheck.Gen.sized @@ gen_c_sized
+       let gen_c = QCheck.Gen.sized gen_c_sized
       ];
+      [%stri let arb_c_sized _n = QCheck.make @@ (gen_c_sized _n)];
+      [%stri let arb_myint = QCheck.make @@ gen_myint];
+      [%stri let arb_c = QCheck.make @@ gen_c];
     ]
   in
   let actual =
