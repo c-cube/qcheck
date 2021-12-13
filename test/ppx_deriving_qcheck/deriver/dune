@@ -4,6 +4,7 @@
    test_primitives
    test_qualified_names
    test_recursive
-   test_tuple)
+   test_tuple
+   test_variants)
  (libraries qcheck-alcotest ppxlib ppx_deriving_qcheck qcheck)
  (preprocess (pps ppxlib.metaquot ppx_deriving_qcheck)))

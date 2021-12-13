@@ -318,7 +318,7 @@ and gen_from_variant ~loc ~env rws =
   in
   let gen = gen_sized ~loc is_rec to_gen rws in
   let typ_t = A.ptyp_constr (A.Located.mk @@ Lident env.curr_type) [] in
-  let typ_gen = A.Located.mk @@ Lident G.ty in
+  let typ_gen = A.Located.mk G.ty in
   let typ = A.ptyp_constr typ_gen [ typ_t ] in
   [%expr ([%e gen] : [%t typ])]
 

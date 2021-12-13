@@ -5,7 +5,7 @@ open Ppxlib
 
 (** {2. Type} *)
 
-let ty = "QCheck.Gen.t"
+let ty = Ldot (Ldot (Lident "QCheck", "Gen"), "t")
 
 (** {2. Primitive generators} *)
 
