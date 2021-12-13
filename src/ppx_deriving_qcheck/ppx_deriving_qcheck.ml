@@ -1,5 +1,5 @@
 open Ppxlib
-module G = Qcheck_generators
+module G = QCheck_generators
 module O = G.Observable
 
 (** {1. ppx_deriving_qcheck} *)

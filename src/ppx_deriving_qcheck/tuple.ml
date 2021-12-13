@@ -1,6 +1,6 @@
 open Ppxlib
-module G = Qcheck_generators
-module O = Qcheck_generators.Observable
+module G = QCheck_generators
+module O = G.Observable
 
 (** {1. Tuple } *)
 
