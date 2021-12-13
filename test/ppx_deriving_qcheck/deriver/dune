@@ -2,6 +2,7 @@
  (names
    test_textual
    test_primitives
-   test_qualified_names)
+   test_qualified_names
+   test_recursive)
  (libraries qcheck-alcotest ppxlib ppx_deriving_qcheck qcheck)
  (preprocess (pps ppxlib.metaquot ppx_deriving_qcheck)))
