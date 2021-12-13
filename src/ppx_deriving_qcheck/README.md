@@ -18,6 +18,16 @@ let test =
 	(fun tree -> rev (rev tree) = tree)
 ```
 
+For `type tree` we derive two generators:
+- `val gen_tree : tree Gen.t` and
+- `val gen_tree_sized : int -> tree Gen.t`
+
+For non-recursive types the latter is however not derived.
+
+For types with the name `t` (i.e. `type t = ...`) which is a common idiom in OCaml code,
+the deriver omits the name from the derived generators,
+thus producing `val gen : t Gen.t` and optionally `val gen_sized : int -> t Gen.t`.
+
 ### Overwrite generator
 If you wan't to specify your own `generator` for any type you can
 add an attribute to the type:
@@ -238,20 +248,19 @@ let gen_color =
 type tree = Leaf of int | Node of tree * tree
 [@@deriving qcheck]
 
-let gen_tree =
-  QCheck.Gen.sized @@
-    (QCheck.Gen.fix
-      (fun self -> function
-        | 0 ->
-          QCheck.Gen.frequency
-            [(1, (QCheck.Gen.map (fun gen0 -> Leaf gen0) QCheck.Gen.int))]
-        | n ->
-          QCheck.Gen.frequency
-            [(1,
-               (QCheck.Gen.map (fun gen0 -> Leaf gen0) QCheck.Gen.int));
-             (1,
-               (QCheck.Gen.map (fun (gen0, gen1) -> Node (gen0, gen1))
-                 (QCheck.Gen.pair (self (n / 2)) (self (n / 2)))))]))
+(* ==> *)
+
+let rec gen_tree_sized n =
+  match n with
+  | 0 -> QCheck.Gen.map (fun gen0 -> Leaf gen0) QCheck.Gen.int
+  | n ->
+    QCheck.Gen.frequency
+      [(1, (QCheck.Gen.map (fun gen0 -> Leaf gen0) QCheck.Gen.int));
+       (1,
+		   (QCheck.Gen.map (fun (gen0, gen1) -> Node (gen0, gen1))
+             (QCheck.Gen.pair (self (n / 2)) (self (n / 2)))))]))
+
+let gen_tree = QCheck.Gen.sized @@ gen_tree_sized
 ```
 
 * Recursive polymorphic variants
