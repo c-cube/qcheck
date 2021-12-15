@@ -1,11 +1,11 @@
-(test
- (name test)
- (modules test)
- (libraries alcotest ppxlib ppx_deriving_qcheck qcheck)
- (preprocess (pps ppxlib.metaquot)))
-
-(test
- (name test_qualified_names)
- (modules test_qualified_names)
- (libraries qcheck)
- (preprocess (pps ppx_deriving_qcheck)))
+(tests
+ (names
+   test_textual
+   test_primitives
+   test_qualified_names
+   test_recursive
+   test_tuple
+   test_variants
+   test_record)
+ (libraries qcheck-alcotest ppxlib ppx_deriving_qcheck qcheck)
+ (preprocess (pps ppxlib.metaquot ppx_deriving_qcheck)))
