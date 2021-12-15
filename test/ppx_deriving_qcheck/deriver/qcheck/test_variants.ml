@@ -16,10 +16,10 @@ let pp_colors fmt x =
 
 let eq_colors = Alcotest.of_pp pp_colors
 
-let gen = Gen.oneofl [Red; Green; Blue]
+let arb = oneofl [Red; Green; Blue]
 
 let test_variants () =
-  test_compare ~msg:"Gen.oneofl <=> deriving variants" ~eq:eq_colors gen gen_colors
+  test_compare ~msg:"Gen.oneofl <=> deriving variants" ~eq:eq_colors arb arb_colors
 
 type poly_colors = [`Red | `Green | `Blue] [@@deriving qcheck]
 
@@ -32,11 +32,11 @@ let pp_poly_colors fmt x =
 
 let eq_poly_colors = Alcotest.of_pp pp_poly_colors
 
-let gen_poly : poly_colors Gen.t = Gen.oneofl [`Red; `Green; `Blue]
+let arb_poly = oneofl [`Red; `Green; `Blue]
 
 let test_poly_variants () =
   test_compare ~msg:"Gen.oneofl <=> deriving variants"
-    ~eq:eq_poly_colors gen_poly gen_poly_colors
+    ~eq:eq_poly_colors arb_poly arb_poly_colors
 
 (** {2. Tests weight} *)
 
@@ -46,8 +46,8 @@ type letters =
 [@@deriving qcheck]
 
 let test_weight =
-  Test.make ~name:"gen_letters always produces B"
-    (make gen_letters)
+  Test.make ~name:"arb_letters always produces B"
+    arb_letters
     (function
      | A -> false
      | B -> true)
@@ -61,8 +61,8 @@ type poly_letters = [
 [@@deriving qcheck]
 
 let test_weight_poly =
-  Test.make ~name:"gen_poly_letters always produces B"
-    (make gen_poly_letters)
+  Test.make ~name:"arb_poly_letters always produces B"
+    arb_poly_letters
     (function
      | `A -> false
      | `B -> true)

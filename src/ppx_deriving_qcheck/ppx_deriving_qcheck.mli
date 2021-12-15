@@ -1,11 +1,18 @@
 open Ppxlib
 
-val derive_gen :
+val derive_gens :
   version:[`QCheck | `QCheck2] ->
   loc:location ->
   rec_flag * type_declaration list ->
   structure
-(** [derive_gen ~version ~loc xs] creates generators for type declaration in [xs].
+(** [derive_gens ~version ~loc xs] creates generators for type declaration in [xs].
 
-    The generator can either be a [QCheck.Gen.t] or a [QCheck2.Gen.t] based on
+    The generators can either be [QCheck.Gen.t] or [QCheck2.Gen.t] based on
     [version]. *)
+
+val derive_arbs :
+  loc:location ->
+  rec_flag * type_declaration list ->
+  structure
+(** [derive_arbs ~loc xs] creates generators for type declaration in [xs] and
+    use these lasts to build [QCheck.arbitrary]. *)

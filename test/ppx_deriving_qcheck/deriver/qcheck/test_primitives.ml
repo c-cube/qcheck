@@ -8,67 +8,67 @@ open Helpers
 type int' = int [@@deriving qcheck]
 
 let test_int () =
-  test_compare ~msg:"Gen.int <=> deriving int" ~eq:Alcotest.int Gen.int gen_int'
+  test_compare ~msg:"int <=> deriving int" ~eq:Alcotest.int int arb_int'
 
 type unit' = unit [@@deriving qcheck]
 
 (* Pretty useless though, but, meh *)
 let test_unit () =
-  test_compare ~msg:"Gen.unit <=> deriving unit" ~eq:Alcotest.unit Gen.unit gen_unit'
+  test_compare ~msg:"unit <=> deriving unit" ~eq:Alcotest.unit unit arb_unit'
 
 type string' = string [@@deriving qcheck]
 
 let test_string () =
-  test_compare ~msg:"Gen.string <=> deriving string" ~eq:Alcotest.string Gen.string gen_string'
+  test_compare ~msg:"string <=> deriving string" ~eq:Alcotest.string string arb_string'
 
 type char' = char [@@deriving qcheck]
 
 let test_char () =
-  test_compare ~msg:"Gen.char <=> deriving char" ~eq:Alcotest.char Gen.char gen_char'
+  test_compare ~msg:"char <=> deriving char" ~eq:Alcotest.char char arb_char'
 
 type bool' = bool [@@deriving qcheck]
 
 let test_bool () =
-  test_compare ~msg:"Gen.bool <=> deriving bool" ~eq:Alcotest.bool Gen.bool gen_bool'
+  test_compare ~msg:"bool <=> deriving bool" ~eq:Alcotest.bool bool arb_bool'
 
 type float' = float [@@deriving qcheck]
 
 let test_float () =
-  test_compare ~msg:"Gen.float <=> deriving float" ~eq:(Alcotest.float 0.) Gen.float gen_float'
+  test_compare ~msg:"float <=> deriving float" ~eq:(Alcotest.float 0.) float arb_float'
 
 type int32' = int32 [@@deriving qcheck]
 
 let test_int32 () =
-  test_compare ~msg:"Gen.int32 <=> deriving int32" ~eq:Alcotest.int32 Gen.ui32 gen_int32'
+  test_compare ~msg:"int32 <=> deriving int32" ~eq:Alcotest.int32 int32 arb_int32'
 
 type int64' = int64 [@@deriving qcheck]
 
 let test_int64 () =
-  test_compare ~msg:"Gen.int64 <=> deriving int64" ~eq:Alcotest.int64 Gen.ui64 gen_int64'
+  test_compare ~msg:"int64 <=> deriving int64" ~eq:Alcotest.int64 int64 arb_int64'
 
 type 'a option' = 'a option [@@deriving qcheck]
 
 let test_option () =
   let zero = Gen.pure 0 in
-  test_compare ~msg:"Gen.option <=> deriving option"
+  test_compare ~msg:"option <=> deriving opt"
     ~eq:Alcotest.(option int)
-    (Gen.option zero) (gen_option' zero)
+    (option (make zero)) (arb_option' zero)
 
 type 'a array' = 'a array [@@deriving qcheck]
 
 let test_array () =
   let zero = Gen.pure 0 in
-  test_compare ~msg:"Gen.array <=> deriving array"
+  test_compare ~msg:"array <=> deriving array"
     ~eq:Alcotest.(array int)
-    (Gen.array zero) (gen_array' zero)
+    (array (make zero)) (arb_array' zero)
 
 type 'a list' = 'a list [@@deriving qcheck]
 
 let test_list () =
   let zero = Gen.pure 0 in
-  test_compare ~msg:"Gen.list <=> deriving list"
+  test_compare ~msg:"list <=> deriving list"
     ~eq:Alcotest.(list int)
-    (Gen.list zero) (gen_list' zero)
+    (list (make zero)) (arb_list' zero)
 
 (** {2. Execute tests} *)
 

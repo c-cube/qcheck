@@ -4,7 +4,7 @@ open Ppxlib
 (** Primitive types tests *)
 let loc = Location.none
 
-let f = Ppx_deriving_qcheck.derive_gen ~version:`QCheck ~loc
+let f = Ppx_deriving_qcheck.derive_arbs ~loc
 
 let f' xs = List.map f xs |> List.concat
 
@@ -18,62 +18,91 @@ let check_eq ~expected ~actual name =
   Alcotest.(check string) name (f expected) (f actual)
 
 let test_int () =
-  let expected = [ [%stri let gen = QCheck.Gen.int] ] in
-
+  let expected = [
+      [%stri let gen = QCheck.Gen.int];
+      [%stri let arb = QCheck.make @@ gen];
+    ] in
   let actual = f @@ extract [%stri type t = int] in
 
   check_eq ~expected ~actual "deriving int"
 
 let test_float () =
-  let expected = [ [%stri let gen = QCheck.Gen.float] ] in
+  let expected = [
+      [%stri let gen = QCheck.Gen.float];
+      [%stri let arb = QCheck.make @@ gen];
+    ] in
   let actual = f @@ extract [%stri type t = float] in
 
   check_eq ~expected ~actual "deriving float"
 
 let test_char () =
-  let expected = [ [%stri let gen = QCheck.Gen.char] ] in
+  let expected = [
+      [%stri let gen = QCheck.Gen.char];
+      [%stri let arb = QCheck.make @@ gen];
+    ] in
   let actual = f @@ extract [%stri type t = char] in
 
   check_eq ~expected ~actual "deriving char"
 
 let test_string () =
-  let expected = [ [%stri let gen = QCheck.Gen.string] ] in
+  let expected = [
+      [%stri let gen = QCheck.Gen.string];
+      [%stri let arb = QCheck.make @@ gen];
+    ] in
   let actual = f @@ extract [%stri type t = string] in
 
   check_eq ~expected ~actual "deriving string"
 
 let test_unit () =
-  let expected = [ [%stri let gen = QCheck.Gen.unit] ] in
+  let expected = [
+      [%stri let gen = QCheck.Gen.unit];
+      [%stri let arb = QCheck.make @@ gen];
+    ] in
   let actual = f @@ extract [%stri type t = unit] in
 
   check_eq ~expected ~actual "deriving unit"
 
 let test_bool () =
-  let expected = [ [%stri let gen = QCheck.Gen.bool] ] in
+  let expected = [
+      [%stri let gen = QCheck.Gen.bool];
+      [%stri let arb = QCheck.make @@ gen];
+    ] in
   let actual = f @@ extract [%stri type t = bool] in
 
   check_eq ~expected ~actual "deriving bool"
 
 let test_int32 () =
-  let expected = [ [%stri let gen = QCheck.Gen.ui32] ] in
+  let expected = [
+      [%stri let gen = QCheck.Gen.ui32];
+      [%stri let arb = QCheck.make @@ gen];
+    ] in
   let actual = f @@ extract [%stri type t = int32] in
 
   check_eq ~expected ~actual "deriving int32"
 
 let test_int32' () =
-  let expected = [ [%stri let gen = QCheck.Gen.ui32] ] in
+  let expected = [
+      [%stri let gen = QCheck.Gen.ui32];
+      [%stri let arb = QCheck.make @@ gen];
+    ] in
   let actual = f @@ extract [%stri type t = Int32.t] in
 
   check_eq ~expected ~actual "deriving int32'"
 
 let test_int64 () =
-  let expected = [ [%stri let gen = QCheck.Gen.ui64] ] in
+  let expected = [
+      [%stri let gen = QCheck.Gen.ui64];
+      [%stri let arb = QCheck.make @@ gen];
+    ] in
   let actual = f @@ extract [%stri type t = int64] in
 
   check_eq ~expected ~actual "deriving int64"
 
 let test_int64' () =
-  let expected = [ [%stri let gen = QCheck.Gen.ui64] ] in
+  let expected = [
+      [%stri let gen = QCheck.Gen.ui64];
+      [%stri let arb = QCheck.make @@ gen];
+    ] in
   let actual = f @@ extract [%stri type t = Int64.t] in
 
   check_eq ~expected ~actual "deriving int64'"
@@ -111,11 +140,13 @@ let test_tuple () =
           QCheck.Gen.map
             (fun (gen0, gen1) -> (gen0, gen1))
             (QCheck.Gen.pair QCheck.Gen.int QCheck.Gen.int)];
+      [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
           QCheck.Gen.map
             (fun (gen0, gen1, gen2) -> (gen0, gen1, gen2))
             (QCheck.Gen.triple QCheck.Gen.int QCheck.Gen.int QCheck.Gen.int)];
+      [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
           QCheck.Gen.map
@@ -125,6 +156,7 @@ let test_tuple () =
                QCheck.Gen.int
                QCheck.Gen.int
                QCheck.Gen.int)];
+      [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
           QCheck.Gen.map
@@ -133,6 +165,7 @@ let test_tuple () =
             (QCheck.Gen.pair
                (QCheck.Gen.pair QCheck.Gen.int QCheck.Gen.int)
                (QCheck.Gen.triple QCheck.Gen.int QCheck.Gen.int QCheck.Gen.int))];
+      [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
           QCheck.Gen.map
@@ -141,24 +174,33 @@ let test_tuple () =
             (QCheck.Gen.pair
                (QCheck.Gen.triple QCheck.Gen.int QCheck.Gen.int QCheck.Gen.int)
                (QCheck.Gen.triple QCheck.Gen.int QCheck.Gen.int QCheck.Gen.int))];
+      [%stri let arb = QCheck.make @@ gen];
     ]
   in
 
   check_eq ~expected ~actual "deriving tuples"
 
 let test_option () =
-  let expected = [ [%stri let gen = QCheck.Gen.option QCheck.Gen.int] ] in
+  let expected = [
+      [%stri let gen = QCheck.Gen.option QCheck.Gen.int];
+      [%stri let arb = QCheck.make @@ gen];
+    ] in
   let actual = f' @@ extract' [ [%stri type t = int option] ] in
   check_eq ~expected ~actual "deriving option"
 
 let test_array () =
-  let expected = [ [%stri let gen = QCheck.Gen.array QCheck.Gen.int] ] in
+  let expected = [
+      [%stri let gen = QCheck.Gen.array QCheck.Gen.int];
+      [%stri let arb = QCheck.make @@ gen];
+    ] in
   let actual = f' @@ extract' [ [%stri type t = int array] ] in
   check_eq ~expected ~actual "deriving option"
 
 let test_list () =
-  let expected = [ [%stri let gen = QCheck.Gen.list QCheck.Gen.string] ] in
-
+  let expected = [
+      [%stri let gen = QCheck.Gen.list QCheck.Gen.string];
+      [%stri let arb = QCheck.make @@ gen];
+    ] in
   let actual = f' @@ extract' [ [%stri type t = string list] ] in
   check_eq ~expected ~actual "deriving list"
 
@@ -166,21 +208,27 @@ let test_alpha () =
   let expected =
     [
       [%stri let gen gen_a = gen_a];
+      [%stri let arb gen_a = QCheck.make @@ (gen gen_a)];
       [%stri let gen gen_a = QCheck.Gen.list gen_a];
+      [%stri let arb gen_a = QCheck.make @@ (gen gen_a)];
       [%stri let gen gen_a = QCheck.Gen.map (fun gen0 -> A gen0) gen_a];
+      [%stri let arb gen_a = QCheck.make @@ (gen gen_a)];
       [%stri
         let gen gen_a gen_b =
           QCheck.Gen.map
             (fun (gen0, gen1) -> A (gen0, gen1))
             (QCheck.Gen.pair gen_a gen_b)];
+      [%stri let arb gen_a gen_b = QCheck.make @@ ((gen gen_a) gen_b)];
       [%stri
         let gen gen_left gen_right =
           QCheck.Gen.map
             (fun (gen0, gen1) -> (gen0, gen1))
             (QCheck.Gen.pair gen_left gen_right)];
+      [%stri let arb gen_left gen_right = QCheck.make @@ ((gen gen_left) gen_right)];
       [%stri
        let gen_int_tree = gen_tree QCheck.Gen.int
-      ]
+      ];
+      [%stri let arb_int_tree = QCheck.make @@ gen_int_tree];
     ]
   in
   let actual =
@@ -207,7 +255,8 @@ let test_equal () =
               (1, QCheck.Gen.pure A);
               (1, QCheck.Gen.pure B);
               (1, QCheck.Gen.pure C);
-            ]];
+      ]];
+      [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen_t' =
           QCheck.Gen.frequency
@@ -215,7 +264,8 @@ let test_equal () =
               (1, QCheck.Gen.pure A);
               (1, QCheck.Gen.pure B);
               (1, QCheck.Gen.pure C);
-            ]];
+      ]];
+      [%stri let arb_t' = QCheck.make @@ gen_t'];
     ]
   in
   let actual =
@@ -237,8 +287,10 @@ let test_dependencies () =
                 QCheck.Gen.map
                   (fun gen0 -> Float gen0)
                   SomeModule.SomeOtherModule.gen );
-            ]];
+      ]];
+      [%stri let arb = QCheck.make @@ gen];
       [%stri let gen = gen_something];
+      [%stri let arb = QCheck.make @@ gen];
     ]
   in
   let actual =
@@ -259,13 +311,15 @@ let test_konstr () =
   let expected =
     [
       [%stri let gen = QCheck.Gen.map (fun gen0 -> A gen0) QCheck.Gen.int];
+      [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
           QCheck.Gen.frequency
             [
               (1, QCheck.Gen.map (fun gen0 -> B gen0) QCheck.Gen.int);
               (1, QCheck.Gen.map (fun gen0 -> C gen0) QCheck.Gen.int);
-            ]];
+      ]];
+      [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
           QCheck.Gen.frequency
@@ -273,11 +327,13 @@ let test_konstr () =
               (1, QCheck.Gen.map (fun gen0 -> X gen0) gen_t1);
               (1, QCheck.Gen.map (fun gen0 -> Y gen0) gen_t2);
               (1, QCheck.Gen.map (fun gen0 -> Z gen0) QCheck.Gen.string);
-            ]];
+      ]];
+      [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
           QCheck.Gen.frequency
             [ (1, QCheck.Gen.pure Left); (1, QCheck.Gen.pure Right) ]];
+      [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
           QCheck.Gen.frequency
@@ -294,7 +350,8 @@ let test_konstr () =
                      QCheck.Gen.int
                      QCheck.Gen.int
                      QCheck.Gen.int) );
-            ]];
+      ]];
+      [%stri let arb = QCheck.make @@ gen];
     ]
   in
   let actual =
@@ -322,11 +379,13 @@ let test_record () =
           QCheck.Gen.map
             (fun (gen0, gen1) -> { a = gen0; b = gen1 })
             (QCheck.Gen.pair QCheck.Gen.int QCheck.Gen.string)];
+      [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
           QCheck.Gen.map
             (fun (gen0, gen1) -> { a = gen0; b = gen1 })
             (QCheck.Gen.pair QCheck.Gen.int QCheck.Gen.string)];
+      [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
           QCheck.Gen.frequency
@@ -336,7 +395,8 @@ let test_record () =
                 QCheck.Gen.map
                   (fun (gen0, gen1) -> B { left = gen0; right = gen1 })
                   (QCheck.Gen.pair QCheck.Gen.int QCheck.Gen.int) );
-            ]];
+      ]];
+      [%stri let arb = QCheck.make @@ gen];
     ]
   in
   let actual =
@@ -361,11 +421,14 @@ let test_variant () =
                (1, QCheck.Gen.map (fun gen0 -> `B gen0) QCheck.Gen.int);
                (1, QCheck.Gen.map (fun gen0 -> `C gen0) QCheck.Gen.string);
              ]
-            : t QCheck.Gen.t)];
+           : t QCheck.Gen.t)];
+      [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen_t' =
           (QCheck.Gen.frequency [ (1, QCheck.Gen.pure `B); (1, gen) ]
-            : t' QCheck.Gen.t)];
+           : t' QCheck.Gen.t)];
+      [%stri let arb_t' = QCheck.make @@ gen_t'];
+
     ]
   in
   let actual =
@@ -401,6 +464,8 @@ let test_tree () =
       [%stri
        let gen_tree gen_a = QCheck.Gen.sized @@ (gen_tree_sized gen_a)
       ];
+      [%stri let arb_tree_sized gen_a n = QCheck.make @@ ((gen_tree_sized gen_a) n)];
+      [%stri let arb_tree gen_a = QCheck.make @@ (gen_tree gen_a)];
     ]
   in
   let actual =
@@ -441,7 +506,9 @@ let test_expr () =
       ];
       [%stri
        let gen_expr = QCheck.Gen.sized @@ gen_expr_sized
-      ]
+      ];
+      [%stri let arb_expr_sized n = QCheck.make @@ (gen_expr_sized n)];
+      [%stri let arb_expr = QCheck.make @@ gen_expr];
     ]
   in
   let actual =
@@ -485,6 +552,10 @@ let test_forest () =
       ];
       [%stri let gen_tree gen_a = QCheck.Gen.sized @@ (gen_tree_sized gen_a)];
       [%stri let gen_forest gen_a = QCheck.Gen.sized @@ (gen_forest_sized gen_a)];
+      [%stri let arb_tree_sized gen_a n = QCheck.make @@ ((gen_tree_sized gen_a) n)];
+      [%stri let arb_forest_sized gen_a n = QCheck.make @@ ((gen_forest_sized gen_a) n)];
+      [%stri let arb_tree gen_a = QCheck.make @@ (gen_tree gen_a)];
+      [%stri let arb_forest gen_a = QCheck.make @@ (gen_forest gen_a)];
     ]
   in
   let actual =
@@ -507,6 +578,7 @@ let test_fun_primitives () =
               QCheck.Observable.int @-> QCheck.Observable.int @-> o_nil)
             (QCheck.make QCheck.Gen.string)
           |> QCheck.gen];
+      [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
           QCheck.fun_nary
@@ -514,6 +586,7 @@ let test_fun_primitives () =
               QCheck.Observable.float @-> QCheck.Observable.float @-> o_nil)
             (QCheck.make QCheck.Gen.string)
           |> QCheck.gen];
+      [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
           QCheck.fun_nary
@@ -521,6 +594,7 @@ let test_fun_primitives () =
               QCheck.Observable.string @-> QCheck.Observable.string @-> o_nil)
             (QCheck.make QCheck.Gen.string)
           |> QCheck.gen];
+      [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
           QCheck.fun_nary
@@ -528,6 +602,7 @@ let test_fun_primitives () =
               QCheck.Observable.bool @-> QCheck.Observable.bool @-> o_nil)
             (QCheck.make QCheck.Gen.string)
           |> QCheck.gen];
+      [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
           QCheck.fun_nary
@@ -535,12 +610,14 @@ let test_fun_primitives () =
               QCheck.Observable.char @-> QCheck.Observable.char @-> o_nil)
             (QCheck.make QCheck.Gen.string)
           |> QCheck.gen];
+      [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
           QCheck.fun_nary
             QCheck.Tuple.(QCheck.Observable.unit @-> o_nil)
             (QCheck.make QCheck.Gen.string)
           |> QCheck.gen];
+      [%stri let arb = QCheck.make @@ gen];
     ]
   in
 
@@ -570,6 +647,7 @@ let test_fun_n () =
               @-> QCheck.Observable.char @-> o_nil)
             (QCheck.make QCheck.Gen.unit)
           |> QCheck.gen];
+      [%stri let arb = QCheck.make @@ gen];
     ]
   in
   let actual =
@@ -587,6 +665,7 @@ let test_fun_option () =
               QCheck.Observable.option QCheck.Observable.int @-> o_nil)
             (QCheck.make QCheck.Gen.unit)
           |> QCheck.gen];
+      [%stri let arb = QCheck.make @@ gen];
     ]
   in
   let actual = f @@ extract [%stri type t = int option -> unit] in
@@ -602,6 +681,7 @@ let test_fun_list () =
               QCheck.Observable.list QCheck.Observable.int @-> o_nil)
             (QCheck.make QCheck.Gen.unit)
           |> QCheck.gen];
+      [%stri let arb = QCheck.make @@ gen];
     ]
   in
   let actual = f @@ extract [%stri type t = int list -> unit] in
@@ -617,6 +697,7 @@ let test_fun_array () =
               QCheck.Observable.array QCheck.Observable.int @-> o_nil)
             (QCheck.make QCheck.Gen.unit)
           |> QCheck.gen];
+      [%stri let arb = QCheck.make @@ gen];
     ]
   in
   let actual = f @@ extract [%stri type t = int array -> unit] in
@@ -633,6 +714,7 @@ let test_fun_tuple () =
               @-> o_nil)
             (QCheck.make QCheck.Gen.unit)
           |> QCheck.gen];
+      [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
           QCheck.fun_nary
@@ -644,6 +726,7 @@ let test_fun_tuple () =
               @-> o_nil)
             (QCheck.make QCheck.Gen.unit)
           |> QCheck.gen];
+      [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
           QCheck.fun_nary
@@ -656,6 +739,7 @@ let test_fun_tuple () =
               @-> o_nil)
             (QCheck.make QCheck.Gen.unit)
           |> QCheck.gen];
+      [%stri let arb = QCheck.make @@ gen];
     ]
   in
   let actual =
@@ -679,7 +763,8 @@ let test_weight_konstrs () =
               (5, QCheck.Gen.pure A);
               (6, QCheck.Gen.pure B);
               (1, QCheck.Gen.pure C);
-            ]];
+      ]];
+      [%stri let arb = QCheck.make @@ gen];
     ]
   in
   let actual =
@@ -714,7 +799,9 @@ let test_recursive_poly_variant () =
             : tree QCheck.Gen.t)];
       [%stri
        let gen_tree gen_a = QCheck.Gen.sized @@ (gen_tree_sized gen_a)
-      ]
+      ];
+      [%stri let arb_tree_sized gen_a n = QCheck.make @@ ((gen_tree_sized gen_a) n)];
+      [%stri let arb_tree gen_a = QCheck.make @@ gen_tree gen_a];
     ]
   in
   let actual =

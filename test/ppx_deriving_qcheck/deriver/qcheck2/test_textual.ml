@@ -4,7 +4,7 @@ open Ppxlib
 (** Primitive types tests *)
 let loc = Location.none
 
-let f = Ppx_deriving_qcheck.derive_gen ~version:`QCheck2 ~loc
+let f = Ppx_deriving_qcheck.derive_gens ~version:`QCheck2 ~loc
 
 let f' xs = List.map f xs |> List.concat
 

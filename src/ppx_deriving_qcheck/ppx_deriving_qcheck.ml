@@ -11,8 +11,10 @@ module O = G.Observable
     {[
     module Tree : sig
       type t
-
+      val gen_sized : int -> t QCheck.Gen.t
       val gen : t QCheck.Gen.t
+      val arb_sized : int -> t QCheck.arbitrary
+      val arb : t QCheck.arbitrary
     end = struct
       type t = Leaf | Node of int * t * t
       [@@deriving qcheck]
@@ -33,6 +35,32 @@ let pat ~loc ?sized s =
   let (module A) = Ast_builder.make loc in
   let s = name ?sized s in
   A.pvar s
+
+(** [name_gen_to_arb name] creates the arb name based on the generator [name] *)
+let name_gen_to_arb = function
+  | "gen" -> "arb"
+  | name ->
+     let n = String.length name in
+     let suffix = String.sub name 3 (n - 3) in
+     "arb" ^ suffix
+
+(** [pattern_name pat] tries to find the [pattern] name. *)
+let pattern_name pat : string =
+  let loc = pat.ppat_loc in
+  match pat.ppat_desc with
+  | Ppat_var var -> var.txt
+  | _ ->
+     Ppxlib.Location.raise_errorf ~loc
+       "Could not extract name from this pattern"
+
+(** [args_and_body expr] extracts the args used in [expr] with
+    the actual body using these args. *)
+let rec args_and_body expr : (string list * expression) =
+  match expr.pexp_desc with
+  | Pexp_fun (Nolabel, _, pat, expr) ->
+     let (args, body) = args_and_body expr in
+     (pattern_name pat :: args, body)
+  | _ -> ([], expr)
 
 (** {2. Recursive generators} *)
 
@@ -492,11 +520,11 @@ let mutually_recursive_gens ~loc gens =
   let mutual_gens = A.pstr_value Recursive gens in
   mutual_gens :: normal_gens
 
-(** [derive_gen ~version ~loc xs] creates generators for type declaration in [xs].
+(** [derive_gens ~version ~loc xs] creates generators for type declaration in [xs].
 
-    The generator can either be a [QCheck.Gen.t] or a [QCheck2.Gen.t] based on
+    The generators can either be [QCheck.Gen.t] or [QCheck2.Gen.t] based on
     [version]. *)
-let derive_gen ~version ~loc (xs : rec_flag * type_declaration list) : structure =
+let derive_gens ~version ~loc (xs : rec_flag * type_declaration list) : structure =
   let add_if_rec env typ x =
     if is_rec_type_decl env typ then
       Env.{ env with rec_types = x :: env.rec_types}
@@ -525,15 +553,85 @@ let derive_gen ~version ~loc (xs : rec_flag * type_declaration list) : structure
      in
      mutually_recursive_gens ~loc gens
 
+(** [derive_arb gen] creates an arbitrary declaration based on [gen]. We call
+    QCheck.make on the derived generator..
+
+    It fetches the generator name and its parameters.
+
+    e.g.
+    {[
+    type 'a list = Cons of 'a * 'a list | Nil
+    [@@deriving qcheck]
+
+    (* produces => *)
+
+    let rec gen_list_sized gen_a =
+      match n with
+      | ...
+
+    let gen_list_gen_a = QCheck.Gen.sized @@ (gen_list_sized gen_a)
+
+    let arb_list_sized gen_a = QCheck.make @@ (gen_list_sized gen_a)
+
+    let arb_list gen_a = QCheck.make @@ (gen_list gen_a)
+    ]}
+*)
+let derive_arb gen =
+  let loc = gen.pstr_loc in
+  let (module A) = Ast_builder.make loc in
+  let (args, body, gen_name) =
+    match gen with
+    | [%stri let [%p? pat] = [%e? body]]
+    | [%stri let rec [%p? pat] = [%e? body]] ->
+       let (args, body) = args_and_body body in
+       let gen_name = pattern_name pat in
+       (args, body, gen_name)
+    | _ -> assert false
+  in
+  let args_pat = List.map A.pvar args in
+  let args_expr = List.map A.evar args in
+
+  let arb_pat = A.pvar (name_gen_to_arb gen_name) in
+  let body =
+    match body with
+    | [%expr QCheck.sized @@ [%e? _]] ->
+       A.evar gen_name |>
+         Args.apply_args ~loc args_expr |>
+         fun e -> [%expr QCheck.make @@ [%e e]]
+    | _ ->
+       A.evar gen_name |>
+         Args.apply_args ~loc args_expr
+  in
+  let body = Args.curry_args ~loc args_pat [%expr QCheck.make @@ [%e body]] in
+  [%stri let [%p arb_pat] = [%e body]]
+
+let derive_arbs ~loc xs =
+  let gens = derive_gens ~loc ~version:`QCheck xs in
+  (* When generators are mutual, they are nested in a {[ let rec gen = ... and gen .. ]},
+     we want an arbitrary for each generator, so, we flatten them in a list. *)
+  let flatten_gens =
+    List.fold_right (fun gen acc ->
+        match gen.pstr_desc with
+        | Pstr_value (_, vbs) ->
+           List.map (fun vb -> [%stri let [%p vb.pvb_pat] = [%e vb.pvb_expr]]) vbs @ acc
+        | _ -> gen :: acc
+      ) gens []
+  in
+  gens @ List.map derive_arb flatten_gens
+
 (** {2. Ppxlib machinery} *)
 
-let create_gen version ~ctxt (decls : rec_flag * type_declaration list) : structure =
+let create_gens version ~ctxt (decls : rec_flag * type_declaration list) : structure =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
-  derive_gen ~version ~loc decls
+  derive_gens ~version ~loc decls
 
-let gen_expander_qcheck = Deriving.Generator.V2.make_noarg (create_gen `QCheck)
+let create_arbs ~ctxt (decls : rec_flag * type_declaration list) : structure =
+  let loc = Expansion_context.Deriver.derived_item_loc ctxt in
+  derive_arbs ~loc decls
 
-let gen_expander_qcheck2 = Deriving.Generator.V2.make_noarg (create_gen `QCheck2)
+let gen_expander_qcheck = Deriving.Generator.V2.make_noarg create_arbs
+
+let gen_expander_qcheck2 = Deriving.Generator.V2.make_noarg (create_gens `QCheck2)
 
 let _ = Deriving.add "qcheck" ~str_type_decl:gen_expander_qcheck
 
