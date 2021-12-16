@@ -1546,6 +1546,26 @@ module Test = struct
     | Run_ok
     | Run_fail of string list
 
+  (* run_law is a helper function for testing a property [law] on a
+     generated input [x].
+
+     When passed a ~retries number n>1, the tested property is checked
+     n times for each shrunk input candidate. The default value is 1,
+     thus causing no change in behaviour.
+
+     Retrying a property can be useful when testing non-deterministic
+     code with QCheck, e.g., for multicore execution. The idea is
+     described in
+        'Testing a Database for Race Conditions with QuickCheck'
+        Hughes and Bolinder, Erlang 2011, Sec.6:
+
+     "As we explained in section 4, we ensure that tests fail when
+     races are present simply by repeating each test a large number of
+     times, and by running on a dual core machine. We obtained the
+     minimal failing cases in the previous section by repeating each
+     test 100 times during shrinking: thus we stopped shrinking a test
+     case only when all of its candidate shrinkings passed 100 tests
+     in a row."  *)
   let run_law ~retries law x =
     let rec loop i = match law x with
       | false -> Run_fail []
