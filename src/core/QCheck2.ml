@@ -1361,6 +1361,7 @@ module Test = struct
     long_factor : int; (* multiplicative factor for long test count *)
     max_gen : int; (* max number of instances to generate (>= count) *)
     max_fail : int; (* max number of failures *)
+    retries : int; (* max number of retries during shrinking *)
     law : 'a -> bool; (* the law to check *)
     gen : 'a Gen.t; (* how to generate/shrink instances *)
     print : 'a Print.t option; (* how to print values *)
@@ -1409,7 +1410,7 @@ module Test = struct
 
   let make_cell ?(if_assumptions_fail=default_if_assumptions_fail)
       ?(count) ?(long_factor=1) ?max_gen
-      ?(max_fail=1) ?(name=fresh_name()) ?print ?collect ?(stats=[]) gen law
+      ?(max_fail=1) ?(retries=1) ?(name=fresh_name()) ?print ?collect ?(stats=[]) gen law
     =
     let count = global_count count in
     let max_gen = match max_gen with None -> count + 200 | Some x->x in
@@ -1421,6 +1422,7 @@ module Test = struct
       stats;
       max_gen;
       max_fail;
+      retries;
       name;
       count;
       long_factor;
@@ -1430,7 +1432,7 @@ module Test = struct
 
   let make_cell_from_QCheck1 ?(if_assumptions_fail=default_if_assumptions_fail)
       ?(count) ?(long_factor=1) ?max_gen
-      ?(max_fail=1) ?(name=fresh_name()) ~gen ?shrink ?print ?collect ~stats law
+      ?(max_fail=1) ?(retries=1) ?(name=fresh_name()) ~gen ?shrink ?print ?collect ~stats law
     =
     let count = global_count count in
     (* Make a "fake" QCheck2 arbitrary with no shrinking *)
@@ -1444,6 +1446,7 @@ module Test = struct
       stats;
       max_gen;
       max_fail;
+      retries;
       name;
       count;
       long_factor;
@@ -1451,8 +1454,8 @@ module Test = struct
       qcheck1_shrink = shrink;
     }
 
-  let make ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?name ?print ?collect ?stats gen law =
-    Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?name ?print ?collect ?stats gen law)
+  let make ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats gen law =
+    Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats gen law)
 
   let test_get_count (Test cell) = get_count cell
 
@@ -1543,9 +1546,33 @@ module Test = struct
     | Run_ok
     | Run_fail of string list
 
-  let run_law law x =
+  (* run_law is a helper function for testing a property [law] on a
+     generated input [x].
+
+     When passed a ~retries number n>1, the tested property is checked
+     n times for each shrunk input candidate. The default value is 1,
+     thus causing no change in behaviour.
+
+     Retrying a property can be useful when testing non-deterministic
+     code with QCheck, e.g., for multicore execution. The idea is
+     described in
+        'Testing a Database for Race Conditions with QuickCheck'
+        Hughes and Bolinder, Erlang 2011, Sec.6:
+
+     "As we explained in section 4, we ensure that tests fail when
+     races are present simply by repeating each test a large number of
+     times, and by running on a dual core machine. We obtained the
+     minimal failing cases in the previous section by repeating each
+     test 100 times during shrinking: thus we stopped shrinking a test
+     case only when all of its candidate shrinkings passed 100 tests
+     in a row."  *)
+  let run_law ~retries law x =
+    let rec loop i = match law x with
+      | false -> Run_fail []
+      | true ->
+        if i<=1 then Run_ok else loop (i-1) in
     try
-      if law x then Run_ok else Run_fail []
+      loop retries
     with User_fail msg -> Run_fail [msg]
 
   (* QCheck1-compatibility code *)
@@ -1575,7 +1602,7 @@ module Test = struct
                try
                  incr count;
                  st.handler st.test.name st.test (Shrinking (steps, !count, x));
-                 begin match run_law st.test.law x with
+                 begin match run_law ~retries:st.test.retries st.test.law x with
                  | Run_fail m when not is_err -> Some (Tree.pure x, Shrink_fail, m)
                  | _ -> None
                  end
@@ -1590,7 +1617,7 @@ module Test = struct
              try
                incr count;
                st.handler st.test.name st.test (Shrinking (steps, !count, x));
-               begin match run_law st.test.law x with
+               begin match run_law ~retries:st.test.retries st.test.law x with
                  | Run_fail m when not is_err -> Some (x_tree, Shrink_fail, m)
                  | _ -> None
                end
@@ -1668,7 +1695,7 @@ module Test = struct
     let res =
       try
         state.handler state.test.name state.test (Testing input);
-        begin match run_law state.test.law input with
+        begin match run_law ~retries:1 state.test.law input with
           | Run_ok ->
             (* one test ok *)
             decr_count state;

@@ -65,6 +65,10 @@ module Overall = struct
       ]
       (Gen.int_bound 120) (fun _ -> true)
 
+  let retries =
+    Test.make ~name:"with shrinking retries" ~retries:10 ~print:Print.int
+      Gen.small_nat (fun i -> Printf.printf "%i %!" i; i mod 3 <> 1)
+
   let bad_assume_warn =
     Test.make ~name:"WARN_unlikely_precond" ~count:2_000 ~print:Print.int
       Gen.int
@@ -86,6 +90,7 @@ module Overall = struct
     error;
     collect;
     stats;
+    retries;
     bad_assume_warn;
     bad_assume_fail;
   ]

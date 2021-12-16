@@ -1585,8 +1585,8 @@ module Test : sig
      
   val make_cell :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
-    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int -> ?name:string ->
-    ?print:'a Print.t -> ?collect:('a -> string) -> ?stats:('a stat list) ->
+    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int -> ?retries:int ->
+    ?name:string -> ?print:'a Print.t -> ?collect:('a -> string) -> ?stats:('a stat list) ->
      'a Gen.t -> ('a -> bool) ->
     'a cell
   (** [make_cell gen prop] builds a test that checks property [prop] on instances
@@ -1601,6 +1601,7 @@ module Test : sig
         preconditions (should be >= count).
       @param max_fail maximum number of failures before we stop generating
         inputs. This is useful if shrinking takes too much time.
+      @param retries number of times to retry the tested property while shrinking.
       @param if_assumptions_fail the minimum
         fraction of tests that must satisfy the precondition for a success
         to be considered valid.
@@ -1616,7 +1617,7 @@ module Test : sig
   val make_cell_from_QCheck1 :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
-    ?name:string -> gen:(Random.State.t -> 'a) -> ?shrink:('a -> ('a -> unit) -> unit) ->
+    ?retries:int -> ?name:string -> gen:(Random.State.t -> 'a) -> ?shrink:('a -> ('a -> unit) -> unit) ->
     ?print:('a -> string) -> ?collect:('a -> string) -> stats:'a stat list -> ('a -> bool) ->
     'a cell
   (** ⚠️ Do not use, this is exposed for internal reasons only. ⚠️ 
@@ -1646,8 +1647,8 @@ module Test : sig
 
   val make :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
-    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int -> ?name:string ->
-    ?print:('a Print.t) -> ?collect:('a -> string) -> ?stats:('a stat list) ->
+    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int -> ?retries:int ->
+    ?name:string -> ?print:('a Print.t) -> ?collect:('a -> string) -> ?stats:('a stat list) ->
     'a Gen.t -> ('a -> bool) -> t
   (** [make gen prop] builds a test that checks property [prop] on instances
       of the generator [gen].

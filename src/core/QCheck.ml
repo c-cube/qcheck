@@ -1680,13 +1680,13 @@ module Test = struct
 
   let make_cell ?if_assumptions_fail
       ?count ?long_factor ?max_gen
-  ?max_fail ?small:_removed_in_qcheck_2 ?name arb law
+  ?max_fail ?small:_removed_in_qcheck_2 ?retries ?name arb law
   =
   let {gen; shrink; print; collect; stats; _} = arb in
-  QCheck2.Test.make_cell_from_QCheck1 ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?name ~gen ?shrink ?print ?collect ~stats law
+  QCheck2.Test.make_cell_from_QCheck1 ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?retries ?name ~gen ?shrink ?print ?collect ~stats law
 
-  let make ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law =
-    QCheck2.Test.Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?small ?name arb law)
+  let make ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?small ?retries ?name arb law =
+    QCheck2.Test.Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?small ?retries ?name arb law)
 
   let fail_report = QCheck2.Test.fail_report
 
