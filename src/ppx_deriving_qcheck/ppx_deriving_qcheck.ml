@@ -175,7 +175,7 @@ let gen_sized ~loc (is_rec : 'a -> bool) (to_gen : 'a -> expression) (xs : 'a li
     [%expr
         match n with
         | 0 -> [%e leaves]
-        | n -> [%e nodes]
+        | _ -> [%e nodes]
     ]
 
 (** [gen_tuple ~loc ?f tys] transforms list of type [tys] into a tuple generator.
