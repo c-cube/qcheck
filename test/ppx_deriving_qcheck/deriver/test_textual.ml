@@ -385,7 +385,7 @@ let test_tree () =
        let rec gen_tree_sized gen_a n =
          match n with
          | 0 -> QCheck.Gen.pure Leaf
-         | n ->
+         | _ ->
             QCheck.Gen.frequency
               [
                 (1, QCheck.Gen.pure Leaf);
@@ -416,7 +416,7 @@ let test_expr () =
        let rec gen_expr_sized n =
          match n with
          | 0 -> QCheck.Gen.map (fun gen0 -> Value gen0) QCheck.Gen.int
-         | n ->
+         | _ ->
             QCheck.Gen.frequency
               [
                 ( 1,
@@ -454,7 +454,7 @@ let test_expr () =
               | Lt of expr * expr]
   in
   check_eq ~expected ~actual "deriving expr"
-  
+
 let test_forest () =
   let expected =
     [
@@ -469,7 +469,7 @@ let test_forest () =
         and gen_forest_sized gen_a n =
           match n with
           | 0 -> QCheck.Gen.pure Nil
-          | n ->
+          | _ ->
              QCheck.Gen.frequency
                [
                  (1, QCheck.Gen.pure Nil);
@@ -695,7 +695,7 @@ let test_recursive_poly_variant () =
        let rec gen_tree_sized gen_a n =
          (match n with
          | 0 -> QCheck.Gen.map (fun gen0 -> `Leaf gen0) gen_a
-         | n ->
+         | _ ->
             QCheck.Gen.frequency
               [
                 ( 1,
@@ -721,6 +721,35 @@ let test_recursive_poly_variant () =
     f @@ extract [%stri type 'a tree = [ `Leaf of 'a | `Node of 'a tree * 'a tree ]]
   in
   check_eq ~expected ~actual "deriving recursive polymorphic variants"
+
+(* Regression test: https://github.com/c-cube/qcheck/issues/213 *)
+let test_unused_variable () =
+  let expected =
+    [
+      [%stri
+        let rec gen_c_sized n =
+          match n with
+          | 0 -> QCheck.Gen.pure A
+          | _ ->
+            QCheck.Gen.frequency
+              [(1, (QCheck.Gen.pure A));
+               (1, (QCheck.Gen.map (fun gen0 -> B gen0) gen_myint))]
+        and gen_myint = QCheck.Gen.nat
+     ];
+      [%stri
+       let gen_c = QCheck.Gen.sized @@ gen_c_sized
+      ]
+    ]
+  in
+  let actual =
+    f @@ extract [%stri
+      type c =
+        | A
+        | B of myint
+      and myint = int [@gen QCheck.Gen.nat] ]
+  in
+  check_eq ~expected ~actual "deriving variant with unused fuel parameter"
+
 
 let () =
   Alcotest.(
@@ -764,5 +793,9 @@ let () =
               "deriving rec poly variants"
               `Quick
               test_recursive_poly_variant;
+            test_case
+              "deriving variant with unused fuel parameter"
+              `Quick
+              test_unused_variable;
           ] );
       ])
