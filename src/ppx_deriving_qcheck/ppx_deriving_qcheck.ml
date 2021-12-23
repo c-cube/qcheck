@@ -112,6 +112,53 @@ let is_rec_type_decl env typ =
   in
   in_type_kind || in_manifest
 
+
+(** is_n_used looks for `n` (size indication) in an expression.
+
+    For instance:
+    {[
+    type foo = A of bar | B of bar
+    and bar = Any
+    [@@deriving qcheck]
+
+    let rec gen_sized_foo n =
+      let open QCheck.Gen in
+      frequency [
+        (map (fun x -> A x) gen_bar);
+        (map (fun x -> B x) gen_bar);
+        ]
+    and gen_bar = p
+      let open QCheck.Gen in
+      pure Any
+    ]}
+
+    The type [foo] is recursive because it has a dependency to [bar] but does
+    not use the fuel as there is no "leaves" for this type.
+
+    We begin by looking for occurences of variables `n`, iff we did not find
+    any occurences, we replace `n` by `_n` in the generator's parameters. Thus,
+    avoiding an unused variable.
+ *)
+exception N_is_used
+
+class is_n_used (expr : expression) =
+object(self)
+  inherit Ast_traverse.map as super
+
+  method! expression expr =
+    match expr with
+    | [%expr n ] ->
+       raise N_is_used
+    | _ -> super#expression expr
+
+  method go () =
+    match self#expression expr |> ignore with
+    | exception N_is_used -> true
+    | () -> false
+end
+
+let is_n_used expr = (new is_n_used expr)#go ()
+
 (** {2. Generator constructors} *)
 
 (** [gen_longident lg args] creates a generator using [lg].
@@ -399,7 +446,11 @@ let gen_from_type_declaration ~loc ~env td =
     let gen = Args.curry_args ~loc args_pat gen in
     `Normal [%stri let [%p pat_gen] = [%e gen]]
   else
-    let gen = Args.curry_args ~loc (args_pat @ [A.pvar "n"]) gen in
+    let args =
+      if is_n_used gen then args_pat @ [A.pvar "n"]
+      else args_pat @ [A.pvar "_n"]
+    in
+    let gen = Args.curry_args ~loc args gen in
     let pat_gen_sized = pat ~loc ~sized:true ty in
     let gen_sized = name ~sized:true ty |> A.evar in
     let gen_normal =
