@@ -33,13 +33,29 @@ let long_ = lazy (
 )
 
 let to_alcotest
-    ?(verbose=Lazy.force verbose_) ?(long=Lazy.force long_) ?(rand=default_rand())
+    ?(colors=false) ?(verbose=Lazy.force verbose_) ?(long=Lazy.force long_)
+    ?(debug_shrink = None) ?debug_shrink_list ?(rand=default_rand())
     (t:T.t) =
   let T.Test cell = t in
+  let handler name cell r =
+    match r, debug_shrink with
+    | QCheck2.Test.Shrunk (step, x), Some out ->
+      let go = match debug_shrink_list with
+        | None -> true
+        | Some test_list -> List.mem name test_list in
+      if not go then ()
+      else
+        QCheck_base_runner.debug_shrinking_choices
+          ~colors ~out ~name cell ~step x
+    | _ ->
+      ()
+  in
   let print = Raw.print_std in
   let run() =
-    T.check_cell_exn cell
-      ~long ~rand ~call:(Raw.callback ~colors:false ~verbose ~print_res:true ~print)
+    let call = Raw.callback ~colors ~verbose ~print_res:true ~print in
+    T.check_cell_exn
+      ~long ~call ~handler ~rand
+      cell
   in
   let name = T.get_name cell in
-  name, `Slow, run
+  ((name, `Slow, run) : unit Alcotest.test_case)
