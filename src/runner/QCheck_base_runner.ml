@@ -219,27 +219,13 @@ let debug_shrinking_counter_example cell out x =
   | None -> Printf.fprintf out "<no printer provided>"
   | Some print -> Printf.fprintf out "%s" (print x)
 
-let debug_shrinking_choices_aux ~colors out name i cell x =
+let debug_shrinking_choices ~colors ~out ~name cell ~step x =
   Printf.fprintf out "\n~~~ %a %s\n\n"
     (Color.pp_str_c ~colors `Cyan) "Shrink" (String.make 69 '~');
   Printf.fprintf out
     "Test %s successfully shrunk counter example (step %d) to:\n\n%a\n%!"
-    name i
+    name step
     (debug_shrinking_counter_example cell) x
-
-let debug_shrinking_choices
-    ~colors ~debug_shrink ~debug_shrink_list name cell i x =
-  match debug_shrink with
-  | None -> ()
-  | Some out ->
-    begin match debug_shrink_list with
-      | [] ->
-        debug_shrinking_choices_aux ~colors out name i cell x
-      | l when List.mem name l ->
-        debug_shrinking_choices_aux ~colors out name i cell x
-      | _ -> ()
-    end
-
 
 let default_handler
   ~colors ~debug_shrink ~debug_shrink_list
@@ -256,9 +242,20 @@ let default_handler
     in
     (* debug shrinking choices *)
     begin match r with
-      | QCheck2.Test.Shrunk (i, x) ->
-          debug_shrinking_choices
-          ~colors ~debug_shrink ~debug_shrink_list name cell i x
+      | QCheck2.Test.Shrunk (step, x) ->
+        begin match debug_shrink with
+          | None -> ()
+          | Some out ->
+            let go =
+              match debug_shrink_list with
+              | [] -> true
+              | test_list -> List.mem name test_list
+            in
+            if not go then ()
+            else
+              debug_shrinking_choices
+                ~colors ~out ~name cell ~step x
+        end
       | _ ->
         ()
     end;
