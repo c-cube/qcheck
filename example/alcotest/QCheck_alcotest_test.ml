@@ -55,6 +55,6 @@ let () =
     List.map QCheck_alcotest.to_alcotest
       [ passing; failing; error; simple_qcheck; passing_tree_rev ]
   in
-  A.run "my test" [
-    "suite", suite
-  ]
+  A.run ~show_errors:true "my test" [
+    "suite", suite;
+  ];

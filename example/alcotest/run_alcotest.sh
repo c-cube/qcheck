@@ -12,6 +12,7 @@ echo "$OUT" | grep -v 'This run has ID' \
   | grep -v 'Raised at ' \
   | grep -v 'Called from ' \
   | sed 's/! in .*s\./!/' \
+  | sed 's/`.*.Error`/`Error`/g' \
   | sed 's/[ \t]*$//g' \
   | tr -s "\n"
 exit $CODE
