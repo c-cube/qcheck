@@ -1059,7 +1059,8 @@ module Test : sig
     ?rand:Random.State.t -> 'a cell -> 'a TestResult.t
 
   val check_cell_exn :
-    ?long:bool -> ?call:'a callback -> ?step:'a step ->
+    ?long:bool -> ?call:'a callback ->
+    ?step:'a step -> ?handler:'a handler ->
     ?rand:Random.State.t -> 'a cell -> unit
 
   val check_exn : ?long:bool -> ?rand:Random.State.t -> t -> unit

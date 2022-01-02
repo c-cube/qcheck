@@ -1741,7 +1741,8 @@ module Test : sig
   *)
 
   val check_cell_exn :
-    ?long:bool -> ?call:'a callback -> ?step:'a step ->
+    ?long:bool -> ?call:'a callback ->
+    ?step:'a step -> ?handler:'a handler ->
     ?rand:Random.State.t -> 'a cell -> unit
   (** Same as {!check_cell} but calls  {!check_result} on the result.
       @raise Test_error if [res = Error _]

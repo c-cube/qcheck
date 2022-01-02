@@ -1931,8 +1931,8 @@ module Test = struct
     | R.Failed_other {msg} ->
       raise (Test_fail (cell.name, [msg]))
 
-  let check_cell_exn ?long ?call ?step ?rand cell =
-    let res = check_cell ?long ?call ?step ?rand cell in
+  let check_cell_exn ?long ?call ?step ?handler ?rand cell =
+    let res = check_cell ?long ?call ?step ?handler ?rand cell in
     check_result cell res
 
   let check_exn ?long ?rand (Test cell) = check_cell_exn ?long ?rand cell
