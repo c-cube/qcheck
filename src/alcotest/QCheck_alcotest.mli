@@ -12,7 +12,10 @@
 *)
 
 val to_alcotest :
-  ?verbose:bool -> ?long:bool -> ?rand:Random.State.t ->
+  ?colors:bool -> ?verbose:bool -> ?long:bool ->
+  ?debug_shrink:(out_channel option) ->
+  ?debug_shrink_list:(string list) ->
+  ?rand:Random.State.t ->
   QCheck2.Test.t -> unit Alcotest.test_case
 (** Convert a qcheck test into an alcotest test
     @param verbose used to print information on stdout (default: [verbose()])

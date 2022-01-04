@@ -48,6 +48,13 @@ let passing_tree_rev =
     QCheck.(make gen_tree)
     (fun tree -> rev_tree (rev_tree tree) = tree)
 
+let debug_shrink =
+  QCheck.Test.make ~count:10
+    ~name:"debug_shrink"
+    (* we use a very constrained test to have a smaller shrinking tree *)
+    QCheck.(pair (1 -- 3) (1 -- 3))
+    (fun (a, b) -> a = b);;
+
 let () =
   Printexc.record_backtrace true;
   let module A = Alcotest in
@@ -55,6 +62,9 @@ let () =
     List.map QCheck_alcotest.to_alcotest
       [ passing; failing; error; simple_qcheck; passing_tree_rev ]
   in
-  A.run "my test" [
-    "suite", suite
-  ]
+  A.run ~show_errors:true "my test" [
+    "suite", suite;
+    "shrinking", [
+      QCheck_alcotest.to_alcotest ~verbose:true ~debug_shrink:(Some stdout) debug_shrink
+    ];
+  ];

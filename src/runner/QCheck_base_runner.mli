@@ -87,6 +87,16 @@ type handler_gen =
 val default_handler : handler_gen
 (** The default handler used. *)
 
+val debug_shrinking_choices:
+  colors:bool ->
+  out:out_channel ->
+  name:string -> 'a QCheck2.Test.cell -> step:int -> 'a -> unit
+(** The function used by the default handler to debug shrinking choices.
+    This can be useful to outside users trying to reproduce some of the
+    base-runner behavior.
+
+    @since 0.19
+*)
 
 (** {2 Run a Suite of Tests and Get Results} *)
 
