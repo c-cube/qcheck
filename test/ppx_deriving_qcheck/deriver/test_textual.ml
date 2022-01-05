@@ -738,15 +738,32 @@ let test_unused_variable () =
      ];
       [%stri
        let gen_c = QCheck.Gen.sized @@ gen_c_sized
-      ]
+      ];
+      [%stri
+        let rec gen_c_sized _n =
+          QCheck.Gen.frequency
+            [(1, (QCheck.Gen.map (fun gen0 -> A gen0) gen_myint));
+             (1, (QCheck.Gen.map (fun gen0 -> B gen0) gen_myint))]
+        and gen_myint = QCheck.Gen.nat
+      ];
+      [%stri
+       let gen_c = QCheck.Gen.sized @@ gen_c_sized
+      ];
     ]
   in
   let actual =
-    f @@ extract [%stri
-      type c =
-        | A
-        | B of myint
-      and myint = int [@gen QCheck.Gen.nat] ]
+    f' @@ extract' [
+             [%stri
+              type c =
+                | A
+                | B of myint
+              and myint = int [@gen QCheck.Gen.nat] ];
+             [%stri
+              type c =
+                | A of myint
+                | B of myint
+              and myint = int [@gen QCheck.Gen.nat] ];
+           ]
   in
   check_eq ~expected ~actual "deriving variant with unused fuel parameter"
 
