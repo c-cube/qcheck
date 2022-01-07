@@ -1421,7 +1421,7 @@ module Test = struct
     | (_, Some x) -> int_of_string x
     | (None, None) -> default_count
   in
-  if count < 0 then invalid_arg ("count must be > 0 but value is " ^ string_of_int count) else count
+  if count <= 0 then invalid_arg ("count must be > 0 but value is " ^ string_of_int count) else count
 
   let fresh_name =
     let r = ref 0 in

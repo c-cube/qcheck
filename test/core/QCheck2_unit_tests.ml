@@ -101,8 +101,6 @@ module TestCount = struct
 
   let test_count_10 () = test_count_n ~count:10 10
 
-  let test_count_0 () = test_count_n ~count:0 0
-
   let test_count_default () = test_count_n 100
 
   let test_count_env () =
@@ -114,7 +112,6 @@ module TestCount = struct
   let tests =
     ("Test.make ~count", Alcotest.[
          test_case "make with custom count" `Quick test_count_10;
-         test_case "make with custom count" `Quick test_count_0;
          test_case "make with default count" `Quick test_count_default;
          test_case "make with env count" `Quick test_count_env;
        ])
