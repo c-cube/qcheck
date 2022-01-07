@@ -1415,13 +1415,19 @@ module Test = struct
 
   let default_count = 100
 
-  let global_count count =
-    let count = match (count, Sys.getenv_opt "QCHECK_COUNT") with
+  let default_long_factor = 1
+
+  let global_positive_var default env_var var =
+    let var = match (var, Sys.getenv_opt env_var) with
     | (Some x, _) -> x
     | (_, Some x) -> int_of_string x
-    | (None, None) -> default_count
+    | (None, None) -> default
   in
-  if count <= 0 then invalid_arg ("count must be > 0 but value is " ^ string_of_int count) else count
+  if var <= 0 then invalid_arg (env_var ^ " must be > 0 but value is " ^ string_of_int var) else var
+
+  let global_count count = global_positive_var default_count "QCHECK_COUNT" count
+
+  let global_long_factor long_factor = global_positive_var default_long_factor "QCHECK_LONG_FACTOR" long_factor
 
   let fresh_name =
     let r = ref 0 in
@@ -1430,10 +1436,11 @@ module Test = struct
   let default_if_assumptions_fail = `Warning, 0.05
 
   let make_cell ?(if_assumptions_fail=default_if_assumptions_fail)
-      ?(count) ?(long_factor=1) ?max_gen
+      ?(count) ?long_factor ?max_gen
       ?(max_fail=1) ?(retries=1) ?(name=fresh_name()) ?print ?collect ?(stats=[]) gen law
     =
     let count = global_count count in
+    let long_factor = global_long_factor long_factor in
     let max_gen = match max_gen with None -> count + 200 | Some x->x in
     {
       law;
