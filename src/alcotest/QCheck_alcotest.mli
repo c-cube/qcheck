@@ -17,8 +17,13 @@ val to_alcotest :
   ?debug_shrink_list:(string list) ->
   ?rand:Random.State.t ->
   QCheck2.Test.t -> unit Alcotest.test_case
-(** Convert a qcheck test into an alcotest test
-    @param verbose used to print information on stdout (default: [verbose()])
-    @param rand the random generator to use (default: [random_state ()])
+(** Convert a qcheck test into an alcotest test.
+
+    In addition to the environment variables mentioned above, you can control
+    the behavior of QCheck tests using optional parameters that behave in the
+    same way as the parameters of {!QCheck_base_runner.run_tests}.
+
     @since 0.9
+    @since 0.9 parameters [verbose], [long], [rand]
+    @since NEXT_VERSION parameters [colors], [debug_shrink], [debug_shrink_list]
 *)
