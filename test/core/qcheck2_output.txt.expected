@@ -589,7 +589,7 @@ stats len:
   8982..9480:                                                                  16
   9481..9979:                                                                  12
 
-+++ Stats for small_string len dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++ Stats for string_small len dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 stats len:
   num: 5000, avg: 15.57, stddev: 24.36, median 6, min 0, max 99
@@ -639,7 +639,7 @@ stats len:
    9000.. 9499:                                                                  15
    9500.. 9999:                                                                  20
 
-+++ Stats for small_list len dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++ Stats for list_small len dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 stats len:
   num: 5000, avg: 16.14, stddev: 24.86, median 6, min 0, max 99
@@ -706,7 +706,7 @@ stats len:
    9000.. 9499:                                                                  15
    9500.. 9999:                                                                  20
 
-+++ Stats for small_array len dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++ Stats for array_small len dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 stats len:
   num: 5000, avg: 16.14, stddev: 24.86, median 6, min 0, max 99
@@ -773,7 +773,7 @@ stats dist:
    81.. 90: #                                                                60
    91..100: #                                                                66
 
-+++ Stats for small_signed_int dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++ Stats for int_small dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 stats dist:
   num: 1000, avg: 0.90, stddev: 28.23, median 0, min -99, max 99
@@ -798,7 +798,7 @@ stats dist:
    81.. 90: #                                                                16
    91..100: #                                                                10
 
-+++ Stats for small_nat dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++ Stats for nat_small dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 stats dist:
   num: 1000, avg: 15.11, stddev: 23.27, median 6, min 0, max 99
