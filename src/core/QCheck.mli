@@ -293,12 +293,13 @@ module Gen : sig
       @since 0.5.2 *)
 
   val int_bound : int -> int t
-  (** Uniform integer generator producing integers within [0... bound].
+  (** Uniform integer generator producing integers between [0] and [bound]
+      (inclusive).
       For [bound < 2^{30} - 1] uses [Random.State.int] for integer generation.
       @raise Invalid_argument if the argument is negative. *)
 
   val int_range : int -> int -> int t
-  (** Uniform integer generator producing integers within [low,high].
+  (** Uniform integer generator producing integers within [low,high] (inclusive).
       @raise Invalid_argument if [low > high]. *)
 
   val graft_corners : 'a t -> 'a list -> unit -> 'a t
