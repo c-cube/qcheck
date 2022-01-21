@@ -380,7 +380,7 @@ module Gen : sig
   val char : char t
   (** Generates characters upto character code 255. *)
 
-  val printable : char t (** Generates printable characters. *)
+  val printable : char t (** Generates printable ascii characters in the range 32 to 127 *)
 
   val numeral : char t (** Generates numeral characters. *)
 
@@ -1196,13 +1196,15 @@ val char : char arbitrary
     valid latin-1). *)
 
 val printable_char : char arbitrary
-(** Uniformly distributed over a subset of chars. *)
-(* FIXME: describe which subset. *)
+(** Uniformly distributed over a subset of printable ascii chars.
+    Ascii character codes 32 to 127.
+  *)
 
 val numeral_char : char arbitrary
 (** Uniformly distributed over ['0'..'9']. *)
 
 val string_gen_of_size : int Gen.t -> char Gen.t -> string arbitrary
+(** Builds a string generator from a (non-negative) size generator and a character generator. *)
 
 val string_gen : char Gen.t -> string arbitrary
 (** Generates strings with a distribution of length of [small_nat]. *)
@@ -1229,6 +1231,8 @@ val printable_string_of_size : int Gen.t -> string arbitrary
 (** Generates strings with distribution of characters of [printable_char]. *)
 
 val small_printable_string : string arbitrary
+(** Generates strings with a length of [small_nat]
+    and distribution of characters of [printable_char]. *)
 
 val numeral_string : string arbitrary
 (** Generates strings with a distribution of length of [small_nat]
