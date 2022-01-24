@@ -399,7 +399,7 @@ let test_tree () =
               ]
       ];
       [%stri
-       let gen_tree gen_a = QCheck2.Gen.sized @@ (gen_tree_sized gen_a)
+       let gen_tree gen_a = QCheck2.Gen.sized (gen_tree_sized gen_a)
       ];
     ]
   in
@@ -440,7 +440,7 @@ let test_expr () =
               ]
       ];
       [%stri
-       let gen_expr = QCheck2.Gen.sized @@ gen_expr_sized
+       let gen_expr = QCheck2.Gen.sized gen_expr_sized
       ]
     ]
   in
@@ -483,8 +483,8 @@ let test_forest () =
                            ((gen_forest_sized gen_a) (n / 2)))) );
                ]
       ];
-      [%stri let gen_tree gen_a = QCheck2.Gen.sized @@ (gen_tree_sized gen_a)];
-      [%stri let gen_forest gen_a = QCheck2.Gen.sized @@ (gen_forest_sized gen_a)];
+      [%stri let gen_tree gen_a = QCheck2.Gen.sized (gen_tree_sized gen_a)];
+      [%stri let gen_forest gen_a = QCheck2.Gen.sized (gen_forest_sized gen_a)];
     ]
   in
   let actual =
@@ -712,7 +712,7 @@ let test_recursive_poly_variant () =
               ]
             : tree QCheck2.Gen.t)];
       [%stri
-       let gen_tree gen_a = QCheck2.Gen.sized @@ (gen_tree_sized gen_a)
+       let gen_tree gen_a = QCheck2.Gen.sized (gen_tree_sized gen_a)
       ]
     ]
   in

@@ -3,171 +3,145 @@ open Ppxlib
 (** This module contains all generators from QCheck used to
     derive a type declaration *)
 
+(** {2. Version} *)
+
+type version = [`QCheck | `QCheck2]
+
+let to_module : version -> string = function
+  | `QCheck -> "QCheck"
+  | `QCheck2 -> "QCheck2"
+
+let with_prefix loc version prefix x =
+  let (module A) = Ast_builder.make loc in
+  A.Located.mk @@ Ldot (Ldot (Lident (to_module version), prefix), x)
+  |> A.pexp_ident
+
+let with_prefix_gen loc version x = with_prefix loc version "Gen" x
+
+let with_prefix_obs loc version x = with_prefix loc version "Observable" x
+
+let apply1 loc f a = [%expr [%e f] [%e a]]
+
+let apply2 loc f a b = [%expr [%e f] [%e a] [%e b]]
+
+let apply3 loc f a b c  = [%expr [%e f] [%e a] [%e b] [%e c]]
+
+let apply4 loc f a b c d = [%expr [%e f] [%e a] [%e b] [%e c] [%e d]]
+
 (** {2. Type} *)
 
-let ty = function
-  | `QCheck -> Ldot (Ldot (Lident "QCheck", "Gen"), "t")
-  | `QCheck2 -> Ldot (Ldot (Lident "QCheck2", "Gen"), "t")
+let ty version = Ldot (Ldot (Lident (to_module version), "Gen"), "t")
 
 (** {2. Primitive generators} *)
 
-let unit loc = function
-  | `QCheck -> [%expr QCheck.Gen.unit]
-  | `QCheck2 -> [%expr QCheck2.Gen.unit]
+let unit loc version = with_prefix_gen loc version "unit"
 
-let int loc = function
-  | `QCheck -> [%expr QCheck.Gen.int]
-  | `QCheck2 -> [%expr QCheck2.Gen.int]
+let int loc version = with_prefix_gen loc version "int"
 
-let string loc = function
-  | `QCheck -> [%expr QCheck.Gen.string]
-  | `QCheck2 -> [%expr QCheck2.Gen.string]
+let string loc version = with_prefix_gen loc version "string"
 
-let char loc = function
-  | `QCheck -> [%expr QCheck.Gen.char]
-  | `QCheck2 -> [%expr QCheck2.Gen.char]
+let char loc version = with_prefix_gen loc version "char"
 
-let bool loc = function
-  | `QCheck -> [%expr QCheck.Gen.bool]
-  | `QCheck2 -> [%expr QCheck2.Gen.bool]
+let bool loc version = with_prefix_gen loc version "bool"
 
-let float loc = function
-  | `QCheck -> [%expr QCheck.Gen.float]
-  | `QCheck2 -> [%expr QCheck2.Gen.float]
+let float loc version = with_prefix_gen loc version "float"
 
-let int32 loc = function
-  | `QCheck -> [%expr QCheck.Gen.ui32]
-  | `QCheck2 -> [%expr QCheck2.Gen.ui32]
+let int32 loc version = with_prefix_gen loc version "ui32"
 
-let int64 loc = function
-  | `QCheck -> [%expr QCheck.Gen.ui64]
-  | `QCheck2 -> [%expr QCheck2.Gen.ui64]
+let int64 loc version = with_prefix_gen loc version "ui64"
 
 let option ~loc ~version e =
-  match version with
-  | `QCheck -> [%expr QCheck.Gen.option [%e e]]
-  | `QCheck2 -> [%expr QCheck2.Gen.opt [%e e]]
+  let gen = with_prefix_gen loc version "option" in
+  apply1 loc gen e
 
 let list ~loc ~version e =
-  match version with
-  | `QCheck -> [%expr QCheck.Gen.list [%e e]]
-  | `QCheck2 -> [%expr QCheck2.Gen.list [%e e]]
+  let gen = with_prefix_gen loc version "list" in
+  apply1 loc gen e
 
 let array ~loc ~version e =
-  match version with
-  | `QCheck -> [%expr QCheck.Gen.array [%e e]]
-  | `QCheck2 -> [%expr QCheck2.Gen.array [%e e]]
+  let gen = with_prefix_gen loc version "array" in
+  apply1 loc gen e
 
 (** {2. Generator combinators} *)
 
-let pure ~loc ~version x =
-  match version with
-  | `QCheck -> [%expr QCheck.Gen.pure [%e x]]
-  | `QCheck2 -> [%expr QCheck2.Gen.pure [%e x]]
+let pure ~loc ~version e =
+  let gen = with_prefix_gen loc version "pure" in
+  apply1 loc gen e
 
 let frequency ~loc ~version l =
   match l with
   | [%expr [([%e? _], [%e? x])]] -> x
   | _ ->
-     (match version with
-      | `QCheck -> [%expr QCheck.Gen.frequency [%e l]]
-      | `QCheck2 -> [%expr QCheck2.Gen.frequency [%e l]])
+     let gen = with_prefix_gen loc version "frequency" in
+     apply1 loc gen l
 
 let map ~loc ~version pat expr gen =
-  match version with
-  | `QCheck -> [%expr QCheck.Gen.map (fun [%p pat] -> [%e expr]) [%e gen]]
-  | `QCheck2 -> [%expr QCheck2.Gen.map (fun [%p pat] -> [%e expr]) [%e gen]]
+  let f = with_prefix_gen loc version "map" in
+  apply2 loc f [%expr fun [%p pat] -> [%e expr]] gen
 
 let pair ~loc ~version a b =
-  match version with
-  | `QCheck -> [%expr QCheck.Gen.pair [%e a] [%e b]]
-  | `QCheck2 -> [%expr QCheck2.Gen.pair [%e a] [%e b]]
+  let gen = with_prefix_gen loc version "pair" in
+  apply2 loc gen a b
 
 let triple ~loc ~version a b c =
-  match version with
-  | `QCheck -> [%expr QCheck.Gen.triple [%e a] [%e b] [%e c]]
-  | `QCheck2 -> [%expr QCheck2.Gen.triple [%e a] [%e b] [%e c]]
+  let gen = with_prefix_gen loc version "triple" in
+  apply3 loc gen a b c
 
 let quad ~loc ~version a b c d =
-  match version with
-  | `QCheck -> [%expr QCheck.Gen.quad [%e a] [%e b] [%e c] [%e d]]
-  | `QCheck2 -> [%expr QCheck2.Gen.quad [%e a] [%e b] [%e c] [%e d]]
+  let gen = with_prefix_gen loc version "quad" in
+  apply4 loc gen a b c d
 
 let sized ~loc ~version e =
-  match version with
-  | `QCheck -> [%expr QCheck.Gen.sized @@ [%e e]]
-  | `QCheck2 -> [%expr QCheck2.Gen.sized @@ [%e e]]
+  let gen = with_prefix_gen loc version "sized" in
+  apply1 loc gen e
 
 let fix ~loc ~version e =
-  match version with
-  | `QCheck -> [%expr QCheck.Gen.fix [%e e]]
-  | `QCheck2 -> [%expr QCheck2.Gen.fix [%e e]]
+  let gen = with_prefix_gen loc version "fix" in
+  apply1 loc gen e
 
 (** Observable generators *)
 module Observable = struct
   (** {2. Primitive generators} *)
-  let unit loc = function
-    | `QCheck ->  [%expr QCheck.Observable.unit]
-    | `QCheck2 ->  [%expr QCheck2.Observable.unit]
+  let unit loc version = with_prefix_obs loc version "unit"
 
-  let int loc = function
-    | `QCheck ->  [%expr QCheck.Observable.int]
-    | `QCheck2 ->  [%expr QCheck2.Observable.int]
+  let int loc version = with_prefix_obs loc version "int"
 
-  let string loc = function
-    | `QCheck ->  [%expr QCheck.Observable.string]
-    | `QCheck2 ->  [%expr QCheck2.Observable.string]
+  let string loc version = with_prefix_obs loc version "string"
 
-  let char loc = function
-    | `QCheck ->  [%expr QCheck.Observable.char]
-    | `QCheck2 ->  [%expr QCheck2.Observable.char]
+  let char loc version = with_prefix_obs loc version "char"
 
-  let bool loc = function
-    | `QCheck ->  [%expr QCheck.Observable.bool]
-    | `QCheck2 ->  [%expr QCheck2.Observable.bool]
+  let bool loc version = with_prefix_obs loc version "bool"
 
-  let float loc = function
-    | `QCheck ->  [%expr QCheck.Observable.float]
-    | `QCheck2 ->  [%expr QCheck2.Observable.float]
+  let float loc version = with_prefix_obs loc version "float"
 
-  let int32 loc = function
-    | `QCheck ->  [%expr QCheck.Observable.int32]
-    | `QCheck2 ->  [%expr QCheck2.Observable.int32]
+  let int32 loc version = with_prefix_obs loc version "int32"
 
-  let int64 loc = function
-    | `QCheck ->  [%expr QCheck.Observable.int64]
-    | `QCheck2 ->  [%expr QCheck2.Observable.int64]
+  let int64 loc version = with_prefix_obs loc version "int64"
 
   let option ~loc ~version e =
-    match version with
-    | `QCheck -> [%expr QCheck.Observable.option [%e e]]
-    | `QCheck2 -> [%expr QCheck2.Observable.option [%e e]]
+    let obs = with_prefix_obs loc version "option" in
+    apply1 loc obs e
 
   let list ~loc ~version e =
-    match version with
-    | `QCheck ->  [%expr QCheck.Observable.list [%e e]]
-    | `QCheck2 ->  [%expr QCheck2.Observable.list [%e e]]
+    let obs = with_prefix_obs loc version "list" in
+    apply1 loc obs e
 
   let array ~loc ~version e =
-    match version with
-    | `QCheck ->  [%expr QCheck.Observable.array [%e e]]
-    | `QCheck2 ->  [%expr QCheck2.Observable.array [%e e]]
+    let obs = with_prefix_obs loc version "array" in
+    apply1 loc obs e
 
   (** {2. Observable combinators} *)
   let pair ~loc ~version a b =
-    match version with
-    | `QCheck -> [%expr QCheck.Observable.pair [%e a] [%e b]]
-    | `QCheck2 -> [%expr QCheck2.Observable.pair [%e a] [%e b]]
+    let obs = with_prefix_obs loc version "pair" in
+    apply2 loc obs a b
 
   let triple ~loc ~version a b c =
-    match version with
-    | `QCheck -> [%expr QCheck.Observable.triple [%e a] [%e b] [%e c]]
-    | `QCheck2 -> [%expr QCheck2.Observable.triple [%e a] [%e b] [%e c]]
+    let obs = with_prefix_obs loc version "triple" in
+    apply3 loc obs a b c
 
   let quad ~loc ~version a b c d =
-    match version with
-    | `QCheck -> [%expr QCheck.Observable.quad [%e a] [%e b] [%e c] [%e d]]
-    | `QCheck2 -> [%expr QCheck2.Observable.quad [%e a] [%e b] [%e c] [%e d]]
+    let obs = with_prefix_obs loc version "quad" in
+    apply4 loc obs a b c d
 
   let fun_nary ~loc ~version left right gen =
     match version with
@@ -178,7 +152,7 @@ module Observable = struct
        [%expr QCheck2.fun_nary QCheck2.Tuple.([%e left] @-> [%e right]) [%e gen]]
 end
 
-module Make (Version : sig val version : [`QCheck | `QCheck2] end) = struct
+module Make (Version : sig val version : version end) = struct
   let version = Version.version
   let ty = ty version
   let unit loc = unit loc version

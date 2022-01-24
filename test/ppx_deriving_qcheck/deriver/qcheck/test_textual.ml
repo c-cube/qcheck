@@ -462,7 +462,7 @@ let test_tree () =
               ]
       ];
       [%stri
-       let gen_tree gen_a = QCheck.Gen.sized @@ (gen_tree_sized gen_a)
+       let gen_tree gen_a = QCheck.Gen.sized (gen_tree_sized gen_a)
       ];
       [%stri let arb_tree_sized gen_a n = QCheck.make @@ ((gen_tree_sized gen_a) n)];
       [%stri let arb_tree gen_a = QCheck.make @@ (gen_tree gen_a)];
@@ -505,7 +505,7 @@ let test_expr () =
               ]
       ];
       [%stri
-       let gen_expr = QCheck.Gen.sized @@ gen_expr_sized
+       let gen_expr = QCheck.Gen.sized gen_expr_sized
       ];
       [%stri let arb_expr_sized n = QCheck.make @@ (gen_expr_sized n)];
       [%stri let arb_expr = QCheck.make @@ gen_expr];
@@ -550,8 +550,8 @@ let test_forest () =
                            ((gen_forest_sized gen_a) (n / 2)))) );
                ]
       ];
-      [%stri let gen_tree gen_a = QCheck.Gen.sized @@ (gen_tree_sized gen_a)];
-      [%stri let gen_forest gen_a = QCheck.Gen.sized @@ (gen_forest_sized gen_a)];
+      [%stri let gen_tree gen_a = QCheck.Gen.sized (gen_tree_sized gen_a)];
+      [%stri let gen_forest gen_a = QCheck.Gen.sized (gen_forest_sized gen_a)];
       [%stri let arb_tree_sized gen_a n = QCheck.make @@ ((gen_tree_sized gen_a) n)];
       [%stri let arb_forest_sized gen_a n = QCheck.make @@ ((gen_forest_sized gen_a) n)];
       [%stri let arb_tree gen_a = QCheck.make @@ (gen_tree gen_a)];
@@ -798,7 +798,7 @@ let test_recursive_poly_variant () =
               ]
             : tree QCheck.Gen.t)];
       [%stri
-       let gen_tree gen_a = QCheck.Gen.sized @@ (gen_tree_sized gen_a)
+       let gen_tree gen_a = QCheck.Gen.sized (gen_tree_sized gen_a)
       ];
       [%stri let arb_tree_sized gen_a n = QCheck.make @@ ((gen_tree_sized gen_a) n)];
       [%stri let arb_tree gen_a = QCheck.make @@ gen_tree gen_a];
