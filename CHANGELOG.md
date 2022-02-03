@@ -1,5 +1,10 @@
 # Changes
 
+## 0.18.1
+
+- fix `Gen.{nat,pos}_split{2,}`
+- fix stack overflow in #156
+
 ## 0.18
 
 This releases marks the addition of `QCheck2`, a module where generation
