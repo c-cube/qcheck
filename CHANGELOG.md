@@ -2,8 +2,26 @@
 
 ## 0.19
 
+- add optional `debug_shrink` parameters in alcotest interface and
+  expose default `debug_shrinking_choices` in test runners
+
+- add missing `?handler` parameter to `Test.check_cell_exn`
+
+- remove `--no-buffer` option on `dune runtest` to avoid garbling the
+  test output
+
+- add an option `retries` parameter `Test.make` et al. for checking a
+  property repeatedly while shrinking.
+  This can be useful when testing non-deterministic code.
+  [#212](https://github.com/c-cube/qcheck/pull/212)
+
 - add tup2 to tup9 for generators
 
+- documentation updates:
+  - clarify upper bound inclusion in `Gen.int_bound` and `Gen.int_range`
+  - clarify `printable_char` and `Gen.printable` distributions
+  - add missing `string_gen_of_size` and `small_printable_string` documentation
+  - document `QCheck_alcotest.to_alcotest`
 
 ## 0.18.1
 
