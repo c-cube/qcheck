@@ -1367,7 +1367,7 @@ val option : ?ratio:float -> 'a arbitrary -> 'a option arbitrary
 val fun1_unsafe : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary
 (** Generator of functions of arity 1.
     The functions are always pure and total functions:
-    - when given the same argument (as decided by Pervasives.(=)), it returns the same value
+    - when given the same argument (as decided by Stdlib.(=)), it returns the same value
     - it never does side effects, like printing or never raise exceptions etc.
       The functions generated are really printable.
 
