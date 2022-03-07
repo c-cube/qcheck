@@ -355,12 +355,15 @@ module Gen = struct
 
   let neg_int : int t = nat >|= Int.neg
 
-  (** [opt gen] shrinks towards [None] then towards shrinks of [gen]. *)
-  let opt ?(ratio : float = 0.85) (gen : 'a t) : 'a option t = fun st ->
+  (** [option gen] shrinks towards [None] then towards shrinks of [gen]. *)
+  let option ?(ratio : float = 0.85) (gen : 'a t) : 'a option t = fun st ->
     let p = RS.float st 1. in
     if p < (1. -. ratio)
     then Tree.pure None
     else Tree.opt (gen st)
+
+  (** [opt] is an alias of {!val:option} for backward compatibility. *)
+  let opt = option
 
   (* Uniform positive random int generator.
 
@@ -561,7 +564,7 @@ module Gen = struct
   let flatten_opt (o : 'a t option) : 'a option t =
     match o with
     | None -> pure None
-    | Some gen -> opt gen
+    | Some gen -> option gen
 
   let flatten_res (res : ('a t, 'e) result) : ('a, 'e) result t =
     match res with
@@ -938,7 +941,7 @@ module Observable = struct
 
     let string (x:string) = Hashtbl.hash x
 
-    let opt f = function
+    let option f = function
       | None -> 42
       | Some x -> combine 43 (f x)
     let list f l = List.fold_left (combine_f f) 0x42 l
@@ -999,7 +1002,7 @@ module Observable = struct
   let char = make ~hash:H.char ~eq:Eq.char Print.char
 
   let option p =
-    make ~hash:(H.opt p.hash) ~eq:(Eq.option p.eq)
+    make ~hash:(H.option p.hash) ~eq:(Eq.option p.eq)
       (Print.option p.print)
 
   let array p =

@@ -17,6 +17,8 @@
 
 - add tup2 to tup9 for generators
 
+- rename `Gen.opt` to `Gen.option` but keep the old binding for compatibility.
+
 - documentation updates:
   - clarify upper bound inclusion in `Gen.int_bound` and `Gen.int_range`
   - clarify `printable_char` and `Gen.printable` distributions
