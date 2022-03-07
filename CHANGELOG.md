@@ -22,6 +22,8 @@
   - clarify `printable_char` and `Gen.printable` distributions
   - add missing `string_gen_of_size` and `small_printable_string` documentation
   - document `QCheck_alcotest.to_alcotest`
+  - fix documented size distribution for `arbitrary` generators
+    `string_gen`, `string`, `printable_string`, `numeral_string`, `list`, and `array`
 
 ## 0.18.1
 
