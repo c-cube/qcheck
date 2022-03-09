@@ -266,11 +266,13 @@ module Gen = struct
     else if origin > high then invalid_arg Format.(asprintf "%s: origin value %a is greater than high value %a" loc pp origin pp high)
     else origin
 
-  let small_nat : int t = fun st ->
+  let nat_small : int t = fun st ->
     let p = RS.float st 1. in
     let x = if p < 0.75 then RS.int st 10 else RS.int st 100 in
     let shrink a = fun () -> Shrink.int_towards 0 a () in
     Tree.make_primitive shrink x
+
+  let small_nat = nat_small
 
   (** Natural number generator *)
   let nat : int t = fun st ->
@@ -284,13 +286,15 @@ module Gen = struct
     let shrink a = fun () -> Shrink.int_towards 0 a () in
     Tree.make_primitive shrink x
 
-  let big_nat : int t = fun st ->
+  let nat_big : int t = fun st ->
     let p = RS.float st 1. in
     if p < 0.75
     then nat st
     else
       let shrink a = fun () -> Shrink.int_towards 0 a () in
       Tree.make_primitive shrink (RS.int st 1_000_000)
+
+  let big_nat = nat_big
 
   let unit : unit t = fun _st -> Tree.pure ()
 
@@ -307,9 +311,13 @@ module Gen = struct
     let shrink a = fun () -> Shrink.float_towards 0. a () in
     Tree.make_primitive shrink x
 
-  let pfloat : float t = float >|= abs_float
+  let float_pos : float t = float >|= abs_float
 
-  let nfloat : float t = pfloat >|= Float.neg
+  let pfloat = float_pos
+
+  let float_neg : float t = float_pos >|= Float.neg
+
+  let nfloat = float_neg
 
   let float_bound_inclusive ?(origin : float = 0.) (bound : float) : float t = fun st ->
     let (low, high) = Float.min_max_num 0. bound in
@@ -353,14 +361,19 @@ module Gen = struct
 
   let (--.) low high = float_range ?origin:None low high
 
-  let neg_int : int t = nat >|= Int.neg
+  let int_neg : int t = nat >|= Int.neg
 
-  (** [opt gen] shrinks towards [None] then towards shrinks of [gen]. *)
-  let opt ?(ratio : float = 0.85) (gen : 'a t) : 'a option t = fun st ->
+  let neg_int = int_neg
+
+  let option_ratio ~ratio (gen : 'a t) : 'a option t = fun st ->
     let p = RS.float st 1. in
     if p < (1. -. ratio)
     then Tree.pure None
     else Tree.opt (gen st)
+
+  let option gen = option_ratio ~ratio:0.85 gen
+
+  let opt ?(ratio = 0.85) = option_ratio ~ratio
 
   (* Uniform positive random int generator.
 
@@ -399,13 +412,15 @@ module Gen = struct
       let right = RS.bits st in
       left lor middle lor right
 
-  let pint ?(origin : int = 0) : int t = fun st ->
+  let nat_origin origin : int t = fun st ->
     let x = pint_raw st in
     let shrink a = fun () ->
-      let origin = parse_origin "Gen.pint" Format.pp_print_int ~origin ~low:0 ~high:max_int in
+      let origin = parse_origin "Gen.nat_origin" Format.pp_print_int ~origin ~low:0 ~high:max_int in
       Shrink.int_towards origin a ()
     in
     Tree.make_primitive shrink x
+
+  let pint ?(origin = 0) = nat_origin origin
 
   let number_towards = Shrink.number_towards
 
@@ -420,15 +435,15 @@ module Gen = struct
   let int : int t =
     bool >>= fun b ->
     if b
-    then pint ~origin:0 >|= (fun n -> - n - 1)
-    else pint ~origin:0
+    then nat_origin 0 >|= (fun n -> - n - 1)
+    else nat_origin 0
 
   let int_bound (n : int) : int t =
     if n < 0 then invalid_arg "Gen.int_bound";
     fun st ->
       if n <= (1 lsl 30) - 2
       then Tree.make_primitive (fun a () -> Shrink.int_towards 0 a ()) (RS.int st (n + 1))
-      else Tree.map (fun r -> r mod (n + 1)) (pint st)
+      else Tree.map (fun r -> r mod (n + 1)) (nat st)
 
   (** To support ranges wider than [Int.max_int], the general idea is to find the center,
       and generate a random half-difference number as well as whether we add or
@@ -467,20 +482,20 @@ module Gen = struct
   let oneof (l : 'a t list) : 'a t =
     int_range 0 (List.length l - 1) >>= List.nth l
 
-  let oneofl (l : 'a list) : 'a t =
+  let oneof_l (l : 'a list) : 'a t =
     int_range 0 (List.length l - 1) >|= List.nth l
+  let oneofl = oneof_l
 
-  let oneofa (a : 'a array) : 'a t =
+  let oneof_a (a : 'a array) : 'a t =
     int_range 0 (Array.length a - 1) >|= Array.get a
+  let oneofa = oneof_a
 
-  (* NOTE: we keep this alias to not break code that uses [small_int]
-     for sizes of strings, arrays, etc. *)
-  let small_int = small_nat
-
-  let small_signed_int : int t = fun st ->
+  let int_small : int t = fun st ->
     if RS.bool st
-    then small_nat st
-    else (small_nat >|= Int.neg) st
+    then nat_small st
+    else (nat_small >|= Int.neg) st
+
+  let small_signed_int = int_small
 
   (** Shrink towards the first element of the list *)
   let frequency (l : (int * 'a t) list) : 'a t =
@@ -495,11 +510,13 @@ module Gen = struct
     in
     aux 0 l
 
-  let frequencyl (l : (int * 'a) list) : 'a t =
+  let frequency_l (l : (int * 'a) list) : 'a t =
     List.map (fun (weight, value) -> (weight, pure value)) l
     |> frequency
+  let frequencyl = frequency_l
 
-  let frequencya a = frequencyl (Array.to_list a)
+  let frequency_a a = frequencyl (Array.to_list a)
+  let frequencya = frequency_a
 
   let char_range ?(origin : char option) (a : char) (b : char) : char t =
     (int_range ~origin:(Char.code (Option.value ~default:a origin)) (Char.code a) (Char.code b)) >|= Char.chr
@@ -519,14 +536,10 @@ module Gen = struct
     let shrink a = fun () -> Shrink.int32_towards 0l a () in
     Tree.make_primitive shrink x
 
-  let ui32 : int32 t = map Int32.abs int32
-
   let int64 : int64 t = fun st ->
     let x = random_binary_string 64 st |> Int64.of_string in
     let shrink a = fun () -> Shrink.int64_towards 0L a () in
     Tree.make_primitive shrink x
-
-  let ui64 : int64 t = map Int64.abs int64
 
   (* A tail-recursive implementation over Tree.t *)
   let list_size (size : int t) (gen : 'a t) : 'a list t =
@@ -561,7 +574,7 @@ module Gen = struct
   let flatten_opt (o : 'a t option) : 'a option t =
     match o with
     | None -> pure None
-    | Some gen -> opt gen
+    | Some gen -> option gen
 
   let flatten_res (res : ('a t, 'e) result) : ('a, 'e) result t =
     match res with
@@ -644,14 +657,18 @@ module Gen = struct
     (* Put alphabet first for shrinking *)
     List.flatten [lower_alphabet; before_lower_alphabet; after_lower_alphabet; newline]
 
-  let printable : char t =
+  let char_printable : char t =
     int_range ~origin:0 0 (List.length printable_chars - 1)
     >|= List.nth printable_chars
 
-  let numeral : char t =
+  let printable = char_printable
+
+  let char_numeral : char t =
     let zero = 48 in
     let nine = 57 in
     int_range ~origin:zero zero nine >|= char_of_int
+
+  let numeral = char_numeral
 
   let bytes_size ?(gen = char) (size : int t) : bytes t = fun st ->
     let open Tree in
@@ -683,13 +700,16 @@ module Gen = struct
 
   let string_of gen = string_size ~gen nat
 
-  let string_printable = string_size ~gen:printable nat
+  let string_printable = string_size ~gen:char_printable nat
 
-  let small_string ?gen st = string_size ?gen small_nat st
+  let string_small ?gen st = string_size ?gen nat_small st
+  let small_string = string_small
 
-  let small_list gen = list_size small_nat gen
+  let list_small gen = list_size nat_small gen
+  let small_list = list_small
 
-  let small_array gen = array_size small_nat gen
+  let array_small gen = array_size nat_small gen
+  let small_array = array_small
 
   let join (gen : 'a t t) : 'a t = gen >>= Fun.id
 
@@ -704,7 +724,8 @@ module Gen = struct
 
   let int_corners = int_pos_corners @ [min_int]
 
-  let small_int_corners () : int t = graft_corners nat int_pos_corners ()
+  let int_small_corners () : int t = graft_corners nat int_pos_corners ()
+  let small_int_corners = int_small_corners
 
   (* sized, fix *)
 

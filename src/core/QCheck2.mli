@@ -59,7 +59,7 @@ content will appear. *)
             ~name:"All lists are sorted"
             ~count:10_000
             ~print:Print.(list int)
-            Gen.(list small_nat)
+            Gen.(list nat_small)
             (fun l -> l = List.sort compare l));;
 
       QCheck2.Test.check_exn test;;
@@ -161,10 +161,28 @@ module Gen : sig
       Shrinks towards [0].
   *)
 
+  val nat_origin : int -> int t
+  (** Generates non-strictly positive integers uniformly ([0] included).
+
+      Shrinks towards [origin] if specified, otherwise towards [0].
+
+      @since NEXT_RELEASE *)
+
   val pint : ?origin : int -> int t
   (** Generates non-strictly positive integers uniformly ([0] included).
 
-      Shrinks towards [origin] if specified, otherwise towards [0]. *)
+      Shrinks towards [origin] if specified, otherwise towards [0].
+
+      @deprecated use {!int_origin} *)
+
+  val nat_small : int t
+  (** Small positive integers (< [100], [0] included).
+
+      Non-uniform: smaller numbers are more likely than bigger numbers.
+
+      Shrinks towards [0].
+
+      @since NEXT_RELEASE *)
 
   val small_nat : int t
   (** Small positive integers (< [100], [0] included).
@@ -173,7 +191,9 @@ module Gen : sig
 
       Shrinks towards [0].
 
-      @since 0.5.1 *)
+      @since 0.5.1
+
+      @deprecated use {!nat_small}. *)
 
   val nat : int t
   (** Generates natural numbers (< [10_000]).
@@ -183,6 +203,15 @@ module Gen : sig
       Shrinks towards [0].
   *)
 
+  val nat_big : int t
+  (** Generates natural numbers, possibly large (< [1_000_000]).
+
+      Non-uniform: smaller numbers are more likely than bigger numbers.
+
+      Shrinks towards [0].
+
+      @since NEXT_RELEASE *)
+
   val big_nat : int t
   (** Generates natural numbers, possibly large (< [1_000_000]).
 
@@ -190,49 +219,70 @@ module Gen : sig
 
       Shrinks towards [0].
 
-      @since 0.10 *)
+      @since 0.10
+
+      @deprecated use {!nat_big}. *)
+
+  val int_neg : int t
+  (** Generates non-strictly negative integers ([0] included).
+
+      Non-uniform: smaller numbers (in absolute value) are more likely than
+      bigger numbers.
+
+      Shrinks towards [0].
+
+      @since NEXT_RELEASE
+  *)
 
   val neg_int : int t
   (** Generates non-strictly negative integers ([0] included).
 
-      Non-uniform: smaller numbers (in absolute value) are more likely than bigger numbers.
-
-      Shrinks towards [0].
-  *)
-
-  val small_int : int t
-  (** Small UNSIGNED integers, for retrocompatibility.
+      Non-uniform: smaller numbers (in absolute value) are more likely than
+      bigger numbers.
 
       Shrinks towards [0].
 
-      @deprecated use {!small_nat}. *)
+      @deprecated use {!int_neg}. *)
+
+  val int_small : int t
+  (** Small SIGNED integers, based on {!nat_small}.
+
+      Non-uniform: smaller numbers (in absolute value) are more likely than
+      bigger numbers.
+
+      Shrinks towards [0].
+
+      @since NEXT_RELEASE *)
 
   val small_signed_int : int t
-  (** Small SIGNED integers, based on {!small_nat}.
+  (** Small SIGNED integers, based on {!nat_small}.
 
-      Non-uniform: smaller numbers (in absolute value) are more likely than bigger numbers.
+      Non-uniform: smaller numbers (in absolute value) are more likely than
+      bigger numbers.
 
       Shrinks towards [0].
 
-      @since 0.5.2 *)
+      @since 0.5.2
+
+      @deprecated use {!int_small} *)
+
+  val int_small_corners : unit -> int t
+  (** As {!int_small}, but each newly created generator starts with
+      a list of corner cases before falling back on random generation.
+
+      @since NEXT_RELEASE
+  *)
 
   val small_int_corners : unit -> int t
-  (** As {!small_int}, but each newly created generator starts with
-    a list of corner cases before falling back on random generation. *)
+  (** As {!int_small}, but each newly created generator starts with
+      a list of corner cases before falling back on random generation.
 
+      @deprecated use {!int_small_corners}. *)
 
   val int32 : int32 t
   (** Generates uniform {!int32} values.
 
       Shrinks towards [0l].
-  *)
-
-  val ui32 : int32 t
-  (** Generates {!int32} values.
-
-      Shrinks towards [0l].
-
-      @deprecated use {!val:int32} instead, the name is wrong, values {i are} signed.
   *)
 
   val int64 : int64 t
@@ -241,37 +291,59 @@ module Gen : sig
       Shrinks towards [0L].
   *)
 
-  val ui64 : int64 t
-  (** Generates {!int64} values.
-
-      Shrinks towards [0L].
-
-      @deprecated use {!val:int64} instead, the name is wrong, values {i are} signed.
-  *)
-
   val float : float t
   (** Generates floating point numbers.
 
       Shrinks towards [0.].
   *)
 
-  val pfloat : float t
+  val float_pos : float t
   (** Generates positive floating point numbers ([0.] included).
 
       Shrinks towards [0.].
+
+      @since NEXT_RELEASE
   *)
+
+    val pfloat : float t
+  (** Generates positive floating point numbers ([0.] included).
+
+      Shrinks towards [0.].
+
+      @deprecated use {!float_pos} *)
+
+  val float_neg : float t
+  (** Generates negative floating point numbers. ([-0.] included).
+
+      Shrinks towards [-0.].
+
+      @since NEXT_RELEASE
+   *)
 
   val nfloat : float t
   (** Generates negative floating point numbers. ([-0.] included).
 
       Shrinks towards [-0.].
-  *)
+
+      @deprecated use {!float_neg}. *)
 
   val char : char t
   (** Generates characters in the [0..255] range.
 
       Shrinks towards ['a'].
   *)
+
+  val char_printable : char t
+  (** Generates printable characters.
+
+    The exhaustive list of character codes is:
+    - [32] to [126], inclusive
+    - ['\n']
+
+    Shrinks towards ['a'].
+
+    @since NEXT_RELEASE
+   *)
 
   val printable : char t
   (** Generates printable characters.
@@ -281,12 +353,24 @@ module Gen : sig
     - ['\n']
 
     Shrinks towards ['a'].
+
+    @deprecated use {!char_printable}
+  *)
+
+  val char_numeral : char t
+  (** Generates numeral characters ['0'..'9'].
+
+      Shrinks towards ['0'].
+
+      @since NEXT_RELEASE
   *)
 
   val numeral : char t
   (** Generates numeral characters ['0'..'9'].
 
       Shrinks towards ['0'].
+
+      @deprecated use {!char_numeral}
   *)
 
   val string_size : ?gen:char t -> int t -> string t
@@ -313,17 +397,28 @@ module Gen : sig
       @since 0.11 *)
 
   val string_printable : string t
-  (** Builds a string generator using the {!printable} character generator.
+  (** Builds a string generator using the {!char_printable} character generator.
 
       Shrinks on the number of characters first, then on the characters.
 
       @since 0.11 *)
 
-  val small_string : ?gen:char t -> string t
-  (** Builds a string generator, length is {!small_nat}.
+  val string_small : ?gen:char t -> string t
+  (** Builds a string generator, length is {!nat_small}.
       Accepts an optional character generator (the default is {!char}).
 
       Shrinks on the number of characters first, then on the characters.
+
+      @since NEXT_RELEASE
+  *)
+
+  val small_string : ?gen:char t -> string t
+  (** Builds a string generator, length is {!nat_small}.
+      Accepts an optional character generator (the default is {!char}).
+
+      Shrinks on the number of characters first, then on the characters.
+
+      @deprecated use {!string_small}
   *)
 
   val pure : 'a -> 'a t
@@ -465,18 +560,40 @@ module Gen : sig
       @raise Invalid_argument or Failure if [l] is empty
   *)
 
-  val oneofl : 'a list -> 'a t
+  val oneof_l : 'a list -> 'a t
+  (** [oneof_l l] constructs a generator that selects among the given list of values [l].
+
+      Shrinks towards the first element of the list.
+      @raise Invalid_argument or Failure if [l] is empty
+
+      @since NEXT_RELEASE
+   *)
+
+    val oneofl : 'a list -> 'a t
   (** [oneofl l] constructs a generator that selects among the given list of values [l].
 
       Shrinks towards the first element of the list.
       @raise Invalid_argument or Failure if [l] is empty
+
+      @deprecated use {!oneof_l}
   *)
+
+  val oneof_a : 'a array -> 'a t
+  (** [oneof_a a] constructs a generator that selects among the given array of values [a].
+
+      Shrinks towards the first element of the array.
+      @raise Invalid_argument or Failure if [l] is empty
+
+      @since NEXT_RELEASE
+   *)
 
   val oneofa : 'a array -> 'a t
   (** [oneofa a] constructs a generator that selects among the given array of values [a].
 
       Shrinks towards the first element of the array.
       @raise Invalid_argument or Failure if [l] is empty
+
+      @deprecated use {!oneof_a}
   *)
 
   val frequency : (int * 'a t) list -> 'a t
@@ -486,18 +603,40 @@ module Gen : sig
       Shrinks towards the first element of the list.
   *)
 
+  val frequency_l : (int * 'a) list -> 'a t
+  (** Constructs a generator that selects among a given list of values.
+      Each of the given values are chosen based on a positive integer weight.
+
+      Shrinks towards the first element of the list.
+
+      @since NEXT_RELEASE
+   *)
+
   val frequencyl : (int * 'a) list -> 'a t
   (** Constructs a generator that selects among a given list of values.
       Each of the given values are chosen based on a positive integer weight.
 
       Shrinks towards the first element of the list.
+
+      @deprecated use {!frequency_l}
   *)
+
+  val frequency_a : (int * 'a) array -> 'a t
+  (** Constructs a generator that selects among a given array of values.
+      Each of the array entries are chosen based on a positive integer weight.
+
+      Shrinks towards the first element of the array.
+
+      @since NEXT_RELEASE
+   *)
 
   val frequencya : (int * 'a) array -> 'a t
   (** Constructs a generator that selects among a given array of values.
       Each of the array entries are chosen based on a positive integer weight.
 
       Shrinks towards the first element of the array.
+
+      @deprecated use {!frequency_a}
   *)
 
   (** {3 Shuffling elements} *)
@@ -551,12 +690,21 @@ module Gen : sig
       Shrinks on the number of elements first, then on elements.
   *)
 
-  val small_list : 'a t -> 'a list t
-  (** Generates lists of small size (see {!small_nat}).
+  val list_small : 'a t -> 'a list t
+  (** Generates lists of small size (see {!nat_small}).
 
       Shrinks on the number of elements first, then on elements.
 
-      @since 0.5.3 *)
+      @since NEXT_RELEASE *)
+
+  val small_list : 'a t -> 'a list t
+  (** Generates lists of small size (see {!nat_small}).
+
+      Shrinks on the number of elements first, then on elements.
+
+      @since 0.5.3
+
+      @deprecated use {!list_small} *)
 
   val list_size : int t -> 'a t -> 'a list t
   (** Builds a list generator from a (non-negative) size generator and an element generator.
@@ -582,17 +730,41 @@ module Gen : sig
       Shrinks on the number of elements first, then on elements.
   *)
 
-  val small_array : 'a t -> 'a array t
-  (** Generates arrays of small size (see {!small_nat}).
+  val array_small : 'a t -> 'a array t
+  (** Generates arrays of small size (see {!nat_small}).
 
       Shrinks on the number of elements first, then on elements.
 
-      @since 0.10 *)
+      @since NEXT_RELEASE *)
+
+  val small_array : 'a t -> 'a array t
+  (** Generates arrays of small size (see {!nat_small}).
+
+      Shrinks on the number of elements first, then on elements.
+
+      @since 0.10
+
+      @deprecated use {!array_small} *)
 
   val array_repeat : int -> 'a t -> 'a array t
   (** [array_repeat i g] builds an array generator from exactly [i] elements generated by [g].
 
       Shrinks on elements only.
+  *)
+
+  val option : 'a t -> 'a option t
+  (** [option gen] is an [option] generator that uses [gen] when generating [Some] values.
+
+      Shrinks towards {!None} then towards shrinks of [gen].
+   *)
+
+  val option_ratio : ratio:float -> 'a t -> 'a option t
+  (** [option_ratio ratio gen] is an [option] generator that uses [gen] when generating [Some] values.
+
+      Shrinks towards {!None} then towards shrinks of [gen].
+
+      @param ratio a float between [0.] and [1.] indicating the probability of a sample to be [Some _]
+      rather than [None] (value is [0.85]).
   *)
 
   val opt : ?ratio:float -> 'a t -> 'a option t
@@ -602,6 +774,8 @@ module Gen : sig
 
       @param ratio a float between [0.] and [1.] indicating the probability of a sample to be [Some _]
       rather than [None] (value is [0.85]).
+
+      @deprecated use {!option}
   *)
 
   (** {3 Combining generators} *)
@@ -784,7 +958,7 @@ module Gen : sig
 
         let string_prefixed_with_keyword_gen : string Gen.t =
           Gen.map2 (fun prefix s -> prefix ^ s)
-            (Gen.oneofl ["foo"; "bar"; "baz"])
+            (Gen.oneof_l ["foo"; "bar"; "baz"])
             Gen.string_printable
       ]}
 
@@ -1316,7 +1490,7 @@ type 'f fun_repr
     For example (note the [Fun (_, f)] part):
     {[
       QCheck2.(Test.make
-        Gen.(pair (fun1 Observable.int bool) (small_list int))
+        Gen.(pair (fun1 Observable.int bool) (list_small int))
         (fun (Fun (_, f), l) -> l = (List.rev_map f l |> List.rev l))
     ]}
 
