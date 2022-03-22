@@ -2,13 +2,13 @@ random seed: 1234
 
 --- Failure --------------------------------------------------------------------
 
-Test should_fail_sort_id failed (18 shrink steps):
+Test should_fail_sort_id failed (11 shrink steps):
 
 [1; 0]
 
 === Error ======================================================================
 
-Test should_error_raise_exn errored on (63 shrink steps):
+Test should_error_raise_exn errored on (1 shrink steps):
 
 0
 
@@ -59,9 +59,9 @@ stats num:
 
 --- Failure --------------------------------------------------------------------
 
-Test FAIL_pred_map_commute failed (107 shrink steps):
+Test FAIL_pred_map_commute failed (116 shrink steps):
 
-([0], {_ -> -21}, {-21 -> true; _ -> false})
+([0], {0 -> -1; _ -> 0}, {0 -> true; _ -> false})
 
 --- Failure --------------------------------------------------------------------
 
@@ -71,34 +71,34 @@ Test FAIL_fun2_pred_strings failed (1 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test fold_left fold_right failed (24 shrink steps):
+Test fold_left fold_right failed (15 shrink steps):
 
-(0, [1], {(1, 0) -> 1; _ -> 0})
+(0, [1], {(0, 1) -> 1; _ -> 0})
 
 +++ Messages ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Messages for test fold_left fold_right:
 
-l=[1], fold_left=1, fold_right=0
+l=[1], fold_left=0, fold_right=1
 
 
 --- Failure --------------------------------------------------------------------
 
-Test fold_left fold_right uncurried failed (97 shrink steps):
+Test fold_left fold_right uncurried failed (39 shrink steps):
 
-({(1, 7) -> 0; _ -> 7}, 0, [1; 0])
+({(0, 7) -> 1; _ -> 0}, 0, [7])
 
 --- Failure --------------------------------------------------------------------
 
-Test long_shrink failed (149 shrink steps):
+Test long_shrink failed (89 shrink steps):
 
 ([0], [-1])
 
 --- Failure --------------------------------------------------------------------
 
-Test mod3_should_fail failed (84 shrink steps):
+Test mod3_should_fail failed (1 shrink steps):
 
--21
+0
 
 +++ Stats for stats_neg ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
