@@ -694,14 +694,6 @@ module Shrink = struct
     | None -> Iter.empty
     | Some x -> Iter.(return None <+> map (fun y->Some y) (s x))
 
-  let string s yield =
-    for i =0 to String.length s-1 do
-      let s' = Bytes.init (String.length s-1)
-        (fun j -> if j<i then s.[j] else s.[j+1])
-      in
-      yield (Bytes.unsafe_to_string s')
-    done
-
   let array ?shrink a yield =
     let n = Array.length a in
     let chunk_size = ref n in
@@ -757,6 +749,11 @@ module Shrink = struct
     match shrink with
     | None -> ()
     | Some shrink -> list_elems shrink l yield
+
+  let string (*?(shrink=char)*) s yield =
+    list ~shrink:char
+      (List.of_seq (String.to_seq s))
+      (fun cs -> yield (String.of_seq (List.to_seq cs)))
 
   let pair a b (x,y) yield =
     a x (fun x' -> yield (x',y));
