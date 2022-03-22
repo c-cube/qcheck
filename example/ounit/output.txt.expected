@@ -35,7 +35,7 @@ Error: tests:1:fail_sort_id (in the log).
 Error: tests:1:fail_sort_id (in the code).
 
 
-test `fail_sort_id` failed on ≥ 1 cases: [1; 0] (after 20 shrink steps)
+test `fail_sort_id` failed on ≥ 1 cases: [1; 0] (after 11 shrink steps)
                                            
 
 ------------------------------------------------------------------------------

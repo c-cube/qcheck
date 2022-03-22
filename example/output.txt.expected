@@ -2,7 +2,7 @@ random seed: 1234
 
 --- Failure --------------------------------------------------------------------
 
-Test should_fail_sort_id failed (18 shrink steps):
+Test should_fail_sort_id failed (13 shrink steps):
 
 [1; 0]
 
@@ -59,9 +59,9 @@ stats num:
 
 --- Failure --------------------------------------------------------------------
 
-Test FAIL_pred_map_commute failed (107 shrink steps):
+Test FAIL_pred_map_commute failed (77 shrink steps):
 
-([0], {_ -> -21}, {-21 -> true; _ -> false})
+([1], {_ -> 0}, {1 -> true; _ -> false})
 
 --- Failure --------------------------------------------------------------------
 
@@ -71,7 +71,7 @@ Test FAIL_fun2_pred_strings failed (1 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test fold_left fold_right failed (24 shrink steps):
+Test fold_left fold_right failed (34 shrink steps):
 
 (0, [1], {(1, 0) -> 1; _ -> 0})
 
@@ -84,9 +84,9 @@ l=[1], fold_left=1, fold_right=0
 
 --- Failure --------------------------------------------------------------------
 
-Test fold_left fold_right uncurried failed (97 shrink steps):
+Test fold_left fold_right uncurried failed (44 shrink steps):
 
-({(1, 7) -> 0; _ -> 7}, 0, [1; 0])
+({(0, 7) -> 1; _ -> 0}, 0, [7])
 
 --- Failure --------------------------------------------------------------------
 
