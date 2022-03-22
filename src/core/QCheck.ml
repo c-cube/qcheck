@@ -650,14 +650,17 @@ module Shrink = struct
 
   let unit = nil
 
-  (* balanced shrinker for integers (non-exhaustive) *)
+  (* inspired by QCheck2's int shrinker algorithm (non-exhaustive) *)
   let int x yield =
-    let y = ref x in
+    let curr = ref 0 in (*to return 0 repeatedly *)  (*was: let curr = ref (x/2) *)
     (* try some divisors *)
-    while !y < -2 || !y >2 do y := !y / 2; yield (x - !y); done; (* fast path *)
-    if x>0 then yield (x-1);
-    if x<0 then yield (x+1);
-    ()
+    while !curr <> x do
+      yield !curr;
+      let half_diff = (x - !curr)/2 in (*was: let half_diff = (x/2) - (!curr/2) in *)
+      if half_diff = 0
+      then curr := x
+      else curr := !curr + half_diff
+    done
 
   let int32 x yield =
     let open Int32 in
