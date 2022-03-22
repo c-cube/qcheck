@@ -1328,7 +1328,7 @@ end = struct
             tbl;
         Buffer.contents b);
       p_shrink1=(fun yield ->
-        Shrink.list (tbl_to_list tbl)
+        Shrink.list_spine (tbl_to_list tbl)
           (fun l ->
              yield (make ~extend:false (tbl_of_list l)))
       );
@@ -1399,9 +1399,9 @@ module Fn = struct
       = function
         | Fun_tbl {fun_arb=a; fun_tbl=tbl; fun_default=def} ->
           let sh_v = match a.shrink with None -> Shrink.nil | Some s->s in
-          (Poly_tbl.shrink1 tbl >|= fun tbl' -> mk_repr tbl' a def)
-          <+>
             (sh_v def >|= fun def' -> mk_repr tbl a def')
+          <+>
+            (Poly_tbl.shrink1 tbl >|= fun tbl' -> mk_repr tbl' a def)
           <+>
             (Poly_tbl.shrink2 sh_v tbl >|= fun tbl' -> mk_repr tbl' a def)
         | Fun_map (g, r') ->
