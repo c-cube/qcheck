@@ -727,37 +727,20 @@ module Shrink = struct
           )
         done
 
-  let list_spine l yield =
-    let n = List.length l in
-    let chunk_size = ref ((n+1)/2) in
-
-    (* push the [n] first elements of [l] into [q], return the rest of the list *)
-    let rec fill_queue n l q = match n,l with
-      | 0, _ -> l
-      | _, x::xs ->
-        Queue.push x q;
-        fill_queue (n-1) xs q
-      | _, _ -> assert false
-    in
-
-    (* remove elements from the list, by chunks of size [chunk_size] (bigger
-       chunks first) *)
-    while !chunk_size > 0 do
-      let q = Queue.create () in
-      let l' = fill_queue !chunk_size l q in
-      (* remove [chunk_size] elements in queue *)
-      let rec pos_loop rev_prefix suffix =
-        yield (List.rev_append rev_prefix suffix);
-        match suffix with
-        | [] -> ()
-        | x::xs ->
-          Queue.push x q;
-          let y = Queue.pop q in
-          (pos_loop [@tailcall]) (y::rev_prefix) xs
-      in
-      pos_loop [] l';
-      chunk_size := !chunk_size / 2;
-    done
+  let rec list_spine l yield =
+    let rec split l len acc = match len,l with
+      | _,[]
+      | 0,_ -> List.rev acc, l
+      | _,x::xs -> split xs (len-1) (x::acc) in
+    match l with
+    | [] -> ()
+    | [_] -> yield []
+    | [x;y] -> yield []; yield [x]; yield [y]
+    | _::_ ->
+      let len = List.length l in
+      let xs,ys = split l ((1 + len) / 2) [] in
+          yield xs;
+          list_spine xs (fun xs' -> yield (xs'@ys))
 
   let list_elems shrink l yield =
     (* try to shrink each element of the list *)
