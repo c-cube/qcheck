@@ -50,9 +50,9 @@ type 'a option' = 'a option [@@deriving qcheck]
 
 let test_option () =
   let zero = Gen.pure 0 in
-  test_compare ~msg:"Gen.opt <=> deriving opt"
+  test_compare ~msg:"Gen.option <=> deriving option"
     ~eq:Alcotest.(option int)
-    (Gen.opt zero) (gen_option' zero)
+    (Gen.option zero) (gen_option' zero)
 
 type 'a array' = 'a array [@@deriving qcheck]
 

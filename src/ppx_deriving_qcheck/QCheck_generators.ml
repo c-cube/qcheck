@@ -25,7 +25,7 @@ let int32 loc = [%expr QCheck.Gen.ui32]
 
 let int64 loc = [%expr QCheck.Gen.ui64]
 
-let option ~loc e = [%expr QCheck.Gen.opt [%e e]]
+let option ~loc e = [%expr QCheck.Gen.option [%e e]]
 
 let list ~loc e = [%expr QCheck.Gen.list [%e e]]
 
