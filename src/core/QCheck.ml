@@ -1447,6 +1447,7 @@ module Fn = struct
 
   let gen_rep (a:_ Observable.t) (b:_ arbitrary): _ fun_repr Gen.t =
     fun st ->
+      let st = RS.copy st in
       mk_repr (Poly_tbl.create a b 8 st) b (b.gen st)
 
   let gen a b = Gen.map make_ (gen_rep a b)
