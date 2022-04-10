@@ -2,6 +2,8 @@
 
 (** Module representing a tree data structure, used in tests *)
 module IntTree = struct
+  open QCheck
+
   type tree = Leaf of int | Node of tree * tree
 
   let leaf x = Leaf x
@@ -15,7 +17,7 @@ module IntTree = struct
     | Leaf x -> Printf.sprintf "Leaf %d" x
     | Node (x, y) -> Printf.sprintf "Node (%s, %s)" (print_tree x) (print_tree y)
 
-  let gen_tree = QCheck.Gen.(sized @@ fix
+  let gen_tree = Gen.(sized @@ fix
                         (fun self n -> match n with
                            | 0 -> map leaf nat
                            | n ->
@@ -24,15 +26,21 @@ module IntTree = struct
                                 2, map2 node (self (n/2)) (self (n/2))]
                         ))
 
+  let rec shrink_tree t = match t with
+    | Leaf l -> Iter.map (fun l' -> Leaf l') (Shrink.int l)
+    | Node (x,y) ->
+      let open Iter in
+      of_list [x;y]
+      <+> map (fun x' -> Node (x',y)) (shrink_tree x)
+      <+> map (fun y' -> Node (x,y')) (shrink_tree y)
+
   let rec rev_tree = function
     | Node (x, y) -> Node (rev_tree y, rev_tree x)
     | Leaf x -> Leaf x
 
-  let passing_tree_rev =
-    QCheck.Test.make ~count:1000
-      ~name:"tree_rev_is_involutive"
-      QCheck.(make gen_tree)
-      (fun tree -> rev_tree (rev_tree tree) = tree)
+  let rec contains_only_n tree n = match tree with
+    | Leaf n' -> n = n'
+    | Node (x, y) -> contains_only_n x n && contains_only_n y n
 end
 
 (* tests of overall functionality *)
@@ -132,6 +140,30 @@ module Generator = struct
          && String.to_seq s |>
             Seq.fold_left (fun acc c -> acc && '\000' <= c && c <= '\255') true)
 
+  let pair_test =
+    Test.make ~name:"int pairs - commute over +" ~count:1000
+      (pair small_nat small_nat) (fun (i,j) -> i+j = j+i)
+
+  let triple_test =
+    Test.make ~name:"int triples - associative over +" ~count:1000
+      (triple small_nat small_nat small_nat) (fun (i,j,k) -> i+(j+k) = (i+j)+k)
+  (*was: (fun (i,j,k) -> i+(j+k) = (i+j)+i)*)
+
+  let quad_test =
+    Test.make ~name:"int quadruples - product of sums" ~count:1000
+      (quad small_nat small_nat small_nat small_nat)
+      (fun (h,i,j,k) -> (h+i)*(j+k) = h*j + h*k + i*j + i*k)
+
+  let bind_test =
+    Test.make ~name:"bind test for ordered pairs" ~count:1000
+      (make Gen.(small_nat >>= fun j -> int_bound j >>= fun i -> return (i,j)))
+      (fun (i,j) -> i<=j)
+
+  let bind_pair_list_length =
+    Test.make ~name:"bind list length" ~count:1000
+      (make Gen.(int_bound 10_000 >>= fun len -> list_size (return len) int >>= fun xs -> return (len,xs)))
+      (fun (len,xs) -> len = List.length xs)
+
   let list_test =
     Test.make ~name:"list has right length" ~count:1000
       (list unit) (fun l -> let len = List.length l in 0 <= len && len < 10_000)
@@ -147,9 +179,8 @@ module Generator = struct
       (make ~print:Print.(pair int (array unit)) gen) (fun (i,l) -> Array.length l = i)
 
   let passing_tree_rev =
-    QCheck.Test.make ~count:1000
-      ~name:"tree_rev_is_involutive"
-      QCheck.(make IntTree.gen_tree)
+    Test.make ~name:"tree_rev_is_involutive" ~count:1000
+      (make IntTree.gen_tree)
       (fun tree -> IntTree.(rev_tree (rev_tree tree)) = tree)
 
   let nat_split2_spec =
@@ -287,6 +318,11 @@ module Generator = struct
     char_test;
     nat_test;
     string_test;
+    pair_test;
+    triple_test;
+    quad_test;
+    bind_test;
+    bind_pair_list_length;
     list_test;
     list_repeat_test;
     array_repeat_test;
@@ -334,6 +370,7 @@ module Shrink = struct
     Test.make ~name:"long_shrink" (pair listgen listgen)
       (fun (xs,ys) -> List.rev (xs@ys) = (List.rev xs)@(List.rev ys))
 
+  (* test from issue 36 *)
   let ints_arent_0_mod_3 =
     Test.make ~name:"ints arent 0 mod 3" ~count:1000
       int (fun i -> i mod 3 <> 0)
@@ -369,7 +406,79 @@ module Shrink = struct
       string
       (fun s -> String.to_seq s |> Seq.fold_left (fun acc c -> acc && c <> '\255') true)
 
+  (* test from issue #167 *)
+  let pair_diff_issue_64 =
+    Test.make ~name:"pairs have different components"
+      (pair small_int small_int) (fun (i,j) -> i<>j)
+
+  let pair_same =
+    Test.make ~name:"pairs have same components" (pair int int) (fun (i,j) -> i=j)
+
+  let pair_one_zero =
+    Test.make ~name:"pairs have a zero component" (pair int int) (fun (i,j) -> i=0 || j=0)
+
+  let pair_all_zero =
+    Test.make ~name:"pairs are (0,0)" (pair int int) (fun (i,j) -> i=0 && j=0)
+
+  let pair_ordered =
+    Test.make ~name:"pairs are ordered" (pair int int) (fun (i,j) -> i<=j)
+
+  let pair_ordered_rev =
+    Test.make ~name:"pairs are ordered reversely" (pair int int) (fun (i,j) -> i>=j)
+
+  let pair_sum_lt_128 =
+    Test.make ~name:"pairs sum to less than 128" (pair int int) (fun (i,j) -> i+j<128)
+
+  let triple_diff =
+    Test.make ~name:"triples have pair-wise different components"
+      (triple small_int small_int small_int) (fun (i,j,k) -> i<>j && j<>k)
+
+  let triple_same =
+    Test.make ~name:"triples have same components"
+      (triple int int int) (fun (i,j,k) -> i=j || j=k)
+
+  let triple_ordered =
+    Test.make ~name:"triples are ordered"
+      (triple int int int) (fun (i,j,k) -> i<=j && j<=k)
+
+  let triple_ordered_rev =
+    Test.make ~name:"triples are ordered reversely"
+      (triple int int int) (fun (i,j,k) -> i>=j && j>=k)
+
+  let quad_diff =
+    Test.make ~name:"quadruples have pair-wise different components"
+      (quad small_int small_int small_int small_int) (fun (h,i,j,k) -> h<>i && i<>j && j<>k)
+
+  let quad_same =
+    Test.make ~name:"quadruples have same components"
+      (quad int int int int) (fun (h,i,j,k) -> h=i || i=j || j=k)
+
+  let quad_ordered =
+    Test.make ~name:"quadruples are ordered"
+      (quad int int int int) (fun (h,i,j,k) -> h <= i && i <= j && j <= k)
+
+  let quad_ordered_rev =
+    Test.make ~name:"quadruples are ordered reversely"
+      (quad int int int int) (fun (h,i,j,k) -> h >= i && i >= j && j >= k)
+
+  let bind_pair_ordered =
+    Test.make ~name:"bind ordered pairs"
+      (make ~print:Print.(pair int int)
+         ~shrink:Shrink.(filter (fun (i,j) -> i<=j) (pair int int))
+         Gen.(int >>= fun j -> int_bound j >>= fun i -> return (i,j)))
+      (fun (_i,_j) -> false)
+
+  let bind_pair_list_size =
+    let shrink (_l,xs) =
+      Iter.map (fun xs' -> (List.length xs',xs')) Shrink.(list ~shrink:int xs) in
+    Test.make ~name:"bind list_size constant"
+      (make ~print:Print.(pair int (list int)) ~shrink
+         Gen.(int_bound 10_000 >>= fun len ->
+              list_size (return len) int >>= fun xs -> return (len,xs)))
+      (fun (len,xs) -> let len' = List.length xs in len=len' && len' < 4)
+
   let print_list xs = print_endline Print.(list int xs)
+
   (* test from issue #64 *)
   let lists_are_empty_issue_64 =
     Test.make ~name:"lists are empty"
@@ -454,6 +563,11 @@ module Shrink = struct
       (tup9 small_int small_int small_int small_int small_int small_int small_int small_int small_int)
       (fun (a, b, c, d, e, f, g, h, i) -> a < b && b < c && c < d && d < e && e < f && f < g && g < h && h < i)
 
+  let tree_contains_only_42 =
+    Test.make ~name:"tree contains only 42"
+      IntTree.(make ~print:print_tree ~shrink:shrink_tree gen_tree)
+      (fun tree -> IntTree.contains_only_n tree 42)
+
   let tests = [
     (*test_fac_issue59;*)
     big_bound_issue59;
@@ -466,6 +580,23 @@ module Shrink = struct
     strings_are_empty;
     string_never_has_000_char;
     string_never_has_255_char;
+    pair_diff_issue_64;
+    pair_same;
+    pair_one_zero;
+    pair_all_zero;
+    pair_ordered;
+    pair_ordered_rev;
+    pair_sum_lt_128;
+    triple_diff;
+    triple_same;
+    triple_ordered;
+    triple_ordered_rev;
+    quad_diff;
+    quad_same;
+    quad_ordered;
+    quad_ordered_rev;
+    bind_pair_ordered;
+    bind_pair_list_size;
     lists_are_empty_issue_64;
     list_shorter_10;
     list_shorter_432;
@@ -480,6 +611,7 @@ module Shrink = struct
     test_tup7;
     test_tup8;
     test_tup9;
+    tree_contains_only_42;
   ]
 end
 
@@ -614,6 +746,26 @@ module Stats = struct
       Test.make ~name:"small_string len dist"     ~count:5_000 (add_stat len small_string)                          (fun _ -> true);
     ]
 
+  let pair_dist =
+    Test.make ~name:"pair dist" ~count:500_000
+      (add_stat ("pair sum", (fun (i,j) -> i+j))
+         (pair (int_bound 100) (int_bound 100))) (fun _ -> true)
+
+  let triple_dist =
+    Test.make ~name:"triple dist" ~count:500_000
+      (add_stat ("triple sum", (fun (i,j,k) -> i+j+k))
+         (triple (int_bound 100) (int_bound 100) (int_bound 100))) (fun _ -> true)
+
+  let quad_dist =
+    Test.make ~name:"quad dist" ~count:500_000
+      (add_stat ("quad sum", (fun (h,i,j,k) -> h+i+j+k))
+         (quad (int_bound 100) (int_bound 100) (int_bound 100) (int_bound 100))) (fun _ -> true)
+
+  let bind_dist =
+    Test.make ~name:"bind dist" ~count:1_000_000
+      (make ~stats:[("ordered pair difference", (fun (i,j) -> j-i));("ordered pair sum", (fun (i,j) -> i+j))]
+         Gen.(int_bound 100 >>= fun j -> int_bound j >>= fun i -> return (i,j))) (fun _ -> true)
+
   let list_len_tests =
     let len = ("len",List.length) in
     [ (* test from issue #30 *)
@@ -669,6 +821,10 @@ module Stats = struct
       range_subset_test
     ]
     @ string_len_tests
+    @ [pair_dist;
+       triple_dist;
+       quad_dist;
+       bind_dist;]
     @ list_len_tests
     @ array_len_tests
     @ int_dist_tests

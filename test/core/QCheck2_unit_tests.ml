@@ -91,7 +91,7 @@ module Gen = struct
        ])
 end
 
-module Test = struct
+module TestCount = struct
   let test_count_n ?count expected =
     let t = QCheck2.(Test.make ?count Gen.int (fun _ -> true)) in
     let msg = Printf.sprintf "QCheck2.Test.make ~count:%s |> get_count = %d"
@@ -112,7 +112,7 @@ module Test = struct
     Alcotest.(check int) "default count is from QCHECK_COUNT" 5 actual
 
   let tests =
-    ("Test", Alcotest.[
+    ("Test.make ~count", Alcotest.[
          test_case "make with custom count" `Quick test_count_10;
          test_case "make with custom count" `Quick test_count_0;
          test_case "make with default count" `Quick test_count_default;
@@ -129,11 +129,61 @@ module String = struct
   let tests = ("String", Alcotest.[test_case "shrinking" `Quick test_string_shrinking])
 end
 
+module Check_exn = struct
+
+  let check_exn = Test.check_exn
+
+  let test_pass_trivial () =
+    let run_test () = check_exn QCheck2.(Test.make Gen.int (fun _ -> true)) in
+    Alcotest.(check unit) "Success-trivial" () @@ run_test ()
+
+  let test_pass_random () =
+    let run_test () =
+      check_exn QCheck2.(Test.make Gen.(list int) (fun l -> List.rev (List.rev l) = l)) in
+    Alcotest.(check unit) "Success-random" () @@ run_test ()
+
+  let test_fail_always () =
+    let name = "will-always-fail" in
+    let counterex_str = "0 (after 2 shrink steps)" in
+    let run_test () =
+      check_exn QCheck2.(Test.make ~name ~print:Print.int Gen.int (fun _ -> false)) in
+    Alcotest.check_raises "Fail" (Test.Test_fail (name,[counterex_str])) run_test
+
+  let test_fail_random () =
+    let name = "list is own reverse" in
+    let counterex_str = "[0; 1] (after 64 shrink steps)" in
+    let run_test () =
+      check_exn
+        QCheck2.(Test.make ~name ~print:Print.(list int)
+                           Gen.(list int) (fun l -> List.rev l = l)) in
+    Alcotest.check_raises "Fail" (Test.Test_fail (name,[counterex_str])) run_test
+
+  exception MyError
+
+  let test_error () =
+    let name = "will-always-error" in
+    let counterex_str = "0 (after 2 shrink steps)" in
+    let run_test () =
+      let () = Printexc.record_backtrace false in (* for easier pattern-matching below *)
+      check_exn QCheck2.(Test.make ~name ~print:Print.int Gen.int (fun _ -> raise MyError)) in
+    Alcotest.check_raises "MyError" (Test.Test_error (name,counterex_str,MyError,"")) run_test
+
+  let tests =
+    ("Test.check_exn", Alcotest.[
+         test_case "check_exn pass trivial" `Quick test_pass_trivial;
+         test_case "check_exn pass random" `Quick test_pass_random;
+         test_case "check_exn fail always" `Quick test_fail_always;
+         test_case "check_exn fail random" `Quick test_fail_random;
+         test_case "check_exn Error" `Quick test_error;
+       ])
+end
+
 let () =
-  Alcotest.run "QCheck"
+  Alcotest.run "QCheck2"
     [
       Shrink.tests;
       Gen.tests;
-      Test.tests;
-      String.tests
+      TestCount.tests;
+      String.tests;
+      Check_exn.tests;
     ]
