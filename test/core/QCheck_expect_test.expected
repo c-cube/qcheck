@@ -411,6 +411,12 @@ Test lists have unique elems failed (7 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
+Test tree contains only 42 failed (10 shrink steps):
+
+Leaf 0
+
+--- Failure --------------------------------------------------------------------
+
 Test forall (a, b) in nat: a < b failed (13 shrink steps):
 
 (0, 0)
@@ -456,12 +462,6 @@ Test forall (a, b, c, d, e, f, g, h) in nat: a < b < c < d < e < f < g < h faile
 Test forall (a, b, c, d, e, f, g, h, i) in nat: a < b < c < d < e < f < g < h < i failed (42 shrink steps):
 
 (0, 0, 0, 0, 0, 0, 0, 0, 0)
-
---- Failure --------------------------------------------------------------------
-
-Test tree contains only 42 failed (10 shrink steps):
-
-Leaf 0
 
 --- Failure --------------------------------------------------------------------
 

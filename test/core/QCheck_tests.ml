@@ -542,6 +542,11 @@ module Shrink = struct
       (fun xs -> let ys = List.sort_uniq Int.compare xs in
                  print_list xs; List.length xs = List.length ys)
 
+  let tree_contains_only_42 =
+    Test.make ~name:"tree contains only 42"
+      IntTree.(make ~print:print_tree ~shrink:shrink_tree gen_tree)
+      (fun tree -> IntTree.contains_only_n tree 42)
+
   let test_tup2 =
     Test.make
       ~name:"forall (a, b) in nat: a < b"
@@ -590,11 +595,6 @@ module Shrink = struct
       (tup9 small_int small_int small_int small_int small_int small_int small_int small_int small_int)
       (fun (a, b, c, d, e, f, g, h, i) -> a < b && b < c && c < d && d < e && e < f && f < g && g < h && h < i)
 
-  let tree_contains_only_42 =
-    Test.make ~name:"tree contains only 42"
-      IntTree.(make ~print:print_tree ~shrink:shrink_tree gen_tree)
-      (fun tree -> IntTree.contains_only_n tree 42)
-
   let tests = [
     (*test_fac_issue59;*)
     big_bound_issue59;
@@ -633,6 +633,7 @@ module Shrink = struct
     list_shorter_4332;
     list_equal_dupl;
     list_unique_elems;
+    tree_contains_only_42;
     test_tup2;
     test_tup3;
     test_tup4;
@@ -641,7 +642,6 @@ module Shrink = struct
     test_tup7;
     test_tup8;
     test_tup9;
-    tree_contains_only_42;
   ]
 end
 
