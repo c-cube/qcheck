@@ -1,5 +1,10 @@
 (** QCheck(1) tests **)
 
+(* Please add any additional tests to both [QCheck_tests.ml] and [QCheck2_tests.ml].
+   This ensures that both generator approaches continue to work as expected
+   and furthermore allows us to compare their behaviour with
+   [diff -y test/core/QCheck_expect_test.expected test/core/QCheck2_expect_test.expected] *)
+
 (** Module representing a tree data structure, used in tests *)
 module IntTree = struct
   open QCheck
