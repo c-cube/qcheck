@@ -19,13 +19,13 @@ module Shrink = struct
 
   let test_int () =
     List.iter (alco_check Alcotest.int (trace_false Shrink.int) "on repeated failure")
-      [ ("int 100",   100,  [50; 75; 88; 94; 97; 99; 99]); (*WTF?*)
-        ("int 1000",  1000, [500; 750; 875; 938; 969; 985; 993; 997; 999; 999]); (*WTF?*)
-        ("int (-26)", -26,  [-13; -20; -23; -25; -25]) ]; (*WTF?*)
+      [ ("int 100",   100,  [0; 50; 75; 87; 93; 96; 98; 99]);
+        ("int 1000",  1000, [0; 500; 750; 875; 937; 968; 984; 992; 996; 998; 999]);
+        ("int (-26)", -26,  [0; -13; -19; -22; -24; -25]) ];
     List.iter (alco_check Alcotest.int (trace_true Shrink.int) "on repeated success")
-      [ ("int 100",   100,  [50; 25; 13; 7; 4; 2; 1; 0]);
-        ("int 1000",  1000, [500; 250; 125; 63; 32; 16; 8; 4; 2; 1; 0]);
-        ("int (-26)", -26,  [-13; -7; -4; -2; -1; 0]) ]
+      [ ("int 100",   100,  [0]);
+        ("int 1000",  1000, [0]);
+        ("int (-26)", -26,  [0]) ]
 
   let test_int32 () =
     List.iter (alco_check Alcotest.int32 (trace_false Shrink.int32) "on repeated failure")
@@ -69,14 +69,14 @@ module Check_exn = struct
 
   let test_fail_always () =
     let name = "will-always-fail" in
-    let counterex_str = "0 (after 63 shrink steps)" in
+    let counterex_str = "0 (after 1 shrink steps)" in
     let run_test () =
       check_exn QCheck.(Test.make ~name int (fun _ -> false)) in
     Alcotest.check_raises "Fail" (Test.Test_fail (name,[counterex_str])) run_test
 
   let test_fail_random () =
     let name = "list is own reverse" in
-    let counterex_str = "[0; -1] (after 126 shrink steps)" in
+    let counterex_str = "[0; 1] (after 63 shrink steps)" in
     let run_test () =
       check_exn
         QCheck.(Test.make ~name (list int) (fun l -> List.rev l = l)) in
@@ -86,7 +86,7 @@ module Check_exn = struct
 
   let test_error () =
     let name = "will-always-error" in
-    let counterex_str = "0 (after 63 shrink steps)" in
+    let counterex_str = "0 (after 1 shrink steps)" in
     let run_test () =
       let () = Printexc.record_backtrace false in (* for easier pattern-matching below *)
       check_exn QCheck.(Test.make ~name int (fun _ -> raise MyError)) in
