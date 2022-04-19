@@ -9,7 +9,23 @@ all rights reserved.
 let poly_compare=compare
 open Printf
 
-module RS = Random.State
+module RS = struct
+  (* Poor man's splitter for version < 5.0                       *)
+  (* This definition is shadowed by the [include] on OCaml >=5.0 *)
+  let split rs =
+    let bits = Random.State.bits rs in
+    let rs' = Random.State.make [|bits|] in
+    rs'
+  include Random.State
+  (* This is how OCaml 5.0 splits:             *)
+  (* Split a new PRNG off the given PRNG *)
+  (*
+  let split s =
+    let i1 = bits64 s in let i2 = bits64 s in
+    let i3 = bits64 s in let i4 = bits64 s in
+    mk i1 i2 i3 i4
+  *)
+end
 
 let (|>) x f = f x
 
@@ -1308,6 +1324,8 @@ end = struct
       List.iter (fun (k,v) -> T.add tbl k v) l;
       tbl
     in
+    (* split random state to avoid later failed [get]s to side-effect the current [st] *)
+    let st' = RS.split st in
     (* make a table
        @param extend if true, extend table on the fly *)
     let rec make ~extend tbl = {
@@ -1315,7 +1333,7 @@ end = struct
         try Some (T.find tbl x)
         with Not_found ->
           if extend then (
-            let v = v.gen st in
+            let v = v.gen st' in
             T.add tbl x v;
             Some v
           ) else None);

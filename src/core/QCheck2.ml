@@ -9,7 +9,23 @@ all rights reserved.
 
 let poly_compare=compare
 
-module RS = Random.State
+module RS = struct
+  (* Poor man's splitter for version < 5.0                       *)
+  (* This definition is shadowed by the [include] on OCaml >=5.0 *)
+  let split rs =
+    let bits = Random.State.bits rs in
+    let rs' = Random.State.make [|bits|] in
+    rs'
+  include Random.State
+  (* This is how OCaml 5.0 splits:       *)
+  (* Split a new PRNG off the given PRNG *)
+  (*
+  let split s =
+    let i1 = bits64 s in let i2 = bits64 s in
+    let i3 = bits64 s in let i4 = bits64 s in
+    mk i1 i2 i3 i4
+  *)
+end
 
 let rec foldn ~f ~init:acc i =
   if i = 0 then acc else foldn ~f ~init:(f acc i) (i-1)
@@ -1063,6 +1079,8 @@ end = struct
                        let equal = k_obs.Observable.eq
                        let hash = k_obs.Observable.hash
                      end) in
+    (* split random state to avoid later failed [get]s to side-effect the current [st] *)
+    let st' = RS.split st in
     (* make a table
        @param extend if [true], extend table [tbl] on the fly (during test execution, to "record" input values and generate an associated output value). [false] during shrinking (use the default value if the input value is not in the table). *)
     let make ~extend tbl =
@@ -1073,7 +1091,7 @@ end = struct
           with Not_found ->
             if extend then (
               (* Generate a new value and "record" the binding for potential future display/shrinking *)
-              let value_tree = v_gen st in
+              let value_tree = v_gen st' in
               p_tree_bindings_rev := (key, value_tree) :: !p_tree_bindings_rev;
               let v = Tree.root value_tree in
               T.add tbl key v;
