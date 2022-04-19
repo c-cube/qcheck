@@ -111,7 +111,7 @@ Test should_error_raise_exn errored on (63 shrink steps):
 
 0
 
-exception Dune__exe__QCheck_expect_test.Overall.Error
+exception QCheck_tests.Overall.Error
 
 
 +++ Collect ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -181,6 +181,14 @@ NOTE: it is likely that the precondition is too strong, or that the generator is
 
 --- Failure --------------------------------------------------------------------
 
+Test FAIL_bad_gen failed:
+
+ERROR: uncaught exception in generator for test FAIL_bad_gen after 100 steps:
+Exception: Invalid_argument("Gen.int_bound")
+Backtrace: 
+
+--- Failure --------------------------------------------------------------------
+
 Test char never produces '\255' failed (0 shrink steps):
 
 '\255'
@@ -247,6 +255,12 @@ Test string never has a \255 char failed (249 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
+Test strings have unique chars failed (248 shrink steps):
+
+"\206\206"
+
+--- Failure --------------------------------------------------------------------
+
 Test pairs have different components failed (0 shrink steps):
 
 (4, 4)
@@ -271,21 +285,33 @@ Test pairs are (0,0) failed (125 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test pairs are ordered failed (125 shrink steps):
+Test pairs are ordered failed (827 shrink steps):
 
-(0, -1)
+(1, 0)
 
 --- Failure --------------------------------------------------------------------
 
-Test pairs are ordered reversely failed (125 shrink steps):
+Test pairs are ordered reversely failed (124 shrink steps):
 
 (0, 1)
 
 --- Failure --------------------------------------------------------------------
 
-Test pairs sum to less than 128 failed (121 shrink steps):
+Test pairs sum to less than 128 failed (116 shrink steps):
 
 (0, 128)
+
+--- Failure --------------------------------------------------------------------
+
+Test pairs lists rev concat failed (140 shrink steps):
+
+([0], [1])
+
+--- Failure --------------------------------------------------------------------
+
+Test pairs lists no overlap failed (22 shrink steps):
+
+([0], [0])
 
 --- Failure --------------------------------------------------------------------
 
@@ -337,13 +363,13 @@ Test quadruples are ordered reversely failed (251 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test bind ordered pairs failed (123 shrink steps):
+Test bind ordered pairs failed (125 shrink steps):
 
 (0, 0)
 
 --- Failure --------------------------------------------------------------------
 
-Test bind list_size constant failed (261 shrink steps):
+Test bind list_size constant failed (50 shrink steps):
 
 (4, [0; 0; 0; 0])
 
@@ -476,7 +502,7 @@ Test fold_left fold_right uncurried fun last failed (26 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test false fold, fun first failed (40 shrink steps):
+Test fold_left test, fun first failed (40 shrink steps):
 
 ({_ -> ""}, "z", [], [0])
 
@@ -1177,7 +1203,7 @@ stats dist:
    4150517416584649600.. 4611686018427387903: #################                                               189
 ================================================================================
 1 warning(s)
-failure (53 tests failed, 1 tests errored, ran 117 tests)
+failure (57 tests failed, 1 tests errored, ran 121 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
