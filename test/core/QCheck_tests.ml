@@ -120,16 +120,7 @@ module Overall = struct
   ]
 end
 
-(* positive tests of the various generators
-
-   Note: it is important to disable shrinking for these tests, as the
-   shrinkers will suggest inputs that are coming from the generators
-   themselves -- which we want to test -- so their reduced
-   counter-example are confusing rather than helpful.
-
-   This is achieved by using (Test.make ~print ...), without a ~shrink
-   argument.
-*)
+(* positive tests of the various generators *)
 module Generator = struct
   open QCheck
 
