@@ -399,7 +399,7 @@ module Shrink = struct
       (make ~print:Print.int ~shrink:Shrink.int Gen.nat) (fun n -> n < 5001)
 
   let char_is_never_abcdef =
-    Test.make ~name:"char is never produces 'abcdef'" ~count:1000
+    Test.make ~name:"char never produces 'abcdef'" ~count:1000
       char (fun c -> not (List.mem c ['a';'b';'c';'d';'e';'f']))
 
   let strings_are_empty =

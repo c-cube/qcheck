@@ -296,7 +296,7 @@ Test nat < 5001 failed (7 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test char is never produces 'abcdef' failed (1 shrink steps):
+Test char never produces 'abcdef' failed (1 shrink steps):
 
 'a'
 
