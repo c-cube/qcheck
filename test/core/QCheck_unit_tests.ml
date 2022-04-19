@@ -76,7 +76,7 @@ module Check_exn = struct
 
   let test_fail_random () =
     let name = "list is own reverse" in
-    let counterex_str = "[0; -1] (after 126 shrink steps)" in
+    let counterex_str = "[0; 1] (after 123 shrink steps)" in
     let run_test () =
       check_exn
         QCheck.(Test.make ~name (list int) (fun l -> List.rev l = l)) in
