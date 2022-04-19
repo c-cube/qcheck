@@ -10,14 +10,16 @@
 - remove `--no-buffer` option on `dune runtest` to avoid garbling the
   test output
 
-- add an option `retries` parameter `Test.make` et al. for checking a
+- add an option `retries` parameter to `Test.make` et al. for checking a
   property repeatedly while shrinking.
   This can be useful when testing non-deterministic code.
   [#212](https://github.com/c-cube/qcheck/pull/212)
 
-- add tup2 to tup9 for generators
+- add `tup2` to `tup9` for generators
 
 - rename `Gen.opt` to `Gen.option` but keep the old binding for compatibility.
+
+- add additional expect and unit tests and refactor expect test suite
 
 - documentation updates:
   - clarify upper bound inclusion in `Gen.int_bound` and `Gen.int_range`
@@ -26,6 +28,7 @@
   - document `QCheck_alcotest.to_alcotest`
   - fix documented size distribution for `arbitrary` generators
     `string_gen`, `string`, `printable_string`, `numeral_string`, `list`, and `array`
+  - fix exception documentation for `check_result`, `check_cell_exn`, and `check_exn`
 
 ## 0.18.1
 
