@@ -59,19 +59,19 @@ stats num:
 
 --- Failure --------------------------------------------------------------------
 
-Test FAIL_pred_map_commute failed (127 shrink steps):
+Test FAIL_pred_map_commute failed (107 shrink steps):
 
-([3], {_ -> 0}, {3 -> false; _ -> true})
+([0], {_ -> -21}, {-21 -> true; _ -> false})
 
 --- Failure --------------------------------------------------------------------
 
 Test FAIL_fun2_pred_strings failed (1 shrink steps):
 
-{some random string -> true; _ -> false}
+{some other string -> false; _ -> true}
 
 --- Failure --------------------------------------------------------------------
 
-Test fold_left fold_right failed (25 shrink steps):
+Test fold_left fold_right failed (24 shrink steps):
 
 (0, [1], {(1, 0) -> 1; _ -> 0})
 
@@ -84,9 +84,9 @@ l=[1], fold_left=1, fold_right=0
 
 --- Failure --------------------------------------------------------------------
 
-Test fold_left fold_right uncurried failed (111 shrink steps):
+Test fold_left fold_right uncurried failed (97 shrink steps):
 
-({(5, 7) -> 0; _ -> 7}, 0, [5; 0])
+({(1, 7) -> 0; _ -> 7}, 0, [1; 0])
 
 --- Failure --------------------------------------------------------------------
 
