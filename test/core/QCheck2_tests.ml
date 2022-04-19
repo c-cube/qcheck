@@ -1,5 +1,10 @@
 (** QCheck2 tests **)
 
+(* Please add any additional tests to both [QCheck_tests.ml] and [QCheck2_tests.ml].
+   This ensures that both generator approaches continue to work as expected
+   and furthermore allows us to compare their behaviour with
+   [diff -y test/core/QCheck_expect_test.expected test/core/QCheck2_expect_test.expected] *)
+
 (** Module representing a integer tree data structure, used in tests *)
 module IntTree = struct
   type tree = Leaf of int | Node of tree * tree
@@ -152,39 +157,6 @@ module Generator = struct
       Gen.(quad small_nat small_nat small_nat small_nat)
       (fun (h,i,j,k) -> (h+i)*(j+k) = h*j + h*k + i*j + i*k)
 
-  let bind_test =
-    Test.make ~name:"bind test for ordered pairs" ~count:1000 ~print:Print.(pair int int)
-      Gen.(small_nat >>= fun j -> int_bound j >>= fun i -> return (i,j))
-      (fun (i,j) -> i<=j)
-
-  let bind_pair_list_length =
-    Test.make ~name:"bind list length" ~count:1000 ~print:Print.(pair int (list int))
-      Gen.(int_bound 1000 >>= fun len ->
-           list_size (return len) (int_bound 10) >>= fun xs -> return (len,xs))
-      (fun (len,xs) -> len = List.length xs)
-
-  let list_test =
-    Test.make ~name:"list has right length" ~count:1000
-      ~print:Print.(list unit)
-      Gen.(list unit) (fun l -> let len = List.length l in 0 <= len && len < 10_000)
-
-  let list_repeat_test =
-    Test.make ~name:"list_repeat has constant length" ~count:1000
-      ~print:Print.(pair int (list unit))
-      Gen.(small_nat >>= fun i -> list_repeat i unit >>= fun l -> return (i,l))
-      (fun (i,l) -> List.length l = i)
-
-  let array_repeat_test =
-    Test.make ~name:"array_repeat has constant length" ~count:1000
-      ~print:Print.(pair int (array unit))
-      Gen.(small_nat >>= fun i -> array_repeat i unit >>= fun l -> return (i,l))
-      (fun (i,l) -> Array.length l = i)
-
-  let passing_tree_rev =
-    Test.make ~name:"tree_rev_is_involutive" ~count:1000
-      IntTree.gen_tree
-      (fun tree -> IntTree.(rev_tree (rev_tree tree)) = tree)
-
   let test_tup2 =
     Test.make ~count:10
       ~name:"forall x in (0, 1): x = (0, 1)"
@@ -239,6 +211,39 @@ module Generator = struct
          (pure 5) (pure 6) (pure 7) (pure 8))
       (fun x -> x = (0, 1, 2, 3, 4, 5, 6, 7, 8))
 
+  let bind_test =
+    Test.make ~name:"bind test for ordered pairs" ~count:1000 ~print:Print.(pair int int)
+      Gen.(small_nat >>= fun j -> int_bound j >>= fun i -> return (i,j))
+      (fun (i,j) -> i<=j)
+
+  let bind_pair_list_length =
+    Test.make ~name:"bind list length" ~count:1000 ~print:Print.(pair int (list int))
+      Gen.(int_bound 1000 >>= fun len ->
+           list_size (return len) (int_bound 10) >>= fun xs -> return (len,xs))
+      (fun (len,xs) -> len = List.length xs)
+
+  let list_test =
+    Test.make ~name:"list has right length" ~count:1000
+      ~print:Print.(list unit)
+      Gen.(list unit) (fun l -> let len = List.length l in 0 <= len && len < 10_000)
+
+  let list_repeat_test =
+    Test.make ~name:"list_repeat has constant length" ~count:1000
+      ~print:Print.(pair int (list unit))
+      Gen.(small_nat >>= fun i -> list_repeat i unit >>= fun l -> return (i,l))
+      (fun (i,l) -> List.length l = i)
+
+  let array_repeat_test =
+    Test.make ~name:"array_repeat has constant length" ~count:1000
+      ~print:Print.(pair int (array unit))
+      Gen.(small_nat >>= fun i -> array_repeat i unit >>= fun l -> return (i,l))
+      (fun (i,l) -> Array.length l = i)
+
+  let passing_tree_rev =
+    Test.make ~name:"tree_rev_is_involutive" ~count:1000
+      IntTree.gen_tree
+      (fun tree -> IntTree.(rev_tree (rev_tree tree)) = tree)
+
   let tests = [
     char_dist_issue_23;
     char_test;
@@ -247,12 +252,6 @@ module Generator = struct
     pair_test;
     triple_test;
     quad_test;
-    bind_test;
-    bind_pair_list_length;
-    list_test;
-    list_repeat_test;
-    array_repeat_test;
-    passing_tree_rev;
     test_tup2;
     test_tup3;
     test_tup4;
@@ -261,6 +260,12 @@ module Generator = struct
     test_tup7;
     test_tup8;
     test_tup9;
+    bind_test;
+    bind_pair_list_length;
+    list_test;
+    list_repeat_test;
+    array_repeat_test;
+    passing_tree_rev;
   ]
 end
 
@@ -310,7 +315,7 @@ module Shrink = struct
       Gen.nat (fun n -> n < 5001)
 
   let char_is_never_abcdef =
-    Test.make ~name:"char is never produces 'abcdef'" ~count:1000 ~print:Print.char
+    Test.make ~name:"char never produces 'abcdef'" ~count:1000 ~print:Print.char
       Gen.char (fun c -> not (List.mem c ['a';'b';'c';'d';'e';'f']))
 
   let strings_are_empty =
@@ -405,60 +410,6 @@ module Shrink = struct
     Test.make ~name:"quadruples are ordered reversely" ~print:Print.(quad int int int int)
       Gen.(quad int int int int) (fun (h,i,j,k) -> h >= i && i >= j && j >= k)
 
-  let bind_pair_ordered =
-    Test.make ~name:"bind ordered pairs" ~print:Print.(pair int int)
-      Gen.(pint ~origin:0 >>= fun j -> int_bound j >>= fun i -> return (i,j))
-      (fun (_i,_j) -> false)
-
-  let bind_pair_list_size =
-    Test.make ~name:"bind list_size constant" ~print:Print.(pair int (list int))
-      Gen.(int_bound 1000 >>= fun len ->
-           list_size (return len) (int_bound 1000) >>= fun xs -> return (len,xs))
-      (fun (len,xs) -> let len' = List.length xs in len=len' && len' < 4)
-
-  (* tests from issue #64 *)
-  let print_list xs = print_endline Print.(list int xs)
-
-  let lists_are_empty_issue_64 =
-    Test.make ~name:"lists are empty" ~print:Print.(list int)
-      Gen.(list small_int) (fun xs -> print_list xs; xs = [])
-
-  let list_shorter_10 =
-    Test.make ~name:"lists shorter than 10" ~print:Print.(list int)
-      Gen.(list small_int) (fun xs -> List.length xs < 10)
-
-  let length_printer xs =
-    Printf.sprintf "[...] list length: %i" (List.length xs)
-
-  let size_gen = Gen.(oneof [small_nat; int_bound 750_000])
-
-  let list_shorter_432 =
-    Test.make ~name:"lists shorter than 432" ~print:length_printer
-      Gen.(list_size size_gen small_int)
-      (fun xs -> List.length xs < 432)
-
-  let list_shorter_4332 =
-    Test.make ~name:"lists shorter than 4332" ~print:length_printer
-      Gen.(list_size size_gen small_int)
-      (fun xs -> List.length xs < 4332)
-
-  let list_equal_dupl =
-    Test.make ~name:"lists equal to duplication" ~print:Print.(list int)
-      Gen.(list_size size_gen small_int)
-      (fun xs -> try xs = xs @ xs
-                 with Stack_overflow -> false)
-
-  let list_unique_elems =
-    Test.make ~name:"lists have unique elems" ~print:Print.(list int)
-      Gen.(list small_int)
-      (fun xs -> let ys = List.sort_uniq Int.compare xs in
-                 print_list xs; List.length xs = List.length ys)
-
-  let tree_contains_only_42 =
-    Test.make ~name:"tree contains only 42" ~print:IntTree.print_tree
-      IntTree.gen_tree
-      (fun tree -> IntTree.contains_only_n tree 42)
-
   let test_tup2 =
     Test.make
       ~print:Print.(tup2 int int)
@@ -515,6 +466,60 @@ module Shrink = struct
       Gen.(tup9 small_int small_int small_int small_int small_int small_int small_int small_int small_int)
       (fun (a, b, c, d, e, f, g, h, i) -> a < b && b < c && c < d && d < e && e < f && f < g && g < h && h < i)
 
+  let bind_pair_ordered =
+    Test.make ~name:"bind ordered pairs" ~print:Print.(pair int int)
+      Gen.(pint ~origin:0 >>= fun j -> int_bound j >>= fun i -> return (i,j))
+      (fun (_i,_j) -> false)
+
+  let bind_pair_list_size =
+    Test.make ~name:"bind list_size constant" ~print:Print.(pair int (list int))
+      Gen.(int_bound 1000 >>= fun len ->
+           list_size (return len) (int_bound 1000) >>= fun xs -> return (len,xs))
+      (fun (len,xs) -> let len' = List.length xs in len=len' && len' < 4)
+
+  (* tests from issue #64 *)
+  let print_list xs = print_endline Print.(list int xs)
+
+  let lists_are_empty_issue_64 =
+    Test.make ~name:"lists are empty" ~print:Print.(list int)
+      Gen.(list small_int) (fun xs -> print_list xs; xs = [])
+
+  let list_shorter_10 =
+    Test.make ~name:"lists shorter than 10" ~print:Print.(list int)
+      Gen.(list small_int) (fun xs -> List.length xs < 10)
+
+  let length_printer xs =
+    Printf.sprintf "[...] list length: %i" (List.length xs)
+
+  let size_gen = Gen.(oneof [small_nat; int_bound 750_000])
+
+  let list_shorter_432 =
+    Test.make ~name:"lists shorter than 432" ~print:length_printer
+      Gen.(list_size size_gen small_int)
+      (fun xs -> List.length xs < 432)
+
+  let list_shorter_4332 =
+    Test.make ~name:"lists shorter than 4332" ~print:length_printer
+      Gen.(list_size size_gen small_int)
+      (fun xs -> List.length xs < 4332)
+
+  let list_equal_dupl =
+    Test.make ~name:"lists equal to duplication" ~print:Print.(list int)
+      Gen.(list_size size_gen small_int)
+      (fun xs -> try xs = xs @ xs
+                 with Stack_overflow -> false)
+
+  let list_unique_elems =
+    Test.make ~name:"lists have unique elems" ~print:Print.(list int)
+      Gen.(list small_int)
+      (fun xs -> let ys = List.sort_uniq Int.compare xs in
+                 print_list xs; List.length xs = List.length ys)
+
+  let tree_contains_only_42 =
+    Test.make ~name:"tree contains only 42" ~print:IntTree.print_tree
+      IntTree.gen_tree
+      (fun tree -> IntTree.contains_only_n tree 42)
+
   let tests = [
     (*test_fac_issue59;*)
     big_bound_issue59;
@@ -545,6 +550,14 @@ module Shrink = struct
     quad_same;
     quad_ordered;
     quad_ordered_rev;
+    test_tup2;
+    test_tup3;
+    test_tup4;
+    test_tup5;
+    test_tup6;
+    test_tup7;
+    test_tup8;
+    test_tup9;
     bind_pair_ordered;
     bind_pair_list_size;
     lists_are_empty_issue_64;
@@ -554,14 +567,6 @@ module Shrink = struct
     list_equal_dupl;
     list_unique_elems;
     tree_contains_only_42;
-    test_tup2;
-    test_tup3;
-    test_tup4;
-    test_tup5;
-    test_tup6;
-    test_tup7;
-    test_tup8;
-    test_tup9;
   ]
 end
 

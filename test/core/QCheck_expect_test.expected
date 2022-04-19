@@ -231,7 +231,7 @@ Test nat < 5001 failed (6 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test char is never produces 'abcdef' failed (0 shrink steps):
+Test char never produces 'abcdef' failed (0 shrink steps):
 
 'd'
 
@@ -363,54 +363,6 @@ Test quadruples are ordered reversely failed (251 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test bind ordered pairs failed (125 shrink steps):
-
-(0, 0)
-
---- Failure --------------------------------------------------------------------
-
-Test bind list_size constant failed (50 shrink steps):
-
-(4, [0; 0; 0; 0])
-
---- Failure --------------------------------------------------------------------
-
-Test lists are empty failed (11 shrink steps):
-
-[0]
-
---- Failure --------------------------------------------------------------------
-
-Test lists shorter than 10 failed (50 shrink steps):
-
-[0; 0; 0; 0; 0; 0; 0; 0; 0; 0]
-
---- Failure --------------------------------------------------------------------
-
-Test lists shorter than 432 failed (1696 shrink steps):
-
-[...] list length: 432
-
---- Failure --------------------------------------------------------------------
-
-Test lists shorter than 4332 failed (13 shrink steps):
-
-[...] list length: 4332
-
---- Failure --------------------------------------------------------------------
-
-Test lists equal to duplication failed (20 shrink steps):
-
-[0]
-
---- Failure --------------------------------------------------------------------
-
-Test lists have unique elems failed (7 shrink steps):
-
-[7; 7]
-
---- Failure --------------------------------------------------------------------
-
 Test forall (a, b) in nat: a < b failed (13 shrink steps):
 
 (0, 0)
@@ -456,6 +408,54 @@ Test forall (a, b, c, d, e, f, g, h) in nat: a < b < c < d < e < f < g < h faile
 Test forall (a, b, c, d, e, f, g, h, i) in nat: a < b < c < d < e < f < g < h < i failed (42 shrink steps):
 
 (0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+--- Failure --------------------------------------------------------------------
+
+Test bind ordered pairs failed (125 shrink steps):
+
+(0, 0)
+
+--- Failure --------------------------------------------------------------------
+
+Test bind list_size constant failed (50 shrink steps):
+
+(4, [0; 0; 0; 0])
+
+--- Failure --------------------------------------------------------------------
+
+Test lists are empty failed (11 shrink steps):
+
+[0]
+
+--- Failure --------------------------------------------------------------------
+
+Test lists shorter than 10 failed (50 shrink steps):
+
+[0; 0; 0; 0; 0; 0; 0; 0; 0; 0]
+
+--- Failure --------------------------------------------------------------------
+
+Test lists shorter than 432 failed (1696 shrink steps):
+
+[...] list length: 432
+
+--- Failure --------------------------------------------------------------------
+
+Test lists shorter than 4332 failed (13 shrink steps):
+
+[...] list length: 4332
+
+--- Failure --------------------------------------------------------------------
+
+Test lists equal to duplication failed (20 shrink steps):
+
+[0]
+
+--- Failure --------------------------------------------------------------------
+
+Test lists have unique elems failed (7 shrink steps):
+
+[7; 7]
 
 --- Failure --------------------------------------------------------------------
 
