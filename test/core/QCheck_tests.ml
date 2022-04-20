@@ -111,6 +111,28 @@ module Overall = struct
          Gen.int)
       (fun _i -> false)
 
+  (* [apply_n f x n] computes f(f(...f(x))) with n applications of f *)
+  let rec apply_n f x n =
+    if n=0
+    then x
+    else apply_n f (f x) (pred n)
+
+  (* test from #236 *)
+  let bad_fun_repro =
+    let sleep_time = 0.175 in
+    let count = ref 0 in
+    Test.make ~count:10 ~name:"bad function reproducability"
+      (set_shrink Shrink.nil (triple small_int (fun1 Observable.int small_int) small_int))
+      (fun (i,f,j) ->
+         incr count;
+         Printf.printf "(%i,fun,%i)%s%!" i j (if !count mod 10 = 0 then "\n" else " ");
+         Unix.sleepf sleep_time;
+         if 1 = Float.to_int (Unix.time ()) mod 2
+         then
+           (ignore(apply_n (Fn.apply f) i j > 0); true)
+         else
+           (ignore(apply_n (Fn.apply f) i i > 0); true))
+
   let tests = [
     passing;
     failing;
@@ -122,6 +144,15 @@ module Overall = struct
     bad_assume_fail;
     bad_gen_fail;
     (*bad_shrinker_fail;*)
+    (* we repeat the following multiple times to check the expected output for duplicate lines *)
+    bad_fun_repro;
+    bad_fun_repro;
+    bad_fun_repro;
+    bad_fun_repro;
+    bad_fun_repro;
+    bad_fun_repro;
+    bad_fun_repro;
+    bad_fun_repro;
   ]
 end
 
