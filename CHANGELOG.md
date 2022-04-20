@@ -21,6 +21,10 @@
 
 - add additional expect and unit tests and refactor expect test suite
 
+- fix function generation affecting reproducability [#236](https://github.com/c-cube/qcheck/issues/236)
+
+- add a shrinker performance benchmark [#177](https://github.com/c-cube/qcheck/pull/177)
+
 - documentation updates:
   - clarify upper bound inclusion in `Gen.int_bound` and `Gen.int_range`
   - clarify `printable_char` and `Gen.printable` distributions
