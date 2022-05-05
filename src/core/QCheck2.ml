@@ -1486,6 +1486,8 @@ module Test = struct
     Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats gen law)
 
   let test_get_count (Test cell) = get_count cell
+  
+  let test_get_long_factor (Test cell) = get_long_factor cell
 
   (** {6 Running the test} *)
 
