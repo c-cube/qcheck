@@ -101,8 +101,6 @@ module TestCount = struct
 
   let test_count_10 () = test_count_n ~count:10 10
 
-  let test_count_0 () = test_count_n ~count:0 0
-
   let test_count_default () = test_count_n 100
 
   let test_count_env () =
@@ -114,9 +112,34 @@ module TestCount = struct
   let tests =
     ("Test.make ~count", Alcotest.[
          test_case "make with custom count" `Quick test_count_10;
-         test_case "make with custom count" `Quick test_count_0;
          test_case "make with default count" `Quick test_count_default;
          test_case "make with env count" `Quick test_count_env;
+       ])
+end
+
+module TestLongFactor = struct
+  let test_long_factor_n ?long_factor expected =
+    let t = QCheck2.(Test.make ?long_factor Gen.int (fun _ -> true)) in
+    let msg = Printf.sprintf "QCheck2.Test.make ~long_factor:%s |> long_factor = %d"
+                (Option.fold ~none:"None" ~some:string_of_int long_factor) expected
+    in
+    Alcotest.(check int) msg expected (QCheck2.Test.test_get_long_factor t)
+
+  let test_long_factor_10 () = test_long_factor_n ~long_factor:10 10
+
+  let test_long_factor_default () = test_long_factor_n 1
+
+  let test_long_factor_env () =
+    let () = Unix.putenv "QCHECK_LONG_FACTOR" "5" in
+    let t = QCheck2.(Test.make Gen.int (fun _ -> true)) in
+    let actual = QCheck2.Test.test_get_long_factor t in
+    Alcotest.(check int) "default long factor is from QCHECK_LONG_FACTOR" 5 actual
+
+  let tests =
+    ("Test.make ~long_factor", Alcotest.[
+         test_case "make with custom long_factor" `Quick test_long_factor_10;
+         test_case "make with default long_factor" `Quick test_long_factor_default;
+         test_case "make with env long_factor" `Quick test_long_factor_env;
        ])
 end
 
@@ -184,6 +207,7 @@ let () =
       Shrink.tests;
       Gen.tests;
       TestCount.tests;
+      TestLongFactor.tests;
       String.tests;
       Check_exn.tests;
     ]

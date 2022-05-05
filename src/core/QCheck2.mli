@@ -1662,6 +1662,8 @@ module Test : sig
 
   val test_get_count : t -> int
 
+  val test_get_long_factor : t -> int
+
   val fail_report : string -> 'a
   (** Fail the test with some additional message that will be reported.
 
