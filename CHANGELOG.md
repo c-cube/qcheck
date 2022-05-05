@@ -34,6 +34,8 @@
     `string_gen`, `string`, `printable_string`, `numeral_string`, `list`, and `array`
   - fix exception documentation for `check_result`, `check_cell_exn`, and `check_exn`
 
+- add environment variable `QCHECK_LONG_FACTOR` similar to `QCHECK_COUNT` [#220](https://github.com/c-cube/qcheck/pull/220)
+
 ## 0.18.1
 
 - fix `Gen.{nat,pos}_split{2,}`
