@@ -1459,10 +1459,11 @@ module Test = struct
     }
 
   let make_cell_from_QCheck1 ?(if_assumptions_fail=default_if_assumptions_fail)
-      ?(count) ?(long_factor=1) ?max_gen
+      ?(count) ?long_factor ?max_gen
       ?(max_fail=1) ?(retries=1) ?(name=fresh_name()) ~gen ?shrink ?print ?collect ~stats law
     =
     let count = global_count count in
+    let long_factor = global_long_factor long_factor in
     (* Make a "fake" QCheck2 arbitrary with no shrinking *)
     let fake_gen = Gen.make_primitive ~gen ~shrink:(fun _ -> Seq.empty) in
     let max_gen = match max_gen with None -> count + 200 | Some x->x in
