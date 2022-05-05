@@ -25,6 +25,11 @@
 
 - add a shrinker performance benchmark [#177](https://github.com/c-cube/qcheck/pull/177)
 
+- shrinker changes
+  - recursive list shrinker with better complexity
+  - string shrinker reuses improved list shrinker and adds char shrinking
+  - function shrinker now shrinks default entry first and benefits from list shrinker improvements
+
 - documentation updates:
   - clarify upper bound inclusion in `Gen.int_bound` and `Gen.int_range`
   - clarify `printable_char` and `Gen.printable` distributions
