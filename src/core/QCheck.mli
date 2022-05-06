@@ -687,7 +687,9 @@ module Shrink : sig
 
   val unit : unit t (** @since 0.6 *)
 
-  val char : char t (** @since 0.6 *)
+  val char : char t
+  (** Shrinks towards ['a'].
+      @since 0.6 *)
 
   val int : int t
 

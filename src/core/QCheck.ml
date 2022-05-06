@@ -687,8 +687,12 @@ module Shrink = struct
 
   let filter f shrink x = Iter.filter f (shrink x)
 
-  let char c yield =
-    if Char.code c > 0 then yield (Char.chr (Char.code c-1))
+  let char c =  match c with
+    | 'a' -> Iter.empty
+    | _ ->
+      let c_code = Char.code c in
+      let a_code = Char.code 'a' in
+      Iter.map (fun diff -> Char.chr (a_code + diff)) (int (c_code - a_code))
 
   let option s x = match x with
     | None -> Iter.empty
