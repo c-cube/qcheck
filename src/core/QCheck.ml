@@ -755,9 +755,14 @@ module Shrink = struct
     | Some shrink -> list_elems shrink l yield
 
   let string s yield =
+    let buf = Buffer.create 42 in
     list ~shrink:char
-      (List.of_seq (String.to_seq s))
-      (fun cs -> yield (String.of_seq (List.to_seq cs)))
+      (String.fold_right (fun c acc -> c::acc) s [])
+      (fun cs ->
+         List.iter (fun c -> Buffer.add_char buf c) cs;
+         let s = Buffer.contents buf in
+         Buffer.clear buf;
+         yield s)
 
   let pair a b (x,y) yield =
     a x (fun x' -> yield (x',y));
