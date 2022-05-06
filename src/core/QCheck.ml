@@ -750,7 +750,7 @@ module Shrink = struct
     | None -> ()
     | Some shrink -> list_elems shrink l yield
 
-  let string (*?(shrink=char)*) s yield =
+  let string s yield =
     list ~shrink:char
       (List.of_seq (String.to_seq s))
       (fun cs -> yield (String.of_seq (List.to_seq cs)))
