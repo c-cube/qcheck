@@ -731,8 +731,8 @@ module Shrink = struct
     | _::_ ->
       let len = List.length l in
       let xs,ys = split l ((1 + len) / 2) [] in
-          yield xs;
-          list_spine xs (fun xs' -> yield (xs'@ys))
+      yield xs;
+      list_spine xs (fun xs' -> yield (xs'@ys))
 
   let list_elems shrink l yield =
     (* try to shrink each element of the list *)
