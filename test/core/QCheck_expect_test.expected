@@ -248,9 +248,9 @@ Test char never produces 'abcdef' failed (0 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test strings are empty failed (145 shrink steps):
+Test strings are empty failed (15 shrink steps):
 
-"\000"
+"a"
 
 --- Failure --------------------------------------------------------------------
 
@@ -513,9 +513,9 @@ Test fold_left fold_right uncurried fun last failed (34 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test fold_left test, fun first failed (275 shrink steps):
+Test fold_left test, fun first failed (36 shrink steps):
 
-({_ -> ""}, "\000", [], [0])
+({_ -> ""}, "a", [], [0])
 
 --- Failure --------------------------------------------------------------------
 
