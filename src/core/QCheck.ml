@@ -86,6 +86,15 @@ let _opt_sum a b = match a, b with
 
 let sum_int = List.fold_left (+) 0
 
+(* Included for backwards compatibility, pre 4.13 *)
+let string_fold_right f s acc =
+  let len = String.length s in
+  let rec loop i acc =
+    if i<0
+    then acc
+    else loop (i-1) (f s.[i] acc) in
+  loop (len-1) acc
+
 exception No_example_found of string
 (* raised if an example failed to be found *)
 
@@ -757,7 +766,7 @@ module Shrink = struct
   let string s yield =
     let buf = Buffer.create 42 in
     list ~shrink:char
-      (String.fold_right (fun c acc -> c::acc) s [])
+      (string_fold_right (fun c acc -> c::acc) s [])
       (fun cs ->
          List.iter (fun c -> Buffer.add_char buf c) cs;
          let s = Buffer.contents buf in
