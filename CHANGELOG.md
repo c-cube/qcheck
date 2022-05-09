@@ -29,6 +29,7 @@
   - recursive list shrinker with better complexity
   - string shrinker reuses improved list shrinker and adds char shrinking
   - function shrinker now shrinks default entry first and benefits from list shrinker improvements
+  - replacing the linear-time char shrinker with a faster one reusing the bisecting int shrinker algorithm
 
 - documentation updates:
   - clarify upper bound inclusion in `Gen.int_bound` and `Gen.int_range`
