@@ -86,6 +86,15 @@ let _opt_sum a b = match a, b with
 
 let sum_int = List.fold_left (+) 0
 
+(* Included for backwards compatibility, pre 4.13 *)
+let string_fold_right f s acc =
+  let len = String.length s in
+  let rec loop i acc =
+    if i<0
+    then acc
+    else loop (i-1) (f s.[i] acc) in
+  loop (len-1) acc
+
 exception No_example_found of string
 (* raised if an example failed to be found *)
 
@@ -687,20 +696,16 @@ module Shrink = struct
 
   let filter f shrink x = Iter.filter f (shrink x)
 
-  let char c yield =
-    if Char.code c > 0 then yield (Char.chr (Char.code c-1))
+  let char c =  match c with
+    | 'a' -> Iter.empty
+    | _ ->
+      let c_code = Char.code c in
+      let a_code = Char.code 'a' in
+      Iter.map (fun diff -> Char.chr (a_code + diff)) (int (c_code - a_code))
 
   let option s x = match x with
     | None -> Iter.empty
     | Some x -> Iter.(return None <+> map (fun y->Some y) (s x))
-
-  let string s yield =
-    for i =0 to String.length s-1 do
-      let s' = Bytes.init (String.length s-1)
-        (fun j -> if j<i then s.[j] else s.[j+1])
-      in
-      yield (Bytes.unsafe_to_string s')
-    done
 
   let array ?shrink a yield =
     let n = Array.length a in
@@ -727,37 +732,20 @@ module Shrink = struct
           )
         done
 
-  let list_spine l yield =
-    let n = List.length l in
-    let chunk_size = ref ((n+1)/2) in
-
-    (* push the [n] first elements of [l] into [q], return the rest of the list *)
-    let rec fill_queue n l q = match n,l with
-      | 0, _ -> l
-      | _, x::xs ->
-        Queue.push x q;
-        fill_queue (n-1) xs q
-      | _, _ -> assert false
-    in
-
-    (* remove elements from the list, by chunks of size [chunk_size] (bigger
-       chunks first) *)
-    while !chunk_size > 0 do
-      let q = Queue.create () in
-      let l' = fill_queue !chunk_size l q in
-      (* remove [chunk_size] elements in queue *)
-      let rec pos_loop rev_prefix suffix =
-        yield (List.rev_append rev_prefix suffix);
-        match suffix with
-        | [] -> ()
-        | x::xs ->
-          Queue.push x q;
-          let y = Queue.pop q in
-          (pos_loop [@tailcall]) (y::rev_prefix) xs
-      in
-      pos_loop [] l';
-      chunk_size := !chunk_size / 2;
-    done
+  let rec list_spine l yield =
+    let rec split l len acc = match len,l with
+      | _,[]
+      | 0,_ -> List.rev acc, l
+      | _,x::xs -> split xs (len-1) (x::acc) in
+    match l with
+    | [] -> ()
+    | [_] -> yield []
+    | [x;y] -> yield []; yield [x]; yield [y]
+    | _::_ ->
+      let len = List.length l in
+      let xs,ys = split l ((1 + len) / 2) [] in
+      yield xs;
+      list_spine xs (fun xs' -> yield (xs'@ys))
 
   let list_elems shrink l yield =
     (* try to shrink each element of the list *)
@@ -774,6 +762,16 @@ module Shrink = struct
     match shrink with
     | None -> ()
     | Some shrink -> list_elems shrink l yield
+
+  let string s yield =
+    let buf = Buffer.create 42 in
+    list ~shrink:char
+      (string_fold_right (fun c acc -> c::acc) s [])
+      (fun cs ->
+         List.iter (fun c -> Buffer.add_char buf c) cs;
+         let s = Buffer.contents buf in
+         Buffer.clear buf;
+         yield s)
 
   let pair a b (x,y) yield =
     a x (fun x' -> yield (x',y));
@@ -1348,7 +1346,7 @@ end = struct
             tbl;
         Buffer.contents b);
       p_shrink1=(fun yield ->
-        Shrink.list (tbl_to_list tbl)
+        Shrink.list_spine (tbl_to_list tbl)
           (fun l ->
              yield (make ~extend:false (tbl_of_list l)))
       );
@@ -1419,9 +1417,9 @@ module Fn = struct
       = function
         | Fun_tbl {fun_arb=a; fun_tbl=tbl; fun_default=def} ->
           let sh_v = match a.shrink with None -> Shrink.nil | Some s->s in
-          (Poly_tbl.shrink1 tbl >|= fun tbl' -> mk_repr tbl' a def)
-          <+>
             (sh_v def >|= fun def' -> mk_repr tbl a def')
+          <+>
+            (Poly_tbl.shrink1 tbl >|= fun tbl' -> mk_repr tbl' a def)
           <+>
             (Poly_tbl.shrink2 sh_v tbl >|= fun tbl' -> mk_repr tbl' a def)
         | Fun_map (g, r') ->
