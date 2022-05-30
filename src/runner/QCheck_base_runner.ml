@@ -358,6 +358,13 @@ let print_fail_other ~colors out cell msg =
   Printf.fprintf out "\n--- %a %s\n\n" (Color.pp_str_c ~colors `Red) "Failure" (String.make 68 '-');
   Printf.fprintf out "Test %s failed:\n\n%s\n%!" (QCheck2.Test.get_name cell) msg
 
+let print_expected_failure ~colors out cell c_ex =
+  Printf.fprintf out "\n--- %a %s\n\n" (Color.pp_str_c ~colors `Blue) "Info" (String.make 71 '-');
+  Printf.fprintf out "Negative test %s failed as expected (%d shrink steps):\n\n%s\n%!"
+    (QCheck2.Test.get_name cell) c_ex.QCheck2.TestResult.shrink_steps
+    (print_inst cell c_ex.QCheck2.TestResult.instance);
+  print_messages ~colors out cell c_ex.QCheck2.TestResult.msg_l
+
 let print_error ~colors out cell c_ex exn bt =
   Printf.fprintf out "\n=== %a %s\n\n" (Color.pp_str_c ~colors `Red) "Error" (String.make 70 '=');
   Printf.fprintf out "Test %s errored on (%d shrink steps):\n\n%s\n\nexception %s\n%s\n%!"
@@ -413,15 +420,14 @@ let run_tests
         print_success ~colors out cell r;
         (total + 1, fail, error, warns)
       | R.Success, false ->
-        print_fail_other ~colors out cell "Negative test succeeded but was expected to fail";
-        (total + 1, fail, error + 1, warns)
+        let msg = Printf.sprintf "Negative test %s succeeded but was expected to fail" (QCheck2.Test.get_name cell) in
+        print_fail_other ~colors out cell msg;
+        (total + 1, fail + 1, error, warns)
       | R.Failed {instances=l}, true ->
         List.iter (print_fail ~colors out cell) l;
         (total + 1, fail + 1, error, warns)
       | R.Failed {instances=l}, false ->
-        (*List.iter (print_fail ~colors out cell) l;*) (* FIXME *)
-        let msgs = List.map (fun c_ex -> print_inst cell c_ex.QCheck2.TestResult.instance) l in
-        print_messages ~colors out cell msgs;
+        if verbose then List.iter (print_expected_failure ~colors out cell) l;
         (total + 1, fail, error, warns)
       | R.Failed_other {msg}, true ->
         print_fail_other ~colors out cell msg;
