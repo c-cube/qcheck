@@ -408,17 +408,29 @@ let run_tests
   let res = List.map aux_map l in
   let aux_fold (total, fail, error, warns) (Res (cell, r)) =
     let warns = warns + List.length (R.get_warnings r) in
-    let acc = match R.get_state r with
-      | R.Success ->
+    let acc = match R.get_state r, QCheck2.Test.get_positive cell with
+      | R.Success, true ->
         print_success ~colors out cell r;
         (total + 1, fail, error, warns)
-      | R.Failed {instances=l} ->
+      | R.Success, false ->
+        print_fail_other ~colors out cell "Negative test succeeded but was expected to fail";
+        (total + 1, fail, error + 1, warns)
+      | R.Failed {instances=l}, true ->
         List.iter (print_fail ~colors out cell) l;
         (total + 1, fail + 1, error, warns)
-      | R.Failed_other {msg} ->
+      | R.Failed {instances=l}, false ->
+        (*List.iter (print_fail ~colors out cell) l;*) (* FIXME *)
+        let msgs = List.map (fun c_ex -> print_inst cell c_ex.QCheck2.TestResult.instance) l in
+        print_messages ~colors out cell msgs;
+        (total + 1, fail, error, warns)
+      | R.Failed_other {msg}, true ->
         print_fail_other ~colors out cell msg;
         (total + 1, fail + 1, error, warns)
-      | R.Error {instance=c_ex; exn; backtrace=bt} ->
+      | R.Failed_other {msg}, false ->
+        (*print_fail_other ~colors out cell msg;*) (* FIXME *)
+        print_messages ~colors out cell [msg];
+        (total + 1, fail, error, warns)
+      | R.Error {instance=c_ex; exn; backtrace=bt}, _ -> (* Error is always considered a failure *)
         print_error ~colors out cell c_ex exn bt;
         (total + 1, fail, error + 1, warns)
     in
