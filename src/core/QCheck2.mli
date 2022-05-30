@@ -1537,8 +1537,11 @@ module TestResult : sig
       @since 0.18 *)
 
   val is_success : _ t -> bool
-  (** Returns true iff the state if [Success]
+  (** Returns true iff the state is [Success]
       @since 0.9 *)
+
+  val is_failed : _ t -> bool
+  (** Returns true iff the state is [Failed _] *)
 
   val stats : 'a t -> ('a stat * (int,int) Hashtbl.t) list
   (** Obtain statistics

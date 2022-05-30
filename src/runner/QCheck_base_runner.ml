@@ -289,7 +289,10 @@ let step ~colors ~size ~out ~verbose c name cell _ r =
   )
 
 let callback ~size ~out ~verbose ~colors c name cell r =
-  let pass = (QCheck2.Test.get_positive cell = QCheck2.TestResult.is_success r) in
+  let pass =
+    if QCheck2.Test.get_positive cell
+    then QCheck2.TestResult.is_success r
+    else QCheck2.TestResult.is_failed r in
   let color = if pass then `Green else `Red in
   if verbose then (
     Printf.fprintf out "%s[%a] %a %s\n%!"
@@ -429,13 +432,9 @@ let run_tests
       | R.Failed {instances=l}, false ->
         if verbose then List.iter (print_expected_failure ~colors out cell) l;
         (total + 1, fail, error, warns)
-      | R.Failed_other {msg}, true ->
+      | R.Failed_other {msg}, _ ->  (* Failed_other is also considered a failure *)
         print_fail_other ~colors out cell msg;
         (total + 1, fail + 1, error, warns)
-      | R.Failed_other {msg}, false ->
-        (*print_fail_other ~colors out cell msg;*) (* FIXME *)
-        print_messages ~colors out cell [msg];
-        (total + 1, fail, error, warns)
       | R.Error {instance=c_ex; exn; backtrace=bt}, _ -> (* Error is always considered a failure *)
         print_error ~colors out cell c_ex exn bt;
         (total + 1, fail, error + 1, warns)

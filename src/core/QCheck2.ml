@@ -1367,6 +1367,10 @@ module TestResult = struct
   let is_success r = match r.state with
     | Success -> true
     | Failed _ | Error _ | Failed_other _ -> false
+
+  let is_failed r = match r.state with
+    | Failed _ -> true
+    | Success | Error _ | Failed_other _ -> false
 end
 
 module Test_exceptions = struct
