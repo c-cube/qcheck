@@ -1587,10 +1587,10 @@ module Test : sig
   type 'a cell
   (** A single property test on a value of type ['a]. A {!Test.t} wraps a [cell]
       and hides its type parameter. *)
-     
+
   val make_cell :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
-    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int -> ?retries:int ->
+    ?count:int -> ?long_factor:int ->  ?negative:bool -> ?max_gen:int -> ?max_fail:int -> ?retries:int ->
     ?name:string -> ?print:'a Print.t -> ?collect:('a -> string) -> ?stats:('a stat list) ->
      'a Gen.t -> ('a -> bool) ->
     'a cell
@@ -1601,6 +1601,7 @@ module Test : sig
         the test cases which satisfy preconditions.
       @param long_factor the factor by which to multiply count, max_gen and
         max_fail when running a long test (default: 1).
+      @param negative whether the test is expected to fail.
       @param max_gen maximum number of times the generation function
         is called in total to replace inputs that do not satisfy
         preconditions (should be >= count).
@@ -1621,11 +1622,11 @@ module Test : sig
 
   val make_cell_from_QCheck1 :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
-    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
+    ?count:int -> ?long_factor:int -> ?negative:bool -> ?max_gen:int -> ?max_fail:int ->
     ?retries:int -> ?name:string -> gen:(Random.State.t -> 'a) -> ?shrink:('a -> ('a -> unit) -> unit) ->
     ?print:('a -> string) -> ?collect:('a -> string) -> stats:'a stat list -> ('a -> bool) ->
     'a cell
-  (** ⚠️ Do not use, this is exposed for internal reasons only. ⚠️ 
+  (** ⚠️ Do not use, this is exposed for internal reasons only. ⚠️
 
       @deprecated Migrate to QCheck2 and use {!make_cell} instead.
    *)
@@ -1646,6 +1647,9 @@ module Test : sig
   (** Get the long factor of a cell.
       @since 0.5.3 *)
 
+  val get_positive : _ cell -> bool
+  (** Get the expected mode of a cell: positive indicates expected to succeed, negative indicates expected to fail.  *)
+
   type t = Test : 'a cell -> t
   (** Same as ['a cell], but masking the type parameter. This allows to
       put tests on different types in the same list of tests. *)
@@ -1657,6 +1661,18 @@ module Test : sig
     'a Gen.t -> ('a -> bool) -> t
   (** [make gen prop] builds a test that checks property [prop] on instances
       of the generator [gen].
+      See {!make_cell} for a description of the parameters.
+  *)
+
+  val make_neg :
+    ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int -> ?retries:int ->
+    ?name:string -> ?print:('a Print.t) -> ?collect:('a -> string) -> ?stats:('a stat list) ->
+    'a Gen.t -> ('a -> bool) -> t
+  (** [make_neg gen prop] builds a test that checks property [prop] on instances
+      of the generator [gen].
+      The test is considered negative, meaning that it is expected to fail.
+      This information is recorded in an underlying test [cell] entry and interpreted suitably by test runners.
       See {!make_cell} for a description of the parameters.
   *)
 

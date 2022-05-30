@@ -997,7 +997,7 @@ module Test : sig
 
   val make_cell :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
-    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
+    ?count:int -> ?long_factor:int -> ?negative:bool -> ?max_gen:int -> ?max_fail:int ->
     ?small:('a -> int) -> ?retries:int -> ?name:string ->
     'a arbitrary -> ('a -> bool) -> 'a cell
   (** [make_cell arb prop] builds a test that checks property [prop] on instances
@@ -1008,6 +1008,7 @@ module Test : sig
       @param retries number of times to retry the tested property while shrinking.
       @param long_factor the factor by which to multiply count, max_gen and
         max_fail when running a long test (default: 1).
+      @param negative whether the test is expected to fail.
       @param max_gen maximum number of times the generation function
         is called in total to replace inputs that do not satisfy
         preconditions (should be >= count).
@@ -1050,6 +1051,18 @@ module Test : sig
     ('a -> bool) -> t
   (** [make arb prop] builds a test that checks property [prop] on instances
       of the generator [arb].
+      See {!make_cell} for a description of the parameters.
+  *)
+
+  val make_neg :
+    ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
+    ?small:('a -> int) -> ?retries:int -> ?name:string -> 'a arbitrary ->
+    ('a -> bool) -> t
+  (** [make_neg arb prop] builds a test that checks property [prop] on instances
+      of the generator [arb].
+      The test is considered negative, meaning that it is expected to fail.
+      This information is recorded in an underlying test [cell] entry and interpreted suitably by test runners.
       See {!make_cell} for a description of the parameters.
   *)
 

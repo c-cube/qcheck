@@ -270,15 +270,17 @@ let default_handler
   in
   { handler; }
 
-let step ~colors ~size ~out ~verbose c name _ _ r =
-  let aux = function
-    | QCheck2.Test.Success -> c.passed <- c.passed + 1
-    | QCheck2.Test.Failure -> c.failed <- c.failed + 1
-    | QCheck2.Test.FalseAssumption -> ()
-    | QCheck2.Test.Error _ -> c.errored <- c.errored + 1
+let step ~colors ~size ~out ~verbose c name cell _ r =
+  let aux r pos = match r,pos with
+    | QCheck2.Test.Success, true  -> c.passed <- c.passed + 1
+    | QCheck2.Test.Failure, true  -> c.failed <- c.failed + 1
+    | QCheck2.Test.Success, false -> c.failed <- c.failed + 1
+    | QCheck2.Test.Failure, false -> c.passed <- c.passed + 1
+    | QCheck2.Test.FalseAssumption, _ -> ()
+    | QCheck2.Test.Error _, _ -> c.errored <- c.errored + 1
   in
   c.gen <- c.gen + 1;
-  aux r;
+  aux r (QCheck2.Test.get_positive cell);
   let now=Unix.gettimeofday() in
   if verbose && now -. !last_msg > get_time_between_msg () then (
     last_msg := now;
@@ -286,8 +288,8 @@ let step ~colors ~size ~out ~verbose c name _ _ r =
       (if colors then Color.reset_line else "\n") (pp_counter ~size) c name
   )
 
-let callback ~size ~out ~verbose ~colors c name _ r =
-  let pass = QCheck2.TestResult.is_success r in
+let callback ~size ~out ~verbose ~colors c name cell r =
+  let pass = (QCheck2.Test.get_positive cell = QCheck2.TestResult.is_success r) in
   let color = if pass then `Green else `Red in
   if verbose then (
     Printf.fprintf out "%s[%a] %a %s\n%!"

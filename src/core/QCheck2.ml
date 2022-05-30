@@ -1380,6 +1380,7 @@ module Test = struct
   type 'a cell = {
     count : int; (* number of tests to do *)
     long_factor : int; (* multiplicative factor for long test count *)
+    positive : bool; (* indicates whether test is considered positive or negative *)
     max_gen : int; (* max number of instances to generate (>= count) *)
     max_fail : int; (* max number of failures *)
     retries : int; (* max number of retries during shrinking *)
@@ -1413,6 +1414,8 @@ module Test = struct
 
   let get_long_factor {long_factor; _} = long_factor
 
+  let get_positive {positive; _} = positive
+
   let default_count = 100
 
   let default_long_factor = 1
@@ -1436,11 +1439,12 @@ module Test = struct
   let default_if_assumptions_fail = `Warning, 0.05
 
   let make_cell ?(if_assumptions_fail=default_if_assumptions_fail)
-      ?(count) ?long_factor ?max_gen
+      ?(count) ?long_factor ?(negative=false) ?max_gen
       ?(max_fail=1) ?(retries=1) ?(name=fresh_name()) ?print ?collect ?(stats=[]) gen law
     =
     let count = global_count count in
     let long_factor = global_long_factor long_factor in
+    let positive = not negative in
     let max_gen = match max_gen with None -> count + 200 | Some x->x in
     {
       law;
@@ -1454,16 +1458,18 @@ module Test = struct
       name;
       count;
       long_factor;
+      positive;
       if_assumptions_fail;
       qcheck1_shrink = None;
     }
 
   let make_cell_from_QCheck1 ?(if_assumptions_fail=default_if_assumptions_fail)
-      ?(count) ?long_factor ?max_gen
+      ?(count) ?long_factor ?(negative=false) ?max_gen
       ?(max_fail=1) ?(retries=1) ?(name=fresh_name()) ~gen ?shrink ?print ?collect ~stats law
     =
     let count = global_count count in
     let long_factor = global_long_factor long_factor in
+    let positive = not negative in
     (* Make a "fake" QCheck2 arbitrary with no shrinking *)
     let fake_gen = Gen.make_primitive ~gen ~shrink:(fun _ -> Seq.empty) in
     let max_gen = match max_gen with None -> count + 200 | Some x->x in
@@ -1479,6 +1485,7 @@ module Test = struct
       name;
       count;
       long_factor;
+      positive;
       if_assumptions_fail;
       qcheck1_shrink = shrink;
     }
@@ -1486,8 +1493,12 @@ module Test = struct
   let make ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats gen law =
     Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats gen law)
 
+  let make_neg ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats gen law =
+    let negative = Some true in
+    Test (make_cell ?if_assumptions_fail ?count ?long_factor ?negative ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats gen law)
+
   let test_get_count (Test cell) = get_count cell
-  
+
   let test_get_long_factor (Test cell) = get_long_factor cell
 
   (** {6 Running the test} *)
