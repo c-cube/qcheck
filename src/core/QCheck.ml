@@ -86,14 +86,19 @@ let _opt_sum a b = match a, b with
 
 let sum_int = List.fold_left (+) 0
 
-(* Included for backwards compatibility, pre 4.13 *)
-let string_fold_right f s acc =
-  let len = String.length s in
+let _fold_righ length get f x acc =
+  let len = length x in
   let rec loop i acc =
     if i<0
     then acc
-    else loop (i-1) (f s.[i] acc) in
+    else loop (i-1) (f (get x i) acc) in
   loop (len-1) acc
+
+(* Included for backwards compatibility, pre 4.13 *)
+let bytes_fold_right = _fold_righ Bytes.length Bytes.get
+
+(* Included for backwards compatibility, pre 4.13 *)
+let string_fold_right = _fold_righ String.length String.get
 
 exception No_example_found of string
 (* raised if an example failed to be found *)
@@ -365,16 +370,26 @@ module Gen = struct
   let printable st = printable_chars.[RS.int st (String.length printable_chars)]
   let numeral st = char_of_int (48 + RS.int st 10)
 
-  let string_size ?(gen = char) size st =
+  let bytes_size ?(gen = char) size st =
     let s = Bytes.create (size st) in
     for i = 0 to Bytes.length s - 1 do
       Bytes.set s i (gen st)
     done;
+    s
+
+  let string_size ?(gen = char) size st =
+    let s = bytes_size ~gen size st in
     Bytes.unsafe_to_string s
+
+  let bytes ?gen st = bytes_size ?gen nat st
   let string ?gen st = string_size ?gen nat st
+  let bytes_of gen = bytes_size ~gen nat
   let string_of gen = string_size ~gen nat
+  let bytes_printable = bytes_size ~gen:printable nat
   let string_printable = string_size ~gen:printable nat
+  let bytes_readable = bytes_printable
   let string_readable = string_printable
+  let small_bytes ?gen st = bytes_size ?gen small_nat st
   let small_string ?gen st = string_size ?gen small_nat st
   let small_list gen = list_size small_nat gen
   let small_array gen = array_size small_nat gen
@@ -462,6 +477,7 @@ module Print = struct
   let int = string_of_int
   let bool = string_of_bool
   let float = string_of_float
+  let bytes = Bytes.to_string
   let string s = s
   let char c = String.make 1 c
 
@@ -773,6 +789,16 @@ module Shrink = struct
   let string ?(shrink = char) s yield =
     let buf = Buffer.create 42 in
     list ~shrink
+      (bytes_fold_right (fun c acc -> c::acc) b [])
+      (fun cs ->
+        List.iter (fun c -> Buffer.add_char buf c) cs;
+        let b = Buffer.contents buf |> Bytes.of_string in
+        Buffer.clear buf;
+        yield b)
+
+  let bytes (b : bytes) (yield : bytes -> unit) =
+    let buf = Buffer.create 42 in
+    list ~shrink
       (string_fold_right (fun c acc -> c::acc) s [])
       (fun cs ->
          List.iter (fun c -> Buffer.add_char buf c) cs;
@@ -940,6 +966,7 @@ module Observable = struct
     let int i = i land max_int
     let bool b = if b then 1 else 2
     let char x = Char.code x
+    let bytes (x:bytes) = Hashtbl.hash x
     let string (x:string) = Hashtbl.hash x
     let opt f = function
       | None -> 42
@@ -953,6 +980,7 @@ module Observable = struct
     type 'a t = 'a -> 'a -> bool
 
     let int : int t = (=)
+    let bytes : bytes t = (=)
     let string : string t = (=)
     let bool : bool t = (=)
     let float = Float.equal
@@ -986,6 +1014,7 @@ module Observable = struct
   let bool : bool t = make ~hash:H.bool ~eq:Eq.bool Print.bool
   let int : int t = make ~hash:H.int ~eq:Eq.int Print.int
   let float : float t = make ~eq:Eq.float Print.float
+  let bytes = make ~hash:H.bytes ~eq:Eq.bytes Print.bytes
   let string = make ~hash:H.string ~eq:Eq.string Print.string
   let char = make ~hash:H.char ~eq:Eq.char Print.char
 
@@ -1108,6 +1137,25 @@ let printable_char =
   make ~print:(sprintf "%C") ~small:(small_char 'a') ~shrink:Shrink.char_printable Gen.printable
 let numeral_char =
   make ~print:(sprintf "%C") ~small:(small_char '0') ~shrink:Shrink.char_numeral Gen.numeral
+
+
+let bytes_gen_of_size size gen =
+  make ~shrink:Shrink.bytes ~small:Bytes.length
+    ~print:(Print.bytes) (Gen.bytes_size ~gen size)
+let bytes_gen gen =
+  make ~shrink:Shrink.bytes ~small:Bytes.length
+    ~print:(Print.bytes) (Gen.bytes ~gen)
+
+let bytes = bytes_gen Gen.char
+let bytes_of_size size = bytes_gen_of_size size Gen.char
+let small_bytes = bytes_gen_of_size Gen.small_nat Gen.char
+
+let printable_bytes = bytes_gen Gen.printable
+let printable_bytes_of_size size = bytes_gen_of_size size Gen.printable
+let small_printable_bytes = bytes_gen_of_size Gen.small_nat Gen.printable
+
+let numeral_bytes = bytes_gen Gen.numeral
+let numeral_bytes_of_size size = bytes_gen_of_size size Gen.numeral
 
 let string_gen_of_size size gen =
   make ~shrink:Shrink.string ~small:String.length
