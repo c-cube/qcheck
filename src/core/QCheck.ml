@@ -86,7 +86,7 @@ let _opt_sum a b = match a, b with
 
 let sum_int = List.fold_left (+) 0
 
-let _fold_righ length get f x acc =
+let _fold_right length get f x acc =
   let len = length x in
   let rec loop i acc =
     if i<0
@@ -95,10 +95,10 @@ let _fold_righ length get f x acc =
   loop (len-1) acc
 
 (* Included for backwards compatibility, pre 4.13 *)
-let bytes_fold_right = _fold_righ Bytes.length Bytes.get
+let bytes_fold_right = _fold_right Bytes.length Bytes.get
 
 (* Included for backwards compatibility, pre 4.13 *)
-let string_fold_right = _fold_righ String.length String.get
+let string_fold_right = _fold_right String.length String.get
 
 exception No_example_found of string
 (* raised if an example failed to be found *)
@@ -789,22 +789,22 @@ module Shrink = struct
   let string ?(shrink = char) s yield =
     let buf = Buffer.create 42 in
     list ~shrink
-      (bytes_fold_right (fun c acc -> c::acc) b [])
-      (fun cs ->
-        List.iter (fun c -> Buffer.add_char buf c) cs;
-        let b = Buffer.contents buf |> Bytes.of_string in
-        Buffer.clear buf;
-        yield b)
-
-  let bytes (b : bytes) (yield : bytes -> unit) =
-    let buf = Buffer.create 42 in
-    list ~shrink
       (string_fold_right (fun c acc -> c::acc) s [])
       (fun cs ->
          List.iter (fun c -> Buffer.add_char buf c) cs;
          let s = Buffer.contents buf in
          Buffer.clear buf;
          yield s)
+
+  let bytes (b : bytes) (yield : bytes -> unit) =
+    let buf = Buffer.create 42 in
+    list ~shrink:char
+      (bytes_fold_right (fun c acc -> c::acc) b [])
+      (fun cs ->
+         List.iter (fun c -> Buffer.add_char buf c) cs;
+         let b = Buffer.contents buf |> Bytes.of_string in
+         Buffer.clear buf;
+         yield b)
 
   let pair a b (x,y) yield =
     a x (fun x' -> yield (x',y));
