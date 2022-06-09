@@ -698,6 +698,14 @@ module Gen = struct
   let string_size ?(gen = char) (size : int t) : string t =
     bytes_size ~gen size >|= Bytes.unsafe_to_string
 
+  let bytes : bytes t = bytes_size nat
+
+  let bytes_of gen = bytes_size ~gen nat
+
+  let bytes_printable = bytes_size ~gen:printable nat
+
+  let small_bytes ?gen st = bytes_size ?gen small_nat st
+
   let string : string t = string_size nat
 
   let string_of gen = string_size ~gen nat
@@ -777,6 +785,8 @@ module Print = struct
 
   let float = string_of_float
 
+  let bytes = Bytes.to_string
+  
   let string s = Printf.sprintf "%S" s
 
   let char c = Printf.sprintf "%C" c
@@ -962,6 +972,8 @@ module Observable = struct
 
     let char x = Char.code x
 
+    let bytes (x:bytes) = Hashtbl.hash x
+
     let string (x:string) = Hashtbl.hash x
 
     let option f = function
@@ -978,6 +990,8 @@ module Observable = struct
     type 'a t = 'a -> 'a -> bool
 
     let int : int t = (=)
+
+    let bytes : bytes t = (=)
 
     let string : string t = (=)
 
@@ -1019,6 +1033,8 @@ module Observable = struct
   let int : int t = make ~hash:H.int ~eq:Eq.int Print.int
 
   let float : float t = make ~eq:Eq.float Print.float
+
+  let bytes = make ~hash:H.bytes ~eq:Eq.bytes Print.bytes
 
   let string = make ~hash:H.string ~eq:Eq.string Print.string
 

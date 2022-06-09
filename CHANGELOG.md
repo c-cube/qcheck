@@ -2,6 +2,10 @@
 
 ## 0.20
 
+- add `{QCheck,QCheck2}.Gen.{bytes_size,bytes,bytes_of,bytes_printable,small_bytes}`
+- add `QCheck.{Print,Shrink,Observable}.bytes`
+- add `QCheck2.{Print,Shrink}.bytes`
+- add `QCheck.{bytes_gen_of_size,bytes_gen,bytes,small_bytes,bytes_of_size,printable_bytes,printable_bytes_of_size,numeral_bytes,numeral_bytes_of_size}`
 - add an optional argument with conservative default to `Shrink.string`
 - fix shrinkers in `QCheck.{printable_string,printable_string_of_size,small_printable_string,numeral_string,numeral_string_of_size}` [#257](https://github.com/c-cube/qcheck/issues/257)
 - add `QCheck2.Gen.set_shrink` to modify the generator's shrinker
