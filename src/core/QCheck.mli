@@ -411,7 +411,7 @@ module Gen : sig
   (** Builds a bytes generator using the given character generator. *)
 
   val bytes_printable : bytes t
-  (** Builds a bytes generator using the {!printable} character generator. *)
+  (** Generator using the {!printable} character generator. *)
 
   val small_bytes : ?gen:char t -> bytes t
   (** Builds a bytes generator, length is {!small_nat}
