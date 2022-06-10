@@ -649,7 +649,7 @@ module Gen = struct
   (** The first characters are the usual lower case alphabetical letters to help shrinking. *)
   let printable_chars : char list =
     (* Left and right inclusive *)
-    let range min max = List.init (max - min) (fun i -> char_of_int (i + min)) in
+    let range min max = List.init (max - min + 1) (fun i -> char_of_int (i + min)) in
     let a = 97 in
     let z = 122 in
     let lower_alphabet = range a z in
