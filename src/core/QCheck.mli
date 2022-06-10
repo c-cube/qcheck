@@ -691,6 +691,10 @@ module Shrink : sig
   (** Shrinks towards ['a'].
       @since 0.6 *)
 
+  val char_numeral : char t
+  (** Shrinks towards ['0'].
+      @since NEXT_RELEASE *)
+
   val int : int t
 
   val int32 : int32 t

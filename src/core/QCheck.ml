@@ -696,12 +696,15 @@ module Shrink = struct
 
   let filter f shrink x = Iter.filter f (shrink x)
 
-  let char c =  match c with
-    | 'a' -> Iter.empty
-    | _ ->
+  let char_generic target c =
+    if c = target
+    then Iter.empty
+    else
       let c_code = Char.code c in
-      let a_code = Char.code 'a' in
-      Iter.map (fun diff -> Char.chr (a_code + diff)) (int (c_code - a_code))
+      let target_code = Char.code target in
+      Iter.map (fun diff -> Char.chr (target_code + diff)) (int (c_code - target_code))
+  let char = char_generic 'a'
+  let char_numeral = char_generic '0'
 
   let option s x = match x with
     | None -> Iter.empty
@@ -1093,9 +1096,14 @@ let int64 =
   make ~print:(fun i -> Int64.to_string i ^ "L") ~small:small1
     ~shrink:Shrink.int64 Gen.ui64
 
-let char = make_scalar ~print:(sprintf "%C") Gen.char
-let printable_char = make_scalar ~print:(sprintf "%C") Gen.printable
-let numeral_char = make_scalar ~print:(sprintf "%C") Gen.numeral
+let small_char target c = abs ((Char.code c) - (Char.code target))
+
+let char =
+  make ~print:(sprintf "%C") ~small:(small_char 'a') ~shrink:Shrink.char Gen.char
+let printable_char =
+  make ~print:(sprintf "%C") ~small:(small_char 'a') ~shrink:Shrink.char Gen.printable
+let numeral_char =
+  make ~print:(sprintf "%C") ~small:(small_char '0') ~shrink:Shrink.char_numeral Gen.numeral
 
 let string_gen_of_size size gen =
   make ~shrink:Shrink.string ~small:String.length
