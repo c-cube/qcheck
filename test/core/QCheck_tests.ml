@@ -186,8 +186,16 @@ module Generator = struct
     Test.make ~name:"char never produces '\\255'" ~count:1_000_000 char (fun c -> c <> '\255')
 
   let char_test =
-    Test.make ~name:"char has right range'" ~count:1000
+    Test.make ~name:"char has right range" ~count:1000
       char (fun c -> '\000' <= c && c <= '\255')
+
+  let printable_test =
+    Test.make ~name:"printable has right range" ~count:1000
+      printable_char (fun c -> c = '\n' || 32 <= Char.code c && Char.code c <= 126)
+
+  let numeral_test =
+    Test.make ~name:"numeral has right range" ~count:1000
+      numeral_char (fun c -> '0' <= c && c <= '9')
 
   let nat_test =
     Test.make ~name:"nat has right range" ~count:1000
@@ -378,6 +386,8 @@ module Generator = struct
   let tests = [
     char_dist_issue_23;
     char_test;
+    printable_test;
+    numeral_test;
     nat_test;
     string_test;
     pair_test;
@@ -453,6 +463,14 @@ module Shrink = struct
   let char_is_never_abcdef =
     Test.make ~name:"char never produces 'abcdef'" ~count:1000
       char (fun c -> not (List.mem c ['a';'b';'c';'d';'e';'f']))
+
+  let printable_is_never_sign =
+    Test.make ~name:"printable never produces '!@#$%'" ~count:1000
+      printable_char (fun c -> not (List.mem c ['!';'@';'#';'$';'%']))
+
+  let numeral_is_never_5 =
+    Test.make ~name:"printable never produces '5" ~count:1000
+      numeral_char (fun c -> c <> '5')
 
   let strings_are_empty =
     Test.make ~name:"strings are empty" ~count:1000
@@ -656,6 +674,8 @@ module Shrink = struct
     ints_smaller_209609;
     nats_smaller_5001;
     char_is_never_abcdef;
+    printable_is_never_sign;
+    numeral_is_never_5;
     strings_are_empty;
     string_never_has_000_char;
     string_never_has_255_char;
@@ -815,8 +835,12 @@ module Stats = struct
   let bool_dist =
     Test.make ~name:"bool dist" ~count:500_000 (set_collect Bool.to_string bool) (fun _ -> true)
 
-  let char_dist =
-    Test.make ~name:"char code dist" ~count:500_000 (add_stat ("char code", Char.code) char) (fun _ -> true)
+  let char_dist_tests =
+    [
+      Test.make ~name:"char code dist"           ~count:500_000 (add_stat ("char code", Char.code) char)           (fun _ -> true);
+      Test.make ~name:"printable char code dist" ~count:500_000 (add_stat ("char code", Char.code) printable_char) (fun _ -> true);
+      Test.make ~name:"numeral char code dist"   ~count:500_000 (add_stat ("char code", Char.code) numeral_char)   (fun _ -> true);
+    ]
 
   let string_len_tests =
     let len = ("len",String.length) in
@@ -896,10 +920,10 @@ module Stats = struct
       (add_stat ("dist",fun x -> x) (oneof [small_int_corners ();int])) (fun _ -> true)
 
   let tests =
-    [ bool_dist;
-      char_dist;
-      tree_depth_test;
-      range_subset_test;]
+    [ bool_dist; ]
+    @ char_dist_tests
+    @ [tree_depth_test;
+       range_subset_test;]
     @ string_len_tests
     @ [pair_dist;
        triple_dist;
