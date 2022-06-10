@@ -315,7 +315,7 @@ module Gen : sig
       @since NEXT_RELEASE *)
 
   val bytes_printable : bytes t
-  (** Builds a bytes generator using the {!printable} character generator.
+  (** Generator using the {!printable} character generator.
 
       Shrinks on the number of characters first, then on the characters.
 
