@@ -672,7 +672,7 @@ module Gen = struct
     let nine = 57 in
     int_range ~origin:zero zero nine >|= char_of_int
 
-  let bytes_size ?(gen = char) (size : int t) : bytes t = fun st ->
+  let bytes_size gen (size : int t) : bytes t = fun st ->
     let open Tree in
     size st >>= fun size ->
     (* Adding char shrinks to a mutable list is expensive: ~20-30% cost increase *)
@@ -695,24 +695,24 @@ module Gen = struct
     in
     Tree (bytes, shrink)
 
-  let string_size ?(gen = char) (size : int t) : string t =
-    bytes_size ~gen size >|= Bytes.unsafe_to_string
+  let string_size gen (size : int t) : string t =
+    bytes_size gen size >|= Bytes.unsafe_to_string
 
-  let bytes : bytes t = bytes_size nat
+  let bytes : bytes t = bytes_size char nat
 
-  let bytes_of gen = bytes_size ~gen nat
+  let bytes_of gen = bytes_size gen nat
 
-  let bytes_printable = bytes_size ~gen:printable nat
+  let bytes_printable = bytes_size printable nat
 
-  let small_bytes ?gen st = bytes_size ?gen small_nat st
+  let small_bytes gen st = bytes_size gen small_nat st
 
-  let string : string t = string_size nat
+  let string : string t = string_size char nat
 
-  let string_of gen = string_size ~gen nat
+  let string_of gen = string_size gen nat
 
-  let string_printable = string_size ~gen:printable nat
+  let string_printable = string_size printable nat
 
-  let small_string ?gen st = string_size ?gen small_nat st
+  let small_string gen st = string_size gen small_nat st
 
   let small_list gen = list_size small_nat gen
 
@@ -786,7 +786,7 @@ module Print = struct
   let float = string_of_float
 
   let bytes = Bytes.to_string
-  
+
   let string s = Printf.sprintf "%S" s
 
   let char c = Printf.sprintf "%C" c
