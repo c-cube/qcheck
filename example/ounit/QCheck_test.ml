@@ -1,3 +1,5 @@
+(* Tests to check integration with the 'OUnit.test' interface *)
+
 let (|>) x f = f x
 
 module Q = QCheck
@@ -22,6 +24,15 @@ let error =
     Q.int
     (fun _ -> raise Error)
 
+let neg_test_failing_as_expected =
+  Q.Test.make_neg ~name:"neg test pass (failing as expected)" QCheck.small_int (fun i -> i mod 2 = 0)
+
+let neg_test_unexpected_success =
+  Q.Test.make_neg ~name:"neg test unexpected success" QCheck.small_int (fun i -> i + i = i * 2)
+
+let neg_test_error =
+  Q.Test.make_neg ~name:"neg fail with error" QCheck.small_int (fun _i -> raise Error)
+
 open OUnit
 
 let regression_23 =
@@ -37,6 +48,9 @@ let others =
   [ passing;
     failing;
     error;
+    neg_test_failing_as_expected;
+    neg_test_unexpected_success;
+    neg_test_error;
   ] |> List.map (fun t -> QCheck_ounit.to_ounit_test t)
 
 let suite =

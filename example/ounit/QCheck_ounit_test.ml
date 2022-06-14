@@ -1,3 +1,5 @@
+(* Tests to check integration with the 'OUnit2.test' interface *)
+
 let passing =
   QCheck.Test.make ~count:1000
     ~name:"list_rev_is_involutive"
@@ -23,6 +25,15 @@ let simple_qcheck =
     ~count: 100
     QCheck.small_int
     (fun _ -> QCheck.Test.fail_reportf "@[<v>this@ will@ always@ fail@]")
+
+let neg_test_failing_as_expected =
+  QCheck.Test.make_neg ~name:"neg test pass (failing as expected)" QCheck.small_int (fun i -> i mod 2 = 0)
+
+let neg_test_unexpected_success =
+  QCheck.Test.make_neg ~name:"neg test unexpected success" QCheck.small_int (fun i -> i + i = i * 2)
+
+let neg_test_error =
+  QCheck.Test.make_neg ~name:"neg fail with error" QCheck.small_int (fun _i -> raise Error)
 
 
 type tree = Leaf of int | Node of tree * tree
@@ -55,4 +66,6 @@ let () =
   run_test_tt_main
     ("tests" >:::
      List.map QCheck_ounit.to_ounit2_test
-       [passing; failing; error; simple_qcheck; passing_tree_rev])
+       [passing; failing; error;
+        neg_test_failing_as_expected; neg_test_unexpected_success; neg_test_error;
+        simple_qcheck; passing_tree_rev])

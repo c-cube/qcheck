@@ -36,6 +36,16 @@ let stats =
     )
     (fun _ -> true)
 
+
+let neg_test_failing_as_expected =
+  QCheck.Test.make_neg ~name:"neg test pass (failing as expected)" QCheck.small_int (fun i -> i mod 2 = 0)
+
+let neg_test_unexpected_success =
+  QCheck.Test.make_neg ~name:"neg test unexpected success" QCheck.small_int (fun i -> i + i = i * 2)
+
+let neg_test_error =
+  QCheck.Test.make_neg ~name:"neg fail with error" QCheck.small_int (fun _i -> raise Error)
+
 let fun1 =
   QCheck.Test.make ~count:100 ~long_factor:100
     ~name:"FAIL_pred_map_commute"
@@ -182,6 +192,9 @@ let () =
     error;
     collect;
     stats;
+    neg_test_failing_as_expected;
+    neg_test_unexpected_success;
+    neg_test_error;
     fun1;
     fun2;
     prop_foldleft_foldright;
