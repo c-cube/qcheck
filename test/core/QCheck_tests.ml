@@ -111,6 +111,22 @@ module Overall = struct
          Gen.int)
       (fun _i -> false)
 
+  let neg_test_fail_as_expected =
+    Test.make_neg ~name:"all ints are even" small_int (fun i -> i mod 2 = 0)
+
+  let neg_test_unexpected_success =
+    Test.make_neg ~name:"int double" small_int (fun i -> i + i = i * 2)
+
+  let neg_test_fail_with_shrinking =
+    Test.make_neg ~name:"list rev concat"
+      (pair (list small_int) (list small_int)) (fun (is,js) -> (List.rev is)@(List.rev js) = List.rev (is@js))
+
+  let pos_test_fails_with_error =
+    Test.make ~name:"pos fail with error" small_int (fun _i -> raise Error)
+
+  let neg_test_fail_with_error =
+    Test.make_neg ~name:"neg fail with error" small_int (fun _i -> raise Error)
+
   (* [apply_n f x n] computes f(f(...f(x))) with n applications of f *)
   let rec apply_n f x n =
     if n=0
@@ -144,6 +160,11 @@ module Overall = struct
     bad_assume_fail;
     bad_gen_fail;
     (*bad_shrinker_fail;*)
+    neg_test_fail_as_expected;
+    neg_test_unexpected_success;
+    neg_test_fail_with_shrinking;
+    pos_test_fails_with_error;
+    neg_test_fail_with_error;
     (* we repeat the following multiple times to check the expected output for duplicate lines *)
     bad_fun_repro;
     bad_fun_repro;
