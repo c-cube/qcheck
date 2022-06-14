@@ -289,8 +289,9 @@ module Gen : sig
       Shrinks towards ['0'].
   *)
 
-  val bytes_size : char t -> int t -> bytes t
+  val bytes_size : ?gen:char t -> int t -> bytes t
   (** Builds a bytes generator from a (non-negative) size generator.
+      Accepts an optional character generator (the default is {!char}).
 
       Shrinks on the number of characters first, then on the characters.
 
@@ -320,17 +321,18 @@ module Gen : sig
 
       @since NEXT_RELEASE *)
 
-  val small_bytes : char t -> bytes t
+  val small_bytes : ?gen:char t -> bytes t
   (** Builds a bytes generator, length is {!small_nat}.
+      Accepts an optional character generator (the default is {!char}).
 
       Shrinks on the number of characters first, then on the characters.
 
       @since NEXT_RELEASE *)
 
 
-  val string_size : char t -> int t -> string t
-  (** Builds a string generator from a character generator and a
-      (non-negative) size generator.
+  val string_size : ?gen:char t -> int t -> string t
+  (** Builds a string generator from a (non-negative) size generator.
+      Accepts an optional character generator (the default is {!char}).
 
       Shrinks on the number of characters first, then on the characters.
   *)
@@ -358,8 +360,9 @@ module Gen : sig
 
       @since 0.11 *)
 
-  val small_string : char t -> string t
+  val small_string : ?gen:char t -> string t
   (** Builds a string generator, length is {!small_nat}.
+      Accepts an optional character generator (the default is {!char}).
 
       Shrinks on the number of characters first, then on the characters.
   *)
@@ -1075,7 +1078,7 @@ module Print : sig
   (** [char] is a printer of character. *)
 
   val bytes : bytes t
-  (** [bytes] is a printer of bytes.
+  (** [bytes] is a printer of bytes. 
       @since NEXT_RELEASE *)
 
   val string : string t
@@ -1320,7 +1323,7 @@ module Observable : sig
   (** [quad o1 o2 o3 o4] is an observable of quadruples of [('a * 'b * 'c * 'd)]. *)
 end
 
-
+  
 (** Utils on combining function arguments. *)
 module Tuple : sig
   (** Heterogeneous tuple, used to pass any number of arguments to
@@ -1645,7 +1648,7 @@ module Test : sig
   type 'a cell
   (** A single property test on a value of type ['a]. A {!Test.t} wraps a [cell]
       and hides its type parameter. *)
-
+     
   val make_cell :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
     ?count:int -> ?long_factor:int ->  ?negative:bool -> ?max_gen:int -> ?max_fail:int -> ?retries:int ->
@@ -1684,7 +1687,7 @@ module Test : sig
     ?retries:int -> ?name:string -> gen:(Random.State.t -> 'a) -> ?shrink:('a -> ('a -> unit) -> unit) ->
     ?print:('a -> string) -> ?collect:('a -> string) -> stats:'a stat list -> ('a -> bool) ->
     'a cell
-  (** ⚠️ Do not use, this is exposed for internal reasons only. ⚠️
+  (** ⚠️ Do not use, this is exposed for internal reasons only. ⚠️ 
 
       @deprecated Migrate to QCheck2 and use {!make_cell} instead.
    *)

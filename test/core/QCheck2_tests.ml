@@ -748,8 +748,8 @@ module Function = struct
   let fold_left_test =
     Test.make ~name:"fold_left test, fun first" ~print:Print.(quad Fn.print string (list int) (list int))
       Gen.(quad  (* string -> int -> string *)
-             (fun2 ~print:Print.string Observable.string Observable.int (small_string char))
-             (small_string char)
+             (fun2 ~print:Print.string Observable.string Observable.int (small_string ~gen:char))
+             (small_string ~gen:char)
              (list small_int)
              (list small_int))
       (fun (f,acc,is,js) ->
@@ -814,21 +814,21 @@ module Stats = struct
   let bytes_len_tests =
     let len = ("len",Bytes.length) in
     [
-      Test.make ~name:"bytes_size len dist"      ~count:5_000 ~stats:[len] Gen.(bytes_size char (int_range 5 10)) (fun _ -> true);
-      Test.make ~name:"bytes len dist"           ~count:5_000 ~stats:[len] Gen.bytes                              (fun _ -> true);
-      Test.make ~name:"bytes_of len dist"        ~count:5_000 ~stats:[len] Gen.(bytes_of (return 'a'))            (fun _ -> true);
-      Test.make ~name:"bytes_printable len dist" ~count:5_000 ~stats:[len] Gen.bytes_printable                    (fun _ -> true);
-      Test.make ~name:"small_bytes len dist"     ~count:5_000 ~stats:[len] Gen.(small_bytes char)                 (fun _ -> true);
+      Test.make ~name:"bytes_size len dist"      ~count:5_000 ~stats:[len] Gen.(bytes_size (int_range 5 10)) (fun _ -> true);
+      Test.make ~name:"bytes len dist"           ~count:5_000 ~stats:[len] Gen.bytes                         (fun _ -> true);
+      Test.make ~name:"bytes_of len dist"        ~count:5_000 ~stats:[len] Gen.(bytes_of (return 'a'))       (fun _ -> true);
+      Test.make ~name:"bytes_printable len dist" ~count:5_000 ~stats:[len] Gen.bytes_printable               (fun _ -> true);
+      Test.make ~name:"small_bytes len dist"     ~count:5_000 ~stats:[len] Gen.(small_bytes ~gen:char)       (fun _ -> true);
     ]
 
   let string_len_tests =
     let len = ("len",String.length) in
     [
-      Test.make ~name:"string_size len dist"      ~count:5_000 ~stats:[len] Gen.(string_size char (int_range 5 10)) (fun _ -> true);
-      Test.make ~name:"string len dist"           ~count:5_000 ~stats:[len] Gen.string                              (fun _ -> true);
-      Test.make ~name:"string_of len dist"        ~count:5_000 ~stats:[len] Gen.(string_of (return 'a'))            (fun _ -> true);
-      Test.make ~name:"string_printable len dist" ~count:5_000 ~stats:[len] Gen.string_printable                    (fun _ -> true);
-      Test.make ~name:"small_string len dist"     ~count:5_000 ~stats:[len] Gen.(small_string char)                 (fun _ -> true);
+      Test.make ~name:"string_size len dist"      ~count:5_000 ~stats:[len] Gen.(string_size (int_range 5 10)) (fun _ -> true);
+      Test.make ~name:"string len dist"           ~count:5_000 ~stats:[len] Gen.string                         (fun _ -> true);
+      Test.make ~name:"string_of len dist"        ~count:5_000 ~stats:[len] Gen.(string_of (return 'a'))       (fun _ -> true);
+      Test.make ~name:"string_printable len dist" ~count:5_000 ~stats:[len] Gen.string_printable               (fun _ -> true);
+      Test.make ~name:"small_string len dist"     ~count:5_000 ~stats:[len] Gen.(small_string ~gen:char)(*ugh*)(fun _ -> true);
     ]
 
   let pair_dist =
