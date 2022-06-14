@@ -1707,6 +1707,7 @@ module Test : sig
   val print_c_ex : 'a cell -> 'a TestResult.counter_ex -> string
   val print_fail : 'a cell -> string -> 'a TestResult.counter_ex list -> string
   val print_fail_other : string -> msg:string -> string
+  val print_expected_failure : 'a cell -> 'a TestResult.counter_ex list -> string
   val print_error : ?st:string -> 'a cell -> string -> 'a TestResult.counter_ex * exn -> string
   val print_test_fail : string -> string list -> string
   val print_test_error : string -> string -> exn -> string -> string
