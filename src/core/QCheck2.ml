@@ -1966,7 +1966,7 @@ module Test = struct
 
   let print_expected_failure cell c_exs = match c_exs with
     | [] -> Format.sprintf "negative test `%s` failed as expected\n" (get_name cell)
-    | c_ex::_ -> Format.sprintf "negative test `%s` failed as expected on: `%s`\n" (get_name cell) (print_c_ex cell c_ex)
+    | c_ex::_ -> Format.sprintf "negative test `%s` failed as expected on: %s\n" (get_name cell) (print_c_ex cell c_ex)
 
   let print_error ?(st="") arb name (i,e) =
     print_test_error name (print_c_ex arb i) e st
