@@ -464,13 +464,13 @@ module Shrink = struct
     Test.make ~name:"char never produces 'abcdef'" ~count:1000
       char (fun c -> not (List.mem c ['a';'b';'c';'d';'e';'f']))
 
-  let printable_is_never_sign =
-    Test.make ~name:"printable never produces '!@#$%'" ~count:1000
-      printable_char (fun c -> not (List.mem c ['!';'@';'#';'$';'%']))
+  let printable_is_never_sign = (* should shrink towards 'a', hence produce '&' with highest ascii code 38 *)
+    Test.make ~name:"printable never produces '!\"#$%&'" ~count:1000
+      printable_char (fun c -> not (List.mem c ['!';'"';'#';'$';'%';'&']))
 
-  let numeral_is_never_5 =
-    Test.make ~name:"printable never produces '5" ~count:1000
-      numeral_char (fun c -> c <> '5')
+  let numeral_is_never_less_5 =
+    Test.make ~name:"printable never produces less than '5" ~count:1000
+      numeral_char (fun c -> c >= '5')
 
   let strings_are_empty =
     Test.make ~name:"strings are empty" ~count:1000
@@ -675,7 +675,7 @@ module Shrink = struct
     nats_smaller_5001;
     char_is_never_abcdef;
     printable_is_never_sign;
-    numeral_is_never_5;
+    numeral_is_never_less_5;
     strings_are_empty;
     string_never_has_000_char;
     string_never_has_255_char;

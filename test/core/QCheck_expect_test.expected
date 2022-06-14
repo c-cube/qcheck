@@ -272,15 +272,15 @@ Test char never produces 'abcdef' failed (3 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test printable never produces '!@#$%' failed (1 shrink steps):
+Test printable never produces '!"#$%&' failed (2 shrink steps):
 
-'%'
+'&'
 
 --- Failure --------------------------------------------------------------------
 
-Test printable never produces '5 failed (0 shrink steps):
+Test printable never produces less than '5 failed (3 shrink steps):
 
-'5'
+'0'
 
 --- Failure --------------------------------------------------------------------
 
