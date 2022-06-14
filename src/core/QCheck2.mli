@@ -280,7 +280,7 @@ module Gen : sig
     - [32] to [126], inclusive
     - ['\n']
 
-    Shrinks towards ['a'].
+    Shrinks towards ['a'] or lower character codes.
   *)
 
   val numeral : char t
