@@ -135,9 +135,14 @@ module Raw = struct
     if print_res then (
       (* even if [not verbose], print errors *)
       match R.get_state result with
-        | R.Success -> ()
+        | R.Success ->
+          if not (T.get_positive cell)
+          then
+            print.fail "%snegative test '%s' succeeded unexpectedly\n" reset_line name;
         | R.Failed {instances=l} ->
-          print.fail "%s%s\n" reset_line (T.print_fail cell name l);
+          if T.get_positive cell
+          then print.fail "%s%s\n" reset_line (T.print_fail cell name l)
+          else print.info "%s%s\n" reset_line (T.print_expected_failure cell l)
         | R.Failed_other {msg} ->
           print.fail "%s%s\n" reset_line (T.print_fail_other name ~msg);
         | R.Error {instance; exn; backtrace} ->

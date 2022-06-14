@@ -2,7 +2,7 @@
 open OUnit
 open QCheck_base_runner
 
-let ps = print_string
+let ps = Printf.printf "%s"
 let va = Printf.sprintf
 let pf = Printf.printf
 
@@ -72,8 +72,16 @@ let to_ounit2_test ?(rand =default_rand()) (QCheck2.Test.Test cell) =
         fail = (fun fmt -> Printf.ksprintf assert_failure fmt);
         err = (fun fmt -> logf ctxt `Error fmt);
       } in
-      T.check_cell_exn cell
-        ~long ~rand ~call:(Raw.callback ~colors:false ~verbose ~print_res:true ~print))
+      if QCheck2.Test.get_positive cell
+      then
+        T.check_cell_exn cell
+          ~long ~rand ~call:(Raw.callback ~colors:false ~verbose ~print_res:true ~print)
+      else
+        try
+          T.check_cell_exn cell
+            ~long ~rand ~call:(Raw.callback ~colors:false ~verbose ~print_res:true ~print);
+          ()
+        with T.Test_fail (_,_) -> ())
 
 let to_ounit2_test_list ?rand lst =
   List.rev (List.rev_map (to_ounit2_test ?rand) lst)
@@ -85,12 +93,18 @@ let to_ounit_test_cell ?(verbose=verbose()) ?(long=long_tests())
   let module T = QCheck2.Test in
   let name = T.get_name cell in
   let run () =
-    try
-      T.check_cell_exn cell ~long ~rand
-        ~call:(Raw.callback ~colors:false ~verbose ~print_res:verbose ~print:Raw.print_std);
-      true
-    with T.Test_fail _ ->
-      false
+
+    let res =
+      try
+        T.check_cell_exn cell ~long ~rand
+          ~call:(Raw.callback ~colors:false ~verbose ~print_res:verbose ~print:Raw.print_std);
+        true
+      with T.Test_fail _ ->
+        false
+    in
+    if QCheck2.Test.get_positive cell
+    then res
+    else not res
   in
   name >:: (fun () -> assert_bool name (run ()))
 
