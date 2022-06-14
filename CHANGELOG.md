@@ -17,6 +17,9 @@
 
 - add `tup2` to `tup9` for generators
 
+- add `Test.make_neg` for negative property-based tests, that are
+  expected not to satisfy the tested property.
+
 - rename `Gen.opt` to `Gen.option` but keep the old binding for compatibility.
 
 - add additional expect and unit tests and refactor expect test suite
