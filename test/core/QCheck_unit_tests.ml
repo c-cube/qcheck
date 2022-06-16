@@ -15,7 +15,7 @@ module Shrink = struct
     loop x
 
   let alco_check typ func msg_suffix (msg,input,expected) =
-    Alcotest.(check (list typ)) (msg ^ " - " ^ msg_suffix) (func input) expected
+    Alcotest.(check (list typ)) (msg ^ " - " ^ msg_suffix) expected (func input)
 
   let test_int () =
     List.iter (alco_check Alcotest.int (trace_false Shrink.int) "on repeated failure")
@@ -47,10 +47,47 @@ module Shrink = struct
         ("int 1000",  1000L, [500L; 250L; 125L; 63L; 32L; 16L; 8L; 4L; 2L; 1L; 0L]);
         ("int (-26)", -26L,  [-13L; -7L; -4L; -2L; -1L; 0L]) ]
 
+  let test_char () =
+    List.iter (alco_check Alcotest.char (trace_false Shrink.char) "on repeated failure")
+      [ ("char 'a'",   'a',  []);
+        ("char 'z'",   'z',  ['n'; 't'; 'w'; 'y'; 'y']); (*WTF?*)
+        ("char 'A'",   'A',  ['Q'; 'I'; 'E'; 'C'; 'B']);
+        ("char '~'",   '~',  ['p'; 'w'; '{'; '}'; '}']) ]; (*WTF?*)
+    List.iter (alco_check Alcotest.char (trace_true Shrink.char) "on repeated success")
+      [ ("char 'a'",   'a',  []);
+        ("char 'z'",   'z',  ['n'; 'h'; 'e'; 'c'; 'b'; 'a']);
+        ("char 'A'",   'A',  ['Q'; 'Y'; ']'; '_'; '`'; 'a']);
+        ("char '~'",   '~',  ['p'; 'i'; 'e'; 'c'; 'b'; 'a']); ]
+
+  let test_char_numeral () =
+    List.iter (alco_check Alcotest.char (trace_false Shrink.char_numeral) "on repeated failure")
+      [ ("char '0'",   '0',  []);
+        ("char '9'",   '9',  ['5'; '7'; '8']) ];
+    List.iter (alco_check Alcotest.char (trace_true Shrink.char_numeral) "on repeated success")
+      [ ("char '0'",   '0',  []);
+        ("char '9'",   '9',  ['5'; '3'; '2'; '1'; '0']); ]
+
+  let test_char_printable () =
+    List.iter (alco_check Alcotest.char (trace_false Shrink.char_printable) "on repeated failure")
+      [ ("char 'A'",   'A',  ['Q'; 'I'; 'E'; 'C'; 'B']);
+        ("char 'a'",   'a',  []);
+        ("char ' '",   ' ',  ['@'; '0'; '('; '$'; '"'; '!']);
+        ("char '~'",   '~',  ['p'; 'w'; '{'; '}'; '}']); (*WTF?*)
+        ("char '\\n'", '\n', ['p'; 'w'; '{'; '}'; '}']); ]; (*WTF?*)
+    List.iter (alco_check Alcotest.char (trace_true Shrink.char_printable) "on repeated success")
+      [ ("char 'A'",   'A',  ['Q'; 'Y'; ']'; '_'; '`'; 'a']);
+        ("char 'a'",   'a',  []);
+        ("char ' '",   ' ',  ['@'; 'P'; 'X'; '\\'; '^'; '_'; '`'; 'a']);
+        ("char '~'",   '~',  ['p'; 'i'; 'e'; 'c'; 'b'; 'a']);
+        ("char '\\n'", '\n', ['p'; 'i'; 'e'; 'c'; 'b'; 'a']); ]
+
   let tests = ("Shrink", Alcotest.[
       test_case "int"   `Quick test_int;
       test_case "int32" `Quick test_int32;
       test_case "int64" `Quick test_int64;
+      test_case "char"  `Quick test_char;
+      test_case "char_numeral"   `Quick test_char_numeral;
+      test_case "char_printable" `Quick test_char_printable;
     ])
 end
 

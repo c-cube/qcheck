@@ -1,5 +1,18 @@
 open QCheck2
 
+let rand_init i = Random.State.make [|i|]
+
+let rec repeated_success t =
+  Tree.root t :: match Tree.children t () with
+  | Seq.Nil -> []
+  | Seq.Cons (t,_) -> repeated_success t
+
+let repeated_failure t =
+  Tree.root t :: match Tree.children t () with
+  | Seq.Nil -> []
+  | Seq.Cons (t,ts) -> Tree.root t :: (Seq.map Tree.root ts |> List.of_seq)
+
+
 module Shrink = struct
   let test_int_towards () =
     Alcotest.(check' (list int))
@@ -57,11 +70,68 @@ module Shrink = struct
       ~actual:(Shrink.float_towards (-50.) (-26.) |> List.of_seq)
       ~expected:[-50.; -38.; -32.; -29.; -27.5; -26.75; -26.375; -26.1875; -26.0938; -26.0469; -26.0234; -26.0117; -26.0059; -26.0029; -26.0015]
 
+  let test_char () =
+    Alcotest.(check' (list char))
+    ~msg:"'k' on repeated failure"
+    ~actual:(Gen.(generate_tree ~rand:(rand_init 1234) char) |> repeated_failure)
+    ~expected:['k'; 'a'; 'f'; 'h'; 'i'; 'j'];
+    Alcotest.(check' (list char))
+    ~msg:"'1' on repeated failure"
+    ~actual:(Gen.(generate_tree ~rand:(rand_init 3345) char) |> repeated_failure)
+    ~expected:['1'; 'a'; 'I'; '='; '7'; '4'; '2'];
+    Alcotest.(check' (list char))
+    ~msg:"'k' on repeated success"
+    ~actual:(Gen.(generate_tree ~rand:(rand_init 1234) char) |> repeated_success)
+    ~expected:['k'; 'a';];
+    Alcotest.(check' (list char))
+    ~msg:"'1' on repeated success"
+    ~actual:(Gen.(generate_tree ~rand:(rand_init 3345) char) |> repeated_success)
+    ~expected:['1'; 'a';]
+
+  let test_char_numeral () =
+    Alcotest.(check' (list char))
+    ~msg:"'3' on repeated failure"
+    ~actual:(Gen.(generate_tree ~rand:(rand_init 1234) numeral) |> repeated_failure)
+    ~expected:['3'; '0'; '1'; '2'];
+    Alcotest.(check' (list char))
+    ~msg:"'0' on repeated failure"
+    ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) numeral) |> repeated_failure)
+    ~expected:['0'];
+    Alcotest.(check' (list char))
+    ~msg:"'3' on repeated success"
+    ~actual:(Gen.(generate_tree ~rand:(rand_init 1234) numeral) |> repeated_success)
+    ~expected:['3'; '0';];
+    Alcotest.(check' (list char))
+    ~msg:"'0' on repeated success"
+    ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) numeral) |> repeated_success)
+    ~expected:['0';]
+
+  let test_char_printable () =
+    Alcotest.(check' (list char))
+    ~msg:"'l' on repeated failure"
+    ~actual:(Gen.(generate_tree ~rand:(rand_init 1234) printable) |> repeated_failure)
+    ~expected:['l'; 'a'; 'f'; 'i'; 'j'; 'k'];
+    Alcotest.(check' (list char))
+    ~msg:"'8' on repeated failure"
+    ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) printable) |> repeated_failure)
+    ~expected:['8'; 'a'; 'z'; ','; '2'; '5'; '7'];
+    Alcotest.(check' (list char))
+    ~msg:"'l' on repeated success"
+    ~actual:(Gen.(generate_tree ~rand:(rand_init 1234) printable) |> repeated_success)
+    ~expected:['l'; 'a';];
+    Alcotest.(check' (list char))
+    ~msg:"'8' on repeated success"
+    ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) printable) |> repeated_success)
+    ~expected:['8'; 'a';]
+
   let tests = ("Shrink", Alcotest.[
       test_case "int_towards" `Quick test_int_towards;
       test_case "int32_towards" `Quick test_int32_towards;
       test_case "int64_towards" `Quick test_int64_towards;
-      test_case "float_towards" `Quick test_float_towards
+      test_case "float_towards" `Quick test_float_towards;
+      test_case "Gen.char tree" `Quick test_char;
+      test_case "Gen.numeral tree" `Quick test_char_numeral;
+      test_case "Gen.printable tree" `Quick test_char_printable;
     ])
 end
 
