@@ -35,7 +35,7 @@
   - string shrinker reuses improved list shrinker and adds char shrinking
   - function shrinker now shrinks default entry first and benefits from list shrinker improvements
   - replacing the linear-time char shrinker with a faster one reusing the bisecting int shrinker algorithm
-  - add `Shrink.char_numeral`
+  - add `Shrink.char_numeral` and `Shrink.char_printable`
   - add shrinking for `char arbitrary`s `char`, `printable_char`, and `numeral_char`
 
 - documentation updates:
