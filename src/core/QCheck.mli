@@ -695,6 +695,10 @@ module Shrink : sig
   (** Shrinks towards ['0'].
       @since NEXT_RELEASE *)
 
+  val char_printable : char t
+  (** Shrinks towards ['a'] like [!char]. The output is also a printable character.
+      @since NEXT_RELEASE *)
+
   val int : int t
 
   val int32 : int32 t

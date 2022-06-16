@@ -706,6 +706,10 @@ module Shrink = struct
   let char = char_generic 'a'
   let char_numeral = char_generic '0'
 
+  let char_printable = function
+    | '\n' -> char '~' (* treat '\n' (10) as '~' (126) to ensure a non-trivial, printable output *)
+    | c -> char c
+
   let option s x = match x with
     | None -> Iter.empty
     | Some x -> Iter.(return None <+> map (fun y->Some y) (s x))
@@ -1101,7 +1105,7 @@ let small_char target c = abs ((Char.code c) - (Char.code target))
 let char =
   make ~print:(sprintf "%C") ~small:(small_char 'a') ~shrink:Shrink.char Gen.char
 let printable_char =
-  make ~print:(sprintf "%C") ~small:(small_char 'a') ~shrink:Shrink.char Gen.printable
+  make ~print:(sprintf "%C") ~small:(small_char 'a') ~shrink:Shrink.char_printable Gen.printable
 let numeral_char =
   make ~print:(sprintf "%C") ~small:(small_char '0') ~shrink:Shrink.char_numeral Gen.numeral
 
