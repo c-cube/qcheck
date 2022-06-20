@@ -712,8 +712,8 @@ module Gen = struct
 
   let string_printable = string_size ~gen:printable nat
 
-  let string_small ?gen st = string_size ?gen small_nat st
-  let small_string ?gen = string_small ?gen
+  let string_small ~gen st = string_size ~gen small_nat st
+  let small_string ~gen = string_small ~gen
 
   let small_list gen = list_size small_nat gen
 

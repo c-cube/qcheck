@@ -359,16 +359,15 @@ module Gen : sig
 
       @since 0.11 *)
 
-  val string_small : ?gen:char t -> string t
-  (** Builds a string generator, length is {!small_nat}.
-      Accepts an optional character generator (the default is {!char}).
+  val string_small : gen:char t -> string t
+  (** Builds a string generator using the given characher generator, length is {!small_nat}.
 
       Shrinks on the number of characters first, then on the characters.
 
       @since NEXT_RELEASE
   *)
 
-  val small_string : ?gen:char t -> string t
+  val small_string : gen:char t -> string t
   (** alias for [string_small] for backward compatibility *)
 
   val pure : 'a -> 'a t
