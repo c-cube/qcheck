@@ -704,7 +704,7 @@ module Gen = struct
 
   let bytes_printable = bytes_size ~gen:printable nat
 
-  let small_bytes ?gen st = bytes_size ?gen small_nat st
+  let bytes_small ~gen st = bytes_size ~gen small_nat st
 
   let string : string t = string_size nat
 
@@ -712,7 +712,8 @@ module Gen = struct
 
   let string_printable = string_size ~gen:printable nat
 
-  let small_string ?gen st = string_size ?gen small_nat st
+  let string_small ?gen st = string_size ?gen small_nat st
+  let small_string ?gen = string_small ?gen
 
   let small_list gen = list_size small_nat gen
 
@@ -786,7 +787,7 @@ module Print = struct
   let float = string_of_float
 
   let bytes = Bytes.to_string
-  
+
   let string s = Printf.sprintf "%S" s
 
   let char c = Printf.sprintf "%C" c
@@ -1524,7 +1525,7 @@ module Test = struct
   let make_neg = make' ~negative:true
 
   let test_get_count (Test cell) = get_count cell
-  
+
   let test_get_long_factor (Test cell) = get_long_factor cell
 
   (** {6 Running the test} *)

@@ -818,7 +818,7 @@ module Stats = struct
       Test.make ~name:"bytes len dist"           ~count:5_000 ~stats:[len] Gen.bytes                         (fun _ -> true);
       Test.make ~name:"bytes_of len dist"        ~count:5_000 ~stats:[len] Gen.(bytes_of (return 'a'))       (fun _ -> true);
       Test.make ~name:"bytes_printable len dist" ~count:5_000 ~stats:[len] Gen.bytes_printable               (fun _ -> true);
-      Test.make ~name:"small_bytes len dist"     ~count:5_000 ~stats:[len] Gen.(small_bytes ~gen:char)       (fun _ -> true);
+      Test.make ~name:"bytes_small len dist"     ~count:5_000 ~stats:[len] Gen.(bytes_small ~gen:char)       (fun _ -> true);
     ]
 
   let string_len_tests =

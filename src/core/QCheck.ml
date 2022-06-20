@@ -1138,7 +1138,6 @@ let printable_char =
 let numeral_char =
   make ~print:(sprintf "%C") ~small:(small_char '0') ~shrink:Shrink.char_numeral Gen.numeral
 
-
 let bytes_gen_of_size size gen =
   make ~shrink:Shrink.bytes ~small:Bytes.length
     ~print:(Print.bytes) (Gen.bytes_size ~gen size)
@@ -1148,14 +1147,8 @@ let bytes_gen gen =
 
 let bytes = bytes_gen Gen.char
 let bytes_of_size size = bytes_gen_of_size size Gen.char
-let small_bytes = bytes_gen_of_size Gen.small_nat Gen.char
-
-let printable_bytes = bytes_gen Gen.printable
-let printable_bytes_of_size size = bytes_gen_of_size size Gen.printable
-let small_printable_bytes = bytes_gen_of_size Gen.small_nat Gen.printable
-
-let numeral_bytes = bytes_gen Gen.numeral
-let numeral_bytes_of_size size = bytes_gen_of_size size Gen.numeral
+let bytes_small = bytes_gen_of_size Gen.small_nat Gen.char
+let bytes_printable = bytes_gen Gen.printable
 
 let string_gen_of_size size gen =
   make ~shrink:Shrink.string ~small:String.length
@@ -1166,7 +1159,8 @@ let string_gen gen =
 
 let string = string_gen Gen.char
 let string_of_size size = string_gen_of_size size Gen.char
-let small_string = string_gen_of_size Gen.small_nat Gen.char
+let string_small = string_gen_of_size Gen.small_nat Gen.char
+let small_string = string_small
 
 let printable_string =
   make ~shrink:(Shrink.string ~shrink:Shrink.char_printable) ~small:String.length
@@ -1187,6 +1181,12 @@ let numeral_string =
 let numeral_string_of_size size =
   make ~shrink:(Shrink.string ~shrink:Shrink.char_numeral) ~small:String.length
     ~print:(sprintf "%S") (Gen.string_size ~gen:Gen.numeral size)
+
+let string_printable = printable_string
+let string_printable_of_size = printable_string_of_size
+let string_small_printable = small_printable_string
+let string_numeral = numeral_string
+let string_numeral_of_size = numeral_string_of_size
 
 let list_sum_ f l = List.fold_left (fun acc x-> f x+acc) 0 l
 

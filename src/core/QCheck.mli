@@ -1285,7 +1285,7 @@ val bytes : bytes arbitrary
     and distribution of characters of [char].
     @since NEXT_RELEASE *)
 
-val small_bytes : bytes arbitrary
+val bytes_small : bytes arbitrary
 (** Same as {!bytes} but with a small length (ie {!Gen.small_nat} ).
     @since NEXT_RELEASE *)
 
@@ -1310,27 +1310,9 @@ val bytes_of_size : int Gen.t -> bytes arbitrary
 (** Generates bytes with distribution of characters of [char].
     @since NEXT_RELEASE *)
 
-val printable_bytes : bytes arbitrary
+val bytes_printable : bytes arbitrary
 (** Generates bytes with a distribution of length of {!Gen.nat}
     and distribution of characters of [printable_char].
-    @since NEXT_RELEASE *)
-
-val printable_bytes_of_size : int Gen.t -> bytes arbitrary
-(** Generates bytes with distribution of characters of [printable_char].
-    @since NEXT_RELEASE *)
-
-val small_printable_bytes : bytes arbitrary
-(** Generates bytes with a length of [small_nat]
-    and distribution of characters of [printable_char].
-    @since NEXT_RELEASE *)
-
-val numeral_bytes : bytes arbitrary
-(** Generates bytes with a distribution of length of {!Gen.nat}
-    and distribution of characters of [numeral_char].
-    @since NEXT_RELEASE *)
-
-val numeral_bytes_of_size : int Gen.t -> bytes arbitrary
-(** Generates bytes with a distribution of characters of [numeral_char].
     @since NEXT_RELEASE *)
 
 val string_of_size : int Gen.t -> string arbitrary
