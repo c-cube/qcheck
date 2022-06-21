@@ -1573,12 +1573,14 @@ module Test_exceptions : sig
       stacktrace (if enabled) or an empty string. *)
 end
 
-(** A test is a pair of an generator and a property thar all generated values must satisfy. *)
+(** A test is a pair of a generator and a property that all generated values must satisfy. *)
 module Test : sig
   (** The main features of this module are:
-      - {!make} a test
-      - fail the test if a property does not hold (using either the {{!fail_report} simple} form or the {{!fail_reportf} rich} form)
-      - {!check_exn} a single test
+      - {!make} to create a test
+      - {!make_neg} to create a negative test that is expected not to satisfy the tested property
+      - {!check_exn} to run a single test with a simple runner.
+
+      A test fails if the property does not hold for a given input. The {{!fail_report} simple} form or the {{!fail_reportf} rich} form) offer more elaborate forms to fail a test.
 
       Note that while {!check_exn} is provided for convenience to discover QCheck or to run a single test in {{: https://opam.ocaml.org/blog/about-utop/} utop}, to run QCheck tests in your project you probably want to opt for a more advanced runner, or convert
       QCheck tests to your favorite test framework:
@@ -1604,7 +1606,7 @@ module Test : sig
         the test cases which satisfy preconditions.
       @param long_factor the factor by which to multiply count, max_gen and
         max_fail when running a long test (default: 1).
-      @param negative whether the test is expected to fail.
+      @param negative whether the test is expected not to satisfy the tested property.
       @param max_gen maximum number of times the generation function
         is called in total to replace inputs that do not satisfy
         preconditions (should be >= count).
@@ -1651,7 +1653,7 @@ module Test : sig
       @since 0.5.3 *)
 
   val get_positive : _ cell -> bool
-  (** Get the expected mode of a cell: positive indicates expected to succeed, negative indicates expected to fail.  *)
+  (** Get the expected mode of a cell: positive indicates expected to satisfy the tested property, negative indicates expected not to satisfy the tested property.  *)
 
   type t = Test : 'a cell -> t
   (** Same as ['a cell], but masking the type parameter. This allows to
@@ -1674,7 +1676,7 @@ module Test : sig
     'a Gen.t -> ('a -> bool) -> t
   (** [make_neg gen prop] builds a test that checks property [prop] on instances
       of the generator [gen].
-      The test is considered negative, meaning that it is expected to fail.
+      The test is considered negative, meaning that it is expected not to satisfy the tested property.
       This information is recorded in an underlying test [cell] entry and interpreted suitably by test runners.
       See {!make_cell} for a description of the parameters.
   *)
