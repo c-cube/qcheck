@@ -1494,12 +1494,11 @@ module Test = struct
       qcheck1_shrink = shrink;
     }
 
-  let make ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats gen law =
-    Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats gen law)
+  let make' ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats ~negative arb law =
+    Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats ~negative arb law)
 
-  let make_neg ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats gen law =
-    let negative = Some true in
-    Test (make_cell ?if_assumptions_fail ?count ?long_factor ?negative ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats gen law)
+  let make = make' ~negative:false
+  let make_neg = make' ~negative:true
 
   let test_get_count (Test cell) = get_count cell
 
