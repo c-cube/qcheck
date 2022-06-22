@@ -135,9 +135,14 @@ module Raw = struct
     if print_res then (
       (* even if [not verbose], print errors *)
       match R.get_state result with
-        | R.Success -> ()
+        | R.Success ->
+          if not (T.get_positive cell)
+          then
+            print.fail "%snegative test '%s' succeeded unexpectedly\n" reset_line name;
         | R.Failed {instances=l} ->
-          print.fail "%s%s\n" reset_line (T.print_fail cell name l);
+          if T.get_positive cell
+          then print.fail "%s%s\n" reset_line (T.print_fail cell name l)
+          else print.info "%s%s\n" reset_line (T.print_expected_failure cell l)
         | R.Failed_other {msg} ->
           print.fail "%s%s\n" reset_line (T.print_fail_other name ~msg);
         | R.Error {instance; exn; backtrace} ->
@@ -286,8 +291,11 @@ let step ~colors ~size ~out ~verbose c name _ _ r =
       (if colors then Color.reset_line else "\n") (pp_counter ~size) c name
   )
 
-let callback ~size ~out ~verbose ~colors c name _ r =
-  let pass = QCheck2.TestResult.is_success r in
+let callback ~size ~out ~verbose ~colors c name cell r =
+  let pass =
+    if QCheck2.Test.get_positive cell
+    then QCheck2.TestResult.is_success r
+    else QCheck2.TestResult.is_failed r in
   let color = if pass then `Green else `Red in
   if verbose then (
     Printf.fprintf out "%s[%a] %a %s\n%!"
@@ -356,6 +364,13 @@ let print_fail_other ~colors out cell msg =
   Printf.fprintf out "\n--- %a %s\n\n" (Color.pp_str_c ~colors `Red) "Failure" (String.make 68 '-');
   Printf.fprintf out "Test %s failed:\n\n%s\n%!" (QCheck2.Test.get_name cell) msg
 
+let print_expected_failure ~colors out cell c_ex =
+  Printf.fprintf out "\n--- %a %s\n\n" (Color.pp_str_c ~colors `Blue) "Info" (String.make 71 '-');
+  Printf.fprintf out "Negative test %s failed as expected (%d shrink steps):\n\n%s\n%!"
+    (QCheck2.Test.get_name cell) c_ex.QCheck2.TestResult.shrink_steps
+    (print_inst cell c_ex.QCheck2.TestResult.instance);
+  print_messages ~colors out cell c_ex.QCheck2.TestResult.msg_l
+
 let print_error ~colors out cell c_ex exn bt =
   Printf.fprintf out "\n=== %a %s\n\n" (Color.pp_str_c ~colors `Red) "Error" (String.make 70 '=');
   Printf.fprintf out "Test %s errored on (%d shrink steps):\n\n%s\n\nexception %s\n%s\n%!"
@@ -406,17 +421,24 @@ let run_tests
   let res = List.map aux_map l in
   let aux_fold (total, fail, error, warns) (Res (cell, r)) =
     let warns = warns + List.length (R.get_warnings r) in
-    let acc = match R.get_state r with
-      | R.Success ->
+    let acc = match R.get_state r, QCheck2.Test.get_positive cell with
+      | R.Success, true ->
         print_success ~colors out cell r;
         (total + 1, fail, error, warns)
-      | R.Failed {instances=l} ->
-        List.iter (print_fail ~colors out cell) l;
-        (total + 1, fail + 1, error, warns)
-      | R.Failed_other {msg} ->
+      | R.Success, false ->
+        let msg = Printf.sprintf "Negative test %s succeeded but was expected to fail" (QCheck2.Test.get_name cell) in
         print_fail_other ~colors out cell msg;
         (total + 1, fail + 1, error, warns)
-      | R.Error {instance=c_ex; exn; backtrace=bt} ->
+      | R.Failed {instances=l}, true ->
+        List.iter (print_fail ~colors out cell) l;
+        (total + 1, fail + 1, error, warns)
+      | R.Failed {instances=l}, false ->
+        if verbose then List.iter (print_expected_failure ~colors out cell) l;
+        (total + 1, fail, error, warns)
+      | R.Failed_other {msg}, _ ->  (* Failed_other is also considered a failure *)
+        print_fail_other ~colors out cell msg;
+        (total + 1, fail + 1, error, warns)
+      | R.Error {instance=c_ex; exn; backtrace=bt}, _ -> (* Error is always considered a failure *)
         print_error ~colors out cell c_ex exn bt;
         (total + 1, fail, error + 1, warns)
     in

@@ -900,10 +900,17 @@ val get_print : 'a arbitrary -> 'a Print.t option
     with an object of type [foo arbitrary] used to generate, print, etc. values
     of type [foo].
 
-    See {!Test.make} to build a test, and {!Test.check_exn} to
-    run one test simply.
-    For more serious testing, it is better to create a testsuite
-    and use {!QCheck_runner}.
+    The main features of this module are:
+    - {!Test.make} to build a test,
+    - {!Test.make_neg} to build a negative test that is expected not to satisfy the tested property,
+    - {!Test.check_exn} to run a single test with a simple runner.
+
+    A test fails if the property does not hold for a given input. The {{!Test.fail_report} simple} form or the {{!Test.fail_reportf} rich} form) offer more elaborate forms to fail a test.
+
+    For more serious testing, it is recommended to create a testsuite and use a full-fledged runner:
+    - {!QCheck_base_runner} is a QCheck-only runner (useful if you don't have or don't need another test framework)
+    - {!QCheck_alcotest} interfaces to the Alcotest framework
+    - {!QCheck_ounit} interfaces to the to OUnit framework
 *)
 
 (** Result of running a test *)
@@ -997,7 +1004,7 @@ module Test : sig
 
   val make_cell :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
-    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
+    ?count:int -> ?long_factor:int -> ?negative:bool -> ?max_gen:int -> ?max_fail:int ->
     ?small:('a -> int) -> ?retries:int -> ?name:string ->
     'a arbitrary -> ('a -> bool) -> 'a cell
   (** [make_cell arb prop] builds a test that checks property [prop] on instances
@@ -1008,6 +1015,7 @@ module Test : sig
       @param retries number of times to retry the tested property while shrinking.
       @param long_factor the factor by which to multiply count, max_gen and
         max_fail when running a long test (default: 1).
+      @param negative whether the test is expected not to satisfy the tested property.
       @param max_gen maximum number of times the generation function
         is called in total to replace inputs that do not satisfy
         preconditions (should be >= count).
@@ -1050,6 +1058,18 @@ module Test : sig
     ('a -> bool) -> t
   (** [make arb prop] builds a test that checks property [prop] on instances
       of the generator [arb].
+      See {!make_cell} for a description of the parameters.
+  *)
+
+  val make_neg :
+    ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
+    ?small:('a -> int) -> ?retries:int -> ?name:string -> 'a arbitrary ->
+    ('a -> bool) -> t
+  (** [make_neg arb prop] builds a test that checks property [prop] on instances
+      of the generator [arb].
+      The test is considered negative, meaning that it is expected not to satisfy the tested property.
+      This information is recorded in an underlying test [cell] entry and interpreted suitably by test runners.
       See {!make_cell} for a description of the parameters.
   *)
 

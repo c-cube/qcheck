@@ -1367,6 +1367,10 @@ module TestResult = struct
   let is_success r = match r.state with
     | Success -> true
     | Failed _ | Error _ | Failed_other _ -> false
+
+  let is_failed r = match r.state with
+    | Failed _ -> true
+    | Success | Error _ | Failed_other _ -> false
 end
 
 module Test_exceptions = struct
@@ -1380,6 +1384,7 @@ module Test = struct
   type 'a cell = {
     count : int; (* number of tests to do *)
     long_factor : int; (* multiplicative factor for long test count *)
+    positive : bool; (* indicates whether test is considered positive or negative *)
     max_gen : int; (* max number of instances to generate (>= count) *)
     max_fail : int; (* max number of failures *)
     retries : int; (* max number of retries during shrinking *)
@@ -1413,6 +1418,8 @@ module Test = struct
 
   let get_long_factor {long_factor; _} = long_factor
 
+  let get_positive {positive; _} = positive
+
   let default_count = 100
 
   let default_long_factor = 1
@@ -1436,11 +1443,12 @@ module Test = struct
   let default_if_assumptions_fail = `Warning, 0.05
 
   let make_cell ?(if_assumptions_fail=default_if_assumptions_fail)
-      ?(count) ?long_factor ?max_gen
+      ?(count) ?long_factor ?(negative=false) ?max_gen
       ?(max_fail=1) ?(retries=1) ?(name=fresh_name()) ?print ?collect ?(stats=[]) gen law
     =
     let count = global_count count in
     let long_factor = global_long_factor long_factor in
+    let positive = not negative in
     let max_gen = match max_gen with None -> count + 200 | Some x->x in
     {
       law;
@@ -1454,16 +1462,18 @@ module Test = struct
       name;
       count;
       long_factor;
+      positive;
       if_assumptions_fail;
       qcheck1_shrink = None;
     }
 
   let make_cell_from_QCheck1 ?(if_assumptions_fail=default_if_assumptions_fail)
-      ?(count) ?long_factor ?max_gen
+      ?(count) ?long_factor ?(negative=false) ?max_gen
       ?(max_fail=1) ?(retries=1) ?(name=fresh_name()) ~gen ?shrink ?print ?collect ~stats law
     =
     let count = global_count count in
     let long_factor = global_long_factor long_factor in
+    let positive = not negative in
     (* Make a "fake" QCheck2 arbitrary with no shrinking *)
     let fake_gen = Gen.make_primitive ~gen ~shrink:(fun _ -> Seq.empty) in
     let max_gen = match max_gen with None -> count + 200 | Some x->x in
@@ -1479,15 +1489,19 @@ module Test = struct
       name;
       count;
       long_factor;
+      positive;
       if_assumptions_fail;
       qcheck1_shrink = shrink;
     }
 
-  let make ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats gen law =
-    Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats gen law)
+  let make' ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats ~negative arb law =
+    Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats ~negative arb law)
+
+  let make = make' ~negative:false
+  let make_neg = make' ~negative:true
 
   let test_get_count (Test cell) = get_count cell
-  
+
   let test_get_long_factor (Test cell) = get_long_factor cell
 
   (** {6 Running the test} *)
@@ -1948,6 +1962,10 @@ module Test = struct
 
   let print_fail_other name ~msg =
     print_test_fail name [msg]
+
+  let print_expected_failure cell c_exs = match c_exs with
+    | [] -> Format.sprintf "negative test `%s` failed as expected\n" (get_name cell)
+    | c_ex::_ -> Format.sprintf "negative test `%s` failed as expected on: %s\n" (get_name cell) (print_c_ex cell c_ex)
 
   let print_error ?(st="") arb name (i,e) =
     print_test_error name (print_c_ex arb i) e st

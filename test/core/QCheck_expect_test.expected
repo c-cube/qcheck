@@ -200,6 +200,30 @@ Backtrace:
 
 --- Failure --------------------------------------------------------------------
 
+Test int double failed:
+
+Negative test int double succeeded but was expected to fail
+
+=== Error ======================================================================
+
+Test pos fail with error errored on (7 shrink steps):
+
+0
+
+exception QCheck_tests.Overall.Error
+
+
+=== Error ======================================================================
+
+Test neg fail with error errored on (7 shrink steps):
+
+0
+
+exception QCheck_tests.Overall.Error
+
+
+--- Failure --------------------------------------------------------------------
+
 Test char never produces '\255' failed (0 shrink steps):
 
 '\255'
@@ -1214,7 +1238,7 @@ stats dist:
    4150517416584649600.. 4611686018427387903: #################                                               189
 ================================================================================
 1 warning(s)
-failure (57 tests failed, 1 tests errored, ran 129 tests)
+failure (58 tests failed, 3 tests errored, ran 134 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++

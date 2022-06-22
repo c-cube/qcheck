@@ -1537,8 +1537,11 @@ module TestResult : sig
       @since 0.18 *)
 
   val is_success : _ t -> bool
-  (** Returns true iff the state if [Success]
+  (** Returns true iff the state is [Success]
       @since 0.9 *)
+
+  val is_failed : _ t -> bool
+  (** Returns true iff the state is [Failed _] *)
 
   val stats : 'a t -> ('a stat * (int,int) Hashtbl.t) list
   (** Obtain statistics
@@ -1570,12 +1573,14 @@ module Test_exceptions : sig
       stacktrace (if enabled) or an empty string. *)
 end
 
-(** A test is a pair of an generator and a property thar all generated values must satisfy. *)
+(** A test is a pair of a generator and a property that all generated values must satisfy. *)
 module Test : sig
   (** The main features of this module are:
-      - {!make} a test
-      - fail the test if a property does not hold (using either the {{!fail_report} simple} form or the {{!fail_reportf} rich} form)
-      - {!check_exn} a single test
+      - {!make} to create a test
+      - {!make_neg} to create a negative test that is expected not to satisfy the tested property
+      - {!check_exn} to run a single test with a simple runner.
+
+      A test fails if the property does not hold for a given input. The {{!fail_report} simple} form or the {{!fail_reportf} rich} form) offer more elaborate forms to fail a test.
 
       Note that while {!check_exn} is provided for convenience to discover QCheck or to run a single test in {{: https://opam.ocaml.org/blog/about-utop/} utop}, to run QCheck tests in your project you probably want to opt for a more advanced runner, or convert
       QCheck tests to your favorite test framework:
@@ -1587,10 +1592,10 @@ module Test : sig
   type 'a cell
   (** A single property test on a value of type ['a]. A {!Test.t} wraps a [cell]
       and hides its type parameter. *)
-     
+
   val make_cell :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
-    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int -> ?retries:int ->
+    ?count:int -> ?long_factor:int ->  ?negative:bool -> ?max_gen:int -> ?max_fail:int -> ?retries:int ->
     ?name:string -> ?print:'a Print.t -> ?collect:('a -> string) -> ?stats:('a stat list) ->
      'a Gen.t -> ('a -> bool) ->
     'a cell
@@ -1601,6 +1606,7 @@ module Test : sig
         the test cases which satisfy preconditions.
       @param long_factor the factor by which to multiply count, max_gen and
         max_fail when running a long test (default: 1).
+      @param negative whether the test is expected not to satisfy the tested property.
       @param max_gen maximum number of times the generation function
         is called in total to replace inputs that do not satisfy
         preconditions (should be >= count).
@@ -1621,11 +1627,11 @@ module Test : sig
 
   val make_cell_from_QCheck1 :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
-    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
+    ?count:int -> ?long_factor:int -> ?negative:bool -> ?max_gen:int -> ?max_fail:int ->
     ?retries:int -> ?name:string -> gen:(Random.State.t -> 'a) -> ?shrink:('a -> ('a -> unit) -> unit) ->
     ?print:('a -> string) -> ?collect:('a -> string) -> stats:'a stat list -> ('a -> bool) ->
     'a cell
-  (** ⚠️ Do not use, this is exposed for internal reasons only. ⚠️ 
+  (** ⚠️ Do not use, this is exposed for internal reasons only. ⚠️
 
       @deprecated Migrate to QCheck2 and use {!make_cell} instead.
    *)
@@ -1646,6 +1652,9 @@ module Test : sig
   (** Get the long factor of a cell.
       @since 0.5.3 *)
 
+  val get_positive : _ cell -> bool
+  (** Get the expected mode of a cell: positive indicates expected to satisfy the tested property, negative indicates expected not to satisfy the tested property.  *)
+
   type t = Test : 'a cell -> t
   (** Same as ['a cell], but masking the type parameter. This allows to
       put tests on different types in the same list of tests. *)
@@ -1657,6 +1666,18 @@ module Test : sig
     'a Gen.t -> ('a -> bool) -> t
   (** [make gen prop] builds a test that checks property [prop] on instances
       of the generator [gen].
+      See {!make_cell} for a description of the parameters.
+  *)
+
+  val make_neg :
+    ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int -> ?retries:int ->
+    ?name:string -> ?print:('a Print.t) -> ?collect:('a -> string) -> ?stats:('a stat list) ->
+    'a Gen.t -> ('a -> bool) -> t
+  (** [make_neg gen prop] builds a test that checks property [prop] on instances
+      of the generator [gen].
+      The test is considered negative, meaning that it is expected not to satisfy the tested property.
+      This information is recorded in an underlying test [cell] entry and interpreted suitably by test runners.
       See {!make_cell} for a description of the parameters.
   *)
 
@@ -1688,6 +1709,7 @@ module Test : sig
   val print_c_ex : 'a cell -> 'a TestResult.counter_ex -> string
   val print_fail : 'a cell -> string -> 'a TestResult.counter_ex list -> string
   val print_fail_other : string -> msg:string -> string
+  val print_expected_failure : 'a cell -> 'a TestResult.counter_ex list -> string
   val print_error : ?st:string -> 'a cell -> string -> 'a TestResult.counter_ex * exn -> string
   val print_test_fail : string -> string list -> string
   val print_test_error : string -> string -> exn -> string -> string

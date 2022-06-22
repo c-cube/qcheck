@@ -59,6 +59,21 @@ stats num:
 
 --- Failure --------------------------------------------------------------------
 
+Test neg test unexpected success failed:
+
+Negative test neg test unexpected success succeeded but was expected to fail
+
+=== Error ======================================================================
+
+Test neg fail with error errored on (7 shrink steps):
+
+0
+
+exception Dune__exe__QCheck_runner_test.Error
+
+
+--- Failure --------------------------------------------------------------------
+
 Test FAIL_pred_map_commute failed (77 shrink steps):
 
 ([1], {_ -> 0}, {1 -> true; _ -> false})
@@ -315,4 +330,4 @@ stats dist:
    4150387758342729156.. 4611540922436308291: ######################################################         5039
 ================================================================================
 1 warning(s)
-failure (9 tests failed, 1 tests errored, ran 25 tests)
+failure (10 tests failed, 2 tests errored, ran 28 tests)
