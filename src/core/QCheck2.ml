@@ -998,7 +998,7 @@ module Observable = struct
 
     let bool : bool t = (=)
 
-    let float = (=)
+    let float : float t = (=)
 
     let unit () () = true
 
@@ -1525,7 +1525,6 @@ module Test = struct
   let make_neg = make' ~negative:true
 
   let test_get_count (Test cell) = get_count cell
-
   let test_get_long_factor (Test cell) = get_long_factor cell
 
   (** {6 Running the test} *)

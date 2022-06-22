@@ -825,7 +825,7 @@ stats len:
   8982..9480:                                                                  16
   9481..9979:                                                                  12
 
-+++ Stats for small_bytes len dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++ Stats for bytes_small len dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 stats len:
   num: 5000, avg: 15.57, stddev: 24.36, median 6, min 0, max 99

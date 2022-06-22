@@ -92,7 +92,7 @@ let string_fold_right f s acc =
   let rec loop i acc =
     if i<0
     then acc
-    else loop (i-1) (f (String.get s i) acc) in
+    else loop (i-1) (f s.[i] acc) in
   loop (len-1) acc
 
 exception No_example_found of string
@@ -382,9 +382,8 @@ module Gen = struct
   let string_of gen = string_size ~gen nat
   let bytes_printable = bytes_size ~gen:printable nat
   let string_printable = string_size ~gen:printable nat
-  let bytes_readable = bytes_printable
   let string_readable = string_printable
-  let small_bytes ?gen st = bytes_size ?gen small_nat st
+  let bytes_small ?gen st = bytes_size ?gen small_nat st
   let small_string ?gen st = string_size ?gen small_nat st
   let small_list gen = list_size small_nat gen
   let small_array gen = array_size small_nat gen
