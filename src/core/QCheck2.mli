@@ -59,7 +59,7 @@ content will appear. *)
             ~name:"All lists are sorted"
             ~count:10_000
             ~print:Print.(list int)
-            Gen.(list small_nat)
+            Gen.(list nat_small)
             (fun l -> l = List.sort compare l));;
 
       QCheck2.Test.check_exn test;;
@@ -155,25 +155,9 @@ module Gen : sig
       Shrinks towards [false].
   *)
 
-  val int : int t
-  (** Generates integers uniformly.
+  (** {2 Integer numbers generators} *)
 
-      Shrinks towards [0].
-  *)
-
-  val pint : ?origin : int -> int t
-  (** Generates non-strictly positive integers uniformly ([0] included).
-
-      Shrinks towards [origin] if specified, otherwise towards [0]. *)
-
-  val small_nat : int t
-  (** Small positive integers (< [100], [0] included).
-
-      Non-uniform: smaller numbers are more likely than bigger numbers.
-
-      Shrinks towards [0].
-
-      @since 0.5.1 *)
+  (** {3. Natural} *)
 
   val nat : int t
   (** Generates natural numbers (< [10_000]).
@@ -183,43 +167,129 @@ module Gen : sig
       Shrinks towards [0].
   *)
 
-  val big_nat : int t
+  val nat_small : int t
+  (** Small positive integers (< [100], [0] included).
+
+      Non-uniform: smaller numbers are more likely than bigger numbers.
+
+      Shrinks towards [0].
+
+      @since NEXT_RELEASE *)
+
+  val nat_big : int t
   (** Generates natural numbers, possibly large (< [1_000_000]).
 
       Non-uniform: smaller numbers are more likely than bigger numbers.
 
       Shrinks towards [0].
 
-      @since 0.10 *)
+      @since NEXT_RELEASE *)
 
-  val neg_int : int t
+  val nat_corners : unit -> int t
+  (** As {!nat}, but each newly created generator starts with a list of corner
+      cases before falling back on random generation.
+
+      @since NEXT_RELEASE
+  *)
+
+  (** {3 Classic integers} *)
+
+  val int : int t
+  (** Generates integers uniformly.
+
+      Shrinks towards [0].
+  *)
+
+  val int_neg : int t
   (** Generates non-strictly negative integers ([0] included).
 
       Non-uniform: smaller numbers (in absolute value) are more likely than bigger numbers.
 
       Shrinks towards [0].
+
+      @since NEXT_RELEASE
   *)
 
-  val small_int : int t
-  (** Small UNSIGNED integers, for retrocompatibility.
+  val int_pos : ?origin : int -> int t
+  (** Generates non-strictly positive integers uniformly ([0] included).
 
-      Shrinks towards [0].
+      Shrinks towards [origin] if specified, otherwise towards [0].
 
-      @deprecated use {!small_nat}. *)
+      @since NEXT_RELEASE *)
 
-  val small_signed_int : int t
-  (** Small SIGNED integers, based on {!small_nat}.
+  val int_small : int t
+  (** Small SIGNED integers, based on {!nat_small}.
 
       Non-uniform: smaller numbers (in absolute value) are more likely than bigger numbers.
 
       Shrinks towards [0].
 
-      @since 0.5.2 *)
+      @since NEXT_RELEASE *)
+
+  val int_big : int t
+  (** Big SIGNED integers, based on {!nat_small} substraced to [Int.max_int]
+
+      Shrinks towards [0].
+
+      @since NEXT_RELEASE *)
+
+  val int_corners : unit -> int t
+  (** As {!int}, but each newly created generator starts with a list of corner
+      cases before falling back on random generation.
+
+      @since NEXT_RELEASE
+  *)
+
+  val int_pos_bound : int -> int t
+  (** Uniform integer generator producing integers within [0..bound].
+
+      Shrinks towards [0].
+
+      @raise Invalid_argument if the argument is negative. *)
+
+  val int_range : ?origin:int -> int -> int -> int t
+  (** [int_range ?origin low high] is an uniform integer generator producing integers within [low..high] (inclusive).
+
+      Shrinks towards [origin] if specified, otherwise towards [0] (but always stays within the range).
+
+      Examples:
+      - [int_range ~origin:6 (-5) 15] will shrink towards [6]
+      - [int_range (-5) 15] will shrink towards [0]
+      - [int_range 8 20] will shrink towards [8] (closest to [0] within range)
+      - [int_range (-20) (-8)] will shrink towards [-8] (closest to [0] within range)
+
+      @raise Invalid_argument if any of the following holds:
+      - [low > high]
+      - [origin < low]
+      - [origin > high]
+  *)
+
+  val (--) : int -> int -> int t
+  (** [a -- b] is an alias for [int_range a b]. See {!int_range} for more information.
+  *)
+
+  (** {3 Deprecated integer generators} *)
+
+  val small_nat : int t
+  (** @deprecated use {!nat_small} *)
+
+  val big_nat : int t
+  (** @deprecated use {!nat_big} *)
+
+  val neg_int : int t
+  (** @deprecated use {!int_neg} *)
+
+  val small_signed_int : int t
+  (** @deprecated use {!int_small} *)
 
   val small_int_corners : unit -> int t
-  (** As {!small_int}, but each newly created generator starts with
-    a list of corner cases before falling back on random generation. *)
+  (** @deprecated use {!nat_corners} *)
 
+  val pint : ?origin : int -> int t
+  (** @deprecated use {!int_pos} *)
+
+  val int_bound : int -> int t
+  (** @deprecated use {!int_pos_bound} *)
 
   val int32 : int32 t
   (** Generates uniform {!int32} values.
@@ -320,7 +390,7 @@ module Gen : sig
       @since 0.11 *)
 
   val small_string : ?gen:char t -> string t
-  (** Builds a string generator, length is {!small_nat}.
+  (** Builds a string generator, length is {!nat_small}.
       Accepts an optional character generator (the default is {!char}).
 
       Shrinks on the number of characters first, then on the characters.
@@ -374,34 +444,6 @@ module Gen : sig
   *)
 
   (** {3 Ranges} *)
-
-  val int_bound : int -> int t
-  (** Uniform integer generator producing integers within [0..bound].
-
-      Shrinks towards [0].
-
-      @raise Invalid_argument if the argument is negative. *)
-
-  val int_range : ?origin:int -> int -> int -> int t
-  (** [int_range ?origin low high] is an uniform integer generator producing integers within [low..high] (inclusive).
-
-      Shrinks towards [origin] if specified, otherwise towards [0] (but always stays within the range).
-
-      Examples:
-      - [int_range ~origin:6 (-5) 15] will shrink towards [6]
-      - [int_range (-5) 15] will shrink towards [0]
-      - [int_range 8 20] will shrink towards [8] (closest to [0] within range)
-      - [int_range (-20) (-8)] will shrink towards [-8] (closest to [0] within range)
-
-      @raise Invalid_argument if any of the following holds:
-      - [low > high]
-      - [origin < low]
-      - [origin > high]
-  *)
-
-  val (--) : int -> int -> int t
-  (** [a -- b] is an alias for [int_range a b]. See {!int_range} for more information.
-  *)
 
   val float_bound_inclusive : ?origin : float -> float -> float t
   (** [float_bound_inclusive ?origin bound] returns a random floating-point number between [0.] and
@@ -533,16 +575,6 @@ module Gen : sig
 
       @since 0.6 *)
 
-  val int_pos_corners : int list
-  (** Non-negative corner cases for int.
-
-      @since 0.6 *)
-
-  val int_corners : int list
-  (** All corner cases for int.
-
-      @since 0.6 *)
-
   (** {3 Lists, arrays and options} *)
 
   val list : 'a t -> 'a list t
@@ -552,7 +584,7 @@ module Gen : sig
   *)
 
   val small_list : 'a t -> 'a list t
-  (** Generates lists of small size (see {!small_nat}).
+  (** Generates lists of small size (see {!nat_small}).
 
       Shrinks on the number of elements first, then on elements.
 
@@ -583,7 +615,7 @@ module Gen : sig
   *)
 
   val small_array : 'a t -> 'a array t
-  (** Generates arrays of small size (see {!small_nat}).
+  (** Generates arrays of small size (see {!nat_small}).
 
       Shrinks on the number of elements first, then on elements.
 

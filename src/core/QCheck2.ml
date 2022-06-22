@@ -282,13 +282,27 @@ module Gen = struct
     else if origin > high then invalid_arg Format.(asprintf "%s: origin value %a is greater than high value %a" loc pp origin pp high)
     else origin
 
-  let small_nat : int t = fun st ->
-    let p = RS.float st 1. in
-    let x = if p < 0.75 then RS.int st 10 else RS.int st 100 in
-    let shrink a = fun () -> Shrink.int_towards 0 a () in
-    Tree.make_primitive shrink x
+  let bool : bool t = fun st ->
+    let false_gen = Tree.pure false in
+    if RS.bool st
+    then Tree.Tree (true, Seq.return false_gen)
+    else false_gen
 
-  (** Natural number generator *)
+  let pick_origin_within_range ~low ~high ~goal =
+    if low > goal then low
+    else if high < goal then high
+    else goal
+
+  (* corner cases *)
+
+  let graft_corners (gen : 'a t) (corners : 'a list) () : 'a t =
+    let cors = ref corners in fun st ->
+      match !cors with
+      | [] -> gen st
+      | e::l -> cors := l; Tree.pure e
+
+  (** {2 Integer generators} *)
+
   let nat : int t = fun st ->
     let p = RS.float st 1. in
     let x =
@@ -300,7 +314,13 @@ module Gen = struct
     let shrink a = fun () -> Shrink.int_towards 0 a () in
     Tree.make_primitive shrink x
 
-  let big_nat : int t = fun st ->
+  let nat_small : int t = fun st ->
+    let p = RS.float st 1. in
+    let x = if p < 0.75 then RS.int st 10 else RS.int st 100 in
+    let shrink a = fun () -> Shrink.int_towards 0 a () in
+    Tree.make_primitive shrink x
+
+  let nat_big : int t = fun st ->
     let p = RS.float st 1. in
     if p < 0.75
     then nat st
@@ -308,13 +328,132 @@ module Gen = struct
       let shrink a = fun () -> Shrink.int_towards 0 a () in
       Tree.make_primitive shrink (RS.int st 1_000_000)
 
-  let unit : unit t = fun _st -> Tree.pure ()
+  let nat_corners_list = [0; 1; 2; max_int]
 
-  let bool : bool t = fun st ->
-    let false_gen = Tree.pure false in
+  let nat_corners = graft_corners nat nat_corners_list
+
+  (* Uniform positive random int generator.
+
+     We can't use {!RS.int} because the upper bound must be positive and is excluded,
+     so {!Int.max_int} would never be reached. We have to manipulate bits directly.
+
+     Note that the leftmost bit is used for negative numbers, so it must be [0].
+
+     {!RS.bits} only generates 30 bits, which is exactly enough on
+     32-bits architectures (i.e. {!Sys.int_size} = 31, i.e. 30 bits for positive numbers)
+     but not on 64-bits ones.
+
+     That's why for 64-bits, 3 30-bits segments are generated and shifted to craft a
+     62-bits number (i.e. {!Sys.int_size} = 63). The leftmost segment is masked to keep
+     only the last 2 bits.
+
+     The current implementation hard-codes 30/32/62/64 values, but technically we should
+     rely on {!Sys.int_size} to find the number of bits.
+
+     Note that we could also further generalize this function to merge it with [random_binary_string].
+     Technically this function is a special case of [random_binary_string] where the size is
+     {!Sys.int_size}.
+  *)
+  let int_pos_raw : RS.t -> int =
+    if Sys.word_size = 32
+    then fun st -> RS.bits st
+    else (* word size = 64 *)
+      fun st ->
+      (* Technically we could write [3] but this is clearer *)
+      let two_bits_mask = 0b11 in
+      (* Top 2 bits *)
+      let left = ((RS.bits st land two_bits_mask) lsl 60) in
+      (* Middle 30 bits *)
+      let middle = (RS.bits st lsl 30) in
+      (* Bottom 30 bits *)
+      let right = RS.bits st in
+      left lor middle lor right
+
+  let int_pos ?(origin : int = 0) : int t = fun st ->
+    let x = int_pos_raw st in
+    let shrink a = fun () ->
+      let origin = parse_origin "Gen.int_pos" Format.pp_print_int ~origin ~low:0 ~high:max_int in
+      Shrink.int_towards origin a ()
+    in
+    Tree.make_primitive shrink x
+
+  let int : int t =
+    bool >>= fun b ->
+    if b
+    then int_pos ~origin:0 >|= (fun n -> - n - 1)
+    else int_pos ~origin:0
+
+  let int_neg : int t = nat >|= Int.neg
+
+  let int_small : int t = fun st ->
     if RS.bool st
-    then Tree.Tree (true, Seq.return false_gen)
-    else false_gen
+    then nat_small st
+    else (nat_small >|= Int.neg) st
+
+  let int_big = nat >|= (-) Int.max_int
+
+  let int_corners_list = nat_corners_list @ [-1; -2; min_int]
+
+  let int_corners () : int t = graft_corners nat int_corners_list ()
+
+  let int_pos_bound (n : int) : int t =
+    if n < 0 then invalid_arg "Gen.int_pos_bound";
+    fun st ->
+      if n <= (1 lsl 30) - 2
+      then Tree.make_primitive (fun a () -> Shrink.int_towards 0 a ()) (RS.int st (n + 1))
+      else Tree.map (fun r -> r mod (n + 1)) (int_pos st)
+
+  (** To support ranges wider than [Int.max_int], the general idea is to find the center,
+      and generate a random half-difference number as well as whether we add or
+      subtract that number from the center. *)
+  let int_range ?(origin : int option) (low : int) (high : int) : int t =
+    if high < low then invalid_arg "Gen.int_range: high < low";
+    fun st ->
+      let Tree.Tree(n, _shrinks) = if low >= 0 || high < 0 then (
+          (* range smaller than max_int *)
+          Tree.map (fun n -> low + n) (int_pos_bound (high - low) st)
+        ) else (
+          (* range potentially bigger than max_int: we split on 0 and
+             choose the interval with regard to their size ratio *)
+          let f_low = float_of_int low in
+          let f_high = float_of_int high in
+          let ratio = (-.f_low) /. (1. +. f_high -. f_low) in
+          if RS.float st 1. <= ratio
+          then Tree.map (fun n -> -n - 1) (int_pos_bound (- (low + 1)) st)
+          else int_pos_bound high st
+        ) in
+      let shrink a = fun () ->
+        let origin = match origin with
+          | None -> pick_origin_within_range ~low ~high ~goal:0
+          | Some origin ->
+         if origin < low
+         then invalid_arg "Gen.int_range: origin < low"
+         else if origin > high then invalid_arg "Gen.int_range: origin > high"
+         else origin
+        in
+        Shrink.int_towards origin a ()
+      in
+      Tree.make_primitive shrink n
+
+  let (--) low high = int_range ?origin:None low high
+
+  (** {2 Deprecated integer generators} *)
+
+  let small_nat = nat_small
+
+  let big_nat = nat_big
+  
+  let neg_int = int_neg
+
+  let small_signed_int = int_small
+
+  let small_int_corners = nat_corners
+
+  let pint = int_pos
+
+  let int_bound = int_pos_bound
+
+  let unit : unit t = fun _st -> Tree.pure ()
 
   let float : float t = fun st ->
     let x = exp (RS.float st 15. *. (if RS.bool st then 1. else -1.))
@@ -352,11 +491,6 @@ module Gen = struct
       let x = RS.float st bound in
       Tree.make_primitive shrink x
 
-  let pick_origin_within_range ~low ~high ~goal =
-    if low > goal then low
-    else if high < goal then high
-    else goal
-
   let float_range ?(origin : float option) (low : float) (high : float) : float t =
     if high < low then invalid_arg "Gen.float_range: high < low"
     else if high -. low > max_float then invalid_arg "Gen.float_range: high -. low > max_float";
@@ -369,8 +503,6 @@ module Gen = struct
 
   let (--.) low high = float_range ?origin:None low high
 
-  let neg_int : int t = nat >|= Int.neg
-
   (** [option gen] shrinks towards [None] then towards shrinks of [gen]. *)
   let option ?(ratio : float = 0.85) (gen : 'a t) : 'a option t = fun st ->
     let p = RS.float st 1. in
@@ -380,51 +512,6 @@ module Gen = struct
 
   (** [opt] is an alias of {!val:option} for backward compatibility. *)
   let opt = option
-
-  (* Uniform positive random int generator.
-
-     We can't use {!RS.int} because the upper bound must be positive and is excluded,
-     so {!Int.max_int} would never be reached. We have to manipulate bits directly.
-
-     Note that the leftmost bit is used for negative numbers, so it must be [0].
-
-     {!RS.bits} only generates 30 bits, which is exactly enough on
-     32-bits architectures (i.e. {!Sys.int_size} = 31, i.e. 30 bits for positive numbers)
-     but not on 64-bits ones.
-
-     That's why for 64-bits, 3 30-bits segments are generated and shifted to craft a
-     62-bits number (i.e. {!Sys.int_size} = 63). The leftmost segment is masked to keep
-     only the last 2 bits.
-
-     The current implementation hard-codes 30/32/62/64 values, but technically we should
-     rely on {!Sys.int_size} to find the number of bits.
-
-     Note that we could also further generalize this function to merge it with [random_binary_string].
-     Technically this function is a special case of [random_binary_string] where the size is
-     {!Sys.int_size}.
-  *)
-  let pint_raw : RS.t -> int =
-    if Sys.word_size = 32
-    then fun st -> RS.bits st
-    else (* word size = 64 *)
-      fun st ->
-      (* Technically we could write [3] but this is clearer *)
-      let two_bits_mask = 0b11 in
-      (* Top 2 bits *)
-      let left = ((RS.bits st land two_bits_mask) lsl 60) in
-      (* Middle 30 bits *)
-      let middle = (RS.bits st lsl 30) in
-      (* Bottom 30 bits *)
-      let right = RS.bits st in
-      left lor middle lor right
-
-  let pint ?(origin : int = 0) : int t = fun st ->
-    let x = pint_raw st in
-    let shrink a = fun () ->
-      let origin = parse_origin "Gen.pint" Format.pp_print_int ~origin ~low:0 ~high:max_int in
-      Shrink.int_towards origin a ()
-    in
-    Tree.make_primitive shrink x
 
   let number_towards = Shrink.number_towards
 
@@ -436,53 +523,6 @@ module Gen = struct
 
   let float_towards = Shrink.float_towards
 
-  let int : int t =
-    bool >>= fun b ->
-    if b
-    then pint ~origin:0 >|= (fun n -> - n - 1)
-    else pint ~origin:0
-
-  let int_bound (n : int) : int t =
-    if n < 0 then invalid_arg "Gen.int_bound";
-    fun st ->
-      if n <= (1 lsl 30) - 2
-      then Tree.make_primitive (fun a () -> Shrink.int_towards 0 a ()) (RS.int st (n + 1))
-      else Tree.map (fun r -> r mod (n + 1)) (pint st)
-
-  (** To support ranges wider than [Int.max_int], the general idea is to find the center,
-      and generate a random half-difference number as well as whether we add or
-      subtract that number from the center. *)
-  let int_range ?(origin : int option) (low : int) (high : int) : int t =
-    if high < low then invalid_arg "Gen.int_range: high < low";
-    fun st ->
-      let Tree.Tree(n, _shrinks) = if low >= 0 || high < 0 then (
-          (* range smaller than max_int *)
-          Tree.map (fun n -> low + n) (int_bound (high - low) st)
-        ) else (
-          (* range potentially bigger than max_int: we split on 0 and
-             choose the interval with regard to their size ratio *)
-          let f_low = float_of_int low in
-          let f_high = float_of_int high in
-          let ratio = (-.f_low) /. (1. +. f_high -. f_low) in
-          if RS.float st 1. <= ratio
-          then Tree.map (fun n -> -n - 1) (int_bound (- (low + 1)) st)
-          else int_bound high st
-        ) in
-      let shrink a = fun () ->
-        let origin = match origin with
-          | None -> pick_origin_within_range ~low ~high ~goal:0
-          | Some origin ->
-         if origin < low
-         then invalid_arg "Gen.int_range: origin < low"
-         else if origin > high then invalid_arg "Gen.int_range: origin > high"
-         else origin
-        in
-        Shrink.int_towards origin a ()
-      in
-      Tree.make_primitive shrink n
-
-  let (--) low high = int_range ?origin:None low high
-
   let oneof (l : 'a t list) : 'a t =
     int_range 0 (List.length l - 1) >>= List.nth l
 
@@ -492,21 +532,12 @@ module Gen = struct
   let oneofa (a : 'a array) : 'a t =
     int_range 0 (Array.length a - 1) >|= Array.get a
 
-  (* NOTE: we keep this alias to not break code that uses [small_int]
-     for sizes of strings, arrays, etc. *)
-  let small_int = small_nat
-
-  let small_signed_int : int t = fun st ->
-    if RS.bool st
-    then small_nat st
-    else (small_nat >|= Int.neg) st
-
   (** Shrink towards the first element of the list *)
   let frequency (l : (int * 'a t) list) : 'a t =
     if l = [] then failwith "QCheck2.frequency called with an empty list";
     let sums = sum_int (List.map fst l) in
     if sums < 1 then failwith "QCheck2.frequency called with weight sum < 1";
-    int_bound (sums - 1)
+    int_pos_bound (sums - 1)
     >>= fun i ->
     let rec aux acc = function
       | ((x, g) :: xs) -> if i < acc + x then g else aux (acc + x) xs
@@ -704,26 +735,13 @@ module Gen = struct
 
   let string_printable = string_size ~gen:printable nat
 
-  let small_string ?gen st = string_size ?gen small_nat st
+  let small_string ?gen st = string_size ?gen nat_small st
 
-  let small_list gen = list_size small_nat gen
+  let small_list gen = list_size nat_small gen
 
-  let small_array gen = array_size small_nat gen
+  let small_array gen = array_size nat_small gen
 
   let join (gen : 'a t t) : 'a t = gen >>= Fun.id
-
-  (* corner cases *)
-
-  let graft_corners (gen : 'a t) (corners : 'a list) () : 'a t =
-    let cors = ref corners in fun st ->
-      match !cors with [] -> gen st
-                     | e::l -> cors := l; Tree.pure e
-
-  let int_pos_corners = [0; 1; 2; max_int]
-
-  let int_corners = int_pos_corners @ [min_int]
-
-  let small_int_corners () : int t = graft_corners nat int_pos_corners ()
 
   (* sized, fix *)
 
