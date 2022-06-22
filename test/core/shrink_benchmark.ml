@@ -104,7 +104,9 @@ let rec merge_and_validate xs ys = match xs,ys with
   | t1::xs,t2::ys ->
     if get_name t1 = get_name t2
     then (t1,t2) :: merge_and_validate xs ys
-    else failwith "QCheck_tests.Shrink and QCheck2_tests.Shrink are not in the same order"
+    else
+      let msg = Printf.sprintf "Found \"%s\" and \"%s\". Are QCheck_tests.Shrink and QCheck2_tests.Shrink not in the same order?" (get_name t1) (get_name t2) in
+      failwith msg
 
 let seeds = [1234;(*4321;*)8743;(*9876;*)6789;
              (*2143*) (* ouch: seed 2143 causes test "lists equal to duplication" to segfault *)
