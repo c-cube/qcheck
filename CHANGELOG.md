@@ -28,11 +28,15 @@
 
 - add a shrinker performance benchmark [#177](https://github.com/c-cube/qcheck/pull/177)
 
+- fix distribution of `QCheck2.printable` which would omit certain characters
+
 - shrinker changes
   - recursive list shrinker with better complexity
   - string shrinker reuses improved list shrinker and adds char shrinking
   - function shrinker now shrinks default entry first and benefits from list shrinker improvements
   - replacing the linear-time char shrinker with a faster one reusing the bisecting int shrinker algorithm
+  - add `Shrink.char_numeral` and `Shrink.char_printable`
+  - add shrinking for `char arbitrary`s `char`, `printable_char`, and `numeral_char`
 
 - documentation updates:
   - clarify upper bound inclusion in `Gen.int_bound` and `Gen.int_range`
@@ -42,6 +46,8 @@
   - fix documented size distribution for `arbitrary` generators
     `string_gen`, `string`, `printable_string`, `numeral_string`, `list`, and `array`
   - fix exception documentation for `check_result`, `check_cell_exn`, and `check_exn`
+  - fix documentation for the distribution of `Gen.printable` and `printable_char`
+  - fix documentation for the shrinking behaviour of `QCheck2.printable`
 
 - add environment variable `QCHECK_LONG_FACTOR` similar to `QCHECK_COUNT` [#220](https://github.com/c-cube/qcheck/pull/220)
 
