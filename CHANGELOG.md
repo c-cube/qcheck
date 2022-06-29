@@ -2,6 +2,8 @@
 
 ## 0.19
 
+- use `Float.equal` for comparing `float`s in the `Observable` module underlying function generators.
+
 - add optional `debug_shrink` parameters in alcotest interface and
   expose default `debug_shrinking_choices` in test runners
 
