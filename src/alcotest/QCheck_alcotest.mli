@@ -25,5 +25,5 @@ val to_alcotest :
 
     @since 0.9
     @since 0.9 parameters [verbose], [long], [rand]
-    @since NEXT_VERSION parameters [colors], [debug_shrink], [debug_shrink_list]
+    @since 0.19 parameters [colors], [debug_shrink], [debug_shrink_list]
 *)

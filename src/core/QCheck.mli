@@ -693,11 +693,11 @@ module Shrink : sig
 
   val char_numeral : char t
   (** Shrinks towards ['0'].
-      @since NEXT_RELEASE *)
+      @since 0.19 *)
 
   val char_printable : char t
   (** Shrinks towards ['a'] like [!char]. The output is also a printable character.
-      @since NEXT_RELEASE *)
+      @since 0.19 *)
 
   val int : int t
 
