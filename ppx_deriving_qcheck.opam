@@ -15,6 +15,7 @@ depends: [
   "ppx_deriving" {>= "5.2.1"}
   "odoc" {with-doc}
   "alcotest" {with-test & >= "1.4.0" }
+  "qcheck-alcotest" {with-test & >= "0.17"}
 ]
 
 build: [
