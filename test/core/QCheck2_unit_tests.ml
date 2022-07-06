@@ -237,29 +237,44 @@ module Check_exn = struct
 
   let test_fail_always () =
     let name = "will-always-fail" in
-    let counterex_str = "0 (after 2 shrink steps)" in
-    let run_test () =
-      check_exn QCheck2.(Test.make ~name ~print:Print.int Gen.int (fun _ -> false)) in
-    Alcotest.check_raises "Fail" (Test.Test_fail (name,[counterex_str])) run_test
+    try
+      check_exn QCheck2.(Test.make ~name ~print:Print.int Gen.int (fun _ -> false));
+      Alcotest.failf "%s: Unexpected success" name
+    with      
+      (Test.Test_fail (n,[c_ex_str])) ->
+        Alcotest.(check string) (Printf.sprintf "%s: name" name) n name;
+        if not (Stdlib.String.starts_with ~prefix:"0" c_ex_str)
+        then
+          Alcotest.failf "%s: counter-example prefix. Received: \"%s\"" name c_ex_str
 
   let test_fail_random () =
     let name = "list is own reverse" in
-    let counterex_str = "[0; 1] (after 64 shrink steps)" in
-    let run_test () =
+    try
       check_exn
         QCheck2.(Test.make ~name ~print:Print.(list int)
-                           Gen.(list int) (fun l -> List.rev l = l)) in
-    Alcotest.check_raises "Fail" (Test.Test_fail (name,[counterex_str])) run_test
+                   Gen.(list int) (fun l -> List.rev l = l));
+      Alcotest.failf "%s: Unexpected success" name
+    with
+      (Test.Test_fail (n,[c_ex_str])) ->
+        Alcotest.(check string) (Printf.sprintf "%s: name" name) n name;
+        if not (Stdlib.String.starts_with ~prefix:"[0; 1]" c_ex_str)
+        then
+          Alcotest.failf "%s: counter-example prefix. Received \"%s\"" name c_ex_str
 
   exception MyError
 
   let test_error () =
     let name = "will-always-error" in
-    let counterex_str = "0 (after 2 shrink steps)" in
-    let run_test () =
-      let () = Printexc.record_backtrace false in (* for easier pattern-matching below *)
-      check_exn QCheck2.(Test.make ~name ~print:Print.int Gen.int (fun _ -> raise MyError)) in
-    Alcotest.check_raises "MyError" (Test.Test_error (name,counterex_str,MyError,"")) run_test
+    try
+      Printexc.record_backtrace false; (* for easier pattern-matching below *)
+      check_exn QCheck2.(Test.make ~name ~print:Print.int Gen.int (fun _ -> raise MyError));
+      Alcotest.failf "%s: Unexpected success" name
+    with
+      (Test.Test_error (n,c_ex_str,MyError,"")) ->
+        Alcotest.(check string) (Printf.sprintf "%s: name" name) n name;
+        if not (Stdlib.String.starts_with ~prefix:"0" c_ex_str)
+        then
+          Alcotest.failf "%s: counter-example prefix. Received \"%s\"" name c_ex_str
 
   let tests =
     ("Test.check_exn", Alcotest.[
