@@ -1,3 +1,6 @@
+(* -*- tuareg -*- *)
+
+let dune = Printf.sprintf {|
 
 (executables
   (names QCheck_runner_test)
@@ -6,16 +9,20 @@
 (rule
   (targets output.txt)
   (deps ./QCheck_runner_test.exe)
-  (enabled_if (= %{os_type} "Unix"))
+  (enabled_if (= %%{os_type} "Unix"))
   (action
     (with-accepted-exit-codes
       1
       (with-stdout-to
-        %{targets}
+        %%{targets}
         (run ./QCheck_runner_test.exe --no-colors -s 1234)))))
 
 (rule
   (alias runtest)
-  (enabled_if (= %{os_type} "Unix"))
+  (enabled_if (= %%{os_type} "Unix"))
   (package qcheck)
-  (action (diff output.txt.expected output.txt)))
+  (action (diff output.txt.expected.%i output.txt)))
+
+|} Sys.word_size
+
+let () = Jbuild_plugin.V1.send dune
