@@ -224,6 +224,14 @@ end
 
 module Check_exn = struct
 
+  (* String.starts_with was introduced in 4.13.
+     Include the below to support pre-4.13 OCaml. *)
+  let string_starts_with ~prefix s =
+    let open Stdlib in
+    let prefix_len = String.length prefix in
+    prefix_len <= String.length s
+    && prefix = String.sub s 0 prefix_len
+
   let check_exn = Test.check_exn
 
   let test_pass_trivial () =
@@ -243,7 +251,7 @@ module Check_exn = struct
     with      
       (Test.Test_fail (n,[c_ex_str])) ->
         Alcotest.(check string) (Printf.sprintf "%s: name" name) n name;
-        if not (Stdlib.String.starts_with ~prefix:"0" c_ex_str)
+        if not (string_starts_with ~prefix:"0" c_ex_str)
         then
           Alcotest.failf "%s: counter-example prefix. Received: \"%s\"" name c_ex_str
 
@@ -257,7 +265,7 @@ module Check_exn = struct
     with
       (Test.Test_fail (n,[c_ex_str])) ->
         Alcotest.(check string) (Printf.sprintf "%s: name" name) n name;
-        if not (Stdlib.String.starts_with ~prefix:"[0; 1]" c_ex_str)
+        if not (string_starts_with ~prefix:"[0; 1]" c_ex_str)
         then
           Alcotest.failf "%s: counter-example prefix. Received \"%s\"" name c_ex_str
 
@@ -272,7 +280,7 @@ module Check_exn = struct
     with
       (Test.Test_error (n,c_ex_str,MyError,"")) ->
         Alcotest.(check string) (Printf.sprintf "%s: name" name) n name;
-        if not (Stdlib.String.starts_with ~prefix:"0" c_ex_str)
+        if not (string_starts_with ~prefix:"0" c_ex_str)
         then
           Alcotest.failf "%s: counter-example prefix. Received \"%s\"" name c_ex_str
 
