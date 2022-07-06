@@ -53,6 +53,8 @@
 
 - add environment variable `QCHECK_LONG_FACTOR` similar to `QCHECK_COUNT` [#220](https://github.com/c-cube/qcheck/pull/220)
 
+- make test suite run on 32-bit architectures
+
 ## 0.18.1
 
 - fix `Gen.{nat,pos}_split{2,}`

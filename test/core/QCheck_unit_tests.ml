@@ -93,6 +93,13 @@ end
 
 module Check_exn = struct
 
+  (* String.starts_with was introduced in 4.13.
+     Include the below to support pre-4.13 OCaml. *)
+  let string_starts_with ~prefix s =
+    let prefix_len = String.length prefix in
+    prefix_len <= String.length s
+    && prefix = String.sub s 0 prefix_len
+
   let check_exn = Test.check_exn
 
   let test_pass_trivial () =
@@ -106,28 +113,43 @@ module Check_exn = struct
 
   let test_fail_always () =
     let name = "will-always-fail" in
-    let counterex_str = "0 (after 63 shrink steps)" in
-    let run_test () =
-      check_exn QCheck.(Test.make ~name int (fun _ -> false)) in
-    Alcotest.check_raises "Fail" (Test.Test_fail (name,[counterex_str])) run_test
+    try
+      check_exn QCheck.(Test.make ~name int (fun _ -> false));
+      Alcotest.failf "%s: Unexpected success" name
+    with
+      (Test.Test_fail (n,[c_ex_str])) ->
+        Alcotest.(check string) (Printf.sprintf "%s: name" name) n name;
+        if not (string_starts_with ~prefix:"0" c_ex_str)
+        then
+        Alcotest.failf "%s: counter-example prefix. Received \"%s\"" name c_ex_str
 
   let test_fail_random () =
     let name = "list is own reverse" in
-    let counterex_str = "[0; 1] (after 123 shrink steps)" in
-    let run_test () =
-      check_exn
-        QCheck.(Test.make ~name (list int) (fun l -> List.rev l = l)) in
-    Alcotest.check_raises "Fail" (Test.Test_fail (name,[counterex_str])) run_test
+    try
+      check_exn QCheck.(Test.make ~name (list int) (fun l -> List.rev l = l));
+      Alcotest.failf "%s: Unexpected success" name
+    with
+      (Test.Test_fail (n,[c_ex_str])) ->
+        Alcotest.(check string) (Printf.sprintf "%s: name" name) n name;
+        if not (string_starts_with ~prefix:"[0; 1]" c_ex_str
+                || string_starts_with ~prefix:"[0; -1]" c_ex_str)
+        then
+          Alcotest.failf "%s: counter-example prefix. Received \"%s\"" name c_ex_str
 
   exception MyError
 
   let test_error () =
     let name = "will-always-error" in
-    let counterex_str = "0 (after 63 shrink steps)" in
-    let run_test () =
-      let () = Printexc.record_backtrace false in (* for easier pattern-matching below *)
-      check_exn QCheck.(Test.make ~name int (fun _ -> raise MyError)) in
-    Alcotest.check_raises "MyError" (Test.Test_error (name,counterex_str,MyError,"")) run_test
+    try
+      Printexc.record_backtrace false; (* for easier pattern-matching below *)
+      check_exn QCheck.(Test.make ~name int (fun _ -> raise MyError));
+      Alcotest.failf "%s: Unexpected success" name
+    with
+      (Test.Test_error (n,c_ex_str,MyError,"")) ->
+        Alcotest.(check string) (Printf.sprintf "%s: name" name) n name;
+        if not (string_starts_with ~prefix:"0" c_ex_str)
+        then
+          Alcotest.failf "%s: counter-example prefix. Received \"%s\"" name c_ex_str
 
   let tests =
     ("Test.check_exn", Alcotest.[
