@@ -492,12 +492,6 @@ Test lists shorter than 4332 failed (4022 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test lists equal to duplication failed (4 shrink steps):
-
-[0]
-
---- Failure --------------------------------------------------------------------
-
 Test lists have unique elems failed (11 shrink steps):
 
 [0; 0; 0; 0; 0]
@@ -1262,7 +1256,7 @@ stats dist:
     966367653.. 1073741823: #################                                               189
 ================================================================================
 1 warning(s)
-failure (60 tests failed, 3 tests errored, ran 131 tests)
+failure (59 tests failed, 3 tests errored, ran 130 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
