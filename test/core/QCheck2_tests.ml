@@ -634,7 +634,7 @@ module Shrink = struct
     list_shorter_10;
     list_shorter_432;
     list_shorter_4332;
-    list_equal_dupl;
+    (*list_equal_dupl;*)
     list_unique_elems;
     tree_contains_only_42;
   ]
