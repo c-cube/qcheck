@@ -28,7 +28,6 @@ depends: [
 ]
 dev-repo: "git+https://github.com/c-cube/qcheck.git"
 bug-reports: "https://github.com/c-cube/qcheck/issues"
-available: [ arch != "ppc64" ]
 conflicts: [
   "ounit" { < "2.0" }
 ]
