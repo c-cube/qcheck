@@ -755,6 +755,8 @@ module Gen = struct
       ~gen:(fun st -> gen st |> Tree.root)
       ~shrink
   
+  let no_shrink (gen: 'a t) : 'a t = set_shrink (fun _ -> Seq.empty) gen
+
   let (let+) = (>|=)
 
   let (and+) = pair
