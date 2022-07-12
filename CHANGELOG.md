@@ -1,7 +1,10 @@
 # Changes
 
+## 0.20
+
 - add an optional argument with conservative default to `Shrink.string`
 - fix shrinkers in `QCheck.{printable_string,printable_string_of_size,small_printable_string,numeral_string,numeral_string_of_size}` [#257](https://github.com/c-cube/qcheck/issues/257)
+- add `QCheck2.Gen.set_shrink` to modify the generator's shrinker
 
 ## 0.19.1
 
