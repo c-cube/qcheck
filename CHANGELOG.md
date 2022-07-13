@@ -1,5 +1,11 @@
 # Changes
 
+## 0.19.1
+
+- fix: allow `~count` in `Test.make` to be 0
+
+- fix: allow `~long_factor` in `Test.make` to be 0
+
 ## 0.19
 
 - use `Float.equal` for comparing `float`s in the `Observable` module underlying function generators.

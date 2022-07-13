@@ -1424,17 +1424,17 @@ module Test = struct
 
   let default_long_factor = 1
 
-  let global_positive_var default env_var var =
+  let global_nonnegative_var default env_var var =
     let var = match (var, Sys.getenv_opt env_var) with
     | (Some x, _) -> x
     | (_, Some x) -> int_of_string x
     | (None, None) -> default
   in
-  if var <= 0 then invalid_arg (env_var ^ " must be > 0 but value is " ^ string_of_int var) else var
+  if var < 0 then invalid_arg (env_var ^ " must be >= 0 but value is " ^ string_of_int var) else var
 
-  let global_count count = global_positive_var default_count "QCHECK_COUNT" count
+  let global_count count = global_nonnegative_var default_count "QCHECK_COUNT" count
 
-  let global_long_factor long_factor = global_positive_var default_long_factor "QCHECK_LONG_FACTOR" long_factor
+  let global_long_factor long_factor = global_nonnegative_var default_long_factor "QCHECK_LONG_FACTOR" long_factor
 
   let fresh_name =
     let r = ref 0 in

@@ -179,11 +179,23 @@ module TestCount = struct
     let actual = QCheck.Test.get_count cell in
     Alcotest.(check int) "default count is from QCHECK_COUNT" 5 actual
 
+  let test_count_0 () = test_count_n ~count:0 0
+
+  let test_count_negative_fail () =
+    try
+      let _ = test_count_n ~count:(-1) (-1) in
+      Alcotest.fail "A negative count in a test should fail"
+    with
+    | _ -> ()
+
   let tests =
     ("Test.make ~count", Alcotest.[
          test_case "make with custom count" `Quick test_count_10;
          test_case "make with default count" `Quick test_count_default;
          test_case "make with env count" `Quick test_count_env;
+         test_case "make with 0 count" `Quick test_count_0;
+         test_case "make with negative count should fail"
+           `Quick test_count_negative_fail;
        ])
 end
 
@@ -205,12 +217,24 @@ module TestLongFactor = struct
     let actual = QCheck.Test.get_long_factor cell in
     Alcotest.(check int) "default long factor is from QCHECK_LONG_FACTOR" 5 actual
 
-  let tests =
-    ("Test.make ~long_factor", Alcotest.[
-         test_case "make with custom long_factor" `Quick test_long_factor_10;
-         test_case "make with default long_factor" `Quick test_long_factor_default;
-         test_case "make with env long_factor" `Quick test_long_factor_env;
-       ])
+   let test_long_factor_0 () = test_long_factor_n ~long_factor:0 0
+  
+   let test_long_factor_negative_fail () =
+     try
+       let _ = test_long_factor_n ~long_factor:(-1) (-1) in
+       Alcotest.fail "A negative long factor in a test should fail"
+     with
+     | _ -> ()
+  
+   let tests =
+     ("Test.make ~long_factor", Alcotest.[
+          test_case "make with custom long_factor" `Quick test_long_factor_10;
+          test_case "make with default long_factor" `Quick test_long_factor_default;
+          test_case "make with env long_factor" `Quick test_long_factor_env;
+          test_case "make with 0 long_factor" `Quick test_long_factor_0;
+          test_case "make with negative long_factor should fail"
+            `Quick test_long_factor_negative_fail;
+     ])
 end
 
 let () =
