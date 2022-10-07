@@ -770,9 +770,9 @@ module Shrink = struct
     | None -> ()
     | Some shrink -> list_elems shrink l yield
 
-  let string s yield =
+  let string ?(shrink = char) s yield =
     let buf = Buffer.create 42 in
-    list ~shrink:char
+    list ~shrink
       (string_fold_right (fun c acc -> c::acc) s [])
       (fun cs ->
          List.iter (fun c -> Buffer.add_char buf c) cs;
@@ -1120,12 +1120,25 @@ let string = string_gen Gen.char
 let string_of_size size = string_gen_of_size size Gen.char
 let small_string = string_gen_of_size Gen.small_nat Gen.char
 
-let printable_string = string_gen Gen.printable
-let printable_string_of_size size = string_gen_of_size size Gen.printable
-let small_printable_string = string_gen_of_size Gen.small_nat Gen.printable
+let printable_string =
+  make ~shrink:(Shrink.string ~shrink:Shrink.char_printable) ~small:String.length
+    ~print:(sprintf "%S") (Gen.string ~gen:Gen.printable)
 
-let numeral_string = string_gen Gen.numeral
-let numeral_string_of_size size = string_gen_of_size size Gen.numeral
+let printable_string_of_size size =
+  make ~shrink:(Shrink.string ~shrink:Shrink.char_printable) ~small:String.length
+    ~print:(sprintf "%S") (Gen.string_size ~gen:Gen.printable size)
+
+let small_printable_string =
+  make ~shrink:(Shrink.string ~shrink:Shrink.char_printable) ~small:String.length
+    ~print:(sprintf "%S") (Gen.string_size ~gen:Gen.printable Gen.small_nat)
+
+let numeral_string =
+  make ~shrink:(Shrink.string ~shrink:Shrink.char_numeral) ~small:String.length
+    ~print:(sprintf "%S") (Gen.string ~gen:Gen.numeral)
+
+let numeral_string_of_size size =
+  make ~shrink:(Shrink.string ~shrink:Shrink.char_numeral) ~small:String.length
+    ~print:(sprintf "%S") (Gen.string_size ~gen:Gen.numeral size)
 
 let list_sum_ f l = List.fold_left (fun acc x-> f x+acc) 0 l
 

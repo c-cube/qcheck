@@ -709,7 +709,7 @@ module Shrink : sig
 
   val option : 'a t -> 'a option t
 
-  val string : string t
+  val string : ?shrink:(char t) -> string t
 
   val filter : ('a -> bool) -> 'a t -> 'a t
   (** [filter f shrink] shrinks values the same as [shrink], but
