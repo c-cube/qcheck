@@ -60,7 +60,14 @@ let set_seed_ ~colors s =
 (* time of last printed message. Useful for rate limiting in verbose mode *)
 let last_msg = ref 0.
 
-let time_between_msg = ref 0.1
+let time_between_msg =
+  let env_var = "QCHECK_MSG_INTERVAL" in
+  let default_interval = 0.1 in
+  let interval = match Sys.getenv_opt env_var with
+    | None -> default_interval
+    | Some f -> float_of_string f in
+  if interval < 0. then invalid_arg (env_var ^ " must be >= 0 but value is " ^ string_of_float interval);
+  ref interval
 
 let get_time_between_msg () = !time_between_msg
 
