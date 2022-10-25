@@ -373,6 +373,13 @@ module Gen : sig
       keep it and wait for users feedback (hence deprecation to raise attention).
   *)
 
+  val set_shrink : ('a -> 'a Seq.t) -> 'a t -> 'a t
+  (** [set_shrink shrink gen] sets the shrinker to [shrink] for [gen]. *)
+
+  val no_shrink : 'a t -> 'a t
+  (** [no_shrink gen] returns a generator using [gen] but with shrinking
+      disabled *)
+
   (** {3 Ranges} *)
 
   val int_bound : int -> int t

@@ -750,6 +750,13 @@ module Gen = struct
   let add_shrink_invariant (p : 'a -> bool) (gen : 'a t) : 'a t =
     fun st -> gen st |> Tree.add_shrink_invariant p
 
+  let set_shrink shrink gen =
+    make_primitive
+      ~gen:(fun st -> gen st |> Tree.root)
+      ~shrink
+  
+  let no_shrink (gen: 'a t) : 'a t = set_shrink (fun _ -> Seq.empty) gen
+
   let (let+) = (>|=)
 
   let (and+) = pair

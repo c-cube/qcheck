@@ -588,6 +588,11 @@ module Shrink = struct
       IntTree.gen_tree
       (fun tree -> IntTree.contains_only_n tree 42)
 
+  let test_gen_no_shrink =
+    Test.make ~name:"sum list = 0" ~print:Print.(list int)
+      Gen.(no_shrink @@ list small_int)
+      (fun xs -> List.fold_left (+) 0 xs = 0)
+
   let tests = [
     (*test_fac_issue59;*)
     big_bound_issue59;
@@ -637,6 +642,7 @@ module Shrink = struct
     (*list_equal_dupl;*)
     list_unique_elems;
     tree_contains_only_42;
+    test_gen_no_shrink;
   ]
 end
 
