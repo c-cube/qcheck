@@ -1303,7 +1303,7 @@ val small_string : string arbitrary
 (** Same as {!string} but with a small length (ie {!Gen.small_nat} ). *)
 
 val string_small : string arbitrary
-(** Same as {!string} but with a small length (ie {!Gen.small_nat} ).
+(** Synonym to [small_string] added for convenience.
     @since NEXT_RELEASE *)
 
 val small_list : 'a arbitrary -> 'a list arbitrary
@@ -1327,15 +1327,14 @@ val printable_string : string arbitrary
     and distribution of characters of [printable_char]. *)
 
 val string_printable : string arbitrary
-(** Generates strings with a distribution of length of {!Gen.nat}
-    and distribution of characters of [printable_char].
+(** Synonym to [printable_string] added for convenience.
     @since NEXT_RELEASE *)
 
 val printable_string_of_size : int Gen.t -> string arbitrary
 (** Generates strings with distribution of characters of [printable_char]. *)
 
 val string_printable_of_size : int Gen.t -> string arbitrary
-(** Generates strings with distribution of characters of [printable_char].
+(** Synonym to [printable_string_of_size] added for convenience.
     @since NEXT_RELEASE *)
 
 val small_printable_string : string arbitrary
@@ -1343,8 +1342,7 @@ val small_printable_string : string arbitrary
     and distribution of characters of [printable_char]. *)
 
 val string_small_printable : string arbitrary
-(** Generates strings with a length of [small_nat]
-    and distribution of characters of [printable_char].
+(** Synonym to [small_printable_string] added for convenience.
     @since NEXT_RELEASE *)
 
 val numeral_string : string arbitrary
@@ -1352,15 +1350,14 @@ val numeral_string : string arbitrary
     and distribution of characters of [numeral_char]. *)
 
 val string_numeral : string arbitrary
-(** Generates strings with a distribution of length of {!Gen.nat}
-    and distribution of characters of [numeral_char].
+(** Synonym to [numeral_string] added for convenience.
     @since NEXT_RELEASE *)
 
 val numeral_string_of_size : int Gen.t -> string arbitrary
 (** Generates strings with a distribution of characters of [numeral_char]. *)
 
 val string_numeral_of_size : int Gen.t -> string arbitrary
-(** Generates strings with a distribution of characters of [numeral_char].
+(** Synonym to [numeral_string_of_size] added for convenience.
     @since NEXT_RELEASE *)
 
 val list : 'a arbitrary -> 'a list arbitrary
