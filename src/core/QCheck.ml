@@ -790,7 +790,7 @@ module Shrink = struct
          Buffer.clear buf;
          yield s)
 
-  let bytes b = Iter.map Bytes.of_string (string (Bytes.to_string b))
+  let bytes ?(shrink = char) b = Iter.map Bytes.of_string (string ~shrink (Bytes.to_string b))
 
   let pair a b (x,y) yield =
     a x (fun x' -> yield (x',y));
@@ -1134,7 +1134,9 @@ let bytes_gen gen =
 let bytes = bytes_gen Gen.char
 let bytes_of_size size = bytes_gen_of_size size Gen.char
 let bytes_small = bytes_gen_of_size Gen.small_nat Gen.char
-let bytes_printable = bytes_gen Gen.printable
+let bytes_printable =
+  make ~shrink:(Shrink.bytes ~shrink:Shrink.char_printable) ~small:Bytes.length
+    ~print:(Print.bytes) (Gen.bytes ~gen:Gen.printable)
 
 let string_gen_of_size size gen =
   make ~shrink:Shrink.string ~small:String.length

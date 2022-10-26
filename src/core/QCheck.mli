@@ -736,7 +736,7 @@ module Shrink : sig
 
   val option : 'a t -> 'a option t
 
-  val bytes : bytes t
+  val bytes : ?shrink:(char t) -> bytes t
   (** @since NEXT_RELEASE *)
 
   val string : ?shrink:(char t) -> string t
