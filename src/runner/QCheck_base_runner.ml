@@ -65,7 +65,10 @@ let time_between_msg =
   let default_interval = 0.1 in
   let interval = match Sys.getenv_opt env_var with
     | None -> default_interval
-    | Some f -> float_of_string f in
+    | Some f ->
+      match float_of_string_opt f with
+      | None -> invalid_arg (env_var ^ " must be a float")
+      | Some i -> i in
   if interval < 0. then invalid_arg (env_var ^ " must be >= 0 but value is " ^ string_of_float interval);
   ref interval
 
