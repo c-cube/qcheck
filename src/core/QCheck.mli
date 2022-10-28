@@ -1289,6 +1289,15 @@ val bytes_small : bytes arbitrary
 (** Same as {!bytes} but with a small length (ie {!Gen.small_nat} ).
     @since NEXT_RELEASE *)
 
+val bytes_of_size : int Gen.t -> bytes arbitrary
+(** Generates bytes with distribution of characters of [char].
+    @since NEXT_RELEASE *)
+
+val bytes_printable : bytes arbitrary
+(** Generates bytes with a distribution of length of {!Gen.nat}
+    and distribution of characters of [printable_char].
+    @since NEXT_RELEASE *)
+
 val string_gen_of_size : int Gen.t -> char Gen.t -> string arbitrary
 (** Builds a string generator from a (non-negative) size generator and a character generator. *)
 
@@ -1309,15 +1318,6 @@ val string_small : string arbitrary
 val small_list : 'a arbitrary -> 'a list arbitrary
 (** Generates lists of small size (see {!Gen.small_nat}).
     @since 0.5.3 *)
-
-val bytes_of_size : int Gen.t -> bytes arbitrary
-(** Generates bytes with distribution of characters of [char].
-    @since NEXT_RELEASE *)
-
-val bytes_printable : bytes arbitrary
-(** Generates bytes with a distribution of length of {!Gen.nat}
-    and distribution of characters of [printable_char].
-    @since NEXT_RELEASE *)
 
 val string_of_size : int Gen.t -> string arbitrary
 (** Generates strings with distribution of characters of [char]. *)

@@ -998,7 +998,7 @@ module Observable = struct
 
     let bool : bool t = (=)
 
-    let float : float t = (=)
+    let float = Float.equal
 
     let unit () () = true
 
