@@ -190,7 +190,7 @@ module Raw = struct
           ; "--debug-shrink-list", Arg.String set_debug_shrink_list, " filter test to debug shrinking on"
           ]
       ) in
-    Arg.parse_argv argv options (fun _ ->()) "run qtest suite";
+    Arg.parse_argv argv options (fun _ ->()) "run QCheck test suite";
     let cli_rand = setup_random_state_ ~colors:!colors () in
     { cli_verbose=verbose(); cli_long_tests=long_tests(); cli_rand;
       cli_print_list= !print_list; cli_slow_test= !slow;
