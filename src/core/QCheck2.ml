@@ -704,7 +704,9 @@ module Gen = struct
 
   let bytes_printable = bytes_size ~gen:printable nat
 
-  let bytes_small ~gen st = bytes_size ~gen small_nat st
+  let bytes_small st = bytes_size small_nat st
+
+  let bytes_small_of gen st = bytes_size ~gen small_nat st
 
   let string : string t = string_size nat
 
@@ -712,8 +714,11 @@ module Gen = struct
 
   let string_printable = string_size ~gen:printable nat
 
-  let string_small ~gen st = string_size ~gen small_nat st
-  let small_string ~gen = string_small ~gen
+  let string_small st = string_size small_nat st
+
+  let string_small_of gen st = string_size ~gen small_nat st
+
+  let small_string ~gen = string_small_of gen
 
   let small_list gen = list_size small_nat gen
 

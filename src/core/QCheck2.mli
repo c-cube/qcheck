@@ -321,13 +321,19 @@ module Gen : sig
 
       @since NEXT_RELEASE *)
 
-  val bytes_small : gen:char t -> bytes t
-  (** Builds a bytes generator using the given character generator, length is {!small_nat}.
+  val bytes_small : bytes t
+  (** Builds a bytes generator using the {!char} character generator, length is {!small_nat}.
 
       Shrinks on the number of characters first, then on the characters.
 
       @since NEXT_RELEASE *)
 
+  val bytes_small_of : char t -> bytes t
+  (** Builds a bytes generator using the given character generator, length is {!small_nat}.
+
+      Shrinks on the number of characters first, then on the characters.
+
+      @since NEXT_RELEASE *)
 
   val string_size : ?gen:char t -> int t -> string t
   (** Builds a string generator from a (non-negative) size generator.
@@ -359,7 +365,15 @@ module Gen : sig
 
       @since 0.11 *)
 
-  val string_small : gen:char t -> string t
+  val string_small : string t
+  (** Builds a string generator using the {!char} characher generator, length is {!small_nat}.
+
+      Shrinks on the number of characters first, then on the characters.
+
+      @since NEXT_RELEASE
+  *)
+
+  val string_small_of : char t -> string t
   (** Builds a string generator using the given characher generator, length is {!small_nat}.
 
       Shrinks on the number of characters first, then on the characters.
