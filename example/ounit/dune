@@ -1,5 +1,11 @@
 (* -*- tuareg -*- *)
 
+let suffix =
+  try
+    let major_version = List.hd (String.split_on_char '.' Sys.ocaml_version) in
+    if int_of_string major_version < 5 then string_of_int Sys.word_size else "ocaml5"
+  with _ -> failwith ("Unknown OCaml version format: " ^ Sys.ocaml_version)
+
 let dune = Printf.sprintf {|
 
 (executables
@@ -21,8 +27,8 @@ let dune = Printf.sprintf {|
   (alias runtest)
   (package qcheck-ounit)
   (enabled_if (= %%{os_type} "Unix"))
-  (action (diff output.txt.expected.%i output.txt)))
+  (action (diff output.txt.expected.%s output.txt)))
 
-|} Sys.word_size
+|} suffix
 
 let () = Jbuild_plugin.V1.send dune
