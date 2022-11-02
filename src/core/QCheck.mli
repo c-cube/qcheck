@@ -1300,6 +1300,10 @@ val bytes_small : bytes arbitrary
 (** Same as {!bytes} but with a small length (ie {!Gen.small_nat} ).
     @since NEXT_RELEASE *)
 
+val bytes_small_of : char Gen.t -> bytes arbitrary
+(** Same as {!bytes_of} but with a small length (ie {!Gen.small_nat} ).
+    @since NEXT_RELEASE *)
+
 val bytes_of_size : int Gen.t -> bytes arbitrary
 (** Generates bytes with distribution of characters of [char].
     @since NEXT_RELEASE *)
@@ -1328,6 +1332,10 @@ val small_string : string arbitrary
 
 val string_small : string arbitrary
 (** Synonym to [small_string] added for convenience.
+    @since NEXT_RELEASE *)
+
+val string_small_of : char Gen.t -> string arbitrary
+(** Same as {!string_of} but with a small length (ie {!Gen.small_nat} ).
     @since NEXT_RELEASE *)
 
 val small_list : 'a arbitrary -> 'a list arbitrary

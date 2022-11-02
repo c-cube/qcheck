@@ -1137,6 +1137,7 @@ let bytes_of gen =
 let bytes = bytes_of Gen.char
 let bytes_of_size size = bytes_gen_of_size size Gen.char
 let bytes_small = bytes_gen_of_size Gen.small_nat Gen.char
+let bytes_small_of gen = bytes_gen_of_size Gen.small_nat gen
 let bytes_printable =
   make ~shrink:(Shrink.bytes ~shrink:Shrink.char_printable) ~small:Bytes.length
     ~print:(Print.bytes) (Gen.bytes ~gen:Gen.printable)
@@ -1151,6 +1152,7 @@ let string_of gen =
 let string = string_of Gen.char
 let string_of_size size = string_gen_of_size size Gen.char
 let string_small = string_gen_of_size Gen.small_nat Gen.char
+let string_small_of gen = string_gen_of_size Gen.small_nat gen
 let small_string = string_small
 let string_gen = string_of
 
