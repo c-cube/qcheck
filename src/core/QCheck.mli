@@ -417,9 +417,12 @@ module Gen : sig
   (** Generator using the {!printable} character generator.
       @since NEXT_RELEASE *)
 
-  val bytes_small : ?gen:char t -> bytes t
-  (** Builds a bytes generator, length is {!small_nat}
-      Accepts an optional character generator (the default is {!char}).
+  val bytes_small : bytes t
+  (** Builds a bytes generator using the {!char} character generator, length is {!small_nat}
+      @since NEXT_RELEASE *)
+
+  val bytes_small_of : char t -> bytes t
+  (** Builds a bytes generator using the given character generator, length is {!small_nat}.
       @since NEXT_RELEASE *)
 
   val string_size : ?gen:char t -> int t -> string t
@@ -449,6 +452,14 @@ module Gen : sig
   val small_string : ?gen:char t -> string t
   (** Builds a string generator, length is {!small_nat}
       Accepts an optional character generator (the default is {!char}). *)
+
+  val string_small : string t
+  (** Builds a string generator using the {!char} character generator, length is {!small_nat}
+      @since NEXT_RELEASE *)
+
+  val string_small_of : char t -> string t
+  (** Builds a string generator using the given character generator, length is {!small_nat}.
+      @since NEXT_RELEASE *)
 
   val small_list : 'a t -> 'a list t
   (** Generates lists of small size (see {!small_nat}).
