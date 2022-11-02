@@ -2,6 +2,7 @@
 
 ## 0.20
 
+- fix unknown option error message referring to `qtest`
 - add an optional argument with conservative default to `Shrink.string`
 - fix shrinkers in `QCheck.{printable_string,printable_string_of_size,small_printable_string,numeral_string,numeral_string_of_size}` [#257](https://github.com/c-cube/qcheck/issues/257)
 - add `QCheck2.Gen.set_shrink` to modify the generator's shrinker
