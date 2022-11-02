@@ -2,12 +2,14 @@
 
 ## 0.20
 
-- add `{QCheck,QCheck2}.Gen.{bytes_size,bytes,bytes_of,bytes_printable,bytes_small}`
-- add `QCheck2.Gen.string_small`
-- add `QCheck.{Print,Shrink,Observable}.bytes`
-- add `QCheck2.{Print,Shrink}.bytes`
-- add `QCheck.{bytes_gen_of_size,bytes_gen,bytes,bytes_small,bytes_of_size,bytes_printable}`
-- add `QCheck.{string_small,string_printable,string_printable_of_size,string_small_printable,string_numeral,string_numeral_of_size}`
+- add several new `bytes` combinators:
+  - `{QCheck,QCheck2}.Gen.{bytes_size,bytes,bytes_of,bytes_printable,bytes_small,bytes_small_of}`
+  - `QCheck.{Print,Shrink,Observable}.bytes`
+  - `QCheck2.{Print,Shrink}.bytes`
+  - `QCheck.{bytes_gen_of_size,bytes_of,bytes,bytes_small,bytes_of_size,bytes_printable}`
+- add new `string` combinators and aliases:
+  - `{QCheck,QCheck2}.Gen.{string_small,string_small_of}`
+  - `QCheck.{string_small,string_of,string_printable,string_printable_of_size,string_small_printable,string_numeral,string_numeral_of_size}`
 - `QCheck2.small_string` character generator argument is no more optional
 - add an optional argument with conservative default to `Shrink.string`
 - fix shrinkers in `QCheck.{printable_string,printable_string_of_size,small_printable_string,numeral_string,numeral_string_of_size}` [#257](https://github.com/c-cube/qcheck/issues/257)
