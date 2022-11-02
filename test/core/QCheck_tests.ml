@@ -201,6 +201,15 @@ module Generator = struct
     Test.make ~name:"nat has right range" ~count:1000
       (make ~print:Print.int Gen.nat) (fun n -> 0 <= n && n < 10000)
 
+  let bytes_test =
+    Test.make ~name:"bytes has right length and content" ~count:1000
+      bytes
+      (fun b ->
+        let len = Bytes.length b in
+        0 <= len && len < 10000
+        && Bytes.to_seq b |>
+             Seq.fold_left (fun acc c -> acc && '\000' <= c && c <= '\255') true)
+
   let string_test =
     Test.make ~name:"string has right length and content" ~count:1000
       string
@@ -389,6 +398,7 @@ module Generator = struct
     printable_test;
     numeral_test;
     nat_test;
+    bytes_test;
     string_test;
     pair_test;
     triple_test;
@@ -471,6 +481,26 @@ module Shrink = struct
   let numeral_is_never_less_5 =
     Test.make ~name:"printable never produces less than '5" ~count:1000
       numeral_char (fun c -> c >= '5')
+  let bytes_are_empty =
+    Test.make ~name:"bytes are empty" ~count:1000
+      bytes (fun b -> b = Bytes.empty)
+
+  let bytes_never_has_000_char =
+    Test.make ~name:"bytes never has a \\000 char" ~count:1000
+      bytes
+      (fun b -> Bytes.to_seq b |> Seq.fold_left (fun acc c -> acc && c <> '\000') true)
+
+   let bytes_never_has_255_char =
+    Test.make ~name:"bytes never has a \\255 char" ~count:1000
+      bytes
+      (fun s -> Bytes.to_seq s |> Seq.fold_left (fun acc c -> acc && c <> '\255') true)
+
+  let bytes_unique_chars =
+    Test.make ~name:"bytes have unique chars" ~count:1000
+      bytes
+      (fun s ->
+         let ch_list = Bytes.to_seq s |> List.of_seq in
+         List.length ch_list = List.length (List.sort_uniq Char.compare ch_list))
 
   let strings_are_empty =
     Test.make ~name:"strings are empty" ~count:1000
@@ -676,6 +706,10 @@ module Shrink = struct
     char_is_never_abcdef;
     printable_is_never_sign;
     numeral_is_never_less_5;
+    bytes_are_empty;
+    bytes_never_has_000_char;
+    bytes_never_has_255_char;
+    bytes_unique_chars;
     strings_are_empty;
     string_never_has_000_char;
     string_never_has_255_char;
@@ -842,6 +876,15 @@ module Stats = struct
       Test.make ~name:"numeral char code dist"   ~count:500_000 (add_stat ("char code", Char.code) numeral_char)   (fun _ -> true);
     ]
 
+  let bytes_len_tests =
+    let len = ("len",Bytes.length) in
+    [
+      Test.make ~name:"bytes_size len dist"      ~count:5_000 (add_stat len (bytes_of_size (Gen.int_range 5 10))) (fun _ -> true);
+      Test.make ~name:"bytes len dist"           ~count:5_000 (add_stat len bytes)                                (fun _ -> true);
+      Test.make ~name:"bytes_of len dist"        ~count:5_000 (add_stat len (bytes_gen (Gen.return 'a')))         (fun _ -> true);
+      Test.make ~name:"bytes_small len dist"     ~count:5_000 (add_stat len bytes_small)                          (fun _ -> true);
+    ]
+
   let string_len_tests =
     let len = ("len",String.length) in
     [
@@ -924,6 +967,7 @@ module Stats = struct
     @ char_dist_tests
     @ [tree_depth_test;
        range_subset_test;]
+    @ bytes_len_tests
     @ string_len_tests
     @ [pair_dist;
        triple_dist;
