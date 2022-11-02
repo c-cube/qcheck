@@ -1130,11 +1130,11 @@ let numeral_char =
 let bytes_gen_of_size size gen =
   make ~shrink:Shrink.bytes ~small:Bytes.length
     ~print:(Print.bytes) (Gen.bytes_size ~gen size)
-let bytes_gen gen =
+let bytes_of gen =
   make ~shrink:Shrink.bytes ~small:Bytes.length
     ~print:(Print.bytes) (Gen.bytes ~gen)
 
-let bytes = bytes_gen Gen.char
+let bytes = bytes_of Gen.char
 let bytes_of_size size = bytes_gen_of_size size Gen.char
 let bytes_small = bytes_gen_of_size Gen.small_nat Gen.char
 let bytes_printable =
@@ -1144,14 +1144,15 @@ let bytes_printable =
 let string_gen_of_size size gen =
   make ~shrink:Shrink.string ~small:String.length
     ~print:(sprintf "%S") (Gen.string_size ~gen size)
-let string_gen gen =
+let string_of gen =
   make ~shrink:Shrink.string ~small:String.length
     ~print:(sprintf "%S") (Gen.string ~gen)
 
-let string = string_gen Gen.char
+let string = string_of Gen.char
 let string_of_size size = string_gen_of_size size Gen.char
 let string_small = string_gen_of_size Gen.small_nat Gen.char
 let small_string = string_small
+let string_gen = string_of
 
 let printable_string =
   make ~shrink:(Shrink.string ~shrink:Shrink.char_printable) ~small:String.length

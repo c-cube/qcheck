@@ -1287,7 +1287,7 @@ val bytes_gen_of_size : int Gen.t -> char Gen.t -> bytes arbitrary
 (** Builds a bytes generator from a (non-negative) size generator and a character generator.
     @since NEXT_RELEASE *)
 
-val bytes_gen : char Gen.t -> bytes arbitrary
+val bytes_of : char Gen.t -> bytes arbitrary
 (** Generates bytes with a distribution of length of {!Gen.nat}.
     @since NEXT_RELEASE *)
 
@@ -1314,6 +1314,10 @@ val string_gen_of_size : int Gen.t -> char Gen.t -> string arbitrary
 
 val string_gen : char Gen.t -> string arbitrary
 (** Generates strings with a distribution of length of {!Gen.nat}. *)
+
+val string_of : char Gen.t -> string arbitrary
+(** Synonym to {!string_gen} added for convenience.
+    @since NEXT_RELEASE *)
 
 val string : string arbitrary
 (** Generates strings with a distribution of length of {!Gen.nat}
