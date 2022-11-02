@@ -315,7 +315,7 @@ module Gen : sig
   (** All corner cases for int.
       @since 0.6 *)
 
-  val (--) : int -> int -> int t (** Synonym to {!int_range}. *)
+  val (--) : int -> int -> int t (** Synonym for {!int_range}. *)
 
   val ui32 : int32 t (** Generates (unsigned) [int32] values. *)
 
@@ -683,7 +683,7 @@ module Iter : sig
   val map2 : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
   val (>|=) : 'a t -> ('a -> 'b) -> 'b t
   val append : 'a t -> 'a t -> 'a t
-  val (<+>) : 'a t -> 'a t -> 'a t (** Synonym to {!append}. *)
+  val (<+>) : 'a t -> 'a t -> 'a t (** Synonym for {!append}. *)
 
   val of_list : 'a list -> 'a t
   val of_array : 'a array -> 'a t
@@ -1249,7 +1249,7 @@ val small_signed_int : int arbitrary
     @since 0.5.2 *)
 
 val (--) : int -> int -> int arbitrary
-(** Synonym to {!int_range}. *)
+(** Synonym for {!int_range}. *)
 
 val int32 : int32 arbitrary
 (** Int32 generator. Uniformly distributed. *)
@@ -1320,7 +1320,7 @@ val string_gen : char Gen.t -> string arbitrary
 (** Generates strings with a distribution of length of {!Gen.nat}. *)
 
 val string_of : char Gen.t -> string arbitrary
-(** Synonym to {!string_gen} added for convenience.
+(** Synonym for {!string_gen} added for convenience.
     @since NEXT_RELEASE *)
 
 val string : string arbitrary
@@ -1331,7 +1331,7 @@ val small_string : string arbitrary
 (** Same as {!string} but with a small length (ie {!Gen.small_nat} ). *)
 
 val string_small : string arbitrary
-(** Synonym to [small_string] added for convenience.
+(** Synonym for [small_string] added for convenience.
     @since NEXT_RELEASE *)
 
 val string_small_of : char Gen.t -> string arbitrary
@@ -1350,14 +1350,14 @@ val printable_string : string arbitrary
     and distribution of characters of [printable_char]. *)
 
 val string_printable : string arbitrary
-(** Synonym to [printable_string] added for convenience.
+(** Synonym for [printable_string] added for convenience.
     @since NEXT_RELEASE *)
 
 val printable_string_of_size : int Gen.t -> string arbitrary
 (** Generates strings with distribution of characters of [printable_char]. *)
 
 val string_printable_of_size : int Gen.t -> string arbitrary
-(** Synonym to [printable_string_of_size] added for convenience.
+(** Synonym for [printable_string_of_size] added for convenience.
     @since NEXT_RELEASE *)
 
 val small_printable_string : string arbitrary
@@ -1365,7 +1365,7 @@ val small_printable_string : string arbitrary
     and distribution of characters of [printable_char]. *)
 
 val string_small_printable : string arbitrary
-(** Synonym to [small_printable_string] added for convenience.
+(** Synonym for [small_printable_string] added for convenience.
     @since NEXT_RELEASE *)
 
 val numeral_string : string arbitrary
@@ -1373,14 +1373,14 @@ val numeral_string : string arbitrary
     and distribution of characters of [numeral_char]. *)
 
 val string_numeral : string arbitrary
-(** Synonym to [numeral_string] added for convenience.
+(** Synonym for [numeral_string] added for convenience.
     @since NEXT_RELEASE *)
 
 val numeral_string_of_size : int Gen.t -> string arbitrary
 (** Generates strings with a distribution of characters of [numeral_char]. *)
 
 val string_numeral_of_size : int Gen.t -> string arbitrary
-(** Synonym to [numeral_string_of_size] added for convenience.
+(** Synonym for [numeral_string_of_size] added for convenience.
     @since NEXT_RELEASE *)
 
 val list : 'a arbitrary -> 'a list arbitrary
