@@ -12,6 +12,11 @@ let repeated_failure t =
   | Seq.Nil -> []
   | Seq.Cons (t,ts) -> Tree.root t :: (Seq.map Tree.root ts |> List.of_seq)
 
+let ocaml_major_version =
+  try
+    let major_version_str = List.hd (String.split_on_char '.' Sys.ocaml_version) in
+    int_of_string major_version_str
+  with _ -> failwith ("Unknown OCaml version format: " ^ Sys.ocaml_version)
 
 module Shrink = struct
   let test_int_towards () =
@@ -74,55 +79,55 @@ module Shrink = struct
     Alcotest.(check' (list char))
     ~msg:"'k' on repeated failure"
     ~actual:(Gen.(generate_tree ~rand:(rand_init 1234) char) |> repeated_failure)
-    ~expected:['k'; 'a'; 'f'; 'h'; 'i'; 'j'];
+    ~expected:(if ocaml_major_version < 5 then ['k'; 'a'; 'f'; 'h'; 'i'; 'j'] else ['>'; 'a'; 'P'; 'G'; 'C'; 'A'; '@'; '?']);
     Alcotest.(check' (list char))
     ~msg:"'1' on repeated failure"
     ~actual:(Gen.(generate_tree ~rand:(rand_init 3345) char) |> repeated_failure)
-    ~expected:['1'; 'a'; 'I'; '='; '7'; '4'; '2'];
+    ~expected:(if ocaml_major_version < 5 then ['1'; 'a'; 'I'; '='; '7'; '4'; '2'] else ['O'; 'a'; 'X'; 'S'; 'Q'; 'P']);
     Alcotest.(check' (list char))
     ~msg:"'k' on repeated success"
     ~actual:(Gen.(generate_tree ~rand:(rand_init 1234) char) |> repeated_success)
-    ~expected:['k'; 'a';];
+    ~expected:(if ocaml_major_version < 5 then ['k'; 'a';] else ['>'; 'a']);
     Alcotest.(check' (list char))
     ~msg:"'1' on repeated success"
     ~actual:(Gen.(generate_tree ~rand:(rand_init 3345) char) |> repeated_success)
-    ~expected:['1'; 'a';]
+    ~expected:(if ocaml_major_version < 5 then ['1'; 'a';] else ['O'; 'a'])
 
   let test_char_numeral () =
     Alcotest.(check' (list char))
     ~msg:"'3' on repeated failure"
     ~actual:(Gen.(generate_tree ~rand:(rand_init 1234) numeral) |> repeated_failure)
-    ~expected:['3'; '0'; '1'; '2'];
+    ~expected:(if ocaml_major_version < 5 then ['3'; '0'; '1'; '2'] else ['0']);
     Alcotest.(check' (list char))
     ~msg:"'0' on repeated failure"
     ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) numeral) |> repeated_failure)
-    ~expected:['0'];
+    ~expected:(if ocaml_major_version < 5 then ['0'] else ['9'; '0'; '4'; '6'; '7'; '8']);
     Alcotest.(check' (list char))
     ~msg:"'3' on repeated success"
     ~actual:(Gen.(generate_tree ~rand:(rand_init 1234) numeral) |> repeated_success)
-    ~expected:['3'; '0';];
+    ~expected:(if ocaml_major_version < 5 then ['3'; '0'] else ['0']);
     Alcotest.(check' (list char))
     ~msg:"'0' on repeated success"
     ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) numeral) |> repeated_success)
-    ~expected:['0';]
+    ~expected:(if ocaml_major_version < 5 then ['0'] else ['9'; '0'])
 
   let test_char_printable () =
     Alcotest.(check' (list char))
     ~msg:"'l' on repeated failure"
     ~actual:(Gen.(generate_tree ~rand:(rand_init 1234) printable) |> repeated_failure)
-    ~expected:['l'; 'a'; 'f'; 'i'; 'j'; 'k'];
+    ~expected:(if ocaml_major_version < 5 then ['l'; 'a'; 'f'; 'i'; 'j'; 'k'] else ['D'; 'a'; '%'; '5'; '='; 'A'; 'C']);
     Alcotest.(check' (list char))
     ~msg:"'8' on repeated failure"
     ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) printable) |> repeated_failure)
-    ~expected:['8'; 'a'; 'z'; ','; '2'; '5'; '7'];
+    ~expected:(if ocaml_major_version < 5 then ['8'; 'a'; 'z'; ','; '2'; '5'; '7'] else ['#'; 'a'; 'o'; 'v'; 'z'; '!'; '"']);
     Alcotest.(check' (list char))
     ~msg:"'l' on repeated success"
     ~actual:(Gen.(generate_tree ~rand:(rand_init 1234) printable) |> repeated_success)
-    ~expected:['l'; 'a';];
+    ~expected:(if ocaml_major_version < 5 then ['l'; 'a'] else ['D'; 'a']);
     Alcotest.(check' (list char))
     ~msg:"'8' on repeated success"
     ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) printable) |> repeated_success)
-    ~expected:['8'; 'a';]
+    ~expected:(if ocaml_major_version < 5 then ['8'; 'a'] else ['#'; 'a'])
 
   let tests = ("Shrink", Alcotest.[
       test_case "int_towards" `Quick test_int_towards;
