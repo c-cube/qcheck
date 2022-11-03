@@ -151,7 +151,7 @@ module Gen = struct
 
   let test_gen_option_custom () =
     let nb = test_gen_option ~ratio:(Some 0.5) in
-    let b = nb > 450 && nb < 550 in
+    let b = nb > 400 && nb < 600 in
     Alcotest.(check bool) "Gen.option produces around 50% of Some" b true
 
   let tests =
