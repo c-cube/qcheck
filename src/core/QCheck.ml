@@ -365,19 +365,31 @@ module Gen = struct
   let printable st = printable_chars.[RS.int st (String.length printable_chars)]
   let numeral st = char_of_int (48 + RS.int st 10)
 
-  let string_size ?(gen = char) size st =
+  let bytes_size ?(gen = char) size st =
     let s = Bytes.create (size st) in
     for i = 0 to Bytes.length s - 1 do
       Bytes.set s i (gen st)
     done;
+    s
+
+  let string_size ?(gen = char) size st =
+    let s = bytes_size ~gen size st in
     Bytes.unsafe_to_string s
+
+  let bytes ?gen st = bytes_size ?gen nat st
   let string ?gen st = string_size ?gen nat st
+  let bytes_of gen = bytes_size ~gen nat
   let string_of gen = string_size ~gen nat
+  let bytes_printable = bytes_size ~gen:printable nat
   let string_printable = string_size ~gen:printable nat
   let string_readable = string_printable
+  let bytes_small st = bytes_size small_nat st
+  let bytes_small_of gen st = bytes_size ~gen small_nat st
   let small_string ?gen st = string_size ?gen small_nat st
   let small_list gen = list_size small_nat gen
   let small_array gen = array_size small_nat gen
+  let string_small st = string_size small_nat st
+  let string_small_of gen st = string_size ~gen small_nat st
 
   let join g st = (g st) st
 
@@ -462,6 +474,7 @@ module Print = struct
   let int = string_of_int
   let bool = string_of_bool
   let float = string_of_float
+  let bytes = Bytes.to_string
   let string s = s
   let char c = String.make 1 c
 
@@ -780,6 +793,8 @@ module Shrink = struct
          Buffer.clear buf;
          yield s)
 
+  let bytes ?(shrink = char) b = Iter.map Bytes.of_string (string ~shrink (Bytes.to_string b))
+
   let pair a b (x,y) yield =
     a x (fun x' -> yield (x',y));
     b y (fun y' -> yield (x,y'))
@@ -940,6 +955,7 @@ module Observable = struct
     let int i = i land max_int
     let bool b = if b then 1 else 2
     let char x = Char.code x
+    let bytes (x:bytes) = Hashtbl.hash x
     let string (x:string) = Hashtbl.hash x
     let opt f = function
       | None -> 42
@@ -953,6 +969,7 @@ module Observable = struct
     type 'a t = 'a -> 'a -> bool
 
     let int : int t = (=)
+    let bytes : bytes t = (=)
     let string : string t = (=)
     let bool : bool t = (=)
     let float = Float.equal
@@ -986,6 +1003,7 @@ module Observable = struct
   let bool : bool t = make ~hash:H.bool ~eq:Eq.bool Print.bool
   let int : int t = make ~hash:H.int ~eq:Eq.int Print.int
   let float : float t = make ~eq:Eq.float Print.float
+  let bytes = make ~hash:H.bytes ~eq:Eq.bytes Print.bytes
   let string = make ~hash:H.string ~eq:Eq.string Print.string
   let char = make ~hash:H.char ~eq:Eq.char Print.char
 
@@ -1109,16 +1127,34 @@ let printable_char =
 let numeral_char =
   make ~print:(sprintf "%C") ~small:(small_char '0') ~shrink:Shrink.char_numeral Gen.numeral
 
+let bytes_gen_of_size size gen =
+  make ~shrink:Shrink.bytes ~small:Bytes.length
+    ~print:(Print.bytes) (Gen.bytes_size ~gen size)
+let bytes_of gen =
+  make ~shrink:Shrink.bytes ~small:Bytes.length
+    ~print:(Print.bytes) (Gen.bytes ~gen)
+
+let bytes = bytes_of Gen.char
+let bytes_of_size size = bytes_gen_of_size size Gen.char
+let bytes_small = bytes_gen_of_size Gen.small_nat Gen.char
+let bytes_small_of gen = bytes_gen_of_size Gen.small_nat gen
+let bytes_printable =
+  make ~shrink:(Shrink.bytes ~shrink:Shrink.char_printable) ~small:Bytes.length
+    ~print:(Print.bytes) (Gen.bytes ~gen:Gen.printable)
+
 let string_gen_of_size size gen =
   make ~shrink:Shrink.string ~small:String.length
     ~print:(sprintf "%S") (Gen.string_size ~gen size)
-let string_gen gen =
+let string_of gen =
   make ~shrink:Shrink.string ~small:String.length
     ~print:(sprintf "%S") (Gen.string ~gen)
 
-let string = string_gen Gen.char
+let string = string_of Gen.char
 let string_of_size size = string_gen_of_size size Gen.char
-let small_string = string_gen_of_size Gen.small_nat Gen.char
+let string_small = string_gen_of_size Gen.small_nat Gen.char
+let string_small_of gen = string_gen_of_size Gen.small_nat gen
+let small_string = string_small
+let string_gen = string_of
 
 let printable_string =
   make ~shrink:(Shrink.string ~shrink:Shrink.char_printable) ~small:String.length
@@ -1139,6 +1175,12 @@ let numeral_string =
 let numeral_string_of_size size =
   make ~shrink:(Shrink.string ~shrink:Shrink.char_numeral) ~small:String.length
     ~print:(sprintf "%S") (Gen.string_size ~gen:Gen.numeral size)
+
+let string_printable = printable_string
+let string_printable_of_size = printable_string_of_size
+let string_small_printable = small_printable_string
+let string_numeral = numeral_string
+let string_numeral_of_size = numeral_string_of_size
 
 let list_sum_ f l = List.fold_left (fun acc x-> f x+acc) 0 l
 

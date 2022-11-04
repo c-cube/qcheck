@@ -698,13 +698,27 @@ module Gen = struct
   let string_size ?(gen = char) (size : int t) : string t =
     bytes_size ~gen size >|= Bytes.unsafe_to_string
 
+  let bytes : bytes t = bytes_size nat
+
+  let bytes_of gen = bytes_size ~gen nat
+
+  let bytes_printable = bytes_size ~gen:printable nat
+
+  let bytes_small st = bytes_size small_nat st
+
+  let bytes_small_of gen st = bytes_size ~gen small_nat st
+
   let string : string t = string_size nat
 
   let string_of gen = string_size ~gen nat
 
   let string_printable = string_size ~gen:printable nat
 
-  let small_string ?gen st = string_size ?gen small_nat st
+  let string_small st = string_size small_nat st
+
+  let string_small_of gen st = string_size ~gen small_nat st
+
+  let small_string ~gen = string_small_of gen
 
   let small_list gen = list_size small_nat gen
 
@@ -776,6 +790,8 @@ module Print = struct
   let bool = string_of_bool
 
   let float = string_of_float
+
+  let bytes = Bytes.to_string
 
   let string s = Printf.sprintf "%S" s
 
@@ -962,6 +978,8 @@ module Observable = struct
 
     let char x = Char.code x
 
+    let bytes (x:bytes) = Hashtbl.hash x
+
     let string (x:string) = Hashtbl.hash x
 
     let option f = function
@@ -978,6 +996,8 @@ module Observable = struct
     type 'a t = 'a -> 'a -> bool
 
     let int : int t = (=)
+
+    let bytes : bytes t = (=)
 
     let string : string t = (=)
 
@@ -1019,6 +1039,8 @@ module Observable = struct
   let int : int t = make ~hash:H.int ~eq:Eq.int Print.int
 
   let float : float t = make ~eq:Eq.float Print.float
+
+  let bytes = make ~hash:H.bytes ~eq:Eq.bytes Print.bytes
 
   let string = make ~hash:H.string ~eq:Eq.string Print.string
 
@@ -1508,7 +1530,6 @@ module Test = struct
   let make_neg = make' ~negative:true
 
   let test_get_count (Test cell) = get_count cell
-
   let test_get_long_factor (Test cell) = get_long_factor cell
 
   (** {6 Running the test} *)
