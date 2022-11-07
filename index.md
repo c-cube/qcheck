@@ -4,9 +4,10 @@ Repository: <https://github.com/c-cube/qcheck>
 
 Documentation:
 
-- [last](0.19)
+- [last](0.20)
 - [development (unreleased)](dev)
 
+- [0.20](0.20)
 - [0.19](0.19)
 - [0.18](0.18)
 - [0.17](0.17)
