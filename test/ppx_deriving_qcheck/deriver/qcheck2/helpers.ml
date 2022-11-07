@@ -1,4 +1,4 @@
-open QCheck
+open QCheck2
 
 (** {1. Helpers} *)
 

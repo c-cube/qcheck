@@ -5,6 +5,7 @@ module type S = sig
   type t = int
 
   val gen : int QCheck.Gen.t
+  val arb : int QCheck.arbitrary
 end
 
 module Q : S = struct
@@ -22,10 +23,10 @@ type t = Q.t [@@deriving qcheck]
 type u = G.t [@@deriving qcheck]
 
 let test_module () =
-  test_compare ~msg:"Gen.int <=> deriving Q.t" ~eq:Alcotest.int Gen.int gen
+  test_compare ~msg:"Gen.int <=> deriving Q.t" ~eq:Alcotest.int int arb
 
 let test_functor () =
-  test_compare ~msg:"Gen.int <=> deriving F.t" ~eq:Alcotest.int Gen.int gen_u
+  test_compare ~msg:"Gen.int <=> deriving F.t" ~eq:Alcotest.int int arb_u
 
 (** {2. Execute tests} *)
 

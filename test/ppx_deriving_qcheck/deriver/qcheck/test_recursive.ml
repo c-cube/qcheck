@@ -17,9 +17,9 @@ let rec pp_tree pp fmt x =
 
 let eq_tree pp = Alcotest.of_pp (pp_tree pp)
 
-let gen_tree_ref gen =
+let arb_tree_ref gen =
   let open Gen in
-  sized @@ fix (fun self ->
+  make @@ sized @@ fix (fun self ->
              function
              | 0 -> pure Leaf
              | n ->
@@ -28,18 +28,18 @@ let gen_tree_ref gen =
                     map3 (fun x l r -> Node (x,l,r)) gen (self (n/2)) (self (n/2));
              ])
 
-let gen_tree_candidate = gen_tree
+let arb_tree_candidate = arb_tree
 
 let test_tree_ref () =
   let gen = Gen.int in
   test_compare ~msg:"gen tree <=> derivation tree"
     ~eq:(eq_tree Format.pp_print_int)
-    (gen_tree_ref gen) (gen_tree gen)
+    (arb_tree_ref gen) (arb_tree gen)
 
 let test_leaf =
   Test.make
-    ~name:"gen_tree_sized 0 = Node (_, Leaf, Leaf)"
-    (make (gen_tree_sized Gen.int 0))
+    ~name:"arb_tree_sized 0 = Node (_, Leaf, Leaf)"
+    (arb_tree_sized Gen.int 0)
     (function
      | Leaf -> true
      | Node (_, Leaf, Leaf) -> true
@@ -49,7 +49,7 @@ let test_leaf =
 
 (* A slight error has been found here:
    If the type is named `list` then `'a list` will be derived with the
-   QCheck generator `list` instead of the `gen_list_sized`.
+   QCheck generator `list` instead of the `arb_list_sized`.
 
    This could lead to a design choice:
    - do we allow overriding primitive types?
@@ -64,7 +64,7 @@ let rec length = function
 
 let test_length =
   Test.make
-    ~name:"gen_list_sized n >>= fun l -> length l <= n"
+    ~name:"arb_list_sized n >>= fun l -> length l <= n"
     small_int
     (fun n ->
       let l = Gen.(generate1 (gen_my_list_sized Gen.int n)) in

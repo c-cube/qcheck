@@ -98,12 +98,18 @@ let rec nest ~pair ~triple ~quad = function
   | Elem a -> a
 
 (** [to_gen t] creates a Gen.t with generators' combinators *)
-let to_gen ~loc t =
-  nest ~pair:(G.pair ~loc) ~triple:(G.triple ~loc) ~quad:(G.quad ~loc) t
+let to_gen ~loc ~version t =
+  nest
+    ~pair:(G.pair ~loc ~version)
+    ~triple:(G.triple ~loc ~version)
+    ~quad:(G.quad ~loc ~version) t
 
 (** [to_obs t] creates a Obs.t with obsersvables' combinators *)
-let to_obs ~loc t =
-  nest ~pair:(O.pair ~loc) ~triple:(O.triple ~loc) ~quad:(O.quad ~loc) t
+let to_obs ~loc ~version t =
+  nest
+    ~pair:(O.pair ~loc ~version)
+    ~triple:(O.triple ~loc ~version)
+    ~quad:(O.quad ~loc ~version) t
 
 let to_pat ~loc t =
   let fresh_id =

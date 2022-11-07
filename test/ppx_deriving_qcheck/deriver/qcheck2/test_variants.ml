@@ -1,11 +1,11 @@
-open QCheck
+open QCheck2
 open Helpers
 
 (** {1. Test variants and polymorphic variants derivation} *)
 
 (** {2. Variants} *)
 
-type colors = Red | Green | Blue [@@deriving qcheck]
+type colors = Red | Green | Blue [@@deriving qcheck2]
 
 let pp_colors fmt x =
   let open Format in
@@ -21,7 +21,7 @@ let gen = Gen.oneofl [Red; Green; Blue]
 let test_variants () =
   test_compare ~msg:"Gen.oneofl <=> deriving variants" ~eq:eq_colors gen gen_colors
 
-type poly_colors = [`Red | `Green | `Blue] [@@deriving qcheck]
+type poly_colors = [`Red | `Green | `Blue] [@@deriving qcheck2]
 
 let pp_poly_colors fmt x =
   let open Format in
@@ -43,11 +43,11 @@ let test_poly_variants () =
 type letters =
   | A [@weight 0]
   | B
-[@@deriving qcheck]
+[@@deriving qcheck2]
 
 let test_weight =
   Test.make ~name:"gen_letters always produces B"
-    (make gen_letters)
+    gen_letters
     (function
      | A -> false
      | B -> true)
@@ -58,11 +58,11 @@ type poly_letters = [
     | `A [@weight 0]
     | `B
   ]
-[@@deriving qcheck]
+[@@deriving qcheck2]
 
 let test_weight_poly =
   Test.make ~name:"gen_poly_letters always produces B"
-    (make gen_poly_letters)
+    gen_poly_letters
     (function
      | `A -> false
      | `B -> true)
