@@ -147,7 +147,7 @@ let test_tuple () =
   check_eq ~expected ~actual "deriving tuples"
 
 let test_option () =
-  let expected = [ [%stri let gen = QCheck2.Gen.opt QCheck2.Gen.int] ] in
+  let expected = [ [%stri let gen = QCheck2.Gen.option QCheck2.Gen.int] ] in
   let actual = f' @@ extract' [ [%stri type t = int option] ] in
   check_eq ~expected ~actual "deriving option"
 
