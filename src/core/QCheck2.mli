@@ -380,8 +380,14 @@ module Gen : sig
       @since 0.20
   *)
 
-  val small_string : gen:char t -> string t
-  (** alias for [string_small] for backward compatibility *)
+  val small_string : ?gen:char t -> string t
+  (** Builds a string generator, length is {!small_nat}.
+      Accepts an optional character generator (the default is {!char}).
+      Shrinks on the number of characters first, then on the characters.
+      This function is kept for backward compatibility:
+      The optional argument is in fact a mandatory [option], see c-cube/qcheck#162.
+      Use {!string_small} instead.
+  *)
 
   val pure : 'a -> 'a t
   (** [pure a] creates a generator that always returns [a].
