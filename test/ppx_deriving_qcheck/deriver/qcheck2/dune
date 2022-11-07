@@ -1,4 +1,5 @@
 (tests
+ (package ppx_deriving_qcheck)
  (names
    test_textual
    test_primitives
