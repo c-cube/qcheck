@@ -29,8 +29,7 @@ on `0 (after 63 shrink steps)`
 │ [FAIL]        suite              4   neg test unexpected success.            │
 └──────────────────────────────────────────────────────────────────────────────┘
 negative test 'neg test unexpected success' succeeded unexpectedly
-ASSERT negative test 'neg test unexpected success' succeeded unexpectedly
-FAIL negative test 'neg test unexpected success' succeeded unexpectedly
+[exception] negative test `neg test unexpected success` succeeded unexpectedly
  ──────────────────────────────────────────────────────────────────────────────
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │ [FAIL]        suite              5   neg fail with error.                    │
