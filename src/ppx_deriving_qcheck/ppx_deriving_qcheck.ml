@@ -111,8 +111,9 @@ let rec longident_to_str = function
       Printf.sprintf "%s %s" (longident_to_str lg1) (longident_to_str lg2)
 
 let rec is_rec_typ env = function
-  | { ptyp_desc = Ptyp_constr ({ txt = x; _ }, _); _ } ->
-     List.exists (fun typ_name -> longident_to_str x = typ_name) env.Env.curr_types
+  | { ptyp_desc = Ptyp_constr ({ txt = x; _ }, args); _ } ->
+     List.exists (fun typ_name -> longident_to_str x = typ_name) env.Env.curr_types ||
+     List.exists (is_rec_typ env) args
   | { ptyp_desc = Ptyp_tuple xs; _ } -> List.exists (is_rec_typ env) xs
   | { ptyp_desc = Ptyp_variant (rws, _, _); _ } ->
      List.exists (is_rec_row_field env) rws
