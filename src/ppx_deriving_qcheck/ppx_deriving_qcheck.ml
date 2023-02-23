@@ -129,7 +129,7 @@ and is_rec_row_field env rw =
 let is_rec_constr_decl env cd =
   match cd.pcd_args with
   | Pcstr_tuple cts -> List.exists (is_rec_typ env) cts
-  | _ -> false
+  | Pcstr_record ldcls -> List.exists (fun ldcl -> is_rec_typ env ldcl.pld_type) ldcls
 
 (** [is_rec_type_decl env typ] looks for elements of [env.curr_types]
     recursively in [typ]. *)
