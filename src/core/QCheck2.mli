@@ -1801,9 +1801,11 @@ module Test : sig
       @since 0.6 *)
 
   val check_result : 'a cell -> 'a TestResult.t -> unit
-  (** [check_result cell res] checks that [res] is [Ok _], and returns unit.
+  (** For a positive test [check_result cell res] checks that [res] is [Ok _], and returns unit.
+      For a negative test [check_result cell res] checks that [res] is [Failed _], and returns unit.
       Otherwise, it raises some exception.
-      @raise Test_fail  if [res = Failed _]
+      @raise Test_fail  if the test is positive and [res = Failed _]
+      @raise Test_unexpected_success  if the test is negative and [res = Ok _]
       @raise Test_error if [res = Error _] *)
 
   type res =
@@ -1840,6 +1842,10 @@ module Test : sig
       predicate [law] is called on them and if it returns [false] or raises an
       exception then we have a counter-example for the [law].
 
+      Note: [check_cell] ignores a test's polarity, acting as
+      described above regardless of whether the tested cell is a
+      positive or negative test.
+
       @param long if [true] then multiply the number of instances to generate
         by the cell's long_factor.
       @param call function called on each test case, with the result.
@@ -1852,13 +1858,19 @@ module Test : sig
     ?step:'a step -> ?handler:'a handler ->
     ?rand:Random.State.t -> 'a cell -> unit
   (** Same as {!check_cell} but calls  {!check_result} on the result.
-      @raise Test_fail  if [res = Failed _]
+      [check_cell test] honors test polarity and thus expects positive tests to succeed
+      without finding a counterexample and expects negative tests to fail by finding one.
+      @raise Test_fail  if the test is positive and [res = Failed _]
+      @raise Test_unexpected_success  if the test is negative and [res = Ok _]
       @raise Test_error if [res = Error _] *)
 
   val check_exn : ?long:bool -> ?rand:Random.State.t -> t -> unit
   (** Checks the property against some test cases, and calls {!check_result},
       which might raise an exception in case of failure.
-      @raise Test_fail  if [res = Failed _]
+      [check_exn test] honors test polarity and thus expects positive tests to succeed
+      without finding a counterexample and expects negative tests to fail by finding one.
+      @raise Test_fail  if the test is positive and [res = Failed _]
+      @raise Test_unexpected_success  if the test is negative and [res = Ok _]
       @raise Test_error if [res = Error _] *)
 end
 
