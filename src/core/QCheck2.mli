@@ -1649,6 +1649,11 @@ module Test_exceptions : sig
       [Test_error (name, i, e, st)]
       means [name] failed on [i] with exception [e], and [st] is the
       stacktrace (if enabled) or an empty string. *)
+
+  exception Test_unexpected_success of string
+  (** Exception raised when a negative test failed.
+      [Test_unexpected_success name] means test [name] failed to find an
+      expected counter example. *)
 end
 
 (** A test is a pair of a generator and a property that all generated values must satisfy. *)
