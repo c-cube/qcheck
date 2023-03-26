@@ -313,6 +313,20 @@ module Check_exn = struct
         then
           Alcotest.failf "%s: counter-example prefix. Received \"%s\"" name c_ex_str
 
+  let test_negative_trivial () =
+    let run_test () = check_exn QCheck2.(Test.make_neg Gen.int (fun _ -> false)) in
+    Alcotest.(check unit) "Success-negative-trivial" () @@ run_test ()
+
+  let test_negative_test_unexpected_success () =
+    let name = "negative-trivial-test" in
+    let run_test () = check_exn QCheck2.(Test.make_neg ~name Gen.int (fun _ -> true)) in
+    try
+      run_test ();
+      Alcotest.failf "Negative test didn't raise expected exception."
+    with
+      Test.Test_unexpected_success n ->
+        Alcotest.(check string) (Printf.sprintf "%s: name" name) n name
+
   let tests =
     ("Test.check_exn", Alcotest.[
          test_case "check_exn pass trivial" `Quick test_pass_trivial;
@@ -320,6 +334,8 @@ module Check_exn = struct
          test_case "check_exn fail always" `Quick test_fail_always;
          test_case "check_exn fail random" `Quick test_fail_random;
          test_case "check_exn Error" `Quick test_error;
+         test_case "check_exn negative pass trivial" `Quick test_negative_trivial;
+         test_case "check_exn Unexpected success" `Quick test_negative_test_unexpected_success;
        ])
 end
 
