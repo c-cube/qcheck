@@ -1137,13 +1137,16 @@ module Test : sig
     ?long:bool -> ?call:'a callback ->
     ?step:'a step -> ?handler:'a handler ->
     ?rand:Random.State.t -> 'a cell -> 'a TestResult.t
+  (** See {!QCheck2.Test.check_cell}. *)
 
   val check_cell_exn :
     ?long:bool -> ?call:'a callback ->
     ?step:'a step -> ?handler:'a handler ->
     ?rand:Random.State.t -> 'a cell -> unit
+  (** See {!QCheck2.Test.check_cell_exn}. *)
 
   val check_exn : ?long:bool -> ?rand:Random.State.t -> t -> unit
+  (** See {!QCheck2.Test.check_exn}. *)
 end
 
 (** {2 Sub-tests} *)
