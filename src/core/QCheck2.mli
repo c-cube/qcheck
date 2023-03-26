@@ -1866,7 +1866,7 @@ module Test : sig
       [check_cell test] honors test polarity and thus expects positive tests to succeed
       without finding a counterexample and expects negative tests to fail by finding one.
       @raise Test_fail  if the test is positive and [res = Failed _]
-      @raise Test_unexpected_success  if the test is negative and [res = Ok _]
+      @raise Test_unexpected_success  if the test is negative and [res = Success _]
       @raise Test_error if [res = Error _] *)
 
   val check_exn : ?long:bool -> ?rand:Random.State.t -> t -> unit
@@ -1875,7 +1875,7 @@ module Test : sig
       [check_exn test] honors test polarity and thus expects positive tests to succeed
       without finding a counterexample and expects negative tests to fail by finding one.
       @raise Test_fail  if the test is positive and [res = Failed _]
-      @raise Test_unexpected_success  if the test is negative and [res = Ok _]
+      @raise Test_unexpected_success  if the test is negative and [res = Success _]
       @raise Test_error if [res = Error _] *)
 end
 
