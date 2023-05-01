@@ -8,6 +8,12 @@ let suffix =
 
 let dune = Printf.sprintf {|
 
+(env
+ (_
+  (env-vars
+   ; Don't run tests as if Alcotest was run in CI
+   (CI false))))
+
 (executable
   (name QCheck_alcotest_test)
   (libraries qcheck-core qcheck-alcotest alcotest))
