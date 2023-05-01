@@ -9,6 +9,8 @@
 - fix issue with `ppx_deriving_qcheck` deriving a generator with unbound
   `gen` for recursive types [#269](https://github.com/c-cube/qcheck/issues/269)
   and a related issue when deriving a generator for a record type
+- fix #241 causing `QCheck.Shrink.int*` to emit duplicates, also affecting `QCheck.Shrink.{char,string}`
+- fix a cornercase where `Shrink.list_spine` would emit duplicates
 - ...
 
 ## 0.20
