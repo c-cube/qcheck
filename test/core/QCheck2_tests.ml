@@ -389,7 +389,7 @@ module Shrink = struct
       Gen.char (fun c -> not (List.mem c ['a';'b';'c';'d';'e';'f']))
 
   let printable_is_never_sign = (* should shrink towards '!' with lowest ascii code 33 *)
-    Test.make ~name:"printable never produces '!\"#$%&''" ~count:1000 ~print:Print.char
+    Test.make ~name:"printable never produces '!\"#$%&'" ~count:1000 ~print:Print.char
       Gen.printable (fun c -> not (List.mem c ['!';'@';'#';'$';'%']))
 
   let numeral_is_never_less_5 =
