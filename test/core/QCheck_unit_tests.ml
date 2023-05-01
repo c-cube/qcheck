@@ -81,6 +81,41 @@ module Shrink = struct
         ("char '~'",   '~',  ['p'; 'i'; 'e'; 'c'; 'b'; 'a']);
         ("char '\\n'", '\n', ['p'; 'i'; 'e'; 'c'; 'b'; 'a']); ]
 
+  let test_string () =
+    List.iter (alco_check Alcotest.string (trace_false Shrink.string) "on repeated failure")
+      [ ("string \"\"",     "",     []);
+        ("string \"a\"",    "a",    [""]);
+        ("string \"aa\"",   "aa",   [""; "a"; "a"]);
+        ("string \"aaaa\"", "aaaa", ["aa"; "aa"; "aaa"; "aaa"]);
+        ("string \"abcd\"", "abcd", ["ab"; "cd"; "acd"; "bcd"; "aacd"; "abbd"; "abcc"; "abcc"]);
+        ("string \"E'*\"",  "E'*",  ["E'"; "*"; "E*"; "'*"; "S'*"; "L'*"; "H'*"; "F'*"; "F'*";
+                                     "ED*"; "E5*"; "E.*"; "E**"; "E(*"; "E(*"; "E'E"; "E'7";
+                                     "E'0"; "E'-"; "E'+"; "E'+"]);
+        ("string \"vi5x92xgG\"", "vi5x92xgG", (* A less exhaustive string shrinker would be preferable *)
+         ["vi5x9"; "vi52xgG"; "vix92xgG"; "5x92xgG"; "v5x92xgG";
+               "i5x92xgG"; "li5x92xgG"; "qi5x92xgG"; "ti5x92xgG";
+               "ui5x92xgG"; "ve5x92xgG"; "vg5x92xgG"; "vh5x92xgG";
+               "viKx92xgG"; "vi@x92xgG"; "vi:x92xgG"; "vi7x92xgG";
+               "vi6x92xgG"; "vi5m92xgG"; "vi5s92xgG"; "vi5v92xgG";
+               "vi5w92xgG"; "vi5xM2xgG"; "vi5xC2xgG"; "vi5x>2xgG";
+               "vi5x;2xgG"; "vi5x:2xgG"; "vi5x9IxgG"; "vi5x9=xgG";
+               "vi5x97xgG"; "vi5x94xgG"; "vi5x93xgG"; "vi5x92mgG";
+               "vi5x92sgG"; "vi5x92vgG"; "vi5x92wgG"; "vi5x92xdG";
+               "vi5x92xfG"; "vi5x92xfG"; "vi5x92xgT"; "vi5x92xgM";
+               "vi5x92xgJ"; "vi5x92xgH"; "vi5x92xgH"]);
+        ("string \"~~~~\"", "~~~~", ["~~"; "~~"; "~~~"; "~~~"; "p~~~"; "w~~~"; "{~~~"; "}~~~";
+                                     "}~~~"; "~p~~"; "~w~~"; "~{~~"; "~}~~"; "~}~~"; "~~p~";
+                                     "~~w~"; "~~{~"; "~~}~"; "~~}~"; "~~~p"; "~~~w"; "~~~{";
+                                     "~~~}"; "~~~}"]); ];
+    List.iter (alco_check Alcotest.string (trace_true Shrink.string) "on repeated success")
+      [ ("string \"\"",     "",     []);
+        ("string \"a\"",    "a",    [""]);
+        ("string \"aa\"",   "aa",   [""]);
+        ("string \"aaaa\"", "aaaa", ["aa"; ""]);
+        ("string \"abcd\"", "abcd", ["ab"; ""]);
+        ("string \"E'*\"",  "E'*",  ["E'"; ""]);
+        ("string \"vi5x92xgG\"", "vi5x92xgG", ["vi5x9"; "vi5"; "vi"; ""]); ]
+
   let tests = ("Shrink", Alcotest.[
       test_case "int"   `Quick test_int;
       test_case "int32" `Quick test_int32;
@@ -88,6 +123,7 @@ module Shrink = struct
       test_case "char"  `Quick test_char;
       test_case "char_numeral"   `Quick test_char_numeral;
       test_case "char_printable" `Quick test_char_printable;
+      test_case "string" `Quick test_string;
     ])
 end
 
