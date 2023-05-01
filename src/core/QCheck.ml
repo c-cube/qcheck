@@ -677,8 +677,8 @@ module Shrink = struct
     let y = ref x in
     (* try some divisors *)
     while !y < -2 || !y >2 do y := !y / 2; yield (x - !y); done; (* fast path *)
-    if x>0 then yield (x-1);
-    if x<0 then yield (x+1);
+    if x = 1 || (x>0 && !y <> 1) then yield (x-1);
+    if x = -1 || (x<0 && !y <> -1) then yield (x+1);
     ()
 
   let int32 x yield =
@@ -686,8 +686,8 @@ module Shrink = struct
     let y = ref x in
     (* try some divisors *)
     while !y < -2l || !y > 2l do y := div !y 2l; yield (sub x !y); done; (* fast path *)
-    if x>0l then yield (pred x);
-    if x<0l then yield (succ x);
+    if x = 1l || (x>0l && !y <> 1l) then yield (pred x);
+    if x = -1l || (x<0l && !y <> -1l) then yield (succ x);
     ()
 
   let int64 x yield =
@@ -695,8 +695,8 @@ module Shrink = struct
     let y = ref x in
     (* try some divisors *)
     while !y < -2L || !y > 2L do y := div !y 2L; yield (sub x !y); done; (* fast path *)
-    if x>0L then yield (pred x);
-    if x<0L then yield (succ x);
+    if x = 1L || (x>0L && !y <> 1L) then yield (pred x);
+    if x = -1L || (x<0L && !y <> -1L) then yield (succ x);
     ()
 
   (* aggressive shrinker for integers,
