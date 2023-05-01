@@ -334,7 +334,7 @@ Test char never produces 'abcdef' failed (1 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test printable never produces '!"#$%&'' failed (1 shrink steps):
+Test printable never produces '!"#$%&' failed (1 shrink steps):
 
 '!'
 
