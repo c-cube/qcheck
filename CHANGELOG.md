@@ -6,6 +6,9 @@
   `Test.check_exn` honor test polarity by raising
   `Test_unexpected_success` when a negative test (expected to have a
   counter example), unexpectedly succeeds.
+- fix issue with `ppx_deriving_qcheck` deriving a generator with unbound
+  `gen` for recursive types [#269](https://github.com/c-cube/qcheck/issues/269)
+  and a related issue when deriving a generator for a record type
 - ...
 
 ## 0.20
