@@ -19,9 +19,9 @@ module Shrink = struct
 
   let test_int () =
     List.iter (alco_check Alcotest.int (trace_false Shrink.int) "on repeated failure")
-      [ ("int 100",   100,  [50; 75; 88; 94; 97; 99; 99]); (*WTF?*)
-        ("int 1000",  1000, [500; 750; 875; 938; 969; 985; 993; 997; 999; 999]); (*WTF?*)
-        ("int (-26)", -26,  [-13; -20; -23; -25; -25]) ]; (*WTF?*)
+      [ ("int 100",   100,  [50; 75; 88; 94; 97; 99]);
+        ("int 1000",  1000, [500; 750; 875; 938; 969; 985; 993; 997; 999]);
+        ("int (-26)", -26,  [-13; -20; -23; -25]) ];
     List.iter (alco_check Alcotest.int (trace_true Shrink.int) "on repeated success")
       [ ("int 100",   100,  [50; 25; 13; 7; 4; 2; 1; 0]);
         ("int 1000",  1000, [500; 250; 125; 63; 32; 16; 8; 4; 2; 1; 0]);
@@ -29,9 +29,9 @@ module Shrink = struct
 
   let test_int32 () =
     List.iter (alco_check Alcotest.int32 (trace_false Shrink.int32) "on repeated failure")
-      [ ("int 100",   100l,  [50l; 75l; 88l; 94l; 97l; 99l; 99l]);
-        ("int 1000",  1000l, [500l; 750l; 875l; 938l; 969l; 985l; 993l; 997l; 999l; 999l]);
-        ("int (-26)", -26l,  [-13l; -20l; -23l; -25l; -25l]) ];
+      [ ("int 100",   100l,  [50l; 75l; 88l; 94l; 97l; 99l]);
+        ("int 1000",  1000l, [500l; 750l; 875l; 938l; 969l; 985l; 993l; 997l; 999l]);
+        ("int (-26)", -26l,  [-13l; -20l; -23l; -25l]) ];
     List.iter (alco_check Alcotest.int32 (trace_true Shrink.int32) "on repeated success")
       [ ("int 100",   100l,  [50l; 25l; 13l; 7l; 4l; 2l; 1l; 0l]);
         ("int 1000",  1000l, [500l; 250l; 125l; 63l; 32l; 16l; 8l; 4l; 2l; 1l; 0l]);
@@ -39,9 +39,9 @@ module Shrink = struct
 
   let test_int64 () =
     List.iter (alco_check Alcotest.int64 (trace_false Shrink.int64) "on repeated failure")
-      [ ("int 100",   100L,  [50L; 75L; 88L; 94L; 97L; 99L; 99L]);
-        ("int 1000",  1000L, [500L; 750L; 875L; 938L; 969L; 985L; 993L; 997L; 999L; 999L]);
-        ("int (-26)", -26L,  [-13L; -20L; -23L; -25L; -25L]) ];
+      [ ("int 100",   100L,  [50L; 75L; 88L; 94L; 97L; 99L]);
+        ("int 1000",  1000L, [500L; 750L; 875L; 938L; 969L; 985L; 993L; 997L; 999L]);
+        ("int (-26)", -26L,  [-13L; -20L; -23L; -25L]) ];
     List.iter (alco_check Alcotest.int64 (trace_true Shrink.int64) "on repeated success")
       [ ("int 100",   100L,  [50L; 25L; 13L; 7L; 4L; 2L; 1L; 0L]);
         ("int 1000",  1000L, [500L; 250L; 125L; 63L; 32L; 16L; 8L; 4L; 2L; 1L; 0L]);
@@ -50,9 +50,9 @@ module Shrink = struct
   let test_char () =
     List.iter (alco_check Alcotest.char (trace_false Shrink.char) "on repeated failure")
       [ ("char 'a'",   'a',  []);
-        ("char 'z'",   'z',  ['n'; 't'; 'w'; 'y'; 'y']); (*WTF?*)
+        ("char 'z'",   'z',  ['n'; 't'; 'w'; 'y']);
         ("char 'A'",   'A',  ['Q'; 'I'; 'E'; 'C'; 'B']);
-        ("char '~'",   '~',  ['p'; 'w'; '{'; '}'; '}']) ]; (*WTF?*)
+        ("char '~'",   '~',  ['p'; 'w'; '{'; '}']) ];
     List.iter (alco_check Alcotest.char (trace_true Shrink.char) "on repeated success")
       [ ("char 'a'",   'a',  []);
         ("char 'z'",   'z',  ['n'; 'h'; 'e'; 'c'; 'b'; 'a']);
@@ -72,14 +72,46 @@ module Shrink = struct
       [ ("char 'A'",   'A',  ['Q'; 'I'; 'E'; 'C'; 'B']);
         ("char 'a'",   'a',  []);
         ("char ' '",   ' ',  ['@'; '0'; '('; '$'; '"'; '!']);
-        ("char '~'",   '~',  ['p'; 'w'; '{'; '}'; '}']); (*WTF?*)
-        ("char '\\n'", '\n', ['p'; 'w'; '{'; '}'; '}']); ]; (*WTF?*)
+        ("char '~'",   '~',  ['p'; 'w'; '{'; '}']);
+        ("char '\\n'", '\n', ['p'; 'w'; '{'; '}']); ];
     List.iter (alco_check Alcotest.char (trace_true Shrink.char_printable) "on repeated success")
       [ ("char 'A'",   'A',  ['Q'; 'Y'; ']'; '_'; '`'; 'a']);
         ("char 'a'",   'a',  []);
         ("char ' '",   ' ',  ['@'; 'P'; 'X'; '\\'; '^'; '_'; '`'; 'a']);
         ("char '~'",   '~',  ['p'; 'i'; 'e'; 'c'; 'b'; 'a']);
         ("char '\\n'", '\n', ['p'; 'i'; 'e'; 'c'; 'b'; 'a']); ]
+
+  let test_string () =
+    List.iter (alco_check Alcotest.string (trace_false Shrink.string) "on repeated failure")
+      [ ("string \"\"",     "",     []);
+        ("string \"a\"",    "a",    [""]);
+        ("string \"aa\"",   "aa",   [""; "a"]);
+        ("string \"aaaa\"", "aaaa", ["aa"; "aa"; "aaa"]);
+        ("string \"abcd\"", "abcd", ["ab"; "cd"; "acd"; "bcd"; "aacd"; "abbd"; "abcc"]);
+        ("string \"E'*\"",  "E'*",  ["E'"; "*"; "E*"; "'*"; "S'*"; "L'*"; "H'*"; "F'*"; "ED*";
+                                     "E5*"; "E.*"; "E**"; "E(*"; "E'E"; "E'7"; "E'0"; "E'-"; "E'+"]);
+        ("string \"vi5x92xgG\"", "vi5x92xgG", (* A less exhaustive string shrinker would be preferable *)
+         ["vi5x9"; "vi52xgG"; "vix92xgG"; "5x92xgG";
+          "v5x92xgG"; "i5x92xgG"; "li5x92xgG"; "qi5x92xgG"; "ti5x92xgG"; "ui5x92xgG";
+          "ve5x92xgG"; "vg5x92xgG"; "vh5x92xgG";
+          "viKx92xgG"; "vi@x92xgG"; "vi:x92xgG"; "vi7x92xgG"; "vi6x92xgG";
+          "vi5m92xgG"; "vi5s92xgG"; "vi5v92xgG"; "vi5w92xgG";
+          "vi5xM2xgG"; "vi5xC2xgG"; "vi5x>2xgG"; "vi5x;2xgG"; "vi5x:2xgG";
+          "vi5x9IxgG"; "vi5x9=xgG"; "vi5x97xgG"; "vi5x94xgG"; "vi5x93xgG";
+          "vi5x92mgG"; "vi5x92sgG"; "vi5x92vgG"; "vi5x92wgG";
+          "vi5x92xdG"; "vi5x92xfG";
+          "vi5x92xgT"; "vi5x92xgM"; "vi5x92xgJ"; "vi5x92xgH"]);
+        ("string \"~~~~\"", "~~~~", ["~~"; "~~"; "~~~"; "p~~~"; "w~~~"; "{~~~"; "}~~~"; "~p~~";
+                                     "~w~~"; "~{~~"; "~}~~"; "~~p~"; "~~w~"; "~~{~"; "~~}~";
+                                     "~~~p"; "~~~w"; "~~~{"; "~~~}"]); ];
+    List.iter (alco_check Alcotest.string (trace_true Shrink.string) "on repeated success")
+      [ ("string \"\"",     "",     []);
+        ("string \"a\"",    "a",    [""]);
+        ("string \"aa\"",   "aa",   [""]);
+        ("string \"aaaa\"", "aaaa", ["aa"; ""]);
+        ("string \"abcd\"", "abcd", ["ab"; ""]);
+        ("string \"E'*\"",  "E'*",  ["E'"; ""]);
+        ("string \"vi5x92xgG\"", "vi5x92xgG", ["vi5x9"; "vi5"; "vi"; ""]); ]
 
   let tests = ("Shrink", Alcotest.[
       test_case "int"   `Quick test_int;
@@ -88,6 +120,7 @@ module Shrink = struct
       test_case "char"  `Quick test_char;
       test_case "char_numeral"   `Quick test_char_numeral;
       test_case "char_printable" `Quick test_char_printable;
+      test_case "string" `Quick test_string;
     ])
 end
 
