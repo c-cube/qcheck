@@ -860,6 +860,41 @@ let test_unused_variable () =
   in
   check_eq ~expected ~actual "deriving variant with unused fuel parameter"
 
+(* Regression test: https://github.com/c-cube/qcheck/issues/269 *)
+let test_faulty_is_rec_typ_in_variant () =
+  let expected =
+    [
+      [%stri let rec gen_sized n =
+               QCheck.Gen.map (fun gen0 -> Foo gen0) (QCheck.Gen.list (gen_sized (n / 2)))];
+      [%stri let gen = QCheck.Gen.sized gen_sized];
+      [%stri let arb_sized n = QCheck.make @@ (gen_sized n)];
+      [%stri let arb = QCheck.make @@ gen];
+    ]
+  in
+  let actual = f @@ extract [%stri type t = Foo of t list]
+  in
+  check_eq ~expected ~actual "deriving rec type in a type constructor inside variant"
+
+let test_faulty_is_rec_constr_decl () =
+  let expected =
+    [
+      [%stri let rec gen_sized n =
+               match n with
+               | 0 -> QCheck.Gen.pure Foo
+               | _ ->
+                 QCheck.Gen.frequency
+                   [(1, (QCheck.Gen.pure Foo));
+                    (1,
+                     (QCheck.Gen.map (fun gen0 -> Bar { baz = gen0 })
+                        (gen_sized (n / 2))))]];
+      [%stri let gen = QCheck.Gen.sized gen_sized];
+      [%stri let arb_sized n = QCheck.make @@ (gen_sized n)];
+      [%stri let arb = QCheck.make @@ gen];
+    ]
+  in
+  let actual = f @@ extract [%stri type t = Foo | Bar of { baz : t }]
+  in
+  check_eq ~expected ~actual "deriving rec type in a type constructor inside record"
 
 let () =
   Alcotest.(
@@ -907,5 +942,13 @@ let () =
               "deriving variant with unused fuel parameter"
               `Quick
               test_unused_variable;
+            test_case
+              "deriving rec type in a type constructor inside variant"
+              `Quick
+              test_faulty_is_rec_typ_in_variant;
+            test_case
+              "deriving rec type in a type constructor inside record"
+              `Quick
+              test_faulty_is_rec_constr_decl;
           ] );
       ])
