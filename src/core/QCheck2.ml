@@ -1406,6 +1406,7 @@ module Test_exceptions = struct
 
   exception Test_fail of string * string list
   exception Test_error of string * string * exn * string
+  exception Test_unexpected_success of string
 end
 
 module Test = struct
@@ -1882,6 +1883,8 @@ module Test = struct
 
   let print_test_fail name l = asprintf "@[%a@]@?" (pp_print_test_fail name) l
 
+  let print_unexpected_success name = Format.sprintf "@[negative test `%s`@ succeeded unexpectedly@]" name
+
   let print_test_error name i e stack =
     Format.sprintf "@[test `%s`@ raised exception `%s`@ on `%s`@,%s@]"
       name (Printexc.to_string e) i stack
@@ -1982,6 +1985,7 @@ module Test = struct
       (function
         | Test_fail (name,l) -> Some (print_test_fail name l)
         | Test_error (name,i,e,st) -> Some (print_test_error name i e st)
+        | Test_unexpected_success name -> Some (print_unexpected_success name)
         | User_fail s -> Some ("qcheck: user fail:\n" ^ s)
         | _ -> None)
 
@@ -1998,14 +2002,17 @@ module Test = struct
   let print_error ?(st="") arb name (i,e) =
     print_test_error name (print_c_ex arb i) e st
 
-  let check_result cell res = match res.R.state with
-    | R.Success -> ()
-    | R.Error {instance; exn; backtrace} ->
+  let check_result cell res = match res.R.state, cell.positive with
+    | R.Success, true -> ()
+    | R.Success, false ->
+      raise (Test_unexpected_success cell.name)
+    | R.Error {instance; exn; backtrace}, _ ->
       raise (Test_error (cell.name, print_c_ex cell instance, exn, backtrace))
-    | R.Failed {instances=l} ->
+    | R.Failed {instances=l}, true ->
       let l = List.map (print_c_ex cell) l in
       raise (Test_fail (cell.name, l))
-    | R.Failed_other {msg} ->
+    | R.Failed _, false -> ()
+    | R.Failed_other {msg}, _ ->
       raise (Test_fail (cell.name, [msg]))
 
   let check_cell_exn ?long ?call ?step ?handler ?rand cell =

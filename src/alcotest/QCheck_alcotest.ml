@@ -54,14 +54,6 @@ let to_alcotest
   let name = T.get_name cell in
   let run () =
     let call = Raw.callback ~colors ~verbose ~print_res:true ~print in
-    if T.get_positive cell
-    then
-      T.check_cell_exn ~long ~call ~handler ~rand cell
-    else
-      try
-        T.check_cell_exn ~long ~call ~handler ~rand cell;
-        Alcotest.failf "negative test '%s' succeeded unexpectedly" name
-      with
-        T.Test_fail (_name,_l) -> ()
+    T.check_cell_exn ~long ~call ~handler ~rand cell
   in
   ((name, `Slow, run) : unit Alcotest.test_case)
