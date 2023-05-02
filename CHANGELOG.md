@@ -2,6 +2,10 @@
 
 ## NEXT RELEASE
 
+- make `Test.check_result`, `Test.check_cell_exn`, and
+  `Test.check_exn` honor test polarity by raising
+  `Test_unexpected_success` when a negative test (expected to have a
+  counter example), unexpectedly succeeds.
 - ...
 
 ## 0.20
