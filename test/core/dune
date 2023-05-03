@@ -8,17 +8,6 @@
   (modules QCheck2_tests)
   (libraries qcheck-core))
 
-(executable
-  (name QCheck_expect_test)
-  (modules QCheck_expect_test)
-  (libraries qcheck-core qcheck-core.runner QCheck_tests))
-
-(rule
-  (targets QCheck_expect_test.out)
-  (action
-    (with-stdout-to %{targets}
-      (run ./QCheck_expect_test.exe --no-colors -s 1234))))
-
 (rule
  (enabled_if (and (= %{arch_sixtyfour} true) (>= %{ocaml_version} 5)))
  (action (copy QCheck_expect_test.expected.ocaml5.64 QCheck_expect_test.expected)))
@@ -35,21 +24,13 @@
  (enabled_if (and (= %{arch_sixtyfour} false) (< %{ocaml_version} 5)))
  (action (copy QCheck_expect_test.expected.ocaml4.32 QCheck_expect_test.expected)))
 
-(rule
-  (alias runtest)
-  (package qcheck-core)
-  (action (diff QCheck_expect_test.expected QCheck_expect_test.out)))
-
-(executable
-  (name QCheck2_expect_test)
-  (modules QCheck2_expect_test)
-  (libraries qcheck-core qcheck-core.runner QCheck2_tests))
-
-(rule
-  (targets QCheck2_expect_test.out)
-  (action
-    (with-stdout-to %{targets}
-      (run ./QCheck2_expect_test.exe --no-colors -s 1234))))
+;; implicitly compared against QCheck_expect_test.expected
+(test
+ (name QCheck_expect_test)
+ (modules QCheck_expect_test)
+ (package qcheck-core)
+ (libraries qcheck-core qcheck-core.runner QCheck_tests)
+ (action (run ./%{test} --no-colors -s 1234)))
 
 (rule
  (enabled_if (and (= %{arch_sixtyfour} true) (>= %{ocaml_version} 5)))
@@ -67,10 +48,13 @@
  (enabled_if (and (= %{arch_sixtyfour} false) (< %{ocaml_version} 5)))
  (action (copy QCheck2_expect_test.expected.ocaml4.32 QCheck2_expect_test.expected)))
 
-(rule
-  (alias runtest)
-  (package qcheck-core)
-  (action (diff QCheck2_expect_test.expected QCheck2_expect_test.out)))
+;; implicitly compared against QCheck2_expect_test.expected
+(test
+ (name QCheck2_expect_test)
+ (modules QCheck2_expect_test)
+ (package qcheck-core)
+ (libraries qcheck-core qcheck-core.runner QCheck2_tests)
+ (action (run ./%{test} --no-colors -s 1234)))
 
 (tests
   (names QCheck_unit_tests QCheck2_unit_tests)
