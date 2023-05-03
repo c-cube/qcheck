@@ -1,34 +1,34 @@
-(* -*- tuareg -*- *)
-
-let suffix =
-  try
-    let major_version = List.hd (String.split_on_char '.' Sys.ocaml_version) in
-    if int_of_string major_version < 5 then string_of_int Sys.word_size else "ocaml5"
-  with _ -> failwith ("Unknown OCaml version format: " ^ Sys.ocaml_version)
-
-let dune = Printf.sprintf {|
-
 (executables
-  (names QCheck_ounit_test QCheck_test)
-  (libraries ounit2 qcheck-ounit))
+ (names QCheck_ounit_test QCheck_test)
+ (libraries ounit2 qcheck-ounit))
 
 (rule
-  (targets output.txt)
-  (deps ./QCheck_ounit_test.exe)
-  (enabled_if (= %%{os_type} "Unix"))
-  (action
-    (with-accepted-exit-codes
-      1
-      (with-stdout-to
-        %%{targets}
-        (run ./run_ounit.sh -runner=sequential -seed 1234)))))
+ (enabled_if (and (= %{arch_sixtyfour} true) (>= %{ocaml_version} 5)))
+ (action (copy QCheck_ounit_test.expected.ocaml5.64 QCheck_ounit_test.expected)))
 
 (rule
-  (alias runtest)
-  (package qcheck-ounit)
-  (enabled_if (= %%{os_type} "Unix"))
-  (action (diff output.txt.expected.%s output.txt)))
+ (enabled_if (and (= %{arch_sixtyfour} false) (>= %{ocaml_version} 5)))
+ (action (copy QCheck_ounit_test.expected.ocaml5.32 QCheck_ounit_test.expected)))
 
-|} suffix
+(rule
+ (enabled_if (and (= %{arch_sixtyfour} true) (< %{ocaml_version} 5)))
+ (action (copy QCheck_ounit_test.expected.ocaml4.64 QCheck_ounit_test.expected)))
 
-let () = Jbuild_plugin.V1.send dune
+(rule
+ (enabled_if (and (= %{arch_sixtyfour} false) (< %{ocaml_version} 5)))
+ (action (copy QCheck_ounit_test.expected.ocaml4.32 QCheck_ounit_test.expected)))
+
+(rule
+ (targets QCheck_ounit_test.output)
+ (deps ./QCheck_ounit_test.exe)
+ (enabled_if (= %{os_type} "Unix"))
+ (action
+  (with-accepted-exit-codes 1
+   (with-stdout-to %{targets}
+    (run ./run_ounit.sh -runner=sequential -seed 1234)))))
+
+(rule
+ (alias runtest)
+ (package qcheck-ounit)
+ (enabled_if (= %{os_type} "Unix"))
+ (action (diff QCheck_ounit_test.expected QCheck_ounit_test.output)))

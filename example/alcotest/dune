@@ -1,42 +1,36 @@
-(* -*- tuareg -*- *)
+(rule
+ (enabled_if (and (= %{arch_sixtyfour} true) (>= %{ocaml_version} 5)))
+ (action (copy QCheck_alcotest_test.expected.ocaml5.64 QCheck_alcotest_test.expected)))
 
-let suffix =
-  try
-    let major_version = List.hd (String.split_on_char '.' Sys.ocaml_version) in
-    if int_of_string major_version < 5 then string_of_int Sys.word_size else "ocaml5"
-  with _ -> failwith ("Unknown OCaml version format: " ^ Sys.ocaml_version)
+(rule
+ (enabled_if (and (= %{arch_sixtyfour} false) (>= %{ocaml_version} 5)))
+ (action (copy QCheck_alcotest_test.expected.ocaml5.32 QCheck_alcotest_test.expected)))
 
-let dune = Printf.sprintf {|
+(rule
+ (enabled_if (and (= %{arch_sixtyfour} true) (< %{ocaml_version} 5)))
+ (action (copy QCheck_alcotest_test.expected.ocaml4.64 QCheck_alcotest_test.expected)))
 
-(env
- (_
-  (env-vars
-   ; Don't run tests as if Alcotest was run in CI
-   (CI false))))
+(rule
+ (enabled_if (and (= %{arch_sixtyfour} false) (< %{ocaml_version} 5)))
+ (action (copy QCheck_alcotest_test.expected.ocaml4.32 QCheck_alcotest_test.expected)))
 
 (executable
-  (name QCheck_alcotest_test)
-  (libraries qcheck-core qcheck-alcotest alcotest))
+ (name QCheck_alcotest_test)
+ (libraries qcheck-core qcheck-alcotest alcotest))
 
 (rule
-  (targets output.txt)
-  (deps ./QCheck_alcotest_test.exe)
-  (enabled_if (= %%{os_type} "Unix"))
-  (action
-    (with-accepted-exit-codes
-      1
-      (setenv
-        QCHECK_SEED 1234
-        (with-stdout-to
-          %%{targets}
-          (run ./run_alcotest.sh --color=never))))))
+ (targets QCheck_alcotest_test.output)
+ (deps ./QCheck_alcotest_test.exe)
+ (enabled_if (= %{os_type} "Unix"))
+ (action
+  (with-accepted-exit-codes 1
+   (setenv CI false ; Don't run tests as if Alcotest was run in CI
+    (setenv QCHECK_SEED 1234
+     (with-stdout-to %{targets}
+      (run ./run_alcotest.sh --color=never)))))))
 
 (rule
-  (alias runtest)
-  (package qcheck-alcotest)
-  (enabled_if (= %%{os_type} "Unix"))
-  (action (diff output.txt.expected.%s output.txt)))
-
-|} suffix
-
-let () = Jbuild_plugin.V1.send dune
+ (alias runtest)
+ (package qcheck-alcotest)
+ (enabled_if (= %{os_type} "Unix"))
+ (action (diff QCheck_alcotest_test.expected QCheck_alcotest_test.output)))

@@ -1,12 +1,3 @@
-(* -*- tuareg -*- *)
-
-let suffix =
-  try
-    let major_version = List.hd (String.split_on_char '.' Sys.ocaml_version) in
-    if int_of_string major_version < 5 then string_of_int Sys.word_size else "ocaml5"
-  with _ -> failwith ("Unknown OCaml version format: " ^ Sys.ocaml_version)
-
-let dune = Printf.sprintf {|
 (library
   (name QCheck_tests)
   (modules QCheck_tests)
@@ -17,37 +8,53 @@ let dune = Printf.sprintf {|
   (modules QCheck2_tests)
   (libraries qcheck-core))
 
-(executable
-  (name QCheck_expect_test)
-  (modules QCheck_expect_test)
-  (libraries qcheck-core qcheck-core.runner QCheck_tests))
+(rule
+ (enabled_if (and (= %{arch_sixtyfour} true) (>= %{ocaml_version} 5)))
+ (action (copy QCheck_expect_test.expected.ocaml5.64 QCheck_expect_test.expected)))
 
 (rule
-  (targets QCheck_expect_test.out)
-  (action
-    (with-stdout-to %%{targets}
-      (run ./QCheck_expect_test.exe --no-colors -s 1234))))
+ (enabled_if (and (= %{arch_sixtyfour} false) (>= %{ocaml_version} 5)))
+ (action (copy QCheck_expect_test.expected.ocaml5.32 QCheck_expect_test.expected)))
 
 (rule
-  (alias runtest)
-  (package qcheck-core)
-  (action (diff QCheck_expect_test.expected.%s QCheck_expect_test.out)))
-
-(executable
-  (name QCheck2_expect_test)
-  (modules QCheck2_expect_test)
-  (libraries qcheck-core qcheck-core.runner QCheck2_tests))
+ (enabled_if (and (= %{arch_sixtyfour} true) (< %{ocaml_version} 5)))
+ (action (copy QCheck_expect_test.expected.ocaml4.64 QCheck_expect_test.expected)))
 
 (rule
-  (targets QCheck2_expect_test.out)
-  (action
-    (with-stdout-to %%{targets}
-      (run ./QCheck2_expect_test.exe --no-colors -s 1234))))
+ (enabled_if (and (= %{arch_sixtyfour} false) (< %{ocaml_version} 5)))
+ (action (copy QCheck_expect_test.expected.ocaml4.32 QCheck_expect_test.expected)))
+
+;; implicitly compared against QCheck_expect_test.expected
+(test
+ (name QCheck_expect_test)
+ (modules QCheck_expect_test)
+ (package qcheck-core)
+ (libraries qcheck-core qcheck-core.runner QCheck_tests)
+ (action (run ./%{test} --no-colors -s 1234)))
 
 (rule
-  (alias runtest)
-  (package qcheck-core)
-  (action (diff QCheck2_expect_test.expected.%s QCheck2_expect_test.out)))
+ (enabled_if (and (= %{arch_sixtyfour} true) (>= %{ocaml_version} 5)))
+ (action (copy QCheck2_expect_test.expected.ocaml5.64 QCheck2_expect_test.expected)))
+
+(rule
+ (enabled_if (and (= %{arch_sixtyfour} false) (>= %{ocaml_version} 5)))
+ (action (copy QCheck2_expect_test.expected.ocaml5.32 QCheck2_expect_test.expected)))
+
+(rule
+ (enabled_if (and (= %{arch_sixtyfour} true) (< %{ocaml_version} 5)))
+ (action (copy QCheck2_expect_test.expected.ocaml4.64 QCheck2_expect_test.expected)))
+
+(rule
+ (enabled_if (and (= %{arch_sixtyfour} false) (< %{ocaml_version} 5)))
+ (action (copy QCheck2_expect_test.expected.ocaml4.32 QCheck2_expect_test.expected)))
+
+;; implicitly compared against QCheck2_expect_test.expected
+(test
+ (name QCheck2_expect_test)
+ (modules QCheck2_expect_test)
+ (package qcheck-core)
+ (libraries qcheck-core qcheck-core.runner QCheck2_tests)
+ (action (run ./%{test} --no-colors -s 1234)))
 
 (tests
   (names QCheck_unit_tests QCheck2_unit_tests)
@@ -59,7 +66,3 @@ let dune = Printf.sprintf {|
   (name shrink_benchmark)
   (modules shrink_benchmark)
   (libraries qcheck-core qcheck-core.runner QCheck_tests QCheck2_tests))
-
-|} suffix suffix
-
-let () = Jbuild_plugin.V1.send dune
