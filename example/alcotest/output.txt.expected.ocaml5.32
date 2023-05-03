@@ -1,0 +1,82 @@
+qcheck random seed: 1234
+Testing `my test'.
+  [OK]          suite              0   list_rev_is_involutive.
+  [FAIL]        suite              1   fail_sort_id.
+  [FAIL]        suite              2   error_raise_exn.
+  [OK]          suite              3   neg test pass (failing as expected).
+  [FAIL]        suite              4   neg test unexpected success.
+  [FAIL]        suite              5   neg fail with error.
+  [FAIL]        suite              6   fail_check_err_message.
+  [OK]          suite              7   tree_rev_is_involutive.
+  [FAIL]        shrinking          0   debug_shrink.
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ [FAIL]        suite              1   fail_sort_id.                           │
+└──────────────────────────────────────────────────────────────────────────────┘
+test `fail_sort_id` failed on ≥ 1 cases: [1; 0] (after 16 shrink steps)
+[exception] test `fail_sort_id` failed on ≥ 1 cases: [1; 0] (after 16 shrink steps)
+ ──────────────────────────────────────────────────────────────────────────────
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ [FAIL]        suite              2   error_raise_exn.                        │
+└──────────────────────────────────────────────────────────────────────────────┘
+test `error_raise_exn`
+raised exception `Error`
+on `0 (after 30 shrink steps)`
+[exception] test `error_raise_exn`
+raised exception `Error`
+on `0 (after 30 shrink steps)`
+ ──────────────────────────────────────────────────────────────────────────────
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ [FAIL]        suite              4   neg test unexpected success.            │
+└──────────────────────────────────────────────────────────────────────────────┘
+negative test 'neg test unexpected success' succeeded unexpectedly
+[exception] negative test `neg test unexpected success` succeeded unexpectedly
+ ──────────────────────────────────────────────────────────────────────────────
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ [FAIL]        suite              5   neg fail with error.                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+test `neg fail with error`
+raised exception `Error`
+on `0 (after 7 shrink steps)`
+[exception] test `neg fail with error`
+raised exception `Error`
+on `0 (after 7 shrink steps)`
+ ──────────────────────────────────────────────────────────────────────────────
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ [FAIL]        suite              6   fail_check_err_message.                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+test `fail_check_err_message` failed on ≥ 1 cases:
+0 (after 7 shrink steps)
+this
+will
+always
+fail
+[exception] test `fail_check_err_message` failed on ≥ 1 cases:
+0 (after 7 shrink steps)
+this
+will
+always
+fail
+ ──────────────────────────────────────────────────────────────────────────────
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ [FAIL]        shrinking          0   debug_shrink.                           │
+└──────────────────────────────────────────────────────────────────────────────┘
+~~~ Shrink ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Test debug_shrink successfully shrunk counter example (step 0) to:
+(2, 3)
+~~~ Shrink ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Test debug_shrink successfully shrunk counter example (step 1) to:
+(1, 3)
+~~~ Shrink ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Test debug_shrink successfully shrunk counter example (step 2) to:
+(0, 3)
+~~~ Shrink ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Test debug_shrink successfully shrunk counter example (step 3) to:
+(0, 2)
+~~~ Shrink ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Test debug_shrink successfully shrunk counter example (step 4) to:
+(0, 1)
+law debug_shrink: 1 relevant cases (1 total)
+test `debug_shrink` failed on ≥ 1 cases: (0, 1) (after 4 shrink steps)
+[exception] test `debug_shrink` failed on ≥ 1 cases: (0, 1) (after 4 shrink steps)
+ ──────────────────────────────────────────────────────────────────────────────
+6 failures! 9 tests run.
