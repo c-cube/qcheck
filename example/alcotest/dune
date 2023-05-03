@@ -14,16 +14,23 @@
  (enabled_if (and (= %{arch_sixtyfour} false) (< %{ocaml_version} 5)))
  (action (copy QCheck_alcotest_test.expected.ocaml4.32 QCheck_alcotest_test.expected)))
 
-;; implicitly compared against QCheck_runner_test.expected
-(test
- (enabled_if (= %{os_type} "Unix"))
+(executable
  (name QCheck_alcotest_test)
- (modules QCheck_alcotest_test)
+ (libraries qcheck-core qcheck-alcotest alcotest))
+
+(rule
+ (targets QCheck_alcotest_test.output)
  (deps ./QCheck_alcotest_test.exe)
- (package qcheck-alcotest)
- (libraries qcheck-core qcheck-alcotest alcotest)
+ (enabled_if (= %{os_type} "Unix"))
  (action
   (with-accepted-exit-codes 1
    (setenv CI false ; Don't run tests as if Alcotest was run in CI
     (setenv QCHECK_SEED 1234
-     (run ./run_alcotest.sh --color=never))))))
+     (with-stdout-to %{targets}
+      (run ./run_alcotest.sh --color=never)))))))
+
+(rule
+ (alias runtest)
+ (package qcheck-alcotest)
+ (enabled_if (= %{os_type} "Unix"))
+ (action (diff QCheck_alcotest_test.expected QCheck_alcotest_test.output)))

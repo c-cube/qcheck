@@ -1,6 +1,5 @@
-(executable
- (name QCheck_test)
- (modules QCheck_test)
+(executables
+ (names QCheck_ounit_test QCheck_test)
  (libraries ounit2 qcheck-ounit))
 
 (rule
@@ -19,14 +18,17 @@
  (enabled_if (and (= %{arch_sixtyfour} false) (< %{ocaml_version} 5)))
  (action (copy QCheck_ounit_test.expected.ocaml4.32 QCheck_ounit_test.expected)))
 
-;; implicitly compared against QCheck_runner_test.expected
-(test
- (enabled_if (= %{os_type} "Unix"))
- (name QCheck_ounit_test)
- (modules QCheck_ounit_test)
+(rule
+ (targets QCheck_ounit_test.output)
  (deps ./QCheck_ounit_test.exe)
- (package qcheck-ounit)
- (libraries ounit2 qcheck-ounit)
+ (enabled_if (= %{os_type} "Unix"))
  (action
   (with-accepted-exit-codes 1
-   (run ./run_ounit.sh -runner=sequential -seed 1234))))
+   (with-stdout-to %{targets}
+    (run ./run_ounit.sh -runner=sequential -seed 1234)))))
+
+(rule
+ (alias runtest)
+ (package qcheck-ounit)
+ (enabled_if (= %{os_type} "Unix"))
+ (action (diff QCheck_ounit_test.expected QCheck_ounit_test.output)))
