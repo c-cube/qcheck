@@ -25,7 +25,6 @@ Error: tests:6:fail_check_err_message.
 
 Error: tests:6:fail_check_err_message (in the log).
 
-Error: tests:6:fail_check_err_message (in the code).
 
 
 test `fail_check_err_message` failed on ≥ 1 cases:
@@ -43,7 +42,6 @@ Error: tests:4:neg test unexpected success.
 
 Error: tests:4:neg test unexpected success (in the log).
 
-Error: tests:4:neg test unexpected success (in the code).
 
 
 negative test 'neg test unexpected success' succeeded unexpectedly
@@ -54,7 +52,6 @@ Error: tests:1:fail_sort_id.
 
 Error: tests:1:fail_sort_id (in the log).
 
-Error: tests:1:fail_sort_id (in the code).
 
 
 test `fail_sort_id` failed on ≥ 1 cases: [1; 0] (after 11 shrink steps)

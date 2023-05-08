@@ -10,5 +10,6 @@ echo "$OUT" \
   | grep -v 'File .*, line .*' \
   | grep -v 'Called from ' \
   | grep -v 'Raised at ' \
+  | grep -v '(in the code)' \
   | sed 's/in: .*seconds/in: <nondet> seconds/'
 exit $CODE
