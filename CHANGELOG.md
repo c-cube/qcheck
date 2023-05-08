@@ -1,6 +1,6 @@
 # Changes
 
-## NEXT RELEASE
+## 0.21
 
 - make `Test.check_result`, `Test.check_cell_exn`, and
   `Test.check_exn` honor test polarity by raising
@@ -11,7 +11,6 @@
   and a related issue when deriving a generator for a record type
 - fix #241 causing `QCheck.Shrink.int*` to emit duplicates, also affecting `QCheck.Shrink.{char,string}`
 - fix a cornercase where `Shrink.list_spine` would emit duplicates
-- ...
 
 ## 0.20
 

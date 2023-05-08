@@ -5,7 +5,7 @@ license: "BSD-2-Clause"
 homepage: "https://github.com/c-cube/qcheck/"
 doc: ["http://c-cube.github.io/qcheck/"]
 synopsis: "OUnit backend for qcheck"
-version: "0.20"
+version: "0.21"
 tags: [
   "qcheck"
   "quickcheck"
