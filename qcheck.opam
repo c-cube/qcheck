@@ -17,13 +17,14 @@ build: [
   ["dune" "runtest" "-p" name "-j" jobs] {with-test}
 ]
 depends: [
-  "dune" { >= "2.2" }
+  "dune" { >= "2.7" }
   "base-bytes"
   "base-unix"
   "qcheck-core" { = version }
   "qcheck-ounit" { = version }
   "alcotest" {with-test}
   "odoc" {with-doc}
+  "bisect_ppx" {with-test}
   "ocaml" {>= "4.08.0"}
 ]
 dev-repo: "git+https://github.com/c-cube/qcheck.git"

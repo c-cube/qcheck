@@ -3,6 +3,7 @@
   (name qcheck_runner)
   (public_name qcheck-core.runner)
   (wrapped false)
+  (instrumentation (backend bisect_ppx))
   (libraries qcheck-core)
   (flags :standard -warn-error -a+8 -safe-string)
   )

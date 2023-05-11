@@ -38,6 +38,14 @@ release: update_next_tag
 	opam publish https://github.com/c-cube/qcheck/archive/$(VERSION).tar.gz
 	@echo "review the release, then type 'opam publish submit qcheck.$(VERSION)/'"
 
+coverage-report:
+	@dune runtest -f --instrument-with bisect_ppx
+	bisect-ppx-report html
+	@echo "Report should be available in file://$(shell pwd)/_coverage/index.html"
+
+coverage-report-summary:
+	@dune runtest -f --instrument-with bisect_ppx
+	bisect-ppx-report summary
 
 watch:
 	@dune build @all -w

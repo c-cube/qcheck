@@ -5,6 +5,7 @@
   (wrapped false)
   (modules QCheck_runner)
   (synopsis "compatibility library for qcheck")
+  (instrumentation (backend bisect_ppx))
   (libraries qcheck-core qcheck-core.runner qcheck-ounit))
 
 (documentation
