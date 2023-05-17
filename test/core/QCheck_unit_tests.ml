@@ -113,6 +113,10 @@ module Shrink = struct
         ("string \"E'*\"",  "E'*",  ["E'"; ""]);
         ("string \"vi5x92xgG\"", "vi5x92xgG", ["vi5x9"; "vi5"; "vi"; ""]); ]
 
+  let test_list_spine_compare () =
+    let run_test () = QCheck.Shrink.list_spine [pred;succ] ignore in
+    Alcotest.(check unit) "doesn't compare elements" () @@ run_test ()
+
   let tests = ("Shrink", Alcotest.[
       test_case "int"   `Quick test_int;
       test_case "int32" `Quick test_int32;
@@ -121,6 +125,7 @@ module Shrink = struct
       test_case "char_numeral"   `Quick test_char_numeral;
       test_case "char_printable" `Quick test_char_printable;
       test_case "string" `Quick test_string;
+      test_case "list_spine" `Quick test_list_spine_compare;
     ])
 end
 
