@@ -85,8 +85,8 @@ module Shrink = struct
     List.iter (alco_check Alcotest.string (trace_false Shrink.string) "on repeated failure")
       [ ("string \"\"",     "",     []);
         ("string \"a\"",    "a",    [""]);
-        ("string \"aa\"",   "aa",   [""; "a"]);
-        ("string \"aaaa\"", "aaaa", ["aa"; "aa"; "aaa"]);
+        ("string \"aa\"",   "aa",   [""; "a"; "a"]);
+        ("string \"aaaa\"", "aaaa", ["aa"; "aa"; "aaa"; "aaa"]);
         ("string \"abcd\"", "abcd", ["ab"; "cd"; "acd"; "bcd"; "aacd"; "abbd"; "abcc"]);
         ("string \"E'*\"",  "E'*",  ["E'"; "*"; "E*"; "'*"; "S'*"; "L'*"; "H'*"; "F'*"; "ED*";
                                      "E5*"; "E.*"; "E**"; "E(*"; "E'E"; "E'7"; "E'0"; "E'-"; "E'+"]);
@@ -101,7 +101,7 @@ module Shrink = struct
           "vi5x92mgG"; "vi5x92sgG"; "vi5x92vgG"; "vi5x92wgG";
           "vi5x92xdG"; "vi5x92xfG";
           "vi5x92xgT"; "vi5x92xgM"; "vi5x92xgJ"; "vi5x92xgH"]);
-        ("string \"~~~~\"", "~~~~", ["~~"; "~~"; "~~~"; "p~~~"; "w~~~"; "{~~~"; "}~~~"; "~p~~";
+        ("string \"~~~~\"", "~~~~", ["~~"; "~~"; "~~~"; "~~~"; "p~~~"; "w~~~"; "{~~~"; "}~~~"; "~p~~";
                                      "~w~~"; "~{~~"; "~}~~"; "~~p~"; "~~w~"; "~~{~"; "~~}~";
                                      "~~~p"; "~~~w"; "~~~{"; "~~~}"]); ];
     List.iter (alco_check Alcotest.string (trace_true Shrink.string) "on repeated success")
@@ -113,6 +113,10 @@ module Shrink = struct
         ("string \"E'*\"",  "E'*",  ["E'"; ""]);
         ("string \"vi5x92xgG\"", "vi5x92xgG", ["vi5x9"; "vi5"; "vi"; ""]); ]
 
+  let test_list_spine_compare () =
+    let run_test () = QCheck.Shrink.list_spine [pred;succ] ignore in
+    Alcotest.(check unit) "doesn't compare elements" () @@ run_test ()
+
   let tests = ("Shrink", Alcotest.[
       test_case "int"   `Quick test_int;
       test_case "int32" `Quick test_int32;
@@ -121,6 +125,7 @@ module Shrink = struct
       test_case "char_numeral"   `Quick test_char_numeral;
       test_case "char_printable" `Quick test_char_printable;
       test_case "string" `Quick test_string;
+      test_case "list_spine" `Quick test_list_spine_compare;
     ])
 end
 

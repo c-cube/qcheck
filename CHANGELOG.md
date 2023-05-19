@@ -2,7 +2,8 @@
 
 ## NEXT RELEASE
 
-- ...
+- Roll back the `Shrink.list_spine` fix, as it was utilizing polymorphic
+  equality that can raise an exception on function comparison.
 
 ## 0.21
 
