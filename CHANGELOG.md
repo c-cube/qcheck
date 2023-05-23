@@ -1,5 +1,9 @@
 # Changes
 
+## NEXT RELEASE
+
+- ...
+
 ## 0.21.1
 
 - Roll back the `Shrink.list_spine` fix, as it was utilizing polymorphic
