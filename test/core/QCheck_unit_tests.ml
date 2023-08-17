@@ -85,8 +85,8 @@ module Shrink = struct
     List.iter (alco_check Alcotest.string (trace_false Shrink.string) "on repeated failure")
       [ ("string \"\"",     "",     []);
         ("string \"a\"",    "a",    [""]);
-        ("string \"aa\"",   "aa",   [""; "a"; "a"]);
-        ("string \"aaaa\"", "aaaa", ["aa"; "aa"; "aaa"; "aaa"]);
+        ("string \"aa\"",   "aa",   [""; "a"]);
+        ("string \"aaaa\"", "aaaa", ["aa"; "aa"; "aaa"]);
         ("string \"abcd\"", "abcd", ["ab"; "cd"; "acd"; "bcd"; "aacd"; "abbd"; "abcc"]);
         ("string \"E'*\"",  "E'*",  ["E'"; "*"; "E*"; "'*"; "S'*"; "L'*"; "H'*"; "F'*"; "ED*";
                                      "E5*"; "E.*"; "E**"; "E(*"; "E'E"; "E'7"; "E'0"; "E'-"; "E'+"]);
@@ -101,7 +101,7 @@ module Shrink = struct
           "vi5x92mgG"; "vi5x92sgG"; "vi5x92vgG"; "vi5x92wgG";
           "vi5x92xdG"; "vi5x92xfG";
           "vi5x92xgT"; "vi5x92xgM"; "vi5x92xgJ"; "vi5x92xgH"]);
-        ("string \"~~~~\"", "~~~~", ["~~"; "~~"; "~~~"; "~~~"; "p~~~"; "w~~~"; "{~~~"; "}~~~"; "~p~~";
+        ("string \"~~~~\"", "~~~~", ["~~"; "~~"; "~~~"; "p~~~"; "w~~~"; "{~~~"; "}~~~"; "~p~~";
                                      "~w~~"; "~{~~"; "~}~~"; "~~p~"; "~~w~"; "~~{~"; "~~}~";
                                      "~~~p"; "~~~w"; "~~~{"; "~~~}"]); ];
     List.iter (alco_check Alcotest.string (trace_true Shrink.string) "on repeated success")
