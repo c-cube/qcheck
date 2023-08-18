@@ -10,7 +10,7 @@ author: [ "the qcheck contributors" ]
 depends: [
   "dune" {>= "2.8.0"}
   "ocaml" {>= "4.08.0"}
-  "qcheck" {>= "0.19"}
+  "qcheck-core" {>= "0.19"}
   "ppxlib" {>= "0.22.0"}
   "ppx_deriving" {>= "5.2.1"}
   "odoc" {with-doc}
