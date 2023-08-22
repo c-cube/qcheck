@@ -760,7 +760,7 @@ module Shrink = struct
     match l with
     | [] -> ()
     | [_] -> yield []
-    | [x;y] -> yield []; yield [x]; if x != y then yield [y]
+    | [x;y] -> yield []; yield [x]; if (try x <> y with Invalid_argument _ -> x != y) then yield [y]
     | _::_ ->
       let len = List.length l in
       let xs,ys = split l ((1 + len) / 2) [] in
