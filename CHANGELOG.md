@@ -2,7 +2,8 @@
 
 ## NEXT RELEASE
 
-- Reintroduce the `Shrink.list_spine` fix using an address comparison instead.
+- Reintroduce the `Shrink.list_spine` fix by catching `Invalid_argument` and
+  falling back on an address comparison.
 - Fix #273 by lowering `ppx_deriving_qcheck`'s `qcheck` dependency to `qcheck-core`
 
 ## 0.21.1
