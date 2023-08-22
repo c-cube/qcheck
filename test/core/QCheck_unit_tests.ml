@@ -113,6 +113,42 @@ module Shrink = struct
         ("string \"E'*\"",  "E'*",  ["E'"; ""]);
         ("string \"vi5x92xgG\"", "vi5x92xgG", ["vi5x9"; "vi5"; "vi"; ""]); ]
 
+  let test_int_list () =
+    List.iter (alco_check Alcotest.(list int) (trace_false (Shrink.list_spine)) "on repeated failure")
+      [ ("list int [0]",       [0],       [[]]);
+        ("list int [0;1]",     [0;1],     [[]; [0]; [1]]);
+        ("list int [0;1;2]",   [0;1;2],   [[0; 1]; [2]; [0; 2]; [1; 2]]);
+        ("list int [0;1;2;3]", [0;1;2;3], [[0; 1]; [2; 3]; [0; 2; 3]; [1; 2; 3]]);
+        ("list int [0;0]",     [0;0],     [[]; [0]]);
+        ("list int [0;0;0]",   [0;0;0],   [[0; 0]; [0]; [0; 0]]);
+        ("list int [0;0;0;0]", [0;0;0;0], [[0; 0]; [0; 0]; [0; 0; 0]]); ];
+    List.iter (alco_check Alcotest.(list int) (trace_true (Shrink.list_spine)) "on repeated success")
+      [ ("list int [0]",       [0],       [[]]);
+        ("list int [0;1]",     [0;1],     [[]]);
+        ("list int [0;1;2]",   [0;1;2],   [[0; 1]; []]);
+        ("list int [0;1;2;3]", [0;1;2;3], [[0; 1]; []]);
+        ("list int [0;0]",     [0;0],     [[]]);
+        ("list int [0;0;0]",   [0;0;0],   [[0; 0]; []]);
+        ("list int [0;0;0;0]", [0;0;0;0], [[0; 0]; []]); ]
+
+  let test_int32_list () = (* use int32 as a boxed type and List.map to force run-time allocations *)
+    List.iter (alco_check Alcotest.(list int32) (trace_false (Shrink.list_spine)) "on repeated failure")
+      [ ("list int32 [0l]",          List.map Int32.of_int [0],       [[]]);
+        ("list int32 [0l;1l]",       List.map Int32.of_int [0;1],     [[]; [0l]; [1l]]);
+        ("list int32 [0l;1l;2l]",    List.map Int32.of_int [0;1;2],   [[0l; 1l]; [2l]; [0l; 2l]; [1l; 2l]]);
+        ("list int32 [0l;1l;2l;3l]", List.map Int32.of_int [0;1;2;3], [[0l; 1l]; [2l; 3l]; [0l; 2l; 3l]; [1l; 2l; 3l]]);
+        ("list int32 [0l;0l]",       List.map Int32.of_int [0;0],     [[]; [0l]; [0l]]);
+        ("list int32 [0l;0l;0l]",    List.map Int32.of_int [0;0;0],   [[0l; 0l]; [0l]; [0l; 0l]; [0l; 0l]]);
+        ("list int32 [0l;0l;0l;0l]", List.map Int32.of_int [0;0;0;0], [[0l; 0l]; [0l; 0l]; [0l; 0l; 0l]; [0l; 0l; 0l]]); ];
+    List.iter (alco_check Alcotest.(list int32) (trace_true (Shrink.list_spine)) "on repeated success")
+      [ ("list int [0l]",          List.map Int32.of_int [0],       [[]]);
+        ("list int [0l;1l]",       List.map Int32.of_int [0;1],     [[]]);
+        ("list int [0l;1l;2l]",    List.map Int32.of_int [0;1;2],   [[0l; 1l]; []]);
+        ("list int [0l;1l;2l;3l]", List.map Int32.of_int [0;1;2;3], [[0l; 1l]; []]);
+        ("list int [0l;0l]",       List.map Int32.of_int [0;0],     [[]]);
+        ("list int [0l;0l;0l]",    List.map Int32.of_int [0;0;0],   [[0l; 0l]; []]);
+        ("list int [0l;0l;0l;0l]", List.map Int32.of_int [0;0;0;0], [[0l; 0l]; []]); ]
+
   let test_list_spine_compare () =
     let run_test () = QCheck.Shrink.list_spine [pred;succ] ignore in
     Alcotest.(check unit) "doesn't compare elements" () @@ run_test ()
@@ -125,6 +161,8 @@ module Shrink = struct
       test_case "char_numeral"   `Quick test_char_numeral;
       test_case "char_printable" `Quick test_char_printable;
       test_case "string" `Quick test_string;
+      test_case "int list" `Quick test_int_list;
+      test_case "int32 list" `Quick test_int32_list;
       test_case "list_spine" `Quick test_list_spine_compare;
     ])
 end
