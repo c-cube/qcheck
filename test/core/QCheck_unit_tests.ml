@@ -137,9 +137,9 @@ module Shrink = struct
         ("list int32 [0l;1l]",       List.map Int32.of_int [0;1],     [[]; [0l]; [1l]]);
         ("list int32 [0l;1l;2l]",    List.map Int32.of_int [0;1;2],   [[0l; 1l]; [2l]; [0l; 2l]; [1l; 2l]]);
         ("list int32 [0l;1l;2l;3l]", List.map Int32.of_int [0;1;2;3], [[0l; 1l]; [2l; 3l]; [0l; 2l; 3l]; [1l; 2l; 3l]]);
-        ("list int32 [0l;0l]",       List.map Int32.of_int [0;0],     [[]; [0l]; [0l]]);
-        ("list int32 [0l;0l;0l]",    List.map Int32.of_int [0;0;0],   [[0l; 0l]; [0l]; [0l; 0l]; [0l; 0l]]);
-        ("list int32 [0l;0l;0l;0l]", List.map Int32.of_int [0;0;0;0], [[0l; 0l]; [0l; 0l]; [0l; 0l; 0l]; [0l; 0l; 0l]]); ];
+        ("list int32 [0l;0l]",       List.map Int32.of_int [0;0],     [[]; [0l]]);
+        ("list int32 [0l;0l;0l]",    List.map Int32.of_int [0;0;0],   [[0l; 0l]; [0l]; [0l; 0l]]);
+        ("list int32 [0l;0l;0l;0l]", List.map Int32.of_int [0;0;0;0], [[0l; 0l]; [0l; 0l]; [0l; 0l; 0l]]); ];
     List.iter (alco_check Alcotest.(list int32) (trace_true (Shrink.list_spine)) "on repeated success")
       [ ("list int [0l]",          List.map Int32.of_int [0],       [[]]);
         ("list int [0l;1l]",       List.map Int32.of_int [0;1],     [[]]);
