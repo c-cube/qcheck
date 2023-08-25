@@ -1,6 +1,6 @@
 # Changes
 
-## NEXT RELEASE
+## 0.21.2
 
 - Reintroduce the `Shrink.list_spine` fix by catching `Invalid_argument` and
   falling back on an address comparison.
