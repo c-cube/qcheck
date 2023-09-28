@@ -19,7 +19,6 @@ build: [
 ]
 depends: [
   "dune" { >= "2.8.0" }
-  "base-bytes"
   "base-unix"
   "qcheck-core" { = version }
   "alcotest" {>= "0.8.1"}
