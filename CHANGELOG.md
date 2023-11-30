@@ -1,6 +1,6 @@
 # Changes
 
-## NEXT RELEASE
+## 0.21.3
 
 - Drop the dependency on `base-bytes` as it is provided in all supported
   versions of the OCaml compiler
