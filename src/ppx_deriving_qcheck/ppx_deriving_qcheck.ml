@@ -634,6 +634,27 @@ let gen_expander_qcheck = Deriving.Generator.V2.make_noarg create_arbs
 
 let gen_expander_qcheck2 = Deriving.Generator.V2.make_noarg (create_gens `QCheck2)
 
-let _ = Deriving.add "qcheck" ~str_type_decl:gen_expander_qcheck
+let gen_sig_expander_qcheck2 =
+  Deriving.Generator.V2.make_noarg
+    (fun ~ctxt  (_rec_flag, tds) ->
+      let loc = Expansion_context.Deriver.derived_item_loc ctxt in
+      let (module A) = Ast_builder.make loc in
+      tds |> List.map (fun td ->
+        let type_name = td.ptype_name.txt in
+        A.psig_value
+          (A.value_description
+            ~name:(A.Located.mk (name type_name))
+            ~type_:(A.ptyp_constr (A.Located.mk (Ldot (Ldot (Lident "QCheck2", "Gen"), "t")))
+                                    [ A.ptyp_constr (A.Located.mk (Lident type_name)) [] ])
+            ~prim:[])))
 
-let _ = Deriving.add "qcheck2" ~str_type_decl:gen_expander_qcheck2
+let _ =
+  Deriving.add
+    "qcheck"
+    ~str_type_decl:gen_expander_qcheck
+
+let _ =
+  Deriving.add
+    "qcheck2"
+    ~str_type_decl:gen_expander_qcheck2
+    ~sig_type_decl:gen_sig_expander_qcheck2
