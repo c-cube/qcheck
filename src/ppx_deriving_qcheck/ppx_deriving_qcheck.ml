@@ -636,7 +636,7 @@ let gen_expander_qcheck2 = Deriving.Generator.V2.make_noarg (create_gens `QCheck
 
 let gen_sig_expander_qcheck2 =
   Deriving.Generator.V2.make_noarg
-    (fun ~ctxt  (_rec_flag, tds) ->
+    (fun ~ctxt (_rec_flag, tds) ->
       let loc = Expansion_context.Deriver.derived_item_loc ctxt in
       let (module A) = Ast_builder.make loc in
       tds |> List.map (fun td ->
