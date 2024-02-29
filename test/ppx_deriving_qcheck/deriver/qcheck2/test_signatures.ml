@@ -5,21 +5,9 @@ open Helpers
    where the type is named "t" and when it is not. *)
 
 module T : sig
-  type t = int [@@deriving_inline qcheck2]
-    include sig
-      [@@@ocaml.warning "-32"]
-      val gen : t QCheck2.Gen.t 
-    end
-    [@@ocaml.doc "@inline"]
-  [@@@deriving.end]
+  type t = int [@@deriving qcheck2]
 
-  type string' = string [@@deriving_inline qcheck2]
-    include sig
-      [@@@ocaml.warning "-32"]
-      val gen_string' : string' QCheck2.Gen.t 
-    end
-    [@@ocaml.doc "@inline"]
-  [@@@deriving.end]
+  type string' = string [@@deriving qcheck2]
 end = struct
   type t = int [@@deriving qcheck2]
 
