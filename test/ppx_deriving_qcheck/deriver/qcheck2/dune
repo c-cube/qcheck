@@ -8,6 +8,6 @@
    test_tuple
    test_variants
    test_record
-   test_sig)
+   test_signatures)
  (libraries qcheck-alcotest ppxlib ppx_deriving_qcheck qcheck-core)
  (preprocess (pps ppxlib.metaquot ppx_deriving_qcheck)))

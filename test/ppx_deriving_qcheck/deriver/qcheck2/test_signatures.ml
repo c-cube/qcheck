@@ -27,16 +27,16 @@ end = struct
 end
 
 let test_int () =
-  test_compare ~msg:"Gen.int <=> deriving int" ~eq:Alcotest.int Gen.int T.gen
+  test_compare ~msg:"Gen.int <=> deriving int exported by signature" ~eq:Alcotest.int Gen.int T.gen
 
 let test_string () =
-  test_compare ~msg:"Gen.string <=> deriving string" ~eq:Alcotest.string Gen.string T.gen_string'
+  test_compare ~msg:"Gen.string <=> deriving string exported by signature" ~eq:Alcotest.string Gen.string T.gen_string'
 
 (** {2. Execute tests} *)
 
-let () = Alcotest.run "Test_Primitives"
-           [("Primitives",
+let () = Alcotest.run "Test_Signatures"
+           [("Signatures",
              Alcotest.[
-                 test_case "test_int" `Quick test_int;
-                 test_case "test_unit" `Quick test_string;
+                 test_case "test_int (sig)" `Quick test_int;
+                 test_case "test_string (sig)" `Quick test_string;
            ])]
