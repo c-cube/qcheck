@@ -2,7 +2,8 @@
 
 ## NEXT RELEASE
 
-- ...
+- Remove `QCheck2.TestResult.get_instances` as retaining previous test inputs
+  cause memory leaks
 
 ## 0.21.3
 
