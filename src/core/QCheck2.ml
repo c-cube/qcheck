@@ -1562,7 +1562,7 @@ module Test = struct
     step: 'a step;
     handler : 'a handler;
     rand: RS.t;
-    mutable res: 'a TestResult.t;
+    res: 'a TestResult.t;
     mutable cur_count: int;  (** number of iterations remaining to do *)
     mutable cur_max_gen: int; (** maximum number of generations allowed *)
     mutable cur_max_fail: int; (** maximum number of counter-examples allowed *)

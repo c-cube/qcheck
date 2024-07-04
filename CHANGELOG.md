@@ -4,6 +4,7 @@
 
 - Remove `QCheck2.TestResult.get_instances` as retaining previous test inputs
   cause memory leaks
+- Make `QCheck2.state.res` immutable, silencing a compilation warning
 
 ## 0.21.3
 
