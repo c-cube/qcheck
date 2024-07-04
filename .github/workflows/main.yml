@@ -19,10 +19,8 @@ jobs:
           - 4.08.x
           - 4.12.x
           - 4.14.x
-          - ocaml-base-compiler.5.0.0
-        exclude:
-          - os: windows-latest
-            ocaml-compiler: ocaml-base-compiler.5.0.0
+          - 5.0.0
+          - 5.2.0
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
