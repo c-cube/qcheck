@@ -33,9 +33,7 @@ jobs:
     - uses: ocaml/setup-ocaml@v3
       with:
         ocaml-compiler: ${{ matrix.ocaml-compiler }}
-    - run: opam pin -n .
-    - run: opam depext -yt qcheck qcheck-core qcheck-ounit qcheck-alcotest
-    - run: opam install -t . --deps-only
+    - run: opam install . --deps-only --with-test
     - run: opam exec -- dune build
     - run: opam exec -- dune runtest
       if: ${{ matrix.os != 'windows-latest'}}
