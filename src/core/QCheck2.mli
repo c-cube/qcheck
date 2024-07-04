@@ -1610,10 +1610,6 @@ module TestResult : sig
   (** [get_warnings t] returns the list of warnings emitted during the test.
       @since 0.18 *)
 
-  val get_instances : 'a t -> 'a list
-  (** [get_instances t] returns the generated instances, with no guarantee on the order.
-      @since 0.18 *)
-
   val is_success : _ t -> bool
   (** Returns true iff the state is [Success]
       @since 0.9 *)

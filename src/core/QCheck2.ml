@@ -1354,9 +1354,6 @@ module TestResult = struct
     collect_tbl: (string, int) Hashtbl.t lazy_t;
     stats_tbl: ('a stat * (int, int) Hashtbl.t) list;
     mutable warnings: string list;
-    mutable instances: 'a list;
-    (** List of instances used for this test, in no particular order.
-        @since 0.9 *)
   }
 
   let get_state {state; _} = state
@@ -1390,8 +1387,6 @@ module TestResult = struct
   let get_warnings r = r.warnings
 
   let warnings = get_warnings
-
-  let get_instances r = r.instances
 
   let is_success r = match r.state with
     | Success -> true
@@ -1763,7 +1758,6 @@ module Test = struct
   and check_state_input state input_tree =
     let Tree.Tree (input, _) = input_tree in
     state.handler state.test.name state.test (Collecting input);
-    state.res.R.instances <- input :: state.res.R.instances;
     collect state input;
     update_stats state input;
     let res =
@@ -1835,7 +1829,7 @@ module Test = struct
       res = {R.
               state=R.Success; count=0; count_gen=0;
               collect_tbl=lazy (Hashtbl.create 10);
-              instances=[]; warnings=[];
+              warnings=[];
               stats_tbl= List.map (fun stat -> stat, Hashtbl.create 10) cell.stats;
             };
     } in
