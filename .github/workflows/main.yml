@@ -10,17 +10,18 @@ jobs:
   run:
     name: Build
     strategy:
+      fail-fast: false
       matrix:
         os:
           - macos-13
           - ubuntu-latest
           - windows-latest
         ocaml-compiler:
-          - 4.08.x
-          - 4.12.x
-          - 4.14.x
-          - 5.0.0
-          - 5.2.0
+          - "4.08"
+          - "4.12"
+          - "4.14"
+          - "5.0"
+          - "5.2"
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
