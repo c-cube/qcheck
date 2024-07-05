@@ -21,7 +21,7 @@ depends: [
   "dune" { >= "2.8.0" }
   "base-unix"
   "qcheck-core" { = version }
-  "alcotest" {>= "0.8.1"}
+  "alcotest" {>= "1.2.0"}
   "odoc" {with-doc}
   "ocaml" {>= "4.08.0"}
 ]
