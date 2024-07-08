@@ -1,5 +1,9 @@
 # Changes
 
+## NEXT RELEASE
+
+- ...
+
 ## 0.22
 
 - Remove `QCheck2.TestResult.get_instances` as retaining previous test inputs
