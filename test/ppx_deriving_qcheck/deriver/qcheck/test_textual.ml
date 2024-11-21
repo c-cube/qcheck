@@ -118,7 +118,7 @@ let test_int64' () =
  *     ]
  *   in
  *   let actual = f @@ extract [%stri type t = Bytes.t ] in
- * 
+ *
  *   check_eq ~expected ~actual "deriving int64" *)
 
 let test_tuple () =
@@ -820,28 +820,28 @@ let test_unused_variable () =
           | _ ->
             QCheck.Gen.frequency
               [(1, (QCheck.Gen.pure A));
-               (1, (QCheck.Gen.map (fun gen0 -> B gen0) gen_myint))]
-        and gen_myint = QCheck.Gen.nat
+               (1, (QCheck.Gen.map (fun gen0 -> B gen0) (gen_myint_sized (n / 2))))]
+        and gen_myint_sized _n = QCheck.Gen.nat
       ];
-      [%stri
-       let gen_c = QCheck.Gen.sized gen_c_sized
-      ];
+      [%stri let gen_c = QCheck.Gen.sized gen_c_sized];
+      [%stri let gen_myint = QCheck.Gen.sized gen_myint_sized];
       [%stri let arb_c_sized n = QCheck.make @@ (gen_c_sized n)];
-      [%stri let arb_myint = QCheck.make @@ gen_myint];
+      [%stri let arb_myint_sized _n = QCheck.make @@ (gen_myint_sized _n)];
       [%stri let arb_c = QCheck.make @@ gen_c];
+      [%stri let arb_myint = QCheck.make @@ gen_myint];
       [%stri
-        let rec gen_c_sized _n =
+        let rec gen_c_sized n =
           QCheck.Gen.frequency
-            [(1, (QCheck.Gen.map (fun gen0 -> A gen0) gen_myint));
-             (1, (QCheck.Gen.map (fun gen0 -> B gen0) gen_myint))]
-        and gen_myint = QCheck.Gen.nat
+            [(1, (QCheck.Gen.map (fun gen0 -> A gen0) (gen_myint_sized (n / 2))));
+             (1, (QCheck.Gen.map (fun gen0 -> B gen0) (gen_myint_sized (n / 2))))]
+        and gen_myint_sized _n = QCheck.Gen.nat
       ];
-      [%stri
-       let gen_c = QCheck.Gen.sized gen_c_sized
-      ];
-      [%stri let arb_c_sized _n = QCheck.make @@ (gen_c_sized _n)];
-      [%stri let arb_myint = QCheck.make @@ gen_myint];
+      [%stri let gen_c = QCheck.Gen.sized gen_c_sized];
+      [%stri let gen_myint = QCheck.Gen.sized gen_myint_sized];
+      [%stri let arb_c_sized n = QCheck.make @@ (gen_c_sized n)];
+      [%stri let arb_myint_sized _n = QCheck.make @@ (gen_myint_sized _n)];
       [%stri let arb_c = QCheck.make @@ gen_c];
+      [%stri let arb_myint = QCheck.make @@ gen_myint];
     ]
   in
   let actual =
