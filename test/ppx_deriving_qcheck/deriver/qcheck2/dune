@@ -7,6 +7,7 @@
    test_recursive
    test_tuple
    test_variants
+   test_mutual
    test_record)
  (libraries qcheck-alcotest ppxlib ppx_deriving_qcheck qcheck-core)
  (preprocess (pps ppxlib.metaquot ppx_deriving_qcheck)))

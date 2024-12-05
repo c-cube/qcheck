@@ -252,7 +252,7 @@ let gen_sized ~loc ~env (is_rec : 'a -> bool) (to_gen : 'a -> expression) (xs : 
     G.frequency ~loc (A.elist nodes)
   else
     let nodes = List.map to_gen nodes in
-    let leaves = A.elist leaves |> G.frequency ~loc 
+    let leaves = A.elist leaves |> G.frequency ~loc
     and nodes = A.elist (leaves @ nodes) |> G.frequency ~loc in
     [%expr
         match n with
@@ -541,12 +541,7 @@ let derive_gens ~version ~loc (xs : rec_flag * type_declaration list) : structur
       | `Normal gen -> [gen])
   | _, xs ->
      let typ_names = List.map (fun x -> x.ptype_name.txt) xs in
-     let env = Env.{ curr_type = ""; rec_types = []; curr_types = typ_names; version } in
-     let env =
-       List.fold_left
-         (fun env x -> add_if_rec env x x.ptype_name.txt)
-         env xs
-     in
+     let env = Env.{ curr_type = ""; rec_types = typ_names; curr_types = typ_names; version } in
      let gens =
        List.map (fun x ->
            let env = { env with curr_type = x.ptype_name.txt }in
