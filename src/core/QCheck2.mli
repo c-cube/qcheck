@@ -516,6 +516,14 @@ module Gen : sig
 
       @since 0.11 *)
 
+  val exponential : float -> float t
+  (** [exponential m] generates floating-point numbers following an exponential
+      distribution with a mean of [m].
+
+      @raise Invalid_argument if [m] is NaN.
+
+      @since NEXT_VERSION *)
+
   val char_range : ?origin:char -> char -> char -> char t
   (** [char_range ?origin low high] generates chars between [low] and [high], inclusive.
       Example: [char_range 'a' 'z'] for all lower case ASCII letters.
