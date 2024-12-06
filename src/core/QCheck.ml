@@ -481,8 +481,8 @@ module Print = struct
   let bool = string_of_bool
   let float = string_of_float
   let bytes = Bytes.to_string
-  let string s = s
-  let char c = String.make 1 c
+  let string s = Printf.sprintf "%S" s
+  let char c = Printf.sprintf "%C" c
 
   let option f = function
     | None -> "None"
