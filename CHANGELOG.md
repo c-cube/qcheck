@@ -2,7 +2,8 @@
 
 ## NEXT RELEASE
 
-- ...
+- Quote and escape when printing `string` and `char` in the `Observable` module
+  for function generation
 
 ## 0.22
 
