@@ -2,6 +2,7 @@
 
 ## NEXT RELEASE
 
+- Add `Shrink.bool` and use it in `QCheck.bool`
 - Remove unread `fun_gen` field from `QCheck2`'s `fun_repr_tbl` type
   thereby silencing a compiler warning
 
