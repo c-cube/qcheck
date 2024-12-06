@@ -672,6 +672,9 @@ module Shrink = struct
 
   let unit = nil
 
+  let bool b =
+    if b then Iter.return false else Iter.empty
+
   (* balanced shrinker for integers (non-exhaustive) *)
   let int x yield =
     let y = ref x in
@@ -1085,9 +1088,9 @@ let choose l = match l with
           arb.gen st)
 
 let unit : unit arbitrary =
-  make ~small:small1 ~shrink:Shrink.nil ~print:(fun _ -> "()") Gen.unit
-
-let bool = make_scalar ~print:string_of_bool Gen.bool
+  make ~small:small1 ~shrink:Shrink.nil ~print:Print.unit Gen.unit
+let bool =
+  make ~small:small1 ~shrink:Shrink.bool ~print:Print.bool Gen.bool
 let float = make_scalar ~print:string_of_float Gen.float
 let pos_float = make_scalar ~print:string_of_float Gen.pfloat
 let neg_float = make_scalar ~print:string_of_float Gen.nfloat
