@@ -2,6 +2,8 @@
 
 ## NEXT RELEASE
 
+- Quote and escape in `Print.string` and `Print.char` in the `QCheck` module,
+  mirroring the `QCheck2.Print` module's behaviour
 - Clean-up `QCheck` and `QCheck2` documentation pages
 - Add `exponential` generator to `QCheck`, `QCheck.Gen`, and `QCheck2.Gen`
 - Add `Shrink.bool` and use it in `QCheck.bool`
