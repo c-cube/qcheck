@@ -1004,7 +1004,7 @@ module Observable = struct
   let int : int t = make ~hash:H.int ~eq:Eq.int Print.int
   let float : float t = make ~eq:Eq.float Print.float
   let bytes = make ~hash:H.bytes ~eq:Eq.bytes Print.bytes
-  let string = make ~hash:H.string ~eq:Eq.string Print.string
+  let string = make ~hash:H.string ~eq:Eq.string (sprintf "%S")
   let char = make ~hash:H.char ~eq:Eq.char (sprintf "%C")
 
   let option p =
