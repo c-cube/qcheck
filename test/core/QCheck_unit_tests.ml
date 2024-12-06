@@ -17,6 +17,14 @@ module Shrink = struct
   let alco_check typ func msg_suffix (msg,input,expected) =
     Alcotest.(check (list typ)) (msg ^ " - " ^ msg_suffix) expected (func input)
 
+  let test_bool () =
+    List.iter (alco_check Alcotest.bool (trace_false Shrink.bool) "on repeated failure")
+      [ ("bool true",  true,  [false]);
+        ("bool false", false, []) ];
+    List.iter (alco_check Alcotest.bool (trace_true Shrink.bool) "on repeated success")
+      [ ("bool true",  true,  [false]);
+        ("bool false", false, []) ]
+
   let test_int () =
     List.iter (alco_check Alcotest.int (trace_false Shrink.int) "on repeated failure")
       [ ("int 100",   100,  [50; 75; 88; 94; 97; 99]);
@@ -154,6 +162,7 @@ module Shrink = struct
     Alcotest.(check unit) "doesn't compare elements" () @@ run_test ()
 
   let tests = ("Shrink", Alcotest.[
+      test_case "bool"  `Quick test_bool;
       test_case "int"   `Quick test_int;
       test_case "int32" `Quick test_int32;
       test_case "int64" `Quick test_int64;
