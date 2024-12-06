@@ -80,9 +80,9 @@ Test FAIL_pred_map_commute failed (47 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test FAIL_fun2_pred_strings failed (1 shrink steps):
+Test FAIL_fun2_pred_strings failed (2 shrink steps):
 
-{some other string -> false; _ -> true}
+{some random string -> true; _ -> false}
 
 --- Failure --------------------------------------------------------------------
 
