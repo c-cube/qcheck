@@ -543,7 +543,7 @@ Test fail_pred_map_commute failed (77 shrink steps):
 
 Test fail_pred_strings failed (1 shrink steps):
 
-{some other string -> false; _ -> true}
+{"some other string" -> false; _ -> true}
 
 --- Failure --------------------------------------------------------------------
 
