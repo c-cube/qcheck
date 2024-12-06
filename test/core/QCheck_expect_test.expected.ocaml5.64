@@ -553,7 +553,7 @@ Test fail_pred_map_commute failed (89 shrink steps):
 
 Test fail_pred_strings failed (2 shrink steps):
 
-{some random string -> true; _ -> false}
+{"some random string" -> true; _ -> false}
 
 --- Failure --------------------------------------------------------------------
 
@@ -584,7 +584,7 @@ Test fold_left fold_right uncurried fun last failed (25 shrink steps):
 
 Test fold_left test, fun first failed (66 shrink steps):
 
-({(, 2) -> "a"; _ -> ""}, "", [], [2])
+({("", 2) -> "a"; _ -> ""}, "", [], [2])
 
 --- Failure --------------------------------------------------------------------
 
