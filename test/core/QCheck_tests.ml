@@ -955,6 +955,12 @@ module Stats = struct
       Test.make ~name:"oneof int dist"                 ~count:1000   (add_stat dist (oneofl[min_int;-1;0;1;max_int])) (fun _ -> true);
     ]
 
+  let exponential_tests =
+    let float_dist = ("dist",int_of_float) in
+    [ Test.make ~name:"exponential 10. dist" ~count:5_000 (add_stat float_dist (exponential 10.)) (fun _ -> true);
+      Test.make ~name:"exponential -10. dist" ~count:5_000 (add_stat float_dist (exponential (-10.))) (fun _ -> true);
+    ]
+
   let tree_depth_test =
     let depth = ("depth", IntTree.depth) in
     Test.make ~name:"tree's depth" ~count:1000 (add_stat depth (make IntTree.gen_tree)) (fun _ -> true)
@@ -982,4 +988,5 @@ module Stats = struct
     @ list_len_tests
     @ array_len_tests
     @ int_dist_tests
+    @ exponential_tests
 end
