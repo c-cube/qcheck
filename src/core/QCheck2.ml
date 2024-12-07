@@ -1169,7 +1169,6 @@ end
 (** Internal representation of functions, used for shrinking and printing (in case of error). *)
 type ('a, 'b) fun_repr_tbl = {
   fun_tbl: ('a, 'b) Poly_tbl.t; (** Input-output bindings *)
-  fun_gen: 'b Gen.t; (** How to generate output values *)
   fun_print: 'b Print.t option; (** How to print output values *)
   fun_default: 'b; (** Default value for all inputs not explicitly mapped in {!fun_tbl} *)
 }
@@ -1203,8 +1202,8 @@ module Fn = struct
 
   let make_ (r : 'a fun_repr) : 'a fun_ = Fun (r, function_of_repr r)
 
-  let mk_repr tbl gen ?print def =
-    Fun_tbl { fun_tbl=tbl; fun_gen=gen; fun_print=print; fun_default=def; }
+  let mk_repr tbl ?print def =
+    Fun_tbl { fun_tbl=tbl; fun_print=print; fun_default=def; }
 
   let map_repr f repr = Fun_map (f, repr)
 
@@ -1233,7 +1232,7 @@ module Fn = struct
   (** [gen_rep obs gen] creates a function generator. Input values are observed with [obs] and
       output values are generated with [gen]. *)
   let gen_rep (obs : 'a Observable.t) ?(print : 'b Print.t option) (gen : 'b Gen.t)  : ('a -> 'b) fun_repr Gen.t =
-    Gen.liftA2 (fun default_value poly_tbl -> mk_repr poly_tbl gen ?print default_value) gen (Poly_tbl.create ?v_print:print obs gen 8)
+    Gen.liftA2 (fun default_value poly_tbl -> mk_repr poly_tbl ?print default_value) gen (Poly_tbl.create ?v_print:print obs gen 8)
 
   let gen (obs : 'a Observable.t) ?(print : 'b Print.t option) (gen : 'b Gen.t)  : ('a -> 'b) fun_ Gen.t =
     Gen.map make_ (gen_rep obs gen ?print)
