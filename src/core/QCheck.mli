@@ -267,6 +267,12 @@ module Gen : sig
   (** Synonym for [float_range]
       @since 0.11 *)
 
+  val exponential : float -> float t
+  (** [exponential m] generates floating-point numbers following an exponential
+      distribution with a mean of [m].
+      @raise Invalid_argument if [m] is NaN.
+      @since NEXT_VERSION *)
+
   val nat : int t (** Generates small natural numbers. *)
 
   val big_nat : int t
@@ -1232,6 +1238,12 @@ val float_range : float -> float -> float arbitrary
 (** [float_range low high] is uniform between [low] included and [high] included.
     @raise Invalid_argument if [low > high] or if the range is larger than [max_float].
     @since 0.11 *)
+
+val exponential : float -> float arbitrary
+(** [exponential m] generates floating-point numbers following an exponential
+    distribution with a mean of [m].
+    @raise Invalid_argument if [m] is NaN.
+    @since NEXT_VERSION *)
 
 val int : int arbitrary
 (** Int generator. Uniformly distributed. *)
