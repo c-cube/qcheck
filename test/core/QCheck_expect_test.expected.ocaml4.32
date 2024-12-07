@@ -253,25 +253,25 @@ Test printable never produces less than '5 failed (3 shrink steps):
 
 Test bytes are empty failed (15 shrink steps):
 
-a
+"a"
 
 --- Failure --------------------------------------------------------------------
 
 Test bytes never has a \000 char failed (8 shrink steps):
 
- 
+"\000"
 
 --- Failure --------------------------------------------------------------------
 
 Test bytes never has a \255 char failed (14 shrink steps):
 
-ÿ
+"\255"
 
 --- Failure --------------------------------------------------------------------
 
 Test bytes have unique chars failed (13 shrink steps):
 
-
+"\129\129"
 
 --- Failure --------------------------------------------------------------------
 
@@ -511,7 +511,7 @@ Test fail_pred_map_commute failed (48 shrink steps):
 
 Test fail_pred_strings failed (2 shrink steps):
 
-{some random string -> true; _ -> false}
+{"some random string" -> true; _ -> false}
 
 --- Failure --------------------------------------------------------------------
 

@@ -340,25 +340,25 @@ Test printable never produces less than '5 failed (0 shrink steps):
 
 Test bytes are empty failed (9 shrink steps):
 
-a
+"a"
 
 --- Failure --------------------------------------------------------------------
 
 Test bytes never has a \000 char failed (55 shrink steps):
 
-aaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+"aaaaaaaaaaaaaaa\000aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
 --- Failure --------------------------------------------------------------------
 
 Test bytes never has a \255 char failed (75 shrink steps):
 
-aaaaaaaÿaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+"aaaaaaa\255aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
 --- Failure --------------------------------------------------------------------
 
 Test bytes have unique chars failed (14 shrink steps):
 
-aaaaaaa
+"aaaaaaa"
 
 --- Failure --------------------------------------------------------------------
 
