@@ -479,8 +479,8 @@ module Print = struct
   let int = string_of_int
   let bool = string_of_bool
   let float = string_of_float
-  let bytes = Bytes.to_string
   let string s = Printf.sprintf "%S" s
+  let bytes b = string (Bytes.to_string b)
   let char c = Printf.sprintf "%C" c
 
   let option f = function
