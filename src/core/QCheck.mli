@@ -723,7 +723,11 @@ module Shrink : sig
   val nil : 'a t
   (** No shrink *)
 
-  val unit : unit t (** @since 0.6 *)
+  val unit : unit t
+  (** @since 0.6 *)
+
+  val bool : bool t
+  (** @since NEXT_RELEASE *)
 
   val char : char t
   (** Shrinks towards ['a'].

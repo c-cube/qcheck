@@ -74,15 +74,15 @@ exception Dune__exe__QCheck_runner_test.Error
 
 --- Failure --------------------------------------------------------------------
 
-Test FAIL_pred_map_commute failed (47 shrink steps):
+Test FAIL_pred_map_commute failed (48 shrink steps):
 
-([1], {_ -> 0}, {0 -> false; _ -> true})
+([1], {_ -> 0}, {1 -> true; _ -> false})
 
 --- Failure --------------------------------------------------------------------
 
-Test FAIL_fun2_pred_strings failed (1 shrink steps):
+Test FAIL_fun2_pred_strings failed (2 shrink steps):
 
-{some other string -> false; _ -> true}
+{some random string -> true; _ -> false}
 
 --- Failure --------------------------------------------------------------------
 
