@@ -295,25 +295,25 @@ Test printable never produces less than '5 failed (0 shrink steps):
 
 Test bytes are empty failed (13 shrink steps):
 
-a
+"a"
 
 --- Failure --------------------------------------------------------------------
 
 Test bytes never has a \000 char failed (13 shrink steps):
 
- 
+"\000"
 
 --- Failure --------------------------------------------------------------------
 
 Test bytes never has a \255 char failed (15 shrink steps):
 
-я
+"\255"
 
 --- Failure --------------------------------------------------------------------
 
 Test bytes have unique chars failed (14 shrink steps):
 
-ии
+"\232\232"
 
 --- Failure --------------------------------------------------------------------
 
