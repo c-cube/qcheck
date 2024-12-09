@@ -369,9 +369,11 @@ module Gen : sig
   (** Generates quadruples.
       @since 0.5.1 *)
 
-   (** {3 Tuple of generators} *)
+  (** {3 Tuple generators} *)
 
-  (** {4 Shrinks on [gen1], then [gen2], then ... } *)
+  (** {4 Create tuple generators by composing individual element generators. For example,
+         [Gen.(tup3 int char bool)] creates a [(int * char * bool)] triple generator
+         by composing the [int], [char], and [bool] generators. *)
 
   val tup2 : 'a t -> 'b t -> ('a * 'b) t
 
