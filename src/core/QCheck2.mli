@@ -15,7 +15,7 @@ content will appear. *)
     This library takes inspiration from Haskell's QuickCheck library. The
     rough idea is that the programmer describes invariants that values of
     a certain type need to satisfy ("properties"), as functions from this type
-    to bool. They also need to describe how to generate random values of the type,
+    to [bool]. The programmer also needs to describe how to generate random values of the type,
     so that the property is tried and checked on a number of random instances.
 
     This explains the organization of this module:
