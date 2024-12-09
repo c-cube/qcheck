@@ -847,8 +847,8 @@ end
     The random function will observe its arguments in a way
     that is determined from the observable instance.
 
-    Inspired from https://blogs.janestreet.com/quickcheck-for-core/
-    and Koen Claessen's "Shrinking and Showing functions".
+    Inspired from {:https://blogs.janestreet.com/quickcheck-for-core/}
+    and {{:https://dl.acm.org/doi/abs/10.1145/2364506.2364516}Koen Claessen's "Shrinking and Showing Functions"}.
 
     @since 0.6
 *)
@@ -1169,7 +1169,7 @@ end
     also be used to find data satisfying a predicate,
     {i within a property being tested}.
 
-    See https://github.com/c-cube/qcheck/issues/31
+    See {:https://github.com/c-cube/qcheck/issues/31}
 *)
 
 exception No_example_found of string
