@@ -238,6 +238,8 @@ module Gen : sig
       @since 0.18
   *)
 
+  (** {3 Primitive generators} *)
+
   val unit : unit t (** The unit generator. *)
 
   val bool : bool t (** The boolean generator. *)
@@ -361,41 +363,6 @@ module Gen : sig
       @since 0.18 ([?ratio] parameter)
   *)
 
-  val pair : 'a t -> 'b t -> ('a * 'b) t (** Generates pairs. *)
-
-  val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t (** Generates triples. *)
-
-  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
-  (** Generates quadruples.
-      @since 0.5.1 *)
-
-  (** {3 Tuple generators}
-
-         Create tuple generators by composing individual element generators. For example,
-         [Gen.(tup3 int char bool)] creates a [(int * char * bool)] triple generator
-         by composing the [int], [char], and [bool] generators.
-  *)
-
-  val tup2 : 'a t -> 'b t -> ('a * 'b) t
-
-  val tup3 : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
-
-  val tup4 : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
-
-  val tup5 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> ('a * 'b * 'c * 'd * 'e) t
-
-  val tup6 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t ->
-    ('a * 'b * 'c * 'd * 'e * 'f) t
-
-  val tup7 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t ->
-    ('a * 'b * 'c * 'd * 'e * 'f * 'g) t
-
-  val tup8 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t ->
-    ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h) t
-
-  val tup9 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t -> 'i t ->
-    ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h * 'i) t
-
   val char : char t
   (** Generates characters upto character code 255. *)
 
@@ -495,6 +462,41 @@ module Gen : sig
   val small_array : 'a t -> 'a array t
   (** Generates arrays of small size (see {!small_nat}).
       @since 0.10 *)
+
+  (** {3 Tuple generators}
+
+         Create tuple generators by composing individual element generators. For example,
+         [Gen.(tup3 int char bool)] creates a [(int * char * bool)] triple generator
+         by composing the [int], [char], and [bool] generators.
+  *)
+
+  val pair : 'a t -> 'b t -> ('a * 'b) t (** Generates pairs. *)
+
+  val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t (** Generates triples. *)
+
+  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
+  (** Generates quadruples.
+      @since 0.5.1 *)
+
+  val tup2 : 'a t -> 'b t -> ('a * 'b) t
+
+  val tup3 : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
+
+  val tup4 : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
+
+  val tup5 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> ('a * 'b * 'c * 'd * 'e) t
+
+  val tup6 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t ->
+    ('a * 'b * 'c * 'd * 'e * 'f) t
+
+  val tup7 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t ->
+    ('a * 'b * 'c * 'd * 'e * 'f * 'g) t
+
+  val tup8 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t ->
+    ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h) t
+
+  val tup9 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t -> 'i t ->
+    ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h * 'i) t
 
   val join : 'a t t -> 'a t
   (** Collapses a generator of generators to simply a generator.
