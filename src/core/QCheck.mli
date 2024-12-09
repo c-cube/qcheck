@@ -10,15 +10,17 @@ all rights reserved.
 (** The library takes inspiration from Haskell's QuickCheck library. The
     rough idea is that the programmer describes invariants that values of
     a certain type need to satisfy ("properties"), as functions from this type
-    to bool. She also needs to describe how to generate random values of the type,
+    to [bool]. The programmer also needs to describe how to generate random values of the type,
     so that the property is tried and checked on a number of random instances.
 
     This explains the organization of this module:
 
-    - {! 'a arbitrary} is used to describe how to generate random values,
-      shrink them (make counter-examples as small as possible), print
-      them, etc. Auxiliary modules such as {!Gen}, {!Print}, and {!Shrink}
-      can be used along with {!make} to build one's own arbitrary instances.
+    - {{!section:arbitrary}The ['a arbitrary] record type} describes how to generate random values,
+      shrink them (reduce counter-examples to a minimum), print them, etc.
+      It is the generator type expected by {!Test.make}.
+
+    - Auxiliary modules such as {!Gen}, {!Print}, and {!Shrink} can be used along with {!make}
+      to build custom generators.
 
     - {!Test} is used to describe a single test, that is, a property of
       type ['a -> bool] combined with an ['a arbitrary] that is used to generate
