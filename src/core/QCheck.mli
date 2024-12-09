@@ -591,12 +591,6 @@ module Gen : sig
       in a generator.
       @since 0.17 *)
 
-  val generate : ?rand:Random.State.t -> n:int -> 'a t -> 'a list
-  (** [generate ~n g] generates [n] instances of [g]. *)
-
-  val generate1 : ?rand:Random.State.t -> 'a t -> 'a
-  (** [generate1 g] generates one instance of [g]. *)
-
   val ( let+ ) : 'a t -> ('a -> 'b) -> 'b t
 
   val ( and+ ) : 'a t -> 'b t -> ('a * 'b) t
@@ -604,6 +598,18 @@ module Gen : sig
   val ( let* ) : 'a t -> ('a -> 'b t) -> 'b t
 
   val ( and* ) : 'a t -> 'b t -> ('a * 'b) t
+
+  (** {3 Debug generators}
+
+      These functions should not be used in tests: they are provided
+      for convenience to debug/investigate what values a generator produces.
+  *)
+
+  val generate : ?rand:Random.State.t -> n:int -> 'a t -> 'a list
+  (** [generate ~n g] generates [n] instances of [g]. *)
+
+  val generate1 : ?rand:Random.State.t -> 'a t -> 'a
+  (** [generate1 g] generates one instance of [g]. *)
 end
 
 (** {2 Pretty printing} *)
