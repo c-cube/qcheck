@@ -1,0 +1,31 @@
+{0 qcheck-core}
+
+The [qcheck-core] opam package contains two libraries:
+
+- The [qcheck-core] library for defining property-based tests
+- The [qcheck-core.runner] library for running property-based tests
+
+{1: The [qcheck-core] library}
+
+The [qcheck-core] library exposes two toplevel modules:
+
+- {!QCheck} is the initial property-based-testing module and
+- {!QCheck2} is a newer property-based-testing module supporting integrated shrinking
+
+Of the two, {!QCheck} is the most battle-tested module.
+{!QCheck2} on the other hand offers integrated shrinking, thus
+removing the need for having to hand-write shrinkers.
+
+{!QCheck} tests can be ported to {!QCheck2} by following the
+{{!QCheck2.migration_qcheck2}migration guide}. Please
+file an issue if you encounter problems using either of the two
+modules.
+
+{1: The [qcheck-core.runner] library}
+
+The entry point of the [qcheck-core.runner] library is the {!QCheck_base_runner} module.
+
+One can run a list of property-based tests by calling either
+
+- {!QCheck_base_runner.run_tests}, which accepts a number of optional arguments, or
+- {!QCheck_base_runner.run_tests_main}, which can be controlled via command-line arguments
