@@ -1776,6 +1776,6 @@ val fun_nary : 'a Tuple.obs -> 'b arbitrary -> ('a Tuple.t -> 'b) fun_ arbitrary
     Example:
     {[
       let module O = Observable in
-      fun_nary Tuple.(O.int @-> O.float @-> O.string @-> o_nil) bool)
+      fun_nary Tuple.(O.int @-> O.float @-> O.string @-> o_nil) bool
     ]}
     @since 0.6 *)
