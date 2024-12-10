@@ -2,6 +2,7 @@
 
 ## NEXT RELEASE
 
+- Clean-up `QCheck` and `QCheck2` documentation pages
 - Add `exponential` generator to `QCheck`, `QCheck.Gen`, and `QCheck2.Gen`
 - Add `Shrink.bool` and use it in `QCheck.bool`
 - Remove unread `fun_gen` field from `QCheck2`'s `fun_repr_tbl` type
