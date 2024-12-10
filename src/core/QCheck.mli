@@ -634,7 +634,8 @@ module Print : sig
   (** Printer for values of type ['a]. *)
 
 
-  val unit : unit t (** @since 0.6 *)
+  val unit : unit t
+  (** @since 0.6 *)
 
   val int : int t (** Integer printer. *)
 
@@ -644,7 +645,9 @@ module Print : sig
 
   val char : char t (** Character printer. *)
 
-  val bytes : bytes t (** Bytes printer. @since 0.20 *)
+  val bytes : bytes t
+  (** Bytes printer.
+      @since 0.20 *)
 
   val string : string t (** String printer. *)
 
@@ -1417,8 +1420,8 @@ end
 (** {2 Defining Tests } *)
 
 (** Module related to individual tests.
-     @since 0.18 most of it moved to {!QCheck2},
-     and the type ['a cell] was made a private implementation detail.
+    Since 0.18 most of it moved to {!QCheck2},
+    and the type ['a cell] was made a private implementation detail.
 *)
 module Test : sig
   type res = QCheck2.Test.res =
