@@ -15,7 +15,7 @@ content will appear. *)
     This library takes inspiration from Haskell's QuickCheck library. The
     rough idea is that the programmer describes invariants that values of
     a certain type need to satisfy ("properties"), as functions from this type
-    to bool. They also need to describe how to generate random values of the type,
+    to [bool]. The programmer also needs to describe how to generate random values of the type,
     so that the property is tried and checked on a number of random instances.
 
     This explains the organization of this module:
@@ -92,6 +92,21 @@ content will appear. *)
 
     @since 0.18
 *)
+
+(** {1 Generators, printers, and shrinkers in QCheck2 }
+
+The {!Gen} module offers combinators to build compositive generators for complex
+data types.
+
+To print counter-examples, {!Test.make} accepts a [print] function, turning a
+test-case into a [string] for printing on the console. The {!Print} module
+offers combinators to build such printers.
+
+The {!Tree} module defines the lazy tree type underlying integrated shrinking.
+
+The {!Shrink} module contains utility functions for defining shrinkers.
+*)
+
 
 (** A tree represents a generated value and its successive shrunk values. *)
 module Tree : sig
@@ -1256,6 +1271,19 @@ module Shrink : sig
 
 end
 
+(** {1 Generating Functions}
+
+    The [QCheck2] module supports generation of pure function values.
+    The implementation is inspired from {:https://blogs.janestreet.com/quickcheck-for-core/}
+    and {{:https://dl.acm.org/doi/abs/10.1145/2364506.2364516}Koen Claessen's "Shrinking and Showing Functions"}.
+
+    Generated function arguments are of type {!Observable.t} and function results are of type
+    {!Gen.t}.
+
+    Underneath the hood, generated function values have a table-based representation.
+    They therefore need to be applied in a special way, e.g., with {!Fn.apply}.
+*)
+
 (** An observable is a random function {i argument}. *)
 module Observable : sig
   (**
@@ -1481,9 +1509,10 @@ val fun_nary : 'a Tuple.obs -> ?print:('b Print.t) -> 'b Gen.t -> ('a Tuple.t ->
 
     @since 0.6 *)
 
-(** Utils on generated functions.
-    @since 0.6 *)
 module Fn : sig
+  (** A utility module of helpers for printing, shrinking, and applying generated function values.
+      @since 0.6 *)
+
   val print : 'f fun_ Print.t
   (** [print f] prints the implementation of generated function [f].
 
@@ -1498,7 +1527,7 @@ module Fn : sig
 end
 
 
-(** {2 Assumptions} *)
+(** {1 Assumptions} *)
 
 val assume : bool -> unit
 (** [assume cond] checks the precondition [cond], and does nothing

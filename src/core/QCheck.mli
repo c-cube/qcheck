@@ -7,18 +7,22 @@ all rights reserved.
 
 (** {1 Quickcheck inspired property-based testing} *)
 
-(** The library takes inspiration from Haskell's QuickCheck library. The
+(** {1 Introduction}
+
+    The library takes inspiration from Haskell's QuickCheck library. The
     rough idea is that the programmer describes invariants that values of
     a certain type need to satisfy ("properties"), as functions from this type
-    to bool. She also needs to describe how to generate random values of the type,
+    to [bool]. The programmer also needs to describe how to generate random values of the type,
     so that the property is tried and checked on a number of random instances.
 
     This explains the organization of this module:
 
-    - {! 'a arbitrary} is used to describe how to generate random values,
-      shrink them (make counter-examples as small as possible), print
-      them, etc. Auxiliary modules such as {!Gen}, {!Print}, and {!Shrink}
-      can be used along with {!make} to build one's own arbitrary instances.
+    - {{!section:arbitrary}The ['a arbitrary] record type} describes how to generate random values,
+      shrink them (reduce counter-examples to a minimum), print them, etc.
+      It is the generator type expected by {!Test.make}.
+
+    - Auxiliary modules such as {!Gen}, {!Print}, and {!Shrink} can be used along with {!make}
+      to build custom generators.
 
     - {!Test} is used to describe a single test, that is, a property of
       type ['a -> bool] combined with an ['a arbitrary] that is used to generate
@@ -27,7 +31,7 @@ all rights reserved.
       and test, etc.
 
 
-    Examples:
+    {1 Examples}
 
     - List.rev is involutive:
 
@@ -78,6 +82,8 @@ all rights reserved.
     {{:http://gasche.github.io/random-generator/doc/Generator.html } here}.
 *)
 
+(** {1 Assumptions} *)
+
 val (==>) : bool -> bool -> bool
 (** [b1 ==> b2] is the logical implication [b1 => b2]
     ie [not b1 || b2] (except that it is strict and will interact
@@ -123,8 +129,14 @@ val assume_fail : unit -> 'a
     @since 0.5.1
 *)
 
-(** {2 Generate Random Values} *)
+(** {1 Generate Random Values} *)
+
 module Gen : sig
+  (** The [Gen] module offers combinators to build custom generators.
+      Unlike the {{!section:arbitrary}the ['a arbitrary] record type},
+      which comes with printers, shrinkers, etc. {!Gen.t} represents
+      a type for generation only. *)
+
   type 'a t = Random.State.t -> 'a
   (** A random generator for values of type 'a. *)
 
@@ -235,6 +247,8 @@ module Gen : sig
 
       @since 0.18
   *)
+
+  (** {3 Primitive generators} *)
 
   val unit : unit t (** The unit generator. *)
 
@@ -359,38 +373,6 @@ module Gen : sig
       @since 0.18 ([?ratio] parameter)
   *)
 
-  val pair : 'a t -> 'b t -> ('a * 'b) t (** Generates pairs. *)
-
-  val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t (** Generates triples. *)
-
-  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
-  (** Generates quadruples.
-      @since 0.5.1 *)
-
-   (** {3 Tuple of generators} *)
-
-  (** {4 Shrinks on [gen1], then [gen2], then ... } *)
-
-  val tup2 : 'a t -> 'b t -> ('a * 'b) t
-
-  val tup3 : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
-
-  val tup4 : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
-
-  val tup5 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> ('a * 'b * 'c * 'd * 'e) t
-
-  val tup6 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t ->
-    ('a * 'b * 'c * 'd * 'e * 'f) t
-
-  val tup7 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t ->
-    ('a * 'b * 'c * 'd * 'e * 'f * 'g) t
-
-  val tup8 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t ->
-    ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h) t
-
-  val tup9 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t -> 'i t ->
-    ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h * 'i) t
-
   val char : char t
   (** Generates characters upto character code 255. *)
 
@@ -491,6 +473,41 @@ module Gen : sig
   (** Generates arrays of small size (see {!small_nat}).
       @since 0.10 *)
 
+  (** {3 Tuple generators}
+
+         Create tuple generators by composing individual element generators. For example,
+         [Gen.(tup3 int char bool)] creates a [(int * char * bool)] triple generator
+         by composing the [int], [char], and [bool] generators.
+  *)
+
+  val pair : 'a t -> 'b t -> ('a * 'b) t (** Generates pairs. *)
+
+  val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t (** Generates triples. *)
+
+  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
+  (** Generates quadruples.
+      @since 0.5.1 *)
+
+  val tup2 : 'a t -> 'b t -> ('a * 'b) t
+
+  val tup3 : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
+
+  val tup4 : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
+
+  val tup5 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> ('a * 'b * 'c * 'd * 'e) t
+
+  val tup6 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t ->
+    ('a * 'b * 'c * 'd * 'e * 'f) t
+
+  val tup7 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t ->
+    ('a * 'b * 'c * 'd * 'e * 'f * 'g) t
+
+  val tup8 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t ->
+    ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h) t
+
+  val tup9 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t -> 'i t ->
+    ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h * 'i) t
+
   val join : 'a t t -> 'a t
   (** Collapses a generator of generators to simply a generator.
       @since 0.5 *)
@@ -586,12 +603,6 @@ module Gen : sig
       in a generator.
       @since 0.17 *)
 
-  val generate : ?rand:Random.State.t -> n:int -> 'a t -> 'a list
-  (** [generate ~n g] generates [n] instances of [g]. *)
-
-  val generate1 : ?rand:Random.State.t -> 'a t -> 'a
-  (** [generate1 g] generates one instance of [g]. *)
-
   val ( let+ ) : 'a t -> ('a -> 'b) -> 'b t
 
   val ( and+ ) : 'a t -> 'b t -> ('a * 'b) t
@@ -599,17 +610,32 @@ module Gen : sig
   val ( let* ) : 'a t -> ('a -> 'b t) -> 'b t
 
   val ( and* ) : 'a t -> 'b t -> ('a * 'b) t
+
+  (** {3 Debug generators}
+
+      These functions should not be used in tests: they are provided
+      for convenience to debug/investigate what values a generator produces.
+  *)
+
+  val generate : ?rand:Random.State.t -> n:int -> 'a t -> 'a list
+  (** [generate ~n g] generates [n] instances of [g]. *)
+
+  val generate1 : ?rand:Random.State.t -> 'a t -> 'a
+  (** [generate1 g] generates one instance of [g]. *)
 end
 
-(** {2 Pretty printing} *)
+(** {1 Printing Values} *)
 
-(** {2 Show Values} *)
 module Print : sig
+
+  (** The [Print] module offers combinators for printing generated values. *)
+
   type 'a t = 'a -> string
   (** Printer for values of type ['a]. *)
 
 
-  val unit : unit t (** @since 0.6 *)
+  val unit : unit t
+  (** @since 0.6 *)
 
   val int : int t (** Integer printer. *)
 
@@ -619,7 +645,9 @@ module Print : sig
 
   val char : char t (** Character printer. *)
 
-  val bytes : bytes t (** Bytes printer. @since 0.20 *)
+  val bytes : bytes t
+  (** Bytes printer.
+      @since 0.20 *)
 
   val string : string t (** String printer. *)
 
@@ -673,12 +701,24 @@ module Print : sig
   (** 9-tuple printer. Expects printers for each component. *)
 end
 
-(** {2 Iterators}
+(** {1 Shrinking Values}
 
-    Compatible with the library "sequence". An iterator [i] is simply
-    a function that accepts another function [f] (of type ['a -> unit])
-    and calls [f] on a sequence of elements [f x1; f x2; ...; f xn]. *)
+    Shrinking is used to reduce the size of a counter-example. It tries
+    to make the counter-example smaller, e.g., by decreasing an integer,
+    or removing elements of a list, until the property to test holds again;
+    it then returns the smallest value that still made the test fail.
+
+    Shrinking is defined as a type {!Shrink.t} that takes an argument to shrink
+    and produces an iterator of type {!Iter.t} of shrinking candidates.
+*)
+
+(** {2 Iterators} *)
+
 module Iter : sig
+  (** [Iter] is compatible with the library "sequence". An iterator [i] is simply
+      a function that accepts another function [f] (of type ['a -> unit])
+      and calls [f] on a sequence of elements [f x1; f x2; ...; f xn]. *)
+
   type 'a t = ('a -> unit) -> unit
 
   val empty : 'a t
@@ -715,13 +755,12 @@ module Iter : sig
   val ( and* ) : 'a t -> 'b t -> ('a * 'b) t
 end
 
-(** {2 Shrink Values}
+(** {2 Shrinkers} *)
 
-    Shrinking is used to reduce the size of a counter-example. It tries
-    to make the counter-example smaller by decreasing it, or removing
-    elements, until the property to test holds again; then it returns the
-    smallest value that still made the test fail. *)
 module Shrink : sig
+  (** The [Shrink] module contains combinators to build up composite shrinkers
+      for user-defined types *)
+
   type 'a t = 'a -> 'a Iter.t
   (** Given a counter-example, return an iterator on smaller versions
       of the counter-example. *)
@@ -837,52 +876,8 @@ module Shrink : sig
   (** Similar to {!tup2} *)
 end
 
-(** {2 Observe Values} *)
 
-(** Observables are usable as arguments for random functions.
-    The random function will observe its arguments in a way
-    that is determined from the observable instance.
-
-    Inspired from https://blogs.janestreet.com/quickcheck-for-core/
-    and Koen Claessen's "Shrinking and Showing functions".
-
-    @since 0.6
-*)
-
-module Observable : sig
-  (** An observable for ['a], packing a printer and other things. *)
-  type -'a t
-
-  val equal : 'a t -> 'a -> 'a -> bool
-  val hash : 'a t -> 'a -> int
-  val print : 'a t -> 'a Print.t
-
-  val unit : unit t
-  val bool : bool t
-  val int : int t
-  val float : float t
-  val string : string t
-  val bytes : bytes t (** @since 0.20 *)
-  val char : char t
-
-  val make :
-    ?eq:('a -> 'a -> bool) ->
-    ?hash:('a -> int) ->
-    'a Print.t ->
-    'a t
-
-  val map : ('a -> 'b) -> 'b t -> 'a t
-
-  val option : 'a t -> 'a option t
-  val list : 'a t -> 'a list t
-  val array : 'a t -> 'a array t
-
-  val pair : 'a t -> 'b t -> ('a * 'b) t
-  val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
-  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
-end
-
-(** {2 Arbitrary}
+(** {1 Arbitrary}
 
     A value of type ['a arbitrary] glues together a random generator,
     and optional functions for shrinking, printing, computing the size,
@@ -895,7 +890,7 @@ type 'a stat = string * ('a -> int)
 
 type 'a arbitrary = private {
   gen: 'a Gen.t;
-  print: ('a -> string) option; (** print values *)
+  print: ('a Print.t) option; (** print values *)
   small: ('a -> int) option;  (** size of example *)
   shrink: ('a Shrink.t) option;  (** shrink to smaller examples *)
   collect: ('a -> string) option;  (** map value to tag, and group by tag *)
@@ -923,6 +918,11 @@ val make :
     @param print printer for values (counter-examples)
     @param collect for statistics
     @param shrink to shrink counter-examples
+*)
+
+(** {2 Adjusting arbitrary generators }
+
+    There is a range to [get] and [set] fields on an arbitrary record type.
 *)
 
 val set_print : 'a Print.t -> 'a arbitrary -> 'a arbitrary
@@ -954,258 +954,8 @@ val get_gen : 'a arbitrary -> 'a Gen.t
 
 val get_print : 'a arbitrary -> 'a Print.t option
 
-(** {2 Tests}
 
-    A test is a universal property of type [foo -> bool] for some type [foo],
-    with an object of type [foo arbitrary] used to generate, print, etc. values
-    of type [foo].
-
-    The main features of this module are:
-    - {!Test.make} to build a test,
-    - {!Test.make_neg} to build a negative test that is expected not to satisfy the tested property,
-    - {!Test.check_exn} to run a single test with a simple runner.
-
-    A test fails if the property does not hold for a given input. The {{!Test.fail_report} simple} form or the {{!Test.fail_reportf} rich} form) offer more elaborate forms to fail a test.
-
-    For more serious testing, it is recommended to create a testsuite and use a full-fledged runner:
-    - {!QCheck_base_runner} is a QCheck-only runner (useful if you don't have or don't need another test framework)
-    - {!QCheck_alcotest} interfaces to the Alcotest framework
-    - {!QCheck_ounit} interfaces to the to OUnit framework
-*)
-
-(** Result of running a test *)
-module TestResult : sig
-  type 'a counter_ex = 'a QCheck2.TestResult.counter_ex = {
-    instance: 'a; (** The counter-example(s) *)
-
-    shrink_steps: int; (** How many shrinking steps for this counterex *)
-
-    msg_l: string list;
-    (** messages.
-        @since 0.7 *)
-  }
-
-  type 'a failed_state = 'a counter_ex list
-
-  (** Result state.
-      changed in 0.10 (move to inline records, add Fail_other) *)
-  type 'a state = 'a QCheck2.TestResult.state =
-    | Success
-    | Failed of {
-        instances: 'a failed_state; (** Failed instance(s) *)
-      }
-    | Failed_other of {msg: string}
-    | Error of {
-        instance: 'a counter_ex;
-        exn: exn;
-        backtrace: string;
-      } (** Error, backtrace, and instance that triggered it *)
-
-  (* result returned by running a test *)
-  type 'a t = 'a QCheck2.TestResult.t
-
-  val get_count : _ t -> int
-  (** Get the count of a cell.
-     @since 0.5.3 *)
-
-  val get_count_gen : _ t -> int
-
-  val get_state : 'a t -> 'a state
-
-  val collect : _ t -> (string,int) Hashtbl.t option
-  (** Obtain statistics
-      @since 0.6 *)
-
-  val stats : 'a t -> ('a stat * (int,int) Hashtbl.t) list
-  (** Obtain statistics
-      @since 0.6 *)
-
-  val warnings : _ t -> string list
-  (** Obtain list of warnings
-      @since 0.10 *)
-
-  val is_success : _ t -> bool
-  (** Returns true iff the state if [Success]
-      @since 0.9 *)
-end
-
-(** Module related to individual tests.
-     @since 0.18 most of it moved to {!QCheck2},
-     and the type ['a cell] was made a private implementation detail.
-*)
-module Test : sig
-  type res = QCheck2.Test.res =
-    | Success
-    | Failure
-    | FalseAssumption
-    | Error of exn * string
-  type 'a event = 'a QCheck2.Test.event =
-    | Generating
-    | Collecting of 'a
-    | Testing of 'a
-    | Shrunk of int * 'a
-    | Shrinking of int * int * 'a
-
-  type 'a cell = 'a QCheck2.Test.cell
-  type 'a handler = 'a QCheck2.Test.handler
-  type 'a step = 'a QCheck2.Test.step
-  type 'a callback = 'a QCheck2.Test.callback
-
-  type t = QCheck2.Test.t
-
-  val fail_report : string -> 'a
-  (** Fail the test with some additional message that will
-      be reported.
-      @since 0.7 *)
-
-  val fail_reportf : ('a, Format.formatter, unit, 'b) format4 -> 'a
-  (** Format version of {!fail_report}
-      @since 0.7 *)
-
-  val make_cell :
-    ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
-    ?count:int -> ?long_factor:int -> ?negative:bool -> ?max_gen:int -> ?max_fail:int ->
-    ?small:('a -> int) -> ?retries:int -> ?name:string ->
-    'a arbitrary -> ('a -> bool) -> 'a cell
-  (** [make_cell arb prop] builds a test that checks property [prop] on instances
-      of the generator [arb].
-      @param name the name of the test.
-      @param count number of test cases to run, counting only
-        the test cases which satisfy preconditions.
-      @param retries number of times to retry the tested property while shrinking.
-      @param long_factor the factor by which to multiply count, max_gen and
-        max_fail when running a long test (default: 1).
-      @param negative whether the test is expected not to satisfy the tested property.
-      @param max_gen maximum number of times the generation function
-        is called in total to replace inputs that do not satisfy
-        preconditions (should be >= count).
-      @param max_fail maximum number of failures before we stop generating
-        inputs. This is useful if shrinking takes too much time.
-      @param small kept for compatibility reasons; if provided, replaces
-        the field [arbitrary.small].
-        If there is no shrinking function but there is a [small]
-        function, only the smallest failures will be printed.
-      @param if_assumptions_fail the minimum
-        fraction of tests that must satisfy the precondition for a success
-        to be considered valid.
-        The fraction should be between 0. and 1.
-        A warning will be emitted otherwise if
-        the flag is [`Warning], the test will be a failure if the flag is [`Fatal].
-        (since 0.10)
-  *)
-
-  val get_law : 'a cell -> ('a -> bool)
-  (** @deprecated use {!QCheck2.Test.get_law} instead *)
-  val get_name : _ cell -> string
-  (** @deprecated use {!QCheck2.Test.get_name} instead *)
-  val set_name : _ cell -> string -> unit
-  (** @deprecated use {!QCheck2.Test.set_name} instead *)
-
-  val get_count : _ cell -> int
-  (** Get the count of a cell.
-      @deprecated use {!QCheck2.Test.get_count} instead
-      @since 0.5.3 *)
-
-  val get_long_factor : _ cell -> int
-  (** Get the long factor of a cell.
-      @deprecated use {!QCheck2.Test.get_long_factor} instead
-      @since 0.5.3 *)
-
-  val make :
-    ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
-    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
-    ?small:('a -> int) -> ?retries:int -> ?name:string -> 'a arbitrary ->
-    ('a -> bool) -> t
-  (** [make arb prop] builds a test that checks property [prop] on instances
-      of the generator [arb].
-      See {!make_cell} for a description of the parameters.
-  *)
-
-  val make_neg :
-    ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
-    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
-    ?small:('a -> int) -> ?retries:int -> ?name:string -> 'a arbitrary ->
-    ('a -> bool) -> t
-  (** [make_neg arb prop] builds a test that checks property [prop] on instances
-      of the generator [arb].
-      The test is considered negative, meaning that it is expected not to satisfy the tested property.
-      This information is recorded in an underlying test [cell] entry and interpreted suitably by test runners.
-      See {!make_cell} for a description of the parameters.
-  *)
-
-  include module type of QCheck2.Test_exceptions
-
-  val print_instance : 'a cell -> 'a -> string
-  val print_c_ex : 'a cell -> 'a TestResult.counter_ex -> string
-  val print_fail : 'a cell -> string -> 'a TestResult.counter_ex list -> string
-  val print_fail_other : string -> msg:string -> string
-  val print_error : ?st:string -> 'a cell -> string -> 'a TestResult.counter_ex * exn -> string
-  val print_test_fail : string -> string list -> string
-  val print_test_error : string -> string -> exn -> string -> string
-
-  val check_cell :
-    ?long:bool -> ?call:'a callback ->
-    ?step:'a step -> ?handler:'a handler ->
-    ?rand:Random.State.t -> 'a cell -> 'a TestResult.t
-  (** See {!QCheck2.Test.check_cell}. *)
-
-  val check_cell_exn :
-    ?long:bool -> ?call:'a callback ->
-    ?step:'a step -> ?handler:'a handler ->
-    ?rand:Random.State.t -> 'a cell -> unit
-  (** See {!QCheck2.Test.check_cell_exn}. *)
-
-  val check_exn : ?long:bool -> ?rand:Random.State.t -> t -> unit
-  (** See {!QCheck2.Test.check_exn}. *)
-end
-
-(** {2 Sub-tests} *)
-
-(** The infrastructure used to find counter-examples to properties can
-    also be used to find data satisfying a predicate,
-    {i within a property being tested}.
-
-    See https://github.com/c-cube/qcheck/issues/31
-*)
-
-exception No_example_found of string
-
-val find_example :
-  ?name:string ->
-  ?count:int ->
-  f:('a -> bool) ->
-  'a Gen.t ->
-  'a Gen.t
-(** [find_example ~f gen] uses [gen] to generate some values of type ['a],
-    and checks them against [f]. If such a value is found, it is returned.
-    Otherwise an exception is raised.
-    {b NOTE} this should only be used from within a property in {!Test.make}.
-    @param count number of attempts.
-    @param name description of the example to find (used in the exception).
-    @param f the property that the example must satisfy.
-    @raise No_example_found if no example is found within [count] tries.
-    @since 0.6
-*)
-
-val find_example_gen :
-  ?rand:Random.State.t ->
-  ?name:string ->
-  ?count:int ->
-  f:('a -> bool) ->
-  'a Gen.t ->
-  'a
-(** Toplevel version of {!find_example}.
-    [find_example_gen ~f arb ~n] is roughly the same as
-    [Gen.generate1 (find_example ~f arb |> gen)].
-    @param rand the random state to use to generate inputs.
-    @raise No_example_found if no example was found within [count] tries.
-    @since 0.6 *)
-
-(** {2 Combinators for arbitrary} *)
-
-val choose : 'a arbitrary list -> 'a arbitrary
-(** Choose among the given list of generators. The list must not
-    be empty; if it is Invalid_argument is raised. *)
+(** {2 Primitive combinators for arbitrary} *)
 
 val unit : unit arbitrary
 (** Always generates [()], obviously. *)
@@ -1414,6 +1164,14 @@ val array : 'a arbitrary -> 'a array arbitrary
 val array_of_size : int Gen.t -> 'a arbitrary -> 'a array arbitrary
 (** Generates arrays with length from the given distribution. *)
 
+val option : ?ratio:float -> 'a arbitrary -> 'a option arbitrary
+(** Choose between returning Some random value with optional ratio, or None. *)
+
+
+(** {2 Tuples of arbitrary generators}
+
+    These shrink on [gen1], then [gen2], then ... *)
+
 val pair : 'a arbitrary -> 'b arbitrary -> ('a * 'b) arbitrary
 (** Combines two generators into a generator of pairs.
     Order of elements can matter (w.r.t shrinking, see {!Shrink.pair}) *)
@@ -1425,10 +1183,6 @@ val triple : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> ('a * 'b * 'c) arbi
 val quad : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> 'd arbitrary -> ('a * 'b * 'c * 'd) arbitrary
 (** Combines four generators into a generator of 4-tuples.
     Order matters for shrinking, see {!Shrink.pair} and the likes *)
-
-(** {3 Tuple of generators} *)
-
-(** {4 Shrinks on [gen1], then [gen2], then ... } *)
 
 val tup2 :
   'a arbitrary ->
@@ -1521,130 +1275,12 @@ val tup9 :
     Order of elements can matter (w.r.t shrinking, see {!Shrink.tup2})
     Prints as many elements as available printers *)
 
-val option : ?ratio:float -> 'a arbitrary -> 'a option arbitrary
-(** Choose between returning Some random value with optional ratio, or None. *)
 
-val fun1_unsafe : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary
-(** Generator of functions of arity 1.
-    The functions are always pure and total functions:
-    - when given the same argument (as decided by Stdlib.(=)), it returns the same value
-    - it never does side effects, like printing or never raise exceptions etc.
-      The functions generated are really printable.
+(** {2 Combinatoric arbitrary combinators } *)
 
-    renamed from {!fun1} since 0.6
-
-    @deprecated use {!fun_} instead.
-
-    @since 0.6
-*)
-
-val fun2_unsafe : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> ('a -> 'b -> 'c) arbitrary
-(** Generator of functions of arity 2. The remark about [fun1] also apply
-    here.
-    renamed from {!fun2} since 0.6
-    @deprecated use {!fun_} instead since 0.6
-*)
-
-type _ fun_repr
-(** Internal data for functions. A ['f fun_] is a function
-    of type ['f], fundamentally. *)
-
-(** A function packed with the data required to print/shrink it. See {!Fn}
-    to see how to apply, print, etc. such a function.
-
-    One can also directly pattern match on it to obtain
-    the executable function.
-
-    For example:
-    {[
-      QCheck.Test.make
-        QCheck.(pair (fun1 Observable.int bool) (small_list int))
-        (fun (Fun (_,f), l) -> l=(List.rev_map f l |> List.rev l))
-    ]}
-*)
-type _ fun_ =
-  | Fun : 'f fun_repr * 'f -> 'f fun_
-
-(** Utils on functions
-    @since 0.6 *)
-module Fn : sig
-  type 'a t = 'a fun_
-
-  val print : _ t Print.t
-  val shrink : _ t Shrink.t
-
-  val apply : 'f t -> 'f
-end
-
-val fun1 : 'a Observable.t -> 'b arbitrary -> ('a -> 'b) fun_ arbitrary
-(** [fun1 o ret] makes random functions that take an argument observable
-    via [o] and map to random values generated from [ret].
-    To write functions with multiple arguments, it's better to use {!Tuple}
-    or {!Observable.pair} rather than applying {!fun_} several times
-    (shrinking will be faster).
-    @since 0.6 *)
-
-module Tuple : sig
-  (** Heterogeneous tuple, used to pass any number of arguments to
-      a function. *)
-  type 'a t =
-    | Nil : unit t
-    | Cons : 'a * 'b t -> ('a * 'b) t
-
-  val nil : unit t
-  val cons : 'a -> 'b t -> ('a * 'b) t
-
-  (** How to observe a  {!'a t} *)
-  type 'a obs
-
-  val o_nil : unit obs
-  val o_cons : 'a Observable.t -> 'b obs -> ('a * 'b) obs
-
-  module Infix : sig
-    val (@::) : 'a -> 'b t -> ('a * 'b) t
-    (** Alias to {!cons}. *)
-
-    val (@->) : 'a Observable.t -> 'b obs -> ('a * 'b) obs
-    (** Alias to {!B_cons}. *)
-  end
-
-  include module type of Infix
-
-  val observable : 'a obs -> 'a t Observable.t
-end
-
-val fun_nary : 'a Tuple.obs -> 'b arbitrary -> ('a Tuple.t -> 'b) fun_ arbitrary
-(** [fun_nary] makes random n-ary functions.
-    Example:
-    {[
-      let module O = Observable in
-      fun_nary Tuple.(O.int @-> O.float @-> O.string @-> o_nil) bool)
-    ]}
-    @since 0.6 *)
-
-val fun2 :
-  'a Observable.t ->
-  'b Observable.t ->
-  'c arbitrary ->
-  ('a -> 'b -> 'c) fun_ arbitrary
-(** @since 0.6 *)
-
-val fun3 :
-  'a Observable.t ->
-  'b Observable.t ->
-  'c Observable.t ->
-  'd arbitrary ->
-  ('a -> 'b -> 'c -> 'd) fun_ arbitrary
-(** @since 0.6 *)
-
-val fun4 :
-  'a Observable.t ->
-  'b Observable.t ->
-  'c Observable.t ->
-  'd Observable.t ->
-  'e arbitrary ->
-  ('a -> 'b -> 'c -> 'd -> 'e) fun_ arbitrary
-(** @since 0.6 *)
+val choose : 'a arbitrary list -> 'a arbitrary
+(** Choose among the given list of generators. The list must not
+    be empty; if it is Invalid_argument is raised. *)
 
 val oneofl : ?print:'a Print.t -> ?collect:('a -> string) ->
   'a list -> 'a arbitrary
@@ -1700,3 +1336,449 @@ val map_keep_input :
       values will map into smaller values.
     @param print optional printer for the [f]'s output.
 *)
+
+
+(** {1 Tests}
+
+    A test is a universal property of type [foo -> bool] for some type [foo],
+    with an object of type [foo arbitrary] used to generate, print, etc. values
+    of type [foo].
+
+    The main features of this module are:
+    - {!Test.make} to build a test,
+    - {!Test.make_neg} to build a negative test that is expected not to satisfy the tested property,
+    - {!Test.check_exn} to run a single test with a simple runner.
+
+    A test fails if the property does not hold for a given input. The {{!Test.fail_report} simple} form or the {{!Test.fail_reportf} rich} form) offer more elaborate forms to fail a test.
+
+    For more serious testing, it is recommended to create a testsuite and use a full-fledged runner:
+    - {!QCheck_base_runner} is a QCheck-only runner (useful if you don't have or don't need another test framework)
+    - {!QCheck_alcotest} interfaces to the Alcotest framework
+    - {!QCheck_ounit} interfaces to the to OUnit framework
+*)
+
+
+(** {2 Test Results } *)
+
+module TestResult : sig
+  (** Module to represent the result of running a test *)
+
+  type 'a counter_ex = 'a QCheck2.TestResult.counter_ex = {
+    instance: 'a; (** The counter-example(s) *)
+
+    shrink_steps: int; (** How many shrinking steps for this counterex *)
+
+    msg_l: string list;
+    (** messages.
+        @since 0.7 *)
+  }
+
+  type 'a failed_state = 'a counter_ex list
+
+  (** Result state.
+      changed in 0.10 (move to inline records, add Fail_other) *)
+  type 'a state = 'a QCheck2.TestResult.state =
+    | Success
+    | Failed of {
+        instances: 'a failed_state; (** Failed instance(s) *)
+      }
+    | Failed_other of {msg: string}
+    | Error of {
+        instance: 'a counter_ex;
+        exn: exn;
+        backtrace: string;
+      } (** Error, backtrace, and instance that triggered it *)
+
+  (* result returned by running a test *)
+  type 'a t = 'a QCheck2.TestResult.t
+
+  val get_count : _ t -> int
+  (** Get the count of a cell.
+     @since 0.5.3 *)
+
+  val get_count_gen : _ t -> int
+
+  val get_state : 'a t -> 'a state
+
+  val collect : _ t -> (string,int) Hashtbl.t option
+  (** Obtain statistics
+      @since 0.6 *)
+
+  val stats : 'a t -> ('a stat * (int,int) Hashtbl.t) list
+  (** Obtain statistics
+      @since 0.6 *)
+
+  val warnings : _ t -> string list
+  (** Obtain list of warnings
+      @since 0.10 *)
+
+  val is_success : _ t -> bool
+  (** Returns true iff the state if [Success]
+      @since 0.9 *)
+end
+
+(** {2 Defining Tests } *)
+
+(** Module related to individual tests.
+    Since 0.18 most of it moved to {!QCheck2},
+    and the type ['a cell] was made a private implementation detail.
+*)
+module Test : sig
+  type res = QCheck2.Test.res =
+    | Success
+    | Failure
+    | FalseAssumption
+    | Error of exn * string
+  type 'a event = 'a QCheck2.Test.event =
+    | Generating
+    | Collecting of 'a
+    | Testing of 'a
+    | Shrunk of int * 'a
+    | Shrinking of int * int * 'a
+
+  type 'a cell = 'a QCheck2.Test.cell
+  type 'a handler = 'a QCheck2.Test.handler
+  type 'a step = 'a QCheck2.Test.step
+  type 'a callback = 'a QCheck2.Test.callback
+
+  type t = QCheck2.Test.t
+
+  val fail_report : string -> 'a
+  (** Fail the test with some additional message that will
+      be reported.
+      @since 0.7 *)
+
+  val fail_reportf : ('a, Format.formatter, unit, 'b) format4 -> 'a
+  (** Format version of {!fail_report}
+      @since 0.7 *)
+
+  val make_cell :
+    ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?count:int -> ?long_factor:int -> ?negative:bool -> ?max_gen:int -> ?max_fail:int ->
+    ?small:('a -> int) -> ?retries:int -> ?name:string ->
+    'a arbitrary -> ('a -> bool) -> 'a cell
+  (** [make_cell arb prop] builds a test that checks property [prop] on instances
+      of the generator [arb].
+      @param name the name of the test.
+      @param count number of test cases to run, counting only
+        the test cases which satisfy preconditions.
+      @param retries number of times to retry the tested property while shrinking.
+      @param long_factor the factor by which to multiply count, max_gen and
+        max_fail when running a long test (default: 1).
+      @param negative whether the test is expected not to satisfy the tested property.
+      @param max_gen maximum number of times the generation function
+        is called in total to replace inputs that do not satisfy
+        preconditions (should be >= count).
+      @param max_fail maximum number of failures before we stop generating
+        inputs. This is useful if shrinking takes too much time.
+      @param small kept for compatibility reasons; if provided, replaces
+        the field [arbitrary.small].
+        If there is no shrinking function but there is a [small]
+        function, only the smallest failures will be printed.
+      @param if_assumptions_fail the minimum
+        fraction of tests that must satisfy the precondition for a success
+        to be considered valid.
+        The fraction should be between 0. and 1.
+        A warning will be emitted otherwise if
+        the flag is [`Warning], the test will be a failure if the flag is [`Fatal].
+        (since 0.10)
+  *)
+
+  val get_law : 'a cell -> ('a -> bool)
+  (** @deprecated use {!QCheck2.Test.get_law} instead *)
+  val get_name : _ cell -> string
+  (** @deprecated use {!QCheck2.Test.get_name} instead *)
+  val set_name : _ cell -> string -> unit
+  (** @deprecated use {!QCheck2.Test.set_name} instead *)
+
+  val get_count : _ cell -> int
+  (** Get the count of a cell.
+      @deprecated use {!QCheck2.Test.get_count} instead
+      @since 0.5.3 *)
+
+  val get_long_factor : _ cell -> int
+  (** Get the long factor of a cell.
+      @deprecated use {!QCheck2.Test.get_long_factor} instead
+      @since 0.5.3 *)
+
+  val make :
+    ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
+    ?small:('a -> int) -> ?retries:int -> ?name:string -> 'a arbitrary ->
+    ('a -> bool) -> t
+  (** [make arb prop] builds a test that checks property [prop] on instances
+      of the generator [arb].
+      See {!make_cell} for a description of the parameters.
+  *)
+
+  val make_neg :
+    ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
+    ?small:('a -> int) -> ?retries:int -> ?name:string -> 'a arbitrary ->
+    ('a -> bool) -> t
+  (** [make_neg arb prop] builds a test that checks property [prop] on instances
+      of the generator [arb].
+      The test is considered negative, meaning that it is expected not to satisfy the tested property.
+      This information is recorded in an underlying test [cell] entry and interpreted suitably by test runners.
+      See {!make_cell} for a description of the parameters.
+  *)
+
+  include module type of QCheck2.Test_exceptions
+
+  val print_instance : 'a cell -> 'a -> string
+  val print_c_ex : 'a cell -> 'a TestResult.counter_ex -> string
+  val print_fail : 'a cell -> string -> 'a TestResult.counter_ex list -> string
+  val print_fail_other : string -> msg:string -> string
+  val print_error : ?st:string -> 'a cell -> string -> 'a TestResult.counter_ex * exn -> string
+  val print_test_fail : string -> string list -> string
+  val print_test_error : string -> string -> exn -> string -> string
+
+  val check_cell :
+    ?long:bool -> ?call:'a callback ->
+    ?step:'a step -> ?handler:'a handler ->
+    ?rand:Random.State.t -> 'a cell -> 'a TestResult.t
+  (** See {!QCheck2.Test.check_cell}. *)
+
+  val check_cell_exn :
+    ?long:bool -> ?call:'a callback ->
+    ?step:'a step -> ?handler:'a handler ->
+    ?rand:Random.State.t -> 'a cell -> unit
+  (** See {!QCheck2.Test.check_cell_exn}. *)
+
+  val check_exn : ?long:bool -> ?rand:Random.State.t -> t -> unit
+  (** See {!QCheck2.Test.check_exn}. *)
+end
+
+(** {2 Sub-tests} *)
+
+(** The infrastructure used to find counter-examples to properties can
+    also be used to find data satisfying a predicate,
+    {i within a property being tested}.
+
+    See {:https://github.com/c-cube/qcheck/issues/31}
+*)
+
+exception No_example_found of string
+
+val find_example :
+  ?name:string ->
+  ?count:int ->
+  f:('a -> bool) ->
+  'a Gen.t ->
+  'a Gen.t
+(** [find_example ~f gen] uses [gen] to generate some values of type ['a],
+    and checks them against [f]. If such a value is found, it is returned.
+    Otherwise an exception is raised.
+    {b NOTE} this should only be used from within a property in {!Test.make}.
+    @param count number of attempts.
+    @param name description of the example to find (used in the exception).
+    @param f the property that the example must satisfy.
+    @raise No_example_found if no example is found within [count] tries.
+    @since 0.6
+*)
+
+val find_example_gen :
+  ?rand:Random.State.t ->
+  ?name:string ->
+  ?count:int ->
+  f:('a -> bool) ->
+  'a Gen.t ->
+  'a
+(** Toplevel version of {!find_example}.
+    [find_example_gen ~f arb ~n] is roughly the same as
+    [Gen.generate1 (find_example ~f arb |> gen)].
+    @param rand the random state to use to generate inputs.
+    @raise No_example_found if no example was found within [count] tries.
+    @since 0.6 *)
+
+
+(** {1 Generating Functions}
+
+    The [QCheck] module supports generation of pure function values.
+    The implementation is inspired from {:https://blogs.janestreet.com/quickcheck-for-core/}
+    and {{:https://dl.acm.org/doi/abs/10.1145/2364506.2364516}Koen Claessen's "Shrinking and Showing Functions"}.
+
+    Generated function arguments are of type {!Observable.t} and function results are of type
+    {{!section:arbitrary}[arbitrary]}.
+
+    Underneath the hood, generated function values have a table-based representation.
+    They therefore need to be applied in a special way, e.g., with {!Fn.apply}.
+*)
+
+(** {2 Observing arguments} *)
+
+module Observable : sig
+  (** Observables are usable as arguments for random functions.
+      The random function will observe its arguments in a way
+      that is determined from the observable instance.
+
+      @since 0.6
+  *)
+
+  (** An observable for ['a], packing a printer and other things. *)
+  type -'a t
+
+  val equal : 'a t -> 'a -> 'a -> bool
+  val hash : 'a t -> 'a -> int
+  val print : 'a t -> 'a Print.t
+
+  val unit : unit t
+  val bool : bool t
+  val int : int t
+  val float : float t
+  val string : string t
+  val bytes : bytes t (** @since 0.20 *)
+  val char : char t
+
+  val make :
+    ?eq:('a -> 'a -> bool) ->
+    ?hash:('a -> int) ->
+    'a Print.t ->
+    'a t
+
+  val map : ('a -> 'b) -> 'b t -> 'a t
+
+  val option : 'a t -> 'a option t
+  val list : 'a t -> 'a list t
+  val array : 'a t -> 'a array t
+
+  val pair : 'a t -> 'b t -> ('a * 'b) t
+  val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
+  val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
+end
+
+(** {2 Deprecated function generator combinators } *)
+
+val fun1_unsafe : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary
+(** Generator of functions of arity 1.
+    The functions are always pure and total functions:
+    - when given the same argument (as decided by Stdlib.(=)), it returns the same value
+    - it never does side effects, like printing or never raise exceptions etc.
+      The functions generated are really printable.
+
+    renamed from {!fun1} since 0.6
+
+    @deprecated use {!fun_} instead.
+
+    @since 0.6
+*)
+
+val fun2_unsafe : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> ('a -> 'b -> 'c) arbitrary
+(** Generator of functions of arity 2. The remark about [fun1] also apply
+    here.
+    renamed from {!fun2} since 0.6
+    @deprecated use {!fun_} instead since 0.6
+*)
+
+type _ fun_repr
+(** Internal data for functions. A ['f fun_] is a function
+    of type ['f], fundamentally. *)
+
+(** A function packed with the data required to print/shrink it. See {!Fn}
+    to see how to apply, print, etc. such a function.
+
+    One can also directly pattern match on it to obtain
+    the executable function.
+
+    For example:
+    {[
+      QCheck.Test.make
+        QCheck.(pair (fun1 Observable.int bool) (small_list int))
+        (fun (Fun (_,f), l) -> l=(List.rev_map f l |> List.rev l))
+    ]}
+*)
+type _ fun_ =
+  | Fun : 'f fun_repr * 'f -> 'f fun_
+
+module Fn : sig
+  (** A utility module of helpers for printing, shrinking, and applying generated function values.
+      @since 0.6 *)
+
+  type 'a t = 'a fun_
+
+  val print : _ t Print.t
+  val shrink : _ t Shrink.t
+
+  val apply : 'f t -> 'f
+end
+
+
+(** {2 Defining function generators } *)
+
+val fun1 : 'a Observable.t -> 'b arbitrary -> ('a -> 'b) fun_ arbitrary
+(** [fun1 o ret] makes random functions that take an argument observable
+    via [o] and map to random values generated from [ret].
+    To write functions with multiple arguments, it's better to use {!Tuple}
+    or {!Observable.pair} rather than applying {!fun_} several times
+    (shrinking will be faster).
+    @since 0.6 *)
+
+val fun2 :
+  'a Observable.t ->
+  'b Observable.t ->
+  'c arbitrary ->
+  ('a -> 'b -> 'c) fun_ arbitrary
+(** @since 0.6 *)
+
+val fun3 :
+  'a Observable.t ->
+  'b Observable.t ->
+  'c Observable.t ->
+  'd arbitrary ->
+  ('a -> 'b -> 'c -> 'd) fun_ arbitrary
+(** @since 0.6 *)
+
+val fun4 :
+  'a Observable.t ->
+  'b Observable.t ->
+  'c Observable.t ->
+  'd Observable.t ->
+  'e arbitrary ->
+  ('a -> 'b -> 'c -> 'd -> 'e) fun_ arbitrary
+(** @since 0.6 *)
+
+
+(** {2 Tuples of observables }
+
+    To circumvent the arity boundaries of {!fun1}, ..., {!fun4}, one can instead
+    define uncurried functions, instead accepting a tuple argument. A resulting
+    function then needs to be applied with {!fun_nary}.
+*)
+
+module Tuple : sig
+  (** Heterogeneous tuple, used to pass any number of arguments to
+      a function. *)
+  type 'a t =
+    | Nil : unit t
+    | Cons : 'a * 'b t -> ('a * 'b) t
+
+  val nil : unit t
+  val cons : 'a -> 'b t -> ('a * 'b) t
+
+  (** How to observe a  {!'a t} *)
+  type 'a obs
+
+  val o_nil : unit obs
+  val o_cons : 'a Observable.t -> 'b obs -> ('a * 'b) obs
+
+  module Infix : sig
+    val (@::) : 'a -> 'b t -> ('a * 'b) t
+    (** Alias to {!cons}. *)
+
+    val (@->) : 'a Observable.t -> 'b obs -> ('a * 'b) obs
+    (** Alias to {!B_cons}. *)
+  end
+
+  include module type of Infix
+
+  val observable : 'a obs -> 'a t Observable.t
+end
+
+val fun_nary : 'a Tuple.obs -> 'b arbitrary -> ('a Tuple.t -> 'b) fun_ arbitrary
+(** [fun_nary] makes random n-ary functions.
+    Example:
+    {[
+      let module O = Observable in
+      fun_nary Tuple.(O.int @-> O.float @-> O.string @-> o_nil) bool
+    ]}
+    @since 0.6 *)

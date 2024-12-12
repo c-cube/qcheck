@@ -1042,9 +1042,9 @@ type 'a stat = string * ('a -> int)
 
 type 'a arbitrary = {
   gen: 'a Gen.t;
-  print: ('a -> string) option; (** print values *)
+  print: ('a Print.t) option; (** print values *)
   small: ('a -> int) option;  (** size of example *)
-  shrink: ('a -> 'a Iter.t) option;  (** shrink to smaller examples *)
+  shrink: ('a Shrink.t) option;  (** shrink to smaller examples *)
   collect: ('a -> string) option;  (** map value to tag, and group by tag *)
   stats: 'a stat list; (** statistics to collect and print *)
 }
