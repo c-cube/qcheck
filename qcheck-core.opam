@@ -5,7 +5,7 @@ homepage: "https://github.com/c-cube/qcheck/"
 license: "BSD-2-Clause"
 synopsis: "Core qcheck library"
 doc: ["http://c-cube.github.io/qcheck/"]
-version: "0.22"
+version: "0.23"
 tags: [
   "test"
   "property"

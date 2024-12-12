@@ -537,7 +537,7 @@ module Gen : sig
 
       @raise Invalid_argument if [m] is NaN.
 
-      @since NEXT_VERSION *)
+      @since 0.23 *)
 
   val char_range : ?origin:char -> char -> char -> char t
   (** [char_range ?origin low high] generates chars between [low] and [high], inclusive.

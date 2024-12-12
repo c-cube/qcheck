@@ -285,7 +285,7 @@ module Gen : sig
   (** [exponential m] generates floating-point numbers following an exponential
       distribution with a mean of [m].
       @raise Invalid_argument if [m] is NaN.
-      @since NEXT_VERSION *)
+      @since 0.23 *)
 
   val nat : int t (** Generates small natural numbers. *)
 
@@ -772,7 +772,7 @@ module Shrink : sig
   (** @since 0.6 *)
 
   val bool : bool t
-  (** @since NEXT_RELEASE *)
+  (** @since 0.23 *)
 
   val char : char t
   (** Shrinks towards ['a'].
@@ -993,7 +993,7 @@ val exponential : float -> float arbitrary
 (** [exponential m] generates floating-point numbers following an exponential
     distribution with a mean of [m].
     @raise Invalid_argument if [m] is NaN.
-    @since NEXT_VERSION *)
+    @since 0.23 *)
 
 val int : int arbitrary
 (** Int generator. Uniformly distributed. *)
