@@ -11,7 +11,7 @@ clean:
 	@dune clean
 
 doc:
-	@dune build @doc doc/
+	@dune build @doc
 
 example-test:
 	@dune exec example/ounit/QCheck_test.exe
