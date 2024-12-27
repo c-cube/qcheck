@@ -259,8 +259,8 @@ module Gen = struct
   let int32 st = Int32.of_string (random_binary_string st 32)
   let int64 st = Int64.of_string (random_binary_string st 64)
 
-  let ui32 = int32 (* FIXME #90 *)
-  let ui64 = int64 (* FIXME #90 *)
+  let ui32 = int32
+  let ui64 = int64
 
   let list_size size gen st =
     foldn ~f:(fun acc _ -> (gen st)::acc) ~init:[] (size st)
