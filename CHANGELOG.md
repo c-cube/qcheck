@@ -2,7 +2,7 @@
 
 ## NEXT RELEASE
 
-- ...
+- Document `dune` usage in README
 
 ## 0.23
 
