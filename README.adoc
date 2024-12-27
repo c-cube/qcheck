@@ -34,13 +34,21 @@ changed in lots of small ways (in the right direction, I hope) so the code
 will not work any more.
 <<examples>> is an updated version of the blog post's examples.
 
-== Build
+== Build and Install
+
+You can install qcheck via opam:
+
+    $ opam install qcheck
+
+The `qcheck` package is offered for compatibility.
+For a bare-bones installation you can use the `qcheck-core` package:
+
+    $ opam install qcheck-core
+
+To build the library from source
 
     $ make
 
-You can use opam:
-
-    $ opam install qcheck
 
 == License
 
@@ -430,3 +438,60 @@ Starting with 0.9, the library is split into several components:
 
 Normally, for contributors,
 `opam pin https://github.com/c-cube/qcheck` will pin all these packages.
+
+
+=== Usage from dune
+
+We can use the buggy test from above using the `qcheck` opam package:
+
+[source,OCaml]
+----
+(* test.ml *)
+let test =
+  QCheck.Test.make ~count:1000 ~name:"my_buggy_test"
+   QCheck.(list small_nat)
+   (fun l -> List.rev l = l)
+
+let _ = QCheck_runner.run_tests_main [test]
+----
+
+with the following `dune` file:
+
+[source]
+----
+(test
+ (name test)
+ (modules test)
+ (libraries qcheck)
+)
+----
+
+and run it with `dune exec ./test.exe` or `dune runtest`.
+
+
+To keep things minimal or if you are using `(implicit_transitive_deps false)`
+in dune, you may want to use the `qcheck-core` package instead. To do so,
+we have to adapt the last line of the example to use `QCheck_base_runner`:
+
+[source,OCaml]
+----
+(* test.ml *)
+let test =
+  QCheck.Test.make ~count:1000 ~name:"my_buggy_test"
+   QCheck.(list small_nat)
+   (fun l -> List.rev l = l)
+
+let _ = QCheck_base_runner.run_tests_main [test]
+----
+
+and adjust the `dune` file accordingly to use `qcheck-core` and its
+`qcheck-core.runner` sub-package:
+
+[source]
+----
+(test
+ (name test)
+ (modules test)
+ (libraries qcheck-core qcheck-core.runner)
+)
+----
