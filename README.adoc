@@ -34,13 +34,21 @@ changed in lots of small ways (in the right direction, I hope) so the code
 will not work any more.
 <<examples>> is an updated version of the blog post's examples.
 
-== Build
+== Build and Install
+
+You can install qcheck via opam:
+
+    $ opam install qcheck
+
+The `qcheck` package is offered for compatibility.
+For a bare-bones installation you can use the `qcheck-core` package:
+
+    $ opam install qcheck-core
+
+To build the library from source
 
     $ make
 
-You can use opam:
-
-    $ opam install qcheck
 
 == License
 
