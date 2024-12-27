@@ -477,6 +477,8 @@ module Print = struct
 
   let unit _ = "()"
   let int = string_of_int
+  let int32 i = Int32.to_string i ^ "l"
+  let int64 i = Int64.to_string i ^ "L"
   let bool = string_of_bool
   let float = string_of_float
   let string s = Printf.sprintf "%S" s
@@ -1122,11 +1124,9 @@ let small_int_corners () = make_int (Gen.nng_corners ())
 let neg_int = make_int Gen.neg_int
 
 let int32 =
-  make ~print:(fun i -> Int32.to_string i ^ "l") ~small:small1
-    ~shrink:Shrink.int32 Gen.ui32
+  make ~print:Print.int32 ~small:small1 ~shrink:Shrink.int32 Gen.ui32
 let int64 =
-  make ~print:(fun i -> Int64.to_string i ^ "L") ~small:small1
-    ~shrink:Shrink.int64 Gen.ui64
+  make ~print:Print.int64 ~small:small1 ~shrink:Shrink.int64 Gen.ui64
 
 let small_char target c = abs ((Char.code c) - (Char.code target))
 

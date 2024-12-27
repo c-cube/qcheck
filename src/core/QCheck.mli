@@ -639,6 +639,12 @@ module Print : sig
 
   val int : int t (** Integer printer. *)
 
+  val int32 : int32 t (** 32-bit integer printer. *)
+  (** @since NEXT_RELEASE *)
+
+  val int64 : int64 t (** 64-bit integer printer. *)
+  (** @since NEXT_RELEASE *)
+
   val bool : bool t (** Boolean printer. *)
 
   val float : float t (** Floating point number printer. *)
