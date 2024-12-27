@@ -1645,6 +1645,8 @@ module Observable : sig
   val unit : unit t
   val bool : bool t
   val int : int t
+  val int32 : int32 t (** @since NEXT_RELEASE *)
+  val int64 : int64 t (** @since NEXT_RELEASE *)
   val float : float t
   val string : string t
   val bytes : bytes t (** @since 0.20 *)
