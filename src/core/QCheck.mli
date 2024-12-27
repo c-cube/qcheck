@@ -337,6 +337,14 @@ module Gen : sig
 
   val (--) : int -> int -> int t (** Synonym for {!int_range}. *)
 
+  val int32 : int32 t
+  (** Generates [int32] values uniformly.
+      @since NEXT_RELEASE *)
+
+  val int64 : int64 t
+  (** Generates [int64] values uniformly.
+      @since NEXT_RELEASE *)
+
   val ui32 : int32 t (** Generates (unsigned) [int32] values. *)
 
   val ui64 : int64 t (** Generates (unsigned) [int64] values. *)

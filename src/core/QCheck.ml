@@ -256,8 +256,11 @@ module Gen = struct
     done;
     Bytes.unsafe_to_string s
 
-  let ui32 st = Int32.of_string (random_binary_string st 32)
-  let ui64 st = Int64.of_string (random_binary_string st 64)
+  let int32 st = Int32.of_string (random_binary_string st 32)
+  let int64 st = Int64.of_string (random_binary_string st 64)
+
+  let ui32 = int32 (* FIXME #90 *)
+  let ui64 = int64 (* FIXME #90 *)
 
   let list_size size gen st =
     foldn ~f:(fun acc _ -> (gen st)::acc) ~init:[] (size st)
@@ -1124,9 +1127,9 @@ let small_int_corners () = make_int (Gen.nng_corners ())
 let neg_int = make_int Gen.neg_int
 
 let int32 =
-  make ~print:Print.int32 ~small:small1 ~shrink:Shrink.int32 Gen.ui32
+  make ~print:Print.int32 ~small:small1 ~shrink:Shrink.int32 Gen.int32
 let int64 =
-  make ~print:Print.int64 ~small:small1 ~shrink:Shrink.int64 Gen.ui64
+  make ~print:Print.int64 ~small:small1 ~shrink:Shrink.int64 Gen.int64
 
 let small_char target c = abs ((Char.code c) - (Char.code target))
 
