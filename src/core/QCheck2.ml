@@ -792,6 +792,8 @@ module Print = struct
   let unit _ = "()"
 
   let int = string_of_int
+  let int32 i = Int32.to_string i ^ "l"
+  let int64 i = Int64.to_string i ^ "L"
 
   let bool = string_of_bool
 
