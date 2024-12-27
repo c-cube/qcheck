@@ -438,3 +438,59 @@ Starting with 0.9, the library is split into several components:
 
 Normally, for contributors,
 `opam pin https://github.com/c-cube/qcheck` will pin all these packages.
+
+
+=== Usage from dune
+
+We can use the buggy test from above using the `qcheck` opam package:
+
+[source,OCaml]
+----
+(* test.ml *)
+let test =
+  QCheck.Test.make ~count:1000 ~name:"my_buggy_test"
+   QCheck.(list small_nat)
+   (fun l -> List.rev l = l)
+
+let _ = QCheck_runner.run_tests_main [test]
+----
+
+with the following `dune` file:
+
+[source]
+----
+(test
+ (name test)
+ (modules test)
+ (libraries qcheck)
+)
+----
+
+and run it with `dune exec ./test.exe` or `dune runtest`.
+
+
+Using the `qcheck-core` package instead, we have to adapt the last line of the
+example to use `QCheck_base_runner`:
+
+[source,OCaml]
+----
+(* test.ml *)
+let test =
+  QCheck.Test.make ~count:1000 ~name:"my_buggy_test"
+   QCheck.(list small_nat)
+   (fun l -> List.rev l = l)
+
+let _ = QCheck_base_runner.run_tests_main [test]
+----
+
+and adjust the `dune` file accordingly to use `qcheck-core` and its
+`qcheck-core.runner` sub-package:
+
+[source]
+----
+(test
+ (name test)
+ (modules test)
+ (libraries qcheck-core qcheck-core.runner)
+)
+----
