@@ -469,8 +469,9 @@ with the following `dune` file:
 and run it with `dune exec ./test.exe` or `dune runtest`.
 
 
-Using the `qcheck-core` package instead, we have to adapt the last line of the
-example to use `QCheck_base_runner`:
+To keep things minimal or if you are using `(implicit_transitive_deps false)`
+in dune, you may want to use the `qcheck-core` package instead. To do so,
+we have to adapt the last line of the example to use `QCheck_base_runner`:
 
 [source,OCaml]
 ----
