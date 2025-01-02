@@ -815,6 +815,10 @@ module Print = struct
     | None -> "None"
     | Some x -> "Some (" ^ f x ^ ")"
 
+  let result vp ep = function
+    | Error e -> "Error (" ^ ep e ^ ")"
+    | Ok v -> "Ok (" ^ vp v ^ ")"
+
   let pair a b (x,y) = Printf.sprintf "(%s, %s)" (a x) (b y)
 
   let triple a b c (x,y,z) = Printf.sprintf "(%s, %s, %s)" (a x) (b y) (c z)

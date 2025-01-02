@@ -1150,6 +1150,12 @@ module Print : sig
   val option : 'a t -> 'a option t
   (** [option p] is a printer of ['a option], using [p] if it is a [Some]. *)
 
+  val result : 'a t -> 'e t -> ('a, 'e) result t
+  (** [result okp errp] is a printer of [('a,'e) result], using [okp] for printing [Ok _]
+      and [errp] for printing [Error _].
+
+      @since NEXT_RELEASE *)
+
   val pair : 'a t -> 'b t -> ('a*'b) t
   (** [pair p1 p2] is a printer of pair. *)
 
