@@ -387,6 +387,12 @@ module Gen = struct
   (** [opt] is an alias of {!val:option} for backward compatibility. *)
   let opt = option
 
+  let result ?(ratio : float = 0.75) (ok_gen : 'a t) (err_gen : 'e t) : ('a, 'e) result t = fun st ->
+    let p = RS.float st 1. in
+    if p < (1. -. ratio)
+    then Tree.map (fun e -> Error e) (err_gen st)
+    else Tree.map (fun o -> Ok o) (ok_gen st)
+
   (* Uniform positive random int generator.
 
      We can't use {!RS.int} because the upper bound must be positive and is excluded,

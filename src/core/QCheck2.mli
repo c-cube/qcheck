@@ -702,6 +702,16 @@ module Gen : sig
   val opt : ?ratio:float -> 'a t -> 'a option t
   (** [opt] is an alias of {!val:option} for backward compatibility. *)
 
+  val result : ?ratio:float -> 'a t -> 'e t -> ('a, 'e) result t
+  (** [result ~ratio okgen errgen] generates [Ok v] with [v] coming from [okgen]
+      or [Error e] with [e] coming from [errgen], depending on [ratio].
+
+      @param ratio a float between [0.] and [1.] indicating the probability of a sample to
+      be [Ok _] rather than [Error _].
+
+      @since NEXT_RELEASE *)
+
+
   (** {3 Combining generators} *)
 
   val pair : 'a t -> 'b t -> ('a * 'b) t
