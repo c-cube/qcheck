@@ -1395,6 +1395,11 @@ module Observable : sig
   (** [option o] wraps the observable [o] of ['a] into an observable of
       ['a option]. *)
 
+  val result : 'a t -> 'e t -> ('a, 'e) result t
+  (** [result ok_o err_o] creates an [('a, 'e) result] observable out of
+      two observables [ok_o] and [err_o].
+      @since NEXT_RELEASE *)
+
   val list : 'a t -> 'a list t
   (** [list o] wraps the observable [o] of ['a] into an observable of
       ['a list]. *)
