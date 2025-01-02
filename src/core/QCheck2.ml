@@ -792,6 +792,8 @@ module Print = struct
   let unit _ = "()"
 
   let int = string_of_int
+  let int32 i = Int32.to_string i ^ "l"
+  let int64 i = Int64.to_string i ^ "L"
 
   let bool = string_of_bool
 
@@ -979,6 +981,8 @@ module Observable = struct
     let combine_f f s x = Hashtbl.seeded_hash s (f x)
 
     let int i = i land max_int
+    let int32 (i:int32) = Hashtbl.hash i
+    let int64 (i:int64) = Hashtbl.hash i
 
     let bool b = if b then 1 else 2
 
@@ -1002,6 +1006,8 @@ module Observable = struct
     type 'a t = 'a -> 'a -> bool
 
     let int : int t = (=)
+    let int32 : int32 t = (=)
+    let int64 : int64 t = (=)
 
     let bytes : bytes t = (=)
 
@@ -1043,6 +1049,8 @@ module Observable = struct
   let bool : bool t = make ~hash:H.bool ~eq:Eq.bool Print.bool
 
   let int : int t = make ~hash:H.int ~eq:Eq.int Print.int
+  let int32 : int32 t = make ~hash:H.int32 ~eq:Eq.int32 Print.int32
+  let int64 : int64 t = make ~hash:H.int64 ~eq:Eq.int64 Print.int64
 
   let float : float t = make ~eq:Eq.float Print.float
 

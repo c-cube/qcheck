@@ -256,8 +256,11 @@ module Gen = struct
     done;
     Bytes.unsafe_to_string s
 
-  let ui32 st = Int32.of_string (random_binary_string st 32)
-  let ui64 st = Int64.of_string (random_binary_string st 64)
+  let int32 st = Int32.of_string (random_binary_string st 32)
+  let int64 st = Int64.of_string (random_binary_string st 64)
+
+  let ui32 = int32
+  let ui64 = int64
 
   let list_size size gen st =
     foldn ~f:(fun acc _ -> (gen st)::acc) ~init:[] (size st)
@@ -477,6 +480,8 @@ module Print = struct
 
   let unit _ = "()"
   let int = string_of_int
+  let int32 i = Int32.to_string i ^ "l"
+  let int64 i = Int64.to_string i ^ "L"
   let bool = string_of_bool
   let float = string_of_float
   let string s = Printf.sprintf "%S" s
@@ -961,6 +966,8 @@ module Observable = struct
     let combine a b = Hashtbl.seeded_hash a b
     let combine_f f s x = Hashtbl.seeded_hash s (f x)
     let int i = i land max_int
+    let int32 (i:int32) = Hashtbl.hash i
+    let int64 (i:int64) = Hashtbl.hash i
     let bool b = if b then 1 else 2
     let char x = Char.code x
     let bytes (x:bytes) = Hashtbl.hash x
@@ -977,6 +984,8 @@ module Observable = struct
     type 'a t = 'a -> 'a -> bool
 
     let int : int t = (=)
+    let int32 : int32 t = (=)
+    let int64 : int64 t = (=)
     let bytes : bytes t = (=)
     let string : string t = (=)
     let bool : bool t = (=)
@@ -1010,6 +1019,8 @@ module Observable = struct
   let unit : unit t = make ~hash:(fun _ -> 1) ~eq:Eq.unit Print.unit
   let bool : bool t = make ~hash:H.bool ~eq:Eq.bool Print.bool
   let int : int t = make ~hash:H.int ~eq:Eq.int Print.int
+  let int32 : int32 t = make ~hash:H.int32 ~eq:Eq.int32 Print.int32
+  let int64 : int64 t = make ~hash:H.int64 ~eq:Eq.int64 Print.int64
   let float : float t = make ~eq:Eq.float Print.float
   let bytes = make ~hash:H.bytes ~eq:Eq.bytes Print.bytes
   let string = make ~hash:H.string ~eq:Eq.string Print.string
@@ -1122,11 +1133,9 @@ let small_int_corners () = make_int (Gen.nng_corners ())
 let neg_int = make_int Gen.neg_int
 
 let int32 =
-  make ~print:(fun i -> Int32.to_string i ^ "l") ~small:small1
-    ~shrink:Shrink.int32 Gen.ui32
+  make ~print:Print.int32 ~small:small1 ~shrink:Shrink.int32 Gen.int32
 let int64 =
-  make ~print:(fun i -> Int64.to_string i ^ "L") ~small:small1
-    ~shrink:Shrink.int64 Gen.ui64
+  make ~print:Print.int64 ~small:small1 ~shrink:Shrink.int64 Gen.int64
 
 let small_char target c = abs ((Char.code c) - (Char.code target))
 

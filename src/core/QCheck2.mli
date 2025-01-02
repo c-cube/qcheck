@@ -1111,7 +1111,15 @@ module Print : sig
   *)
 
   val int : int t
-  (** [int] is a printer of integer. *)
+  (** [int] is a printer of integers. *)
+
+  val int32 : int32 t
+  (** [int32] is a printer of 32-bit integers.
+      @since NEXT_RELEASE *)
+
+  val int64 : int64 t
+  (** [int64] is a printer of 64-bit integers.
+      @since NEXT_RELEASE *)
 
   val bool : bool t
   (** [bool] is a printer of boolean. *)
@@ -1333,6 +1341,14 @@ module Observable : sig
 
   val int : int t
   (** [int] is an observable of [int]. *)
+
+  val int32 : int32 t
+  (** [int32] is an observable of [int32].
+      @since NEXT_RELEASE *)
+
+  val int64 : int64 t
+  (** [int64] is an observable of [int64].
+      @since NEXT_RELEASE *)
 
   val float : float t
   (** [float] is an observable of [float]. *)
