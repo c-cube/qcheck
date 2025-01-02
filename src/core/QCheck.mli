@@ -657,8 +657,9 @@ module Print : sig
   (** 32-bit integer printer.
       @since NEXT_RELEASE *)
 
-  val int64 : int64 t (** 64-bit integer printer. *)
-  (** @since NEXT_RELEASE *)
+  val int64 : int64 t
+  (** 64-bit integer printer.
+      @since NEXT_RELEASE *)
 
   val bool : bool t (** Boolean printer. *)
 
