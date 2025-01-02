@@ -1678,6 +1678,7 @@ module Observable : sig
   val map : ('a -> 'b) -> 'b t -> 'a t
 
   val option : 'a t -> 'a option t
+  val result : 'a t -> 'e t -> ('a, 'e) result t (** @since NEXT_RELEASE *)
   val list : 'a t -> 'a list t
   val array : 'a t -> 'a array t
 
