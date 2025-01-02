@@ -195,6 +195,12 @@ module Gen = struct
 
   let opt = option
 
+  let result ?(ratio = 0.75) vg eg st =
+    let p = RS.float st 1. in
+    if p < (1.0 -. ratio)
+    then Error (eg st)
+    else Ok (vg st)
+
   (* Uniform random int generator *)
   let pint =
     if Sys.word_size = 32 then

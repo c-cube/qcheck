@@ -387,6 +387,14 @@ module Gen : sig
       @since 0.18 ([?ratio] parameter)
   *)
 
+  val result : ?ratio:float -> 'a t -> 'e t -> ('a, 'e) result t
+  (** A result generator, with optional ratio.
+      @param ratio a float between [0.] and [1.] indicating the probability of a sample to be [Ok _]
+      rather than [Error _].
+
+      @since NEXT_RELEASE
+  *)
+
   val char : char t
   (** Generates characters upto character code 255. *)
 
