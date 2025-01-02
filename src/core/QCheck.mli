@@ -830,6 +830,9 @@ module Shrink : sig
 
   val option : 'a t -> 'a option t
 
+  val result : 'a t -> 'e t -> ('a, 'e) result t
+  (** @since NEXT_RELEASE *)
+
   val bytes : ?shrink:(char t) -> bytes t
   (** @since 0.20 *)
 

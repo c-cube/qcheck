@@ -750,6 +750,10 @@ module Shrink = struct
     | None -> Iter.empty
     | Some x -> Iter.(return None <+> map (fun y->Some y) (s x))
 
+  let result vs es x = match x with
+    | Error e -> Iter.map (fun e -> Error e) (es e)
+    | Ok v -> Iter.map (fun v -> Ok v) (vs v)
+
   let array ?shrink a yield =
     let n = Array.length a in
     let chunk_size = ref n in
