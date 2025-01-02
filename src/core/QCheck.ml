@@ -1365,6 +1365,21 @@ let option ?ratio a =
     ?print:(_opt_map ~f:Print.option a.print)
     g
 
+let result ?ratio ok err =
+  let g = Gen.result ?ratio ok.gen err.gen
+  and shrink = _opt_map_2 ok.shrink err.shrink ~f:Shrink.result
+  and small = match ok.small, err.small with
+    | None, None -> (function Ok _ -> 0 | Error _ -> 1)
+    | None, Some es -> (function Ok _ -> 0 | Error e -> es e)
+    | Some os, None -> (function Ok o -> os o | Error _ -> 1)
+    | Some os, Some es -> (function Ok o -> os o | Error e -> es e)
+  in
+  make
+    ~small
+    ?shrink:shrink
+    ?print:(_opt_map_2 ~f:Print.result ok.print err.print)
+    g
+
 let map ?rev f a =
   make
     ?print:(_opt_map_2 rev a.print ~f:(fun r p x -> p (r x)))

@@ -1204,6 +1204,14 @@ val array_of_size : int Gen.t -> 'a arbitrary -> 'a array arbitrary
 val option : ?ratio:float -> 'a arbitrary -> 'a option arbitrary
 (** Choose between returning Some random value with optional ratio, or None. *)
 
+val result : ?ratio:float -> 'a arbitrary -> 'e arbitrary -> ('a, 'e) result arbitrary
+(** [result ~ratio okgen errgen] generates [Ok v] with [v] coming from [okgen]
+    or [Error e] with [e] coming from [errgen], depending on [ratio]. The latter
+    is a float between [0.] and [1.] indicating the probability of a sample to
+    be [Ok _] rather than [Error _].
+
+    @since NEXT_RELEASE *)
+
 
 (** {2 Tuples of arbitrary generators}
 
