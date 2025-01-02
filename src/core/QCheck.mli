@@ -683,6 +683,10 @@ module Print : sig
 
   val option : 'a t -> 'a option t (** Option printer. *)
 
+  val result : 'a t -> 'e t -> ('a, 'e) result t
+  (** Result printer.
+      @since NEXT_RELEASE *)
+
   val pair : 'a t -> 'b t -> ('a*'b) t
   (** Pair printer. Expects printers for each component. *)
 
