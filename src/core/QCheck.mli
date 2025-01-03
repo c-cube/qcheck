@@ -387,6 +387,14 @@ module Gen : sig
       @since 0.18 ([?ratio] parameter)
   *)
 
+  val result : ?ratio:float -> 'a t -> 'e t -> ('a, 'e) result t
+  (** A result generator, with optional ratio.
+      @param ratio a float between [0.] and [1.] indicating the probability of a sample to be [Ok _]
+      rather than [Error _].
+
+      @since NEXT_RELEASE
+  *)
+
   val char : char t
   (** Generates characters upto character code 255. *)
 
@@ -675,6 +683,10 @@ module Print : sig
 
   val option : 'a t -> 'a option t (** Option printer. *)
 
+  val result : 'a t -> 'e t -> ('a, 'e) result t
+  (** Result printer.
+      @since NEXT_RELEASE *)
+
   val pair : 'a t -> 'b t -> ('a*'b) t
   (** Pair printer. Expects printers for each component. *)
 
@@ -817,6 +829,9 @@ module Shrink : sig
   (** @since 0.14 *)
 
   val option : 'a t -> 'a option t
+
+  val result : 'a t -> 'e t -> ('a, 'e) result t
+  (** @since NEXT_RELEASE *)
 
   val bytes : ?shrink:(char t) -> bytes t
   (** @since 0.20 *)
@@ -1188,6 +1203,14 @@ val array_of_size : int Gen.t -> 'a arbitrary -> 'a array arbitrary
 
 val option : ?ratio:float -> 'a arbitrary -> 'a option arbitrary
 (** Choose between returning Some random value with optional ratio, or None. *)
+
+val result : ?ratio:float -> 'a arbitrary -> 'e arbitrary -> ('a, 'e) result arbitrary
+(** [result ~ratio okgen errgen] generates [Ok v] with [v] coming from [okgen]
+    or [Error e] with [e] coming from [errgen], depending on [ratio]. The latter
+    is a float between [0.] and [1.] indicating the probability of a sample to
+    be [Ok _] rather than [Error _].
+
+    @since NEXT_RELEASE *)
 
 
 (** {2 Tuples of arbitrary generators}
@@ -1663,6 +1686,7 @@ module Observable : sig
   val map : ('a -> 'b) -> 'b t -> 'a t
 
   val option : 'a t -> 'a option t
+  val result : 'a t -> 'e t -> ('a, 'e) result t (** @since NEXT_RELEASE *)
   val list : 'a t -> 'a list t
   val array : 'a t -> 'a array t
 

@@ -2,6 +2,8 @@
 
 ## NEXT RELEASE
 
+- Add `result` combinators to `QCheck`, `QCheck.{Gen,Print,Shrink,Observable}`,
+  and `QCheck2.{Gen,Print,Observable}`.
 - Add missing combinators `QCheck{,2}.Print.int{32,64}`, `QCheck.Gen.int{32,64}`,
   `QCheck{,2}.Observable.int{32,64}`, and deprecate `QCheck.Gen.{ui32,ui64}`
 - Document `dune` usage in README

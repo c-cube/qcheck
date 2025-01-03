@@ -195,6 +195,12 @@ module Gen = struct
 
   let opt = option
 
+  let result ?(ratio = 0.75) vg eg st =
+    let p = RS.float st 1. in
+    if p < (1.0 -. ratio)
+    then Error (eg st)
+    else Ok (vg st)
+
   (* Uniform random int generator *)
   let pint =
     if Sys.word_size = 32 then
@@ -492,6 +498,10 @@ module Print = struct
     | None -> "None"
     | Some x -> "Some (" ^ f x ^ ")"
 
+  let result vp ep = function
+    | Error e -> "Error (" ^ ep e ^ ")"
+    | Ok v -> "Ok (" ^ vp v ^ ")"
+
   let pair a b (x,y) = Printf.sprintf "(%s, %s)" (a x) (b y)
   let triple a b c (x,y,z) = Printf.sprintf "(%s, %s, %s)" (a x) (b y) (c z)
   let quad a b c d (x,y,z,w) =
@@ -740,6 +750,10 @@ module Shrink = struct
     | None -> Iter.empty
     | Some x -> Iter.(return None <+> map (fun y->Some y) (s x))
 
+  let result vs es x = match x with
+    | Error e -> Iter.map (fun e -> Error e) (es e)
+    | Ok v -> Iter.map (fun v -> Ok v) (vs v)
+
   let array ?shrink a yield =
     let n = Array.length a in
     let chunk_size = ref n in
@@ -975,6 +989,9 @@ module Observable = struct
     let opt f = function
       | None -> 42
       | Some x -> combine 43 (f x)
+    let result vh eh = function
+      | Error e -> combine 17 (eh e)
+      | Ok v -> combine 19 (vh v)
     let list f l = List.fold_left (combine_f f) 0x42 l
     let array f l = Array.fold_left (combine_f f) 0x42 l
     let pair f g (x,y) = combine (f x) (g y)
@@ -1013,6 +1030,8 @@ module Observable = struct
       | None, Some _ -> false
       | Some x, Some y -> f x y
 
+    let result ok error r1 r2 = Result.equal ~ok ~error r1 r2
+
     let pair f g (x1,y1)(x2,y2) = f x1 x2 && g y1 y2
   end
 
@@ -1029,6 +1048,10 @@ module Observable = struct
   let option p =
     make ~hash:(H.opt p.hash) ~eq:(Eq.option p.eq)
       (Print.option p.print)
+
+  let result op rp =
+    make ~hash:(H.result op.hash rp.hash) ~eq:(Eq.result op.eq rp.eq)
+      (Print.result op.print rp.print)
 
   let array p =
     make ~hash:(H.array p.hash) ~eq:(Eq.array p.eq) (Print.array p.print)
@@ -1340,6 +1363,21 @@ let option ?ratio a =
     ~small
     ?shrink
     ?print:(_opt_map ~f:Print.option a.print)
+    g
+
+let result ?ratio ok err =
+  let g = Gen.result ?ratio ok.gen err.gen
+  and shrink = _opt_map_2 ok.shrink err.shrink ~f:Shrink.result
+  and small = match ok.small, err.small with
+    | None, None -> (function Ok _ -> 0 | Error _ -> 1)
+    | None, Some es -> (function Ok _ -> 0 | Error e -> es e)
+    | Some os, None -> (function Ok o -> os o | Error _ -> 1)
+    | Some os, Some es -> (function Ok o -> os o | Error e -> es e)
+  in
+  make
+    ~small
+    ?shrink:shrink
+    ?print:(_opt_map_2 ~f:Print.result ok.print err.print)
     g
 
 let map ?rev f a =
