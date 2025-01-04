@@ -387,6 +387,12 @@ module Gen = struct
   (** [opt] is an alias of {!val:option} for backward compatibility. *)
   let opt = option
 
+  let result ?(ratio : float = 0.75) (ok_gen : 'a t) (err_gen : 'e t) : ('a, 'e) result t = fun st ->
+    let p = RS.float st 1. in
+    if p < (1. -. ratio)
+    then Tree.map (fun e -> Error e) (err_gen st)
+    else Tree.map (fun o -> Ok o) (ok_gen st)
+
   (* Uniform positive random int generator.
 
      We can't use {!RS.int} because the upper bound must be positive and is excluded,
@@ -809,6 +815,10 @@ module Print = struct
     | None -> "None"
     | Some x -> "Some (" ^ f x ^ ")"
 
+  let result vp ep = function
+    | Error e -> "Error (" ^ ep e ^ ")"
+    | Ok v -> "Ok (" ^ vp v ^ ")"
+
   let pair a b (x,y) = Printf.sprintf "(%s, %s)" (a x) (b y)
 
   let triple a b c (x,y,z) = Printf.sprintf "(%s, %s, %s)" (a x) (b y) (c z)
@@ -995,6 +1005,11 @@ module Observable = struct
     let option f = function
       | None -> 42
       | Some x -> combine 43 (f x)
+
+    let result vh eh = function
+      | Error e -> combine 17 (eh e)
+      | Ok v -> combine 19 (vh v)
+
     let list f l = List.fold_left (combine_f f) 0x42 l
 
     let array f l = Array.fold_left (combine_f f) 0x42 l
@@ -1041,6 +1056,8 @@ module Observable = struct
       | None, Some _ -> false
       | Some x, Some y -> f x y
 
+    let result ok error r1 r2 = Result.equal ~ok ~error r1 r2
+
     let pair f g (x1,y1)(x2,y2) = f x1 x2 && g y1 y2
   end
 
@@ -1063,6 +1080,10 @@ module Observable = struct
   let option p =
     make ~hash:(H.option p.hash) ~eq:(Eq.option p.eq)
       (Print.option p.print)
+
+  let result op rp =
+    make ~hash:(H.result op.hash rp.hash) ~eq:(Eq.result op.eq rp.eq)
+      (Print.result op.print rp.print)
 
   let array p =
     make ~hash:(H.array p.hash) ~eq:(Eq.array p.eq) (Print.array p.print)

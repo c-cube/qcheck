@@ -702,6 +702,16 @@ module Gen : sig
   val opt : ?ratio:float -> 'a t -> 'a option t
   (** [opt] is an alias of {!val:option} for backward compatibility. *)
 
+  val result : ?ratio:float -> 'a t -> 'e t -> ('a, 'e) result t
+  (** [result ~ratio okgen errgen] generates [Ok v] with [v] coming from [okgen]
+      or [Error e] with [e] coming from [errgen], depending on [ratio].
+
+      @param ratio a float between [0.] and [1.] indicating the probability of a sample to
+      be [Ok _] rather than [Error _].
+
+      @since NEXT_RELEASE *)
+
+
   (** {3 Combining generators} *)
 
   val pair : 'a t -> 'b t -> ('a * 'b) t
@@ -1140,6 +1150,12 @@ module Print : sig
   val option : 'a t -> 'a option t
   (** [option p] is a printer of ['a option], using [p] if it is a [Some]. *)
 
+  val result : 'a t -> 'e t -> ('a, 'e) result t
+  (** [result okp errp] is a printer of [('a,'e) result], using [okp] for printing [Ok _]
+      and [errp] for printing [Error _].
+
+      @since NEXT_RELEASE *)
+
   val pair : 'a t -> 'b t -> ('a*'b) t
   (** [pair p1 p2] is a printer of pair. *)
 
@@ -1378,6 +1394,11 @@ module Observable : sig
   val option : 'a t -> 'a option t
   (** [option o] wraps the observable [o] of ['a] into an observable of
       ['a option]. *)
+
+  val result : 'a t -> 'e t -> ('a, 'e) result t
+  (** [result ok_o err_o] creates an [('a, 'e) result] observable out of
+      two observables [ok_o] and [err_o].
+      @since NEXT_RELEASE *)
 
   val list : 'a t -> 'a list t
   (** [list o] wraps the observable [o] of ['a] into an observable of
