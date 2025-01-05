@@ -511,24 +511,32 @@ module Gen : sig
       @since 0.5.1 *)
 
   val tup2 : 'a t -> 'b t -> ('a * 'b) t
+  (** Combines two generators into a 2-tuple generator. *)
 
   val tup3 : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
+  (** Combines three generators into a 3-tuple generator. *)
 
   val tup4 : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
+  (** Combines four generators into a 4-tuple generator. *)
 
   val tup5 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> ('a * 'b * 'c * 'd * 'e) t
+  (** Combines five generators into a 5-tuple generator. *)
 
   val tup6 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t ->
     ('a * 'b * 'c * 'd * 'e * 'f) t
+  (** Combines six generators into a 6-tuple generator. *)
 
   val tup7 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t ->
     ('a * 'b * 'c * 'd * 'e * 'f * 'g) t
+  (** Combines seven generators into a 7-tuple generator. *)
 
   val tup8 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t ->
     ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h) t
+  (** Combines eight generators into an 8-tuple generator. *)
 
   val tup9 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t -> 'i t ->
     ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h * 'i) t
+  (** Combines nine generators into a 9-tuple generator. *)
 
   val join : 'a t t -> 'a t
   (** Collapses a generator of generators to simply a generator.
