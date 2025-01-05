@@ -768,39 +768,84 @@ module Iter : sig
       and calls [f] on a sequence of elements [f x1; f x2; ...; f xn]. *)
 
   type 'a t = ('a -> unit) -> unit
+  (** The type of iterators, underlying {!Shrink.t}. *)
 
   val empty : 'a t
+  (** The empty iterator *)
+
   val return : 'a -> 'a t
+  (** The constant iterator *)
+
   val (<*>) : ('a -> 'b) t -> 'a t -> 'b t
+  (** Applicative operator for iterators, combining a function iterator and
+      an argument iterator into a result generator. *)
+
   val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
+  (** Monadic bind operator for iterators.
+      [i >>= f] passes each element of [i] to [f], iterating over each element
+      of [f]'s resulting iterators. *)
+
   val map : ('a -> 'b) -> 'a t -> 'b t
+  (** [map f i] returns an iterator of elements from [i], each of which have
+      been applied to [f]. *)
+
   val map2 : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
+  (** [map f i j] returns an iterator of elements from [i] and [j], which have
+      been applied to [f]. *)
+
   val (>|=) : 'a t -> ('a -> 'b) -> 'b t
+  (** An infix synonym for {!map}. *)
+
   val append : 'a t -> 'a t -> 'a t
-  val (<+>) : 'a t -> 'a t -> 'a t (** Synonym for {!append}. *)
+  (** [append a b] first iterates over [a]'s elements and then over [b]'s. *)
+
+  val (<+>) : 'a t -> 'a t -> 'a t
+  (** Synonym for {!append}. *)
 
   val of_list : 'a list -> 'a t
+  (** [of_list xs] builds an iterator over the list elements of [xs]. *)
+
   val of_array : 'a array -> 'a t
+  (** [of_array xs] builds an iterator over the array elements of [xs]. *)
+
   val pair : 'a t -> 'b t -> ('a * 'b) t
+  (** [pair a b] iterates over pairs [(x,y)] with [x] coming from [a] and
+      [y] coming from [b]. *)
+
   val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
+  (** [triple a b c] iterates over triples [(x,y,z)] with [x] coming from [a],
+      [y] coming from [b], and [z] coming from [c]. *)
+
   val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
+  (** [quad a b c d] iterates over quadruples [(x,y,z,w)] with [x] coming from [a],
+      [y] coming from [b], [z] coming from [c], and [w] coming from [d]. *)
+
   val find : ('a -> bool) -> 'a t -> 'a option
+  (** [find p i] maps over the iterator [i], returning [Some _] when the
+      predicate [p] is [true] and [None] otherwise. *)
 
   val filter : ('a -> bool) -> 'a t -> 'a t
+  (** [filter p i] returns an iterator of elements from [i] satisfying [p]. *)
 
   val append_l : 'a t list -> 'a t
-  (** @since 0.8 *)
+  (** Appends a list of iterators into a single iterator.
+      @since 0.8 *)
 
   val flatten : 'a t t -> 'a t
-  (** @since 0.8 *)
+  (** Flattens an iterator of iterators into a single iterator.
+      @since 0.8 *)
 
   val ( let+ ) : 'a t -> ('a -> 'b) -> 'b t
+  (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!map}. *)
 
   val ( and+ ) : 'a t -> 'b t -> ('a * 'b) t
+  (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!pair}. *)
 
   val ( let* ) : 'a t -> ('a -> 'b t) -> 'b t
+  (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!(>>=)}. *)
 
   val ( and* ) : 'a t -> 'b t -> ('a * 'b) t
+  (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!pair}. *)
 end
 
 (** {2 Shrinkers} *)
