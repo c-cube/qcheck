@@ -807,7 +807,10 @@ end
 
 module Shrink : sig
   (** The [Shrink] module contains combinators to build up composite shrinkers
-      for user-defined types *)
+      for user-defined types
+
+      Warning: A hand-written shrinker returning its own argument, will cause
+      QCheck's shrinking phase to loop infinitely. *)
 
   type 'a t = 'a -> 'a Iter.t
   (** Given a counter-example, return an iterator on smaller versions
