@@ -634,12 +634,17 @@ module Gen : sig
       @since 0.17 *)
 
   val ( let+ ) : 'a t -> ('a -> 'b) -> 'b t
+  (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!map}. *)
 
   val ( and+ ) : 'a t -> 'b t -> ('a * 'b) t
+  (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!pair}. *)
 
   val ( let* ) : 'a t -> ('a -> 'b t) -> 'b t
+  (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!bind}. *)
 
   val ( and* ) : 'a t -> 'b t -> ('a * 'b) t
+  (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!pair}. *)
+
 
   (** {3 Debug generators}
 
