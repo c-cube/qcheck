@@ -817,40 +817,53 @@ module Shrink : sig
   (** No shrink *)
 
   val unit : unit t
-  (** @since 0.6 *)
+  (** unit shrinker. Does not produce any shrinking candidates.
+      @since 0.6 *)
 
   val bool : bool t
-  (** @since 0.23 *)
+  (** bool shrinker. Shrinks towards [false].
+      @since 0.23 *)
 
   val char : char t
-  (** Shrinks towards ['a'].
+  (** char shrinker. Shrinks towards ['a'].
       @since 0.6 *)
 
   val char_numeral : char t
-  (** Shrinks towards ['0'].
+  (** char digit shrinker. Shrinks towards ['0'].
       @since 0.19 *)
 
   val char_printable : char t
-  (** Shrinks towards ['a'] like [!char]. The output is also a printable character.
+  (** Printable char shrinker. Shrinks towards ['a'] like [!char]. The output is also a printable character.
       @since 0.19 *)
 
   val int : int t
+  (** int shrinker. Shrinks towards [0]. *)
 
   val int32 : int32 t
-  (** @since 0.14 *)
+  (** int32 shrinker. Shrinks towards [0l].
+      @since 0.14 *)
 
   val int64 : int64 t
-  (** @since 0.14 *)
+  (** int64 shrinker. Shrinks towards [0L].
+      @since 0.14 *)
 
   val option : 'a t -> 'a option t
+  (** option shrinker. Shrinks towards [None].
+      [option shk] reduces [Some v] values using [shk] to reduce [v]. *)
 
   val result : 'a t -> 'e t -> ('a, 'e) result t
-  (** @since NEXT_RELEASE *)
+  (** result shrinker.
+      [result ashk eshk] reduces [Ok a] values using [ashk] and [Error e] values using [eshk].
+      @since NEXT_RELEASE *)
 
   val bytes : ?shrink:(char t) -> bytes t
-  (** @since 0.20 *)
+  (** bytes shrinker. Shrinks towards shorter byte strings.
+      @param shrink an optional [char] shrinker.
+      @since 0.20 *)
 
   val string : ?shrink:(char t) -> string t
+  (** string shrinker. Shrinks towards [""].
+      @param shrink an optional [char] shrinker. *)
 
   val filter : ('a -> bool) -> 'a t -> 'a t
   (** [filter f shrink] shrinks values the same as [shrink], but
