@@ -670,7 +670,8 @@ module Print : sig
 
 
   val unit : unit t
-  (** @since 0.6 *)
+  (** [unit] is a printer of unit.
+      @since 0.6 *)
 
   val int : int t (** Integer printer. *)
 
