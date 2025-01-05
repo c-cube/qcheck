@@ -511,24 +511,32 @@ module Gen : sig
       @since 0.5.1 *)
 
   val tup2 : 'a t -> 'b t -> ('a * 'b) t
+  (** Combines two generators into a 2-tuple generator. *)
 
   val tup3 : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
+  (** Combines three generators into a 3-tuple generator. *)
 
   val tup4 : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
+  (** Combines four generators into a 4-tuple generator. *)
 
   val tup5 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> ('a * 'b * 'c * 'd * 'e) t
+  (** Combines five generators into a 5-tuple generator. *)
 
   val tup6 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t ->
     ('a * 'b * 'c * 'd * 'e * 'f) t
+  (** Combines six generators into a 6-tuple generator. *)
 
   val tup7 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t ->
     ('a * 'b * 'c * 'd * 'e * 'f * 'g) t
+  (** Combines seven generators into a 7-tuple generator. *)
 
   val tup8 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t ->
     ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h) t
+  (** Combines eight generators into an 8-tuple generator. *)
 
   val tup9 : 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t -> 'g t -> 'h t -> 'i t ->
     ('a * 'b * 'c * 'd * 'e * 'f * 'g * 'h * 'i) t
+  (** Combines nine generators into a 9-tuple generator. *)
 
   val join : 'a t t -> 'a t
   (** Collapses a generator of generators to simply a generator.
@@ -626,12 +634,17 @@ module Gen : sig
       @since 0.17 *)
 
   val ( let+ ) : 'a t -> ('a -> 'b) -> 'b t
+  (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!map}. *)
 
   val ( and+ ) : 'a t -> 'b t -> ('a * 'b) t
+  (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!pair}. *)
 
   val ( let* ) : 'a t -> ('a -> 'b t) -> 'b t
+  (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!bind}. *)
 
   val ( and* ) : 'a t -> 'b t -> ('a * 'b) t
+  (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!pair}. *)
+
 
   (** {3 Debug generators}
 
@@ -657,7 +670,8 @@ module Print : sig
 
 
   val unit : unit t
-  (** @since 0.6 *)
+  (** [unit] is a printer of unit.
+      @since 0.6 *)
 
   val int : int t (** Integer printer. *)
 
@@ -754,46 +768,94 @@ module Iter : sig
       and calls [f] on a sequence of elements [f x1; f x2; ...; f xn]. *)
 
   type 'a t = ('a -> unit) -> unit
+  (** The type of iterators, underlying {!Shrink.t}. *)
 
   val empty : 'a t
+  (** The empty iterator *)
+
   val return : 'a -> 'a t
+  (** The constant iterator *)
+
   val (<*>) : ('a -> 'b) t -> 'a t -> 'b t
+  (** Applicative operator for iterators, combining a function iterator and
+      an argument iterator into a result generator. *)
+
   val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
+  (** Monadic bind operator for iterators.
+      [i >>= f] passes each element of [i] to [f], iterating over each element
+      of [f]'s resulting iterators. *)
+
   val map : ('a -> 'b) -> 'a t -> 'b t
+  (** [map f i] returns an iterator of elements from [i], each of which have
+      been applied to [f]. *)
+
   val map2 : ('a -> 'b -> 'c) -> 'a t -> 'b t -> 'c t
+  (** [map f i j] returns an iterator of elements from [i] and [j], which have
+      been applied to [f]. *)
+
   val (>|=) : 'a t -> ('a -> 'b) -> 'b t
+  (** An infix synonym for {!map}. *)
+
   val append : 'a t -> 'a t -> 'a t
-  val (<+>) : 'a t -> 'a t -> 'a t (** Synonym for {!append}. *)
+  (** [append a b] first iterates over [a]'s elements and then over [b]'s. *)
+
+  val (<+>) : 'a t -> 'a t -> 'a t
+  (** Synonym for {!append}. *)
 
   val of_list : 'a list -> 'a t
+  (** [of_list xs] builds an iterator over the list elements of [xs]. *)
+
   val of_array : 'a array -> 'a t
+  (** [of_array xs] builds an iterator over the array elements of [xs]. *)
+
   val pair : 'a t -> 'b t -> ('a * 'b) t
+  (** [pair a b] iterates over pairs [(x,y)] with [x] coming from [a] and
+      [y] coming from [b]. *)
+
   val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
+  (** [triple a b c] iterates over triples [(x,y,z)] with [x] coming from [a],
+      [y] coming from [b], and [z] coming from [c]. *)
+
   val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
+  (** [quad a b c d] iterates over quadruples [(x,y,z,w)] with [x] coming from [a],
+      [y] coming from [b], [z] coming from [c], and [w] coming from [d]. *)
+
   val find : ('a -> bool) -> 'a t -> 'a option
+  (** [find p i] maps over the iterator [i], returning [Some _] when the
+      predicate [p] is [true] and [None] otherwise. *)
 
   val filter : ('a -> bool) -> 'a t -> 'a t
+  (** [filter p i] returns an iterator of elements from [i] satisfying [p]. *)
 
   val append_l : 'a t list -> 'a t
-  (** @since 0.8 *)
+  (** Appends a list of iterators into a single iterator.
+      @since 0.8 *)
 
   val flatten : 'a t t -> 'a t
-  (** @since 0.8 *)
+  (** Flattens an iterator of iterators into a single iterator.
+      @since 0.8 *)
 
   val ( let+ ) : 'a t -> ('a -> 'b) -> 'b t
+  (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!map}. *)
 
   val ( and+ ) : 'a t -> 'b t -> ('a * 'b) t
+  (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!pair}. *)
 
   val ( let* ) : 'a t -> ('a -> 'b t) -> 'b t
+  (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!(>>=)}. *)
 
   val ( and* ) : 'a t -> 'b t -> ('a * 'b) t
+  (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!pair}. *)
 end
 
 (** {2 Shrinkers} *)
 
 module Shrink : sig
   (** The [Shrink] module contains combinators to build up composite shrinkers
-      for user-defined types *)
+      for user-defined types
+
+      Warning: A hand-written shrinker returning its own argument, will cause
+      QCheck's shrinking phase to loop infinitely. *)
 
   type 'a t = 'a -> 'a Iter.t
   (** Given a counter-example, return an iterator on smaller versions
@@ -803,40 +865,53 @@ module Shrink : sig
   (** No shrink *)
 
   val unit : unit t
-  (** @since 0.6 *)
+  (** unit shrinker. Does not produce any shrinking candidates.
+      @since 0.6 *)
 
   val bool : bool t
-  (** @since 0.23 *)
+  (** bool shrinker. Shrinks towards [false].
+      @since 0.23 *)
 
   val char : char t
-  (** Shrinks towards ['a'].
+  (** char shrinker. Shrinks towards ['a'].
       @since 0.6 *)
 
   val char_numeral : char t
-  (** Shrinks towards ['0'].
+  (** char digit shrinker. Shrinks towards ['0'].
       @since 0.19 *)
 
   val char_printable : char t
-  (** Shrinks towards ['a'] like [!char]. The output is also a printable character.
+  (** Printable char shrinker. Shrinks towards ['a'] like [!char]. The output is also a printable character.
       @since 0.19 *)
 
   val int : int t
+  (** int shrinker. Shrinks towards [0]. *)
 
   val int32 : int32 t
-  (** @since 0.14 *)
+  (** int32 shrinker. Shrinks towards [0l].
+      @since 0.14 *)
 
   val int64 : int64 t
-  (** @since 0.14 *)
+  (** int64 shrinker. Shrinks towards [0L].
+      @since 0.14 *)
 
   val option : 'a t -> 'a option t
+  (** option shrinker. Shrinks towards [None].
+      [option shk] reduces [Some v] values using [shk] to reduce [v]. *)
 
   val result : 'a t -> 'e t -> ('a, 'e) result t
-  (** @since NEXT_RELEASE *)
+  (** result shrinker.
+      [result ashk eshk] reduces [Ok a] values using [ashk] and [Error e] values using [eshk].
+      @since NEXT_RELEASE *)
 
   val bytes : ?shrink:(char t) -> bytes t
-  (** @since 0.20 *)
+  (** bytes shrinker. Shrinks towards shorter byte strings.
+      @param shrink an optional [char] shrinker.
+      @since 0.20 *)
 
   val string : ?shrink:(char t) -> string t
+  (** string shrinker. Shrinks towards [""].
+      @param shrink an optional [char] shrinker. *)
 
   val filter : ('a -> bool) -> 'a t -> 'a t
   (** [filter f shrink] shrinks values the same as [shrink], but

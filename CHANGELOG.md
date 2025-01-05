@@ -2,6 +2,7 @@
 
 ## NEXT RELEASE
 
+- Add missing documentation strings for `QCheck.{Print,Iter,Shrink,Gen}` and `QCheck2.Gen`.
 - Add `result` combinators to `QCheck`, `QCheck.{Gen,Print,Shrink,Observable}`,
   and `QCheck2.{Gen,Print,Observable}`.
 - Add missing combinators `QCheck{,2}.Print.int{32,64}`, `QCheck.Gen.int{32,64}`,
