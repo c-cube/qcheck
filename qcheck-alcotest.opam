@@ -27,3 +27,4 @@ depends: [
 ]
 dev-repo: "git+https://github.com/c-cube/qcheck.git"
 bug-reports: "https://github.com/c-cube/qcheck/issues"
+x-maintenance-intent: ["(latest)"]
