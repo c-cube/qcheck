@@ -559,9 +559,21 @@ Test sum list = 0 failed (0 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test fail_pred_map_commute failed (77 shrink steps):
+Test fail_pred_map_commute_int failed (77 shrink steps):
 
 ([1], {_ -> 0}, {1 -> true; _ -> false})
+
+--- Failure --------------------------------------------------------------------
+
+Test fail_pred_map_commute_int32 failed (149 shrink steps):
+
+([-2l], {_ -> 0l}, {-2l -> true; _ -> false})
+
+--- Failure --------------------------------------------------------------------
+
+Test fail_pred_map_commute_int64 failed (181 shrink steps):
+
+([3L], {_ -> 0L}, {3L -> true; _ -> false})
 
 --- Failure --------------------------------------------------------------------
 
@@ -1473,7 +1485,7 @@ stats dist:
     6.. 10:                                                                   0
 ================================================================================
 1 warning(s)
-failure (68 tests failed, 3 tests errored, ran 158 tests)
+failure (70 tests failed, 3 tests errored, ran 160 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++

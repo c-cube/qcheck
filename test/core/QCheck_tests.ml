@@ -796,12 +796,30 @@ end
 module Function = struct
   open QCheck
 
-  let fail_pred_map_commute =
-    Test.make ~name:"fail_pred_map_commute" ~count:100 ~long_factor:100
+  let fail_pred_map_commute_int =
+    Test.make ~name:"fail_pred_map_commute_int" ~count:100 ~long_factor:100
       (triple
          (small_list small_int)
          (fun1 Observable.int int)
          (fun1 Observable.int bool))
+      (fun (l,Fun (_,f),Fun (_,p)) ->
+         List.filter p (List.map f l) = List.map f (List.filter p l))
+
+  let fail_pred_map_commute_int32 =
+    Test.make ~name:"fail_pred_map_commute_int32" ~count:100 ~long_factor:100
+      (triple
+         (small_list int32)
+         (fun1 Observable.int32 int32)
+         (fun1 Observable.int32 bool))
+      (fun (l,Fun (_,f),Fun (_,p)) ->
+         List.filter p (List.map f l) = List.map f (List.filter p l))
+
+  let fail_pred_map_commute_int64 =
+    Test.make ~name:"fail_pred_map_commute_int64" ~count:100 ~long_factor:100
+      (triple
+         (small_list int64)
+         (fun1 Observable.int64 int64)
+         (fun1 Observable.int64 bool))
       (fun (l,Fun (_,f),Fun (_,p)) ->
          List.filter p (List.map f l) = List.map f (List.filter p l))
 
@@ -865,7 +883,9 @@ module Function = struct
          = List.fold_left f (List.fold_left f acc is) is) (*Typo*)
 
   let tests = [
-    fail_pred_map_commute;
+    fail_pred_map_commute_int;
+    fail_pred_map_commute_int32;
+    fail_pred_map_commute_int64;
     fail_pred_strings;
     prop_foldleft_foldright;
     prop_foldleft_foldright_uncurry;
