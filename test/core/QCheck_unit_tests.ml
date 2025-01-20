@@ -169,6 +169,17 @@ module Shrink = struct
       [ ("option int Some 42",  Some 42,  [None]);
         ("option int None",     None, []) ]
 
+  let test_int_string_result () =
+    List.iter (alco_check Alcotest.(result int string) (trace_false Shrink.(result int string)) "on repeated failure")
+      [ ("result int string Ok 55",          Ok 55,  [Ok 28; Ok 42; Ok 49; Ok 52; Ok 54]);
+        ("result int string Error \"oops\"", Error "oops", [Error "oo"; Error "ps"; Error "ops"; Error "hops";
+                                                            Error "lops"; Error "nops"; Error "ohps"; Error "olps";
+                                                            Error "onps"; Error "oois"; Error "ooms"; Error "ooos";
+                                                            Error "oopj"; Error "oopo"; Error "oopq"; Error "oopr"]) ];
+    List.iter (alco_check Alcotest.(result int string) (trace_true Shrink.(result int string)) "on repeated success")
+      [ ("result int string Ok 55",          Ok 55,  [Ok 28; Ok 14; Ok 7; Ok 4; Ok 2; Ok 1; Ok 0]);
+        ("result int string Error \"oops\"", Error "oops", [Error "oo"; Error ""]) ]
+
   let tests = ("Shrink", Alcotest.[
       test_case "bool"  `Quick test_bool;
       test_case "int"   `Quick test_int;
@@ -182,6 +193,7 @@ module Shrink = struct
       test_case "int32 list" `Quick test_int32_list;
       test_case "list_spine" `Quick test_list_spine_compare;
       test_case "int option"  `Quick test_int_option;
+      test_case "(int,string) result" `Quick test_int_string_result;
     ])
 end
 
