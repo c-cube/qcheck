@@ -201,6 +201,18 @@ module Generator = struct
     Test.make ~name:"nat has right range" ~count:1000
       (make ~print:Print.int Gen.nat) (fun n -> 0 <= n && n < 10000)
 
+  let int_test =
+    Test.make ~name:"int doubling" ~count:1000
+      int (fun i -> i+i = 2*i)
+
+  let int32_test =
+    Test.make ~name:"int32 doubling" ~count:1000
+      int32 (fun i -> Int32.add i i = Int32.mul 2l i)
+
+  let int64_test =
+    Test.make ~name:"int64 doubling" ~count:1000
+      int64 (fun i -> Int64.add i i = Int64.mul 2L i)
+
   let bytes_test =
     Test.make ~name:"bytes has right length and content" ~count:1000
       bytes
@@ -398,6 +410,9 @@ module Generator = struct
     printable_test;
     numeral_test;
     nat_test;
+    int_test;
+    int32_test;
+    int64_test;
     bytes_test;
     string_test;
     pair_test;
