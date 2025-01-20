@@ -476,6 +476,22 @@ module Shrink = struct
     Test.make ~name:"ints are 0" ~count:1000
       int (fun i -> Printf.printf "%i\n" i; i = 0)
 
+  let int32s_arent_0l_rem_3l =
+    Test.make ~name:"int32s arent 0l rem 3l" ~count:1000
+      int32 (fun i -> Int32.rem i 3l <> 0l)
+
+  let int32s_are_0l =
+    Test.make ~name:"int32s are 0l" ~count:1000
+      int32 (fun i -> i = 0l)
+
+  let int64s_arent_0L_rem_3L =
+    Test.make ~name:"int64s arent 0L rem 3L" ~count:1000
+      int64 (fun i -> Int64.rem i 3L <> 0L)
+
+  let int64s_are_0L =
+    Test.make ~name:"int64s are 0L" ~count:1000
+      int64 (fun i -> i = 0L)
+
   (* test from issue #59 *)
   let ints_smaller_209609 =
     Test.make ~name:"ints < 209609"
@@ -721,6 +737,10 @@ module Shrink = struct
     long_shrink;
     ints_arent_0_mod_3;
     ints_are_0;
+    int32s_arent_0l_rem_3l;
+    int32s_are_0l;
+    int64s_arent_0L_rem_3L;
+    int64s_are_0L;
     ints_smaller_209609;
     nats_smaller_5001;
     char_is_never_abcdef;

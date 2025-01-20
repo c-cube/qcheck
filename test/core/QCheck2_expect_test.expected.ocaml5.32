@@ -252,6 +252,30 @@ Test ints are 0 failed (29 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
+Test int32s arent 0l rem 3l failed (1 shrink steps):
+
+0l
+
+--- Failure --------------------------------------------------------------------
+
+Test int32s are 0l failed (30 shrink steps):
+
+1l
+
+--- Failure --------------------------------------------------------------------
+
+Test int64s arent 0L rem 3L failed (1 shrink steps):
+
+0L
+
+--- Failure --------------------------------------------------------------------
+
+Test int64s are 0L failed (62 shrink steps):
+
+1L
+
+--- Failure --------------------------------------------------------------------
+
 Test ints < 209609 failed (0 shrink steps):
 
 1073741823
@@ -1447,7 +1471,7 @@ stats dist:
    -3..  0: #######################################################        1631
 ================================================================================
 1 warning(s)
-failure (64 tests failed, 3 tests errored, ran 146 tests)
+failure (68 tests failed, 3 tests errored, ran 150 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
