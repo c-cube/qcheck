@@ -161,6 +161,14 @@ module Shrink = struct
     let run_test () = QCheck.Shrink.list_spine [pred;succ] ignore in
     Alcotest.(check unit) "doesn't compare elements" () @@ run_test ()
 
+  let test_int_option () =
+    List.iter (alco_check Alcotest.(option int) (trace_false Shrink.(option int)) "on repeated failure")
+      [ ("option int Some 42",  Some 42,  [None; Some 21; Some 32; Some 37; Some 40; Some 41]);
+        ("option int None",     None, []) ];
+    List.iter (alco_check Alcotest.(option int) (trace_true Shrink.(option int)) "on repeated success")
+      [ ("option int Some 42",  Some 42,  [None]);
+        ("option int None",     None, []) ]
+
   let tests = ("Shrink", Alcotest.[
       test_case "bool"  `Quick test_bool;
       test_case "int"   `Quick test_int;
@@ -173,6 +181,7 @@ module Shrink = struct
       test_case "int list" `Quick test_int_list;
       test_case "int32 list" `Quick test_int32_list;
       test_case "list_spine" `Quick test_list_spine_compare;
+      test_case "int option"  `Quick test_int_option;
     ])
 end
 
