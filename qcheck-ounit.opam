@@ -25,4 +25,5 @@ depends: [
   "ocaml" {>= "4.08.0"}
 ]
 dev-repo: "git+https://github.com/c-cube/qcheck.git"
+x-maintenance-intent: ["(latest)"]
 bug-reports: "https://github.com/c-cube/qcheck/issues"

@@ -27,3 +27,4 @@ build: [
 homepage: "https://github.com/c-cube/qcheck/"
 bug-reports: "https://github.com/c-cube/qcheck/-/issues"
 dev-repo: "git+https://github.com/vch9/ppx_deriving_qcheck.git"
+x-maintenance-intent: ["(latest)"]
