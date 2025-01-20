@@ -1010,6 +1010,18 @@ module Stats = struct
       Test.make ~name:"oneof int dist"                 ~count:1000   (add_stat dist (oneofl[min_int;-1;0;1;max_int])) (fun _ -> true);
     ]
 
+  let int_32_64_dist_tests =
+    let add_stat32 shift arb = add_stat ("dist",fun i -> Int32.(to_int (logand 0xffffl (shift i)))) arb in
+    let add_stat64 shift arb = add_stat ("dist",fun i -> Int64.(to_int (logand 0xffffL (shift i)))) arb in
+    [ (* stats are int-based, so for these to work for 31-bit ints, consider blocks of 16 bits *)
+      Test.make ~name:"int32 lower dist"     ~count:10000 (add_stat32 (fun i -> i) int32)                              (fun _ -> true);
+      Test.make ~name:"int32 upper dist"     ~count:10000 (add_stat32 (fun i -> Int32.shift_right_logical i 16) int32) (fun _ -> true);
+      Test.make ~name:"int64 lower dist"     ~count:10000 (add_stat64 (fun i -> i) int64)                              (fun _ -> true);
+      Test.make ~name:"int64 lower-mid dist" ~count:10000 (add_stat64 (fun i -> Int64.shift_right i 16) int64)         (fun _ -> true);
+      Test.make ~name:"int64 upper-mid dist" ~count:10000 (add_stat64 (fun i -> Int64.shift_right i 32) int64)         (fun _ -> true);
+      Test.make ~name:"int64 upper dist"     ~count:10000 (add_stat64 (fun i -> Int64.shift_right_logical i 48) int64) (fun _ -> true);
+    ]
+
   let exponential_tests =
     let float_dist = ("dist",int_of_float) in
     [ Test.make ~name:"exponential 10. dist" ~count:5_000 (add_stat float_dist (exponential 10.)) (fun _ -> true);
@@ -1043,5 +1055,6 @@ module Stats = struct
     @ list_len_tests
     @ array_len_tests
     @ int_dist_tests
+    @ int_32_64_dist_tests
     @ exponential_tests
 end
