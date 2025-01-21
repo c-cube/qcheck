@@ -937,6 +937,14 @@ module Stats = struct
       ~stats:[("ordered pair difference", (fun (i,j) -> j-i));("ordered pair sum", (fun (i,j) -> i+j))]
       Gen.(int_bound 100 >>= fun j -> int_bound j >>= fun i -> return (i,j)) (fun _ -> true)
 
+  let option_dist =
+    Test.make ~name:"option dist" ~count:10_000
+      ~collect:(function None -> "None  " | Some _ -> "Some _") Gen.(option int) (fun _ -> true)
+
+  let result_dist =
+    Test.make ~name:"result dist" ~count:10_000
+      ~collect:(function Ok _ -> "Ok _   " | Error _ -> "Error _") Gen.(result int string) (fun _ -> true)
+
   let list_len_tests =
     let len = ("len",List.length) in
     [ (* test from issue #30 *)
@@ -1007,7 +1015,9 @@ module Stats = struct
     @ [pair_dist;
        triple_dist;
        quad_dist;
-       bind_dist;]
+       bind_dist;
+       option_dist;
+       result_dist;]
     @ list_len_tests
     @ array_len_tests
     @ int_dist_tests

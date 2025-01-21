@@ -1139,6 +1139,20 @@ stats ordered pair sum:
   190..199: ##                                                             3580
   200..209:                                                                 125
 
++++ Collect ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Collect results for test option dist:
+
+None  : 1464 cases
+Some _: 8536 cases
+
++++ Collect ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Collect results for test result dist:
+
+Error _: 2509 cases
+Ok _   : 7491 cases
+
 +++ Stats for list len dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 stats len:
@@ -1714,7 +1728,7 @@ stats dist:
    -3..  0: #######################################################        1631
 ================================================================================
 1 warning(s)
-failure (74 tests failed, 3 tests errored, ran 164 tests)
+failure (74 tests failed, 3 tests errored, ran 166 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
