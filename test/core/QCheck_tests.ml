@@ -731,6 +731,22 @@ module Shrink = struct
       (fun xs -> let ys = List.sort_uniq Int.compare xs in
                  print_list xs; List.length xs = List.length ys)
 
+  let int_option_are_none =
+    Test.make ~name:"int option are none" ~count:1000
+      (option (int_bound 1000)) (function None -> true | Some _ -> false)
+
+   let int_option_are_some_100_or_more =
+    Test.make ~name:"int option are some 100 or more" ~count:1000
+      (option (int_bound 1000)) (function None -> false | Some i -> i >= 100)
+
+  let int_string_result_are_ok =
+    Test.make ~name:"(int,string) result are Ok" ~count:1000
+      (result (int_bound 1000) string_small) (function Ok _ -> true | Error _ -> false)
+
+  let int_string_result_are_error =
+    Test.make ~name:"(int,string) result are Error" ~count:1000
+      (result (int_bound 1000) string_small) (function Ok _ -> false | Error _ -> true)
+
   let tree_contains_only_42 =
     Test.make ~name:"tree contains only 42"
       IntTree.(make ~print:print_tree ~shrink:shrink_tree gen_tree)
@@ -797,6 +813,10 @@ module Shrink = struct
     list_shorter_4332;
     (*list_equal_dupl;*)
     list_unique_elems;
+    int_option_are_none;
+    int_option_are_some_100_or_more;
+    int_string_result_are_ok;
+    int_string_result_are_error;
     tree_contains_only_42;
     test_gen_no_shrink;
   ]

@@ -515,6 +515,30 @@ Test lists have unique elems failed (8 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
+Test int option are none failed (11 shrink steps):
+
+Some (0)
+
+--- Failure --------------------------------------------------------------------
+
+Test int option are some 100 or more failed (1 shrink steps):
+
+None
+
+--- Failure --------------------------------------------------------------------
+
+Test (int,string) result are Ok failed (0 shrink steps):
+
+Error ("")
+
+--- Failure --------------------------------------------------------------------
+
+Test (int,string) result are Error failed (11 shrink steps):
+
+Ok (0)
+
+--- Failure --------------------------------------------------------------------
+
 Test tree contains only 42 failed (10 shrink steps):
 
 Leaf 0
@@ -1603,7 +1627,7 @@ stats dist:
     6.. 10:                                                                   0
 ================================================================================
 1 warning(s)
-failure (70 tests failed, 3 tests errored, ran 168 tests)
+failure (74 tests failed, 3 tests errored, ran 172 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
