@@ -320,6 +320,16 @@ module Generator = struct
       Gen.(small_nat >>= fun i -> array_repeat i unit >>= fun l -> return (i,l))
       (fun (i,l) -> Array.length l = i)
 
+  let int_option_test =
+    Test.make ~name:"int option right range" ~count:1000 ~print:Print.(option int)
+      Gen.(option (int_bound 1000))
+      (function None -> true | Some i -> 0 <= i && i <= 1000)
+
+  let int_string_result_test =
+    Test.make ~name:"(int,string) result right range" ~count:1000 ~print:Print.(result int string)
+      Gen.(result (int_bound 1000) string_small)
+      (function Ok i -> 0 <= i && i <= 1000 | Error s -> String.length s < 100)
+
   let passing_tree_rev =
     Test.make ~name:"tree_rev_is_involutive" ~count:1000
       IntTree.gen_tree
@@ -350,6 +360,8 @@ module Generator = struct
     list_test;
     list_repeat_test;
     array_repeat_test;
+    int_option_test;
+    int_string_result_test;
     passing_tree_rev;
   ]
 end
