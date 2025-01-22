@@ -201,6 +201,18 @@ module Generator = struct
     Test.make ~name:"nat has right range" ~count:1000
       (make ~print:Print.int Gen.nat) (fun n -> 0 <= n && n < 10000)
 
+  let int_test =
+    Test.make ~name:"int doubling" ~count:1000
+      int (fun i -> i+i = 2*i)
+
+  let int32_test =
+    Test.make ~name:"int32 doubling" ~count:1000
+      int32 (fun i -> Int32.add i i = Int32.mul 2l i)
+
+  let int64_test =
+    Test.make ~name:"int64 doubling" ~count:1000
+      int64 (fun i -> Int64.add i i = Int64.mul 2L i)
+
   let bytes_test =
     Test.make ~name:"bytes has right length and content" ~count:1000
       bytes
@@ -311,6 +323,14 @@ module Generator = struct
     Test.make ~name:"array_repeat has constant length" ~count:1000
       (make ~print:Print.(pair int (array unit)) gen) (fun (i,l) -> Array.length l = i)
 
+  let int_option_test =
+    Test.make ~name:"int option right range" ~count:1000
+      (option (int_bound 1000)) (function None -> true | Some i -> 0 <= i && i <= 1000)
+
+  let int_string_result_test =
+    Test.make ~name:"(int,string) result right range" ~count:1000
+      (result (int_bound 1000) string_small) (function Ok i -> 0 <= i && i <= 1000 | Error s -> String.length s < 100)
+
   let passing_tree_rev =
     Test.make ~name:"tree_rev_is_involutive" ~count:1000
       (make IntTree.gen_tree)
@@ -398,6 +418,9 @@ module Generator = struct
     printable_test;
     numeral_test;
     nat_test;
+    int_test;
+    int32_test;
+    int64_test;
     bytes_test;
     string_test;
     pair_test;
@@ -416,6 +439,8 @@ module Generator = struct
     list_test;
     list_repeat_test;
     array_repeat_test;
+    int_option_test;
+    int_string_result_test;
     passing_tree_rev;
     nat_split2_spec;
     pos_split2_spec;
@@ -460,6 +485,22 @@ module Shrink = struct
   let ints_are_0 =
     Test.make ~name:"ints are 0" ~count:1000
       int (fun i -> Printf.printf "%i\n" i; i = 0)
+
+  let int32s_arent_0l_rem_3l =
+    Test.make ~name:"int32s arent 0l rem 3l" ~count:1000
+      int32 (fun i -> Int32.rem i 3l <> 0l)
+
+  let int32s_are_0l =
+    Test.make ~name:"int32s are 0l" ~count:1000
+      int32 (fun i -> i = 0l)
+
+  let int64s_arent_0L_rem_3L =
+    Test.make ~name:"int64s arent 0L rem 3L" ~count:1000
+      int64 (fun i -> Int64.rem i 3L <> 0L)
+
+  let int64s_are_0L =
+    Test.make ~name:"int64s are 0L" ~count:1000
+      int64 (fun i -> i = 0L)
 
   (* test from issue #59 *)
   let ints_smaller_209609 =
@@ -690,6 +731,22 @@ module Shrink = struct
       (fun xs -> let ys = List.sort_uniq Int.compare xs in
                  print_list xs; List.length xs = List.length ys)
 
+  let int_option_are_none =
+    Test.make ~name:"int option are none" ~count:1000
+      (option (int_bound 1000)) (function None -> true | Some _ -> false)
+
+   let int_option_are_some_100_or_more =
+    Test.make ~name:"int option are some 100 or more" ~count:1000
+      (option (int_bound 1000)) (function None -> false | Some i -> i >= 100)
+
+  let int_string_result_are_ok =
+    Test.make ~name:"(int,string) result are Ok" ~count:1000
+      (result (int_bound 1000) string_small) (function Ok _ -> true | Error _ -> false)
+
+  let int_string_result_are_error =
+    Test.make ~name:"(int,string) result are Error" ~count:1000
+      (result (int_bound 1000) string_small) (function Ok _ -> false | Error _ -> true)
+
   let tree_contains_only_42 =
     Test.make ~name:"tree contains only 42"
       IntTree.(make ~print:print_tree ~shrink:shrink_tree gen_tree)
@@ -706,6 +763,10 @@ module Shrink = struct
     long_shrink;
     ints_arent_0_mod_3;
     ints_are_0;
+    int32s_arent_0l_rem_3l;
+    int32s_are_0l;
+    int64s_arent_0L_rem_3L;
+    int64s_are_0L;
     ints_smaller_209609;
     nats_smaller_5001;
     char_is_never_abcdef;
@@ -752,6 +813,10 @@ module Shrink = struct
     list_shorter_4332;
     (*list_equal_dupl;*)
     list_unique_elems;
+    int_option_are_none;
+    int_option_are_some_100_or_more;
+    int_string_result_are_ok;
+    int_string_result_are_error;
     tree_contains_only_42;
     test_gen_no_shrink;
   ]
@@ -761,12 +826,30 @@ end
 module Function = struct
   open QCheck
 
-  let fail_pred_map_commute =
-    Test.make ~name:"fail_pred_map_commute" ~count:100 ~long_factor:100
+  let fail_pred_map_commute_int =
+    Test.make ~name:"fail_pred_map_commute_int" ~count:100 ~long_factor:100
       (triple
          (small_list small_int)
          (fun1 Observable.int int)
          (fun1 Observable.int bool))
+      (fun (l,Fun (_,f),Fun (_,p)) ->
+         List.filter p (List.map f l) = List.map f (List.filter p l))
+
+  let fail_pred_map_commute_int32 =
+    Test.make ~name:"fail_pred_map_commute_int32" ~count:100 ~long_factor:100
+      (triple
+         (small_list int32)
+         (fun1 Observable.int32 int32)
+         (fun1 Observable.int32 bool))
+      (fun (l,Fun (_,f),Fun (_,p)) ->
+         List.filter p (List.map f l) = List.map f (List.filter p l))
+
+  let fail_pred_map_commute_int64 =
+    Test.make ~name:"fail_pred_map_commute_int64" ~count:100 ~long_factor:100
+      (triple
+         (small_list int64)
+         (fun1 Observable.int64 int64)
+         (fun1 Observable.int64 bool))
       (fun (l,Fun (_,f),Fun (_,p)) ->
          List.filter p (List.map f l) = List.map f (List.filter p l))
 
@@ -830,7 +913,9 @@ module Function = struct
          = List.fold_left f (List.fold_left f acc is) is) (*Typo*)
 
   let tests = [
-    fail_pred_map_commute;
+    fail_pred_map_commute_int;
+    fail_pred_map_commute_int32;
+    fail_pred_map_commute_int64;
     fail_pred_strings;
     prop_foldleft_foldright;
     prop_foldleft_foldright_uncurry;
@@ -921,6 +1006,14 @@ module Stats = struct
       (make ~stats:[("ordered pair difference", (fun (i,j) -> j-i));("ordered pair sum", (fun (i,j) -> i+j))]
          Gen.(int_bound 100 >>= fun j -> int_bound j >>= fun i -> return (i,j))) (fun _ -> true)
 
+  let option_dist =
+    Test.make ~name:"option dist" ~count:10_000
+      (set_collect (function None -> "None  " | Some _ -> "Some _") (option int)) (fun _ -> true)
+
+  let result_dist =
+    Test.make ~name:"result dist" ~count:10_000
+      (set_collect (function Ok _ -> "Ok _   " | Error _ -> "Error _") (result int string)) (fun _ -> true)
+
   let list_len_tests =
     let len = ("len",List.length) in
     [ (* test from issue #30 *)
@@ -955,6 +1048,18 @@ module Stats = struct
       Test.make ~name:"oneof int dist"                 ~count:1000   (add_stat dist (oneofl[min_int;-1;0;1;max_int])) (fun _ -> true);
     ]
 
+  let int_32_64_dist_tests =
+    let add_stat32 shift arb = add_stat ("dist",fun i -> Int32.(to_int (logand 0xffffl (shift i)))) arb in
+    let add_stat64 shift arb = add_stat ("dist",fun i -> Int64.(to_int (logand 0xffffL (shift i)))) arb in
+    [ (* stats are int-based, so for these to work for 31-bit ints, consider blocks of 16 bits *)
+      Test.make ~name:"int32 lower dist"     ~count:10000 (add_stat32 (fun i -> i) int32)                              (fun _ -> true);
+      Test.make ~name:"int32 upper dist"     ~count:10000 (add_stat32 (fun i -> Int32.shift_right_logical i 16) int32) (fun _ -> true);
+      Test.make ~name:"int64 lower dist"     ~count:10000 (add_stat64 (fun i -> i) int64)                              (fun _ -> true);
+      Test.make ~name:"int64 lower-mid dist" ~count:10000 (add_stat64 (fun i -> Int64.shift_right i 16) int64)         (fun _ -> true);
+      Test.make ~name:"int64 upper-mid dist" ~count:10000 (add_stat64 (fun i -> Int64.shift_right i 32) int64)         (fun _ -> true);
+      Test.make ~name:"int64 upper dist"     ~count:10000 (add_stat64 (fun i -> Int64.shift_right_logical i 48) int64) (fun _ -> true);
+    ]
+
   let exponential_tests =
     let float_dist = ("dist",int_of_float) in
     [ Test.make ~name:"exponential 10. dist" ~count:5_000 (add_stat float_dist (exponential 10.)) (fun _ -> true);
@@ -984,9 +1089,12 @@ module Stats = struct
     @ [pair_dist;
        triple_dist;
        quad_dist;
-       bind_dist;]
+       bind_dist;
+       option_dist;
+       result_dist;]
     @ list_len_tests
     @ array_len_tests
     @ int_dist_tests
+    @ int_32_64_dist_tests
     @ exponential_tests
 end
