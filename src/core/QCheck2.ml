@@ -252,7 +252,11 @@ module Gen = struct
 
   let pure (a : 'a) : 'a t = fun _ -> Tree.pure a
 
-  let ap (f : ('a -> 'b) t) (x : 'a t) : 'b t = fun st -> Tree.ap (f st)  (x st)
+  let ap (f : ('a -> 'b) t) (x : 'a t) : 'b t = fun st ->
+    let st' = RS.split st in
+    let ftree = f st in
+    let xtree = x st' in
+    Tree.ap ftree xtree
 
   let (<*>) = ap
 
@@ -268,7 +272,10 @@ module Gen = struct
 
   let return = pure
 
-  let bind (gen : 'a t) (f : 'a -> ('b t)) : 'b t = fun st -> Tree.bind (gen st) (fun a -> f a st)
+  let bind (gen : 'a t) (f : 'a -> ('b t)) : 'b t = fun st ->
+    let st' = RS.split st in
+    let gentree = gen st in
+    Tree.bind gentree (fun a -> f a st')
 
   let (>>=) = bind
 
