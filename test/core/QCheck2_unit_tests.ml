@@ -171,6 +171,69 @@ module Shrink = struct
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (small_int >>= fun i -> map (fun j -> (i,j)) small_int)) |> repeated_success)
          ~expected:[(29, 1); (0, 2)(*WTF?*); (0, 0)])
 
+  let test_list_int () =
+    if ocaml_major_version < 5
+    then
+      (Alcotest.(check' (list (list int)))
+         ~msg:"[4; 2; 9; 1; 10] on repeated failure"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (list_size (int_bound 8) (int_bound 10))) |> repeated_failure)
+         ~expected:[ [4; 2; 9; 1; 10]; []; [0; 5](*WTF?*); [4; 8; 9](*WTF?*); [4; 9; 10; 1](*WTF?*);
+                     [0; 2; 9; 1; 10]; [2; 2; 9; 1; 10]; [3; 2; 9; 1; 10];
+                     [4; 0; 9; 1; 10]; [4; 1; 9; 1; 10];
+                     [4; 2; 0; 1; 10]; [4; 2; 4; 1; 10]; [4; 2; 6; 1; 10]; [4; 2; 7; 1; 10]; [4; 2; 8; 1; 10];
+                     [4; 2; 9; 0; 10];
+                     [4; 2; 9; 1; 0]; [4; 2; 9; 1; 5]; [4; 2; 9; 1; 8]; [4; 2; 9; 1; 9]; ];
+       Alcotest.(check' (list (list int)))
+         ~msg:"[4; 2; 9; 1; 10] on repeated success"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (list_size (int_bound 8) (int_bound 10))) |> repeated_success)
+         ~expected:[ [4; 2; 9; 1; 10]; []; ])
+    else
+      (Alcotest.(check' (list (list int)))
+         ~msg:"[4; 10; 3; 5; 2] repeated failure"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (list_size (int_bound 8) (int_bound 10))) |> repeated_failure)
+         ~expected:[ [4; 10; 3; 5; 2]; []; [1; 2](*WTF?*); [9; 5; 4](*WTF?*); [1; 0; 7; 0](*WTF?*);
+                     [0; 10; 3; 5; 2]; [2; 10; 3; 5; 2]; [3; 10; 3; 5; 2];
+                     [4; 0; 3; 5; 2]; [4; 5; 3; 5; 2]; [4; 8; 3; 5; 2]; [4; 9; 3; 5; 2];
+                     [4; 10; 0; 5; 2]; [4; 10; 1; 5; 2]; [4; 10; 2; 5; 2];
+                     [4; 10; 3; 0; 2]; [4; 10; 3; 2; 2]; [4; 10; 3; 3; 2]; [4; 10; 3; 4; 2];
+                     [4; 10; 3; 5; 0]; [4; 10; 3; 5; 1]; ];
+       Alcotest.(check' (list (list int)))
+         ~msg:"[4; 10; 3; 5; 2] repeated success"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (list_size (int_bound 8) (int_bound 10))) |> repeated_success)
+         ~expected:[ [4; 10; 3; 5; 2]; []; ])
+
+  let test_bytes_size () =
+    if ocaml_major_version < 5
+    then
+      (Alcotest.(check' (list bytes))
+         ~msg:"\")]}XS\" on repeated failure"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (bytes_size ~gen:printable (int_bound 8))) |> repeated_failure)
+         ~expected:(List.map String.to_bytes
+                      [ ")]}XS"; ""; "&3"(*WTF?*); "\n'n"(*WTF?*); "< *S"(*WTF?*);
+                        "a]}XS"; "r]}XS"; " ]}XS"; "$]}XS"; "&]}XS"; "']}XS"; "(]}XS";
+                        ")a}XS"; ")1}XS"; ")G}XS"; ")R}XS"; ")W}XS"; ")Z}XS"; ")[}XS"; ")\\}XS";
+                        ")]aXS"; ")]4XS"; ")]KXS"; ")]WXS"; ")]]XS"; ")]`XS"; ")]{XS"; ")]|XS";
+                        ")]}aS"; ")]}/S"; ")]}DS"; ")]}NS"; ")]}SS"; ")]}VS"; ")]}WS";
+                        ")]}Xa"; ")]}X,"; ")]}X?"; ")]}XI"; ")]}XN"; ")]}XP"; ")]}XQ"; ")]}XR"; ]);
+       Alcotest.(check' (list bytes))
+         ~msg:"\")]}XS\" on repeated success"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (bytes_size ~gen:printable (int_bound 8))) |> repeated_success)
+         ~expected:(List.map String.to_bytes [")]}XS"; ""]))
+    else
+      (Alcotest.(check' (list bytes))
+         ~msg:"\"[PjjX\" on repeated failure"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (bytes_size ~gen:printable (int_bound 8))) |> repeated_failure)
+         ~expected:(List.map String.to_bytes
+                      [ "[PjjX"; ""; "Y1"(*WTF?*); "6\"U"(*WTF?*); "9ff%"(*WTF?*);
+                        "aPjjX"; "0PjjX"; "EPjjX"; "PPjjX"; "UPjjX"; "XPjjX"; "YPjjX"; "ZPjjX";
+                        "[ajjX"; "[+jjX"; "[>jjX"; "[GjjX"; "[LjjX"; "[NjjX"; "[OjjX";
+                        "[PajX"; "[PejX"; "[PgjX"; "[PhjX"; "[PijX"; "[PjaX"; "[PjeX"; "[PjgX"; "[PjhX"; "[PjiX";
+                        "[Pjja"; "[Pjj/"; "[PjjD"; "[PjjN"; "[PjjS"; "[PjjV"; "[PjjW"; ] );
+       Alcotest.(check' (list bytes))
+         ~msg:"\"[PjjX\" on repeated success"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (bytes_size ~gen:printable (int_bound 8))) |> repeated_success)
+         ~expected:(List.map String.to_bytes ["[PjjX"; ""; ]))
+
   let tests = ("Shrink", Alcotest.[
       test_case "int_towards" `Quick test_int_towards;
       test_case "int32_towards" `Quick test_int32_towards;
@@ -181,6 +244,8 @@ module Shrink = struct
       test_case "Gen.printable tree" `Quick test_char_printable;
       test_case "Gen.(pair small_int small_int) tree" `Quick test_pair_small_int;
       test_case "Gen.bind small_int tree" `Quick test_bind_small_int;
+      test_case "Gen.list_size int" `Quick test_list_int;
+      test_case "Gen.bytes_size" `Quick test_bytes_size;
     ])
 end
 
