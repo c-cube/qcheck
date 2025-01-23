@@ -129,6 +129,48 @@ module Shrink = struct
     ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) printable) |> repeated_success)
     ~expected:(if ocaml_major_version < 5 then ['8'; 'a'] else ['#'; 'a'])
 
+  let test_pair_small_int () =
+    if ocaml_major_version < 5
+    then
+      (Alcotest.(check' (list (pair int int)))
+         ~msg:"69,1 on repeated failure"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (pair small_int small_int)) |> repeated_failure)
+         ~expected:[(69, 1); (0, 1); (34, 1); (51, 1); (60, 1); (64, 1); (66, 1); (67, 1); (68, 1); (69, 0)];
+       Alcotest.(check' (list (pair int int)))
+         ~msg:"69,1 on repeated success"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (pair small_int small_int)) |> repeated_success)
+         ~expected:[(69, 1); (0, 1); (0, 0)])
+    else
+      (Alcotest.(check' (list (pair int int)))
+         ~msg:"1,29 on repeated failure"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (pair small_int small_int)) |> repeated_failure)
+         ~expected:[(1, 29); (0, 29); (1, 0); (1, 14); (1, 21); (1, 25); (1, 27); (1, 28)];
+       Alcotest.(check' (list (pair int int)))
+         ~msg:"1,29 on repeated success"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (pair small_int small_int)) |> repeated_success)
+         ~expected:[(1, 29); (0, 29); (0, 0)])
+
+  let test_bind_small_int () =
+    if ocaml_major_version < 5
+    then
+      (Alcotest.(check' (list (pair int int)))
+         ~msg:"1,69 on repeated failure"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (small_int >>= fun i -> map (fun j -> (i,j)) small_int)) |> repeated_failure)
+         ~expected:[(1, 69); (0, 3)(*WTF?*); (1, 0); (1, 34); (1, 51); (1, 60); (1, 64); (1, 66); (1, 67); (1, 68)];
+       Alcotest.(check' (list (pair int int)))
+         ~msg:"1,69 on repeated success"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (small_int >>= fun i -> map (fun j -> (i,j)) small_int)) |> repeated_success)
+         ~expected:[(1, 69); (0, 3)(*WTF?*); (0, 0)])
+    else
+      (Alcotest.(check' (list (pair int int)))
+         ~msg:"29,1 on repeated failure"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (small_int >>= fun i -> map (fun j -> (i,j)) small_int)) |> repeated_failure)
+         ~expected:[(29, 1); (0, 2)(*WTF?*); (14, 1); (21, 8)(*WTF?*); (25, 7)(*WTF?*); (27, 9)(*WTF?*); (28, 5)(*WTF?*); (29, 0)];
+       Alcotest.(check' (list (pair int int)))
+         ~msg:"29,1 on repeated success"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (small_int >>= fun i -> map (fun j -> (i,j)) small_int)) |> repeated_success)
+         ~expected:[(29, 1); (0, 2)(*WTF?*); (0, 0)])
+
   let tests = ("Shrink", Alcotest.[
       test_case "int_towards" `Quick test_int_towards;
       test_case "int32_towards" `Quick test_int32_towards;
@@ -137,6 +179,8 @@ module Shrink = struct
       test_case "Gen.char tree" `Quick test_char;
       test_case "Gen.numeral tree" `Quick test_char_numeral;
       test_case "Gen.printable tree" `Quick test_char_printable;
+      test_case "Gen.(pair small_int small_int) tree" `Quick test_pair_small_int;
+      test_case "Gen.bind small_int tree" `Quick test_bind_small_int;
     ])
 end
 
