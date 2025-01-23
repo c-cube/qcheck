@@ -503,13 +503,13 @@ module Gen = struct
   let (--) low high = int_range ?origin:None low high
 
   let oneof (l : 'a t list) : 'a t =
-    int_range 0 (List.length l - 1) >>= List.nth l
+    int_bound (List.length l - 1) >>= List.nth l
 
   let oneofl (l : 'a list) : 'a t =
-    int_range 0 (List.length l - 1) >|= List.nth l
+    int_bound (List.length l - 1) >|= List.nth l
 
   let oneofa (a : 'a array) : 'a t =
-    int_range 0 (Array.length a - 1) >|= Array.get a
+    int_bound (Array.length a - 1) >|= Array.get a
 
   (* NOTE: we keep this alias to not break code that uses [small_int]
      for sizes of strings, arrays, etc. *)
