@@ -569,11 +569,13 @@ module Gen = struct
   (* A tail-recursive implementation over Tree.t *)
   let list_size (size : int t) (gen : 'a t) : 'a list t =
     fun st ->
+    let st' = RS.split st in
     Tree.bind (size st) @@ fun size ->
+    let st' = RS.copy st' in (* start new loop off from same RS *)
     let rec loop n acc =
       if n <= 0
-      then acc
-      else (loop [@tailcall]) (n - 1) (Tree.liftA2 List.cons (gen st) acc)
+      then Tree.map List.rev acc
+      else (loop [@tailcall]) (n - 1) (Tree.liftA2 List.cons (gen st') acc)
     in
     loop size (Tree.pure [])
 
