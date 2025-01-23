@@ -189,18 +189,19 @@ module Shrink = struct
          ~expected:[ [4; 2; 9; 1; 10]; []; ])
     else
       (Alcotest.(check' (list (list int)))
-         ~msg:"[4; 10; 3; 5; 2] repeated failure"
+         ~msg:"[9; 2; 7; 3; 8; 6] repeated failure"
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (list_size (int_bound 8) (int_bound 10))) |> repeated_failure)
-         ~expected:[ [4; 10; 3; 5; 2]; []; [1; 2](*WTF?*); [9; 5; 4](*WTF?*); [1; 0; 7; 0](*WTF?*);
-                     [0; 10; 3; 5; 2]; [2; 10; 3; 5; 2]; [3; 10; 3; 5; 2];
-                     [4; 0; 3; 5; 2]; [4; 5; 3; 5; 2]; [4; 8; 3; 5; 2]; [4; 9; 3; 5; 2];
-                     [4; 10; 0; 5; 2]; [4; 10; 1; 5; 2]; [4; 10; 2; 5; 2];
-                     [4; 10; 3; 0; 2]; [4; 10; 3; 2; 2]; [4; 10; 3; 3; 2]; [4; 10; 3; 4; 2];
-                     [4; 10; 3; 5; 0]; [4; 10; 3; 5; 1]; ];
+         ~expected:[ [9; 2; 7; 3; 8; 6]; []; [9; 2; 7]; [9; 2; 7; 3; 8];
+                     [9; 2; 7; 3; 8; 0]; [9; 2; 7; 3; 8; 3]; [9; 2; 7; 3; 8; 5];
+                     [9; 2; 7; 3; 0; 6]; [9; 2; 7; 3; 4; 6]; [9; 2; 7; 3; 6; 6]; [9; 2; 7; 3; 7; 6];
+                     [9; 2; 7; 0; 8; 6]; [9; 2; 7; 1; 8; 6]; [9; 2; 7; 2; 8; 6];
+                     [9; 2; 0; 3; 8; 6]; [9; 2; 3; 3; 8; 6]; [9; 2; 5; 3; 8; 6]; [9; 2; 6; 3; 8; 6];
+                     [9; 0; 7; 3; 8; 6]; [9; 1; 7; 3; 8; 6];
+                     [0; 2; 7; 3; 8; 6]; [4; 2; 7; 3; 8; 6]; [6; 2; 7; 3; 8; 6]; [7; 2; 7; 3; 8; 6]; [8; 2; 7; 3; 8; 6]; ];
        Alcotest.(check' (list (list int)))
-         ~msg:"[4; 10; 3; 5; 2] repeated success"
+         ~msg:"[9; 2; 7; 3; 8; 6] repeated success"
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (list_size (int_bound 8) (int_bound 10))) |> repeated_success)
-         ~expected:[ [4; 10; 3; 5; 2]; []; ])
+         ~expected:[[9; 2; 7; 3; 8; 6]; []; ])
 
   let test_bytes_size () =
     if ocaml_major_version < 5
@@ -403,7 +404,7 @@ module Check_exn = struct
     with
       (Test.Test_fail (n,[c_ex_str])) ->
         Alcotest.(check string) (Printf.sprintf "%s: name" name) n name;
-        if not (string_starts_with ~prefix:"[0; 1]" c_ex_str)
+        if not (string_starts_with ~prefix:"[1; 0]" c_ex_str)
         then
           Alcotest.failf "%s: counter-example prefix. Received \"%s\"" name c_ex_str
 
