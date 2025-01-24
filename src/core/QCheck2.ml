@@ -695,12 +695,14 @@ module Gen = struct
 
   let bytes_size ?(gen = char) (size : int t) : bytes t = fun st ->
     let open Tree in
+    let st' = RS.split st in
     size st >>= fun size ->
     (* Adding char shrinks to a mutable list is expensive: ~20-30% cost increase *)
     (* Adding char shrinks to a mutable lazy list is less expensive: ~15% cost increase *)
+    let st' = RS.copy st' in (* start char generation from same Random.State to recreate same char prefix (when size shrinking) *)
     let char_trees_rev = ref [] in
     let bytes = Bytes.init size (fun _ ->
-                    let char_tree = gen st in
+                    let char_tree = gen st' in
                     char_trees_rev := char_tree :: !char_trees_rev ;
                     (* Performance: return the root right now, the heavy processing of shrinks can wait until/if there is a need to shrink *)
                     root char_tree) in
