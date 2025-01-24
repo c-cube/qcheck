@@ -571,13 +571,13 @@ module Gen = struct
     fun st ->
     let st' = RS.split st in
     Tree.bind (size st) @@ fun size ->
-    let st' = RS.copy st' in (* start new loop off from same RS *)
-    let rec loop n acc =
-      if n <= 0
-      then Tree.map List.rev acc
-      else (loop [@tailcall]) (n - 1) (Tree.liftA2 List.cons (gen st') acc)
+    let st' = RS.copy st' in (* start each loop from same Random.State to recreate same element (prefix) *)
+    let rec loop n acc = (* phase 1: build a list of element trees, tail recursively *)
+      if n <= 0          (* phase 2: build a list shrink Tree of element trees, tail recursively *)
+      then List.fold_left (fun acc t -> Tree.liftA2 List.cons t acc) (Tree.pure []) acc
+      else (loop [@tailcall]) (n - 1) ((gen st')::acc)
     in
-    loop size (Tree.pure [])
+    loop size []
 
   let list (gen : 'a t) : 'a list t = list_size nat gen
 
