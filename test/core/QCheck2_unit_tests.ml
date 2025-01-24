@@ -175,29 +175,26 @@ module Shrink = struct
     if ocaml_major_version < 5
     then
       (Alcotest.(check' (list (list int)))
-         ~msg:"[4; 2; 9; 1; 10] on repeated failure"
+         ~msg:"[10; 8] on repeated failure"
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (list_size (int_bound 8) (int_bound 10))) |> repeated_failure)
-         ~expected:[ [4; 2; 9; 1; 10]; []; [0; 5](*WTF?*); [4; 8; 9](*WTF?*); [4; 9; 10; 1](*WTF?*);
-                     [0; 2; 9; 1; 10]; [2; 2; 9; 1; 10]; [3; 2; 9; 1; 10];
-                     [4; 0; 9; 1; 10]; [4; 1; 9; 1; 10];
-                     [4; 2; 0; 1; 10]; [4; 2; 4; 1; 10]; [4; 2; 6; 1; 10]; [4; 2; 7; 1; 10]; [4; 2; 8; 1; 10];
-                     [4; 2; 9; 0; 10];
-                     [4; 2; 9; 1; 0]; [4; 2; 9; 1; 5]; [4; 2; 9; 1; 8]; [4; 2; 9; 1; 9]; ];
+         ~expected:[ [10; 8]; []; [10];
+                     [0; 8]; [5; 8]; [8; 8]; [9; 8];
+                     [10; 0]; [10; 4]; [10; 6]; [10; 7]; ];
        Alcotest.(check' (list (list int)))
-         ~msg:"[4; 2; 9; 1; 10] on repeated success"
+         ~msg:"[10; 8] on repeated success"
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (list_size (int_bound 8) (int_bound 10))) |> repeated_success)
-         ~expected:[ [4; 2; 9; 1; 10]; []; ])
+         ~expected:[ [10; 8]; []; ])
     else
       (Alcotest.(check' (list (list int)))
          ~msg:"[9; 2; 7; 3; 8; 6] repeated failure"
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (list_size (int_bound 8) (int_bound 10))) |> repeated_failure)
          ~expected:[ [9; 2; 7; 3; 8; 6]; []; [9; 2; 7]; [9; 2; 7; 3; 8];
-                     [9; 2; 7; 3; 8; 0]; [9; 2; 7; 3; 8; 3]; [9; 2; 7; 3; 8; 5];
-                     [9; 2; 7; 3; 0; 6]; [9; 2; 7; 3; 4; 6]; [9; 2; 7; 3; 6; 6]; [9; 2; 7; 3; 7; 6];
-                     [9; 2; 7; 0; 8; 6]; [9; 2; 7; 1; 8; 6]; [9; 2; 7; 2; 8; 6];
-                     [9; 2; 0; 3; 8; 6]; [9; 2; 3; 3; 8; 6]; [9; 2; 5; 3; 8; 6]; [9; 2; 6; 3; 8; 6];
+                     [0; 2; 7; 3; 8; 6]; [4; 2; 7; 3; 8; 6]; [6; 2; 7; 3; 8; 6]; [7; 2; 7; 3; 8; 6]; [8; 2; 7; 3; 8; 6];
                      [9; 0; 7; 3; 8; 6]; [9; 1; 7; 3; 8; 6];
-                     [0; 2; 7; 3; 8; 6]; [4; 2; 7; 3; 8; 6]; [6; 2; 7; 3; 8; 6]; [7; 2; 7; 3; 8; 6]; [8; 2; 7; 3; 8; 6]; ];
+                     [9; 2; 0; 3; 8; 6]; [9; 2; 3; 3; 8; 6]; [9; 2; 5; 3; 8; 6]; [9; 2; 6; 3; 8; 6];
+                     [9; 2; 7; 0; 8; 6]; [9; 2; 7; 1; 8; 6]; [9; 2; 7; 2; 8; 6];
+                     [9; 2; 7; 3; 0; 6]; [9; 2; 7; 3; 4; 6]; [9; 2; 7; 3; 6; 6]; [9; 2; 7; 3; 7; 6];
+                     [9; 2; 7; 3; 8; 0]; [9; 2; 7; 3; 8; 3]; [9; 2; 7; 3; 8; 5]; ];
        Alcotest.(check' (list (list int)))
          ~msg:"[9; 2; 7; 3; 8; 6] repeated success"
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (list_size (int_bound 8) (int_bound 10))) |> repeated_success)
@@ -404,7 +401,7 @@ module Check_exn = struct
     with
       (Test.Test_fail (n,[c_ex_str])) ->
         Alcotest.(check string) (Printf.sprintf "%s: name" name) n name;
-        if not (string_starts_with ~prefix:"[1; 0]" c_ex_str)
+        if not (string_starts_with ~prefix:"[0; 1]" c_ex_str)
         then
           Alcotest.failf "%s: counter-example prefix. Received \"%s\"" name c_ex_str
 
