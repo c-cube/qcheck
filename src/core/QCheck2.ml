@@ -279,7 +279,7 @@ module Gen = struct
   let bind (gen : 'a t) (f : 'a -> ('b t)) : 'b t = fun st ->
     let st' = RS.split st in
     let gentree = gen st in
-    Tree.bind gentree (fun a -> f a st')
+    Tree.bind gentree (fun a -> f a (RS.copy st'))
 
   let (>>=) = bind
 
