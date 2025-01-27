@@ -206,19 +206,19 @@ module Shrink = struct
       (Alcotest.(check' (list bytes))
          ~msg:"\"_!\" on repeated failure"
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (bytes_size ~gen:printable (int_bound 8))) |> repeated_failure)
-         ~expected:(List.map String.to_bytes
+         ~expected:(List.map Bytes.of_string
                       [ "_!"; ""; "_";
                         "a!"; "2!"; "H!"; "S!"; "Y!"; "\\!"; "]!"; "^!";
                         "_a"; "_n"; "_u"; "_x"; "_z"; "_ "; ] );
        Alcotest.(check' (list bytes))
          ~msg:"\"_!\" on repeated success"
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (bytes_size ~gen:printable (int_bound 8))) |> repeated_success)
-         ~expected:(List.map String.to_bytes ["_!"; ""]))
+         ~expected:(List.map Bytes.of_string ["_!"; ""]))
     else
       (Alcotest.(check' (list bytes))
          ~msg:"\"Ns<>W\\\" on repeated failure"
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (bytes_size ~gen:printable (int_bound 8))) |> repeated_failure)
-         ~expected:(List.map String.to_bytes
+         ~expected:(List.map Bytes.of_string
                       ["Ns<>W\\"; ""; "Ns<"; "Ns<>W";
                        "as<>W\\"; "*s<>W\\"; "<s<>W\\"; "Es<>W\\"; "Js<>W\\"; "Ls<>W\\"; "Ms<>W\\";
                        "Na<>W\\"; "Nj<>W\\"; "No<>W\\"; "Nq<>W\\"; "Nr<>W\\";
@@ -229,7 +229,7 @@ module Shrink = struct
        Alcotest.(check' (list bytes))
          ~msg:"\"Ns<>W\\\" on repeated success"
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (bytes_size ~gen:printable (int_bound 8))) |> repeated_success)
-         ~expected:(List.map String.to_bytes ["Ns<>W\\"; ""; ]))
+         ~expected:(List.map Bytes.of_string ["Ns<>W\\"; ""; ]))
 
   let tests = ("Shrink", Alcotest.[
       test_case "int_towards" `Quick test_int_towards;
