@@ -12,6 +12,10 @@ let poly_compare=compare
 module RS = struct
   (* Poor man's splitter for version < 5.0                       *)
   (* This definition is shadowed by the [include] on OCaml >=5.0 *)
+  (* For the record, this is a hack:
+     Seeding a child RNG based on the output of a parent RNG
+     does not create an independent RNG. As an added bonus,
+     performance is bad. *)
   let split rs =
     let bits = Random.State.bits rs in
     let rs' = Random.State.make [|bits|] in
