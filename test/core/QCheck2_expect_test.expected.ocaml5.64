@@ -401,19 +401,19 @@ Test pairs have different components failed (0 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test pairs have same components failed (62 shrink steps):
+Test pairs have same components failed (63 shrink steps):
 
 (0, 1)
 
 --- Failure --------------------------------------------------------------------
 
-Test pairs have a zero component failed (122 shrink steps):
+Test pairs have a zero component failed (123 shrink steps):
 
 (1, 1)
 
 --- Failure --------------------------------------------------------------------
 
-Test pairs are (0,0) failed (62 shrink steps):
+Test pairs are (0,0) failed (63 shrink steps):
 
 (0, 1)
 
@@ -455,7 +455,7 @@ Test triples have pair-wise different components failed (3 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test triples have same components failed (64 shrink steps):
+Test triples have same components failed (63 shrink steps):
 
 (0, 1, 0)
 
@@ -479,7 +479,7 @@ Test quadruples have pair-wise different components failed (4 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test quadruples have same components failed (126 shrink steps):
+Test quadruples have same components failed (127 shrink steps):
 
 (0, 1, 0, 1)
 
@@ -611,7 +611,7 @@ Ok (0)
 
 --- Failure --------------------------------------------------------------------
 
-Test tree contains only 42 failed (2 shrink steps):
+Test tree contains only 42 failed (1 shrink steps):
 
 Leaf 0
 

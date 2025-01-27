@@ -156,11 +156,11 @@ module Shrink = struct
       (Alcotest.(check' (list (pair int int)))
          ~msg:"1,3 on repeated failure"
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (small_int >>= fun i -> map (fun j -> (i,j)) small_int)) |> repeated_failure)
-         ~expected:[(1, 3); (0, 6)(*WTF?*); (1, 0); (1, 1); (1, 2)];
+         ~expected:[(1, 3); (0, 3); (1, 0); (1, 1); (1, 2)];
        Alcotest.(check' (list (pair int int)))
          ~msg:"1,3 on repeated success"
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (small_int >>= fun i -> map (fun j -> (i,j)) small_int)) |> repeated_success)
-         ~expected:[(1, 3); (0, 6)(*WTF?*); (0, 0)])
+         ~expected:[(1, 3); (0, 3); (0, 0)])
     else
       (Alcotest.(check' (list (pair int int)))
          ~msg:"2,6 on repeated failure"
