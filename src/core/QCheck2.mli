@@ -2008,6 +2008,10 @@ val find_example_gen :
     QCheck2 is a major release and as such, there are (as few as possible)
     breaking changes, as well as functional changes you should be aware of.
 
+    The QCheck2 shrinkers haven't been battle tested as much as the
+    QCheck ones, and furthermore implement different reduction algorithms.
+    Please report if you encounter any issues porting tests from QCheck to QCheck2.
+
     {2 Minimal changes}
 
     Most of your QCheck (v1) code should be able to compile and run the first time you upgrade
