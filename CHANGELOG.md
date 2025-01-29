@@ -2,6 +2,8 @@
 
 ## NEXT RELEASE
 
+- Use `split` and `copy` in `Random.State` underlying `QCheck2` to
+  avoid non-deterministic shrinking behaviour
 - Add missing documentation strings for `QCheck.{Print,Iter,Shrink,Gen}` and `QCheck2.Gen`.
 - Add `result` combinators to `QCheck`, `QCheck.{Gen,Print,Shrink,Observable}`,
   and `QCheck2.{Gen,Print,Observable}`.
