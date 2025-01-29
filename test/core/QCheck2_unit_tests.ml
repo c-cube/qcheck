@@ -171,7 +171,7 @@ module Shrink = struct
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (small_int >>= fun i -> map (fun j -> (i,j)) small_int)) |> repeated_success)
          ~expected:[(2, 6); (0, 6); (0, 0)])
 
-  let test_list_int () =
+  let test_list_size_int () =
     if ocaml_major_version < 5
     then
       (Alcotest.(check' (list (list int)))
@@ -199,6 +199,36 @@ module Shrink = struct
          ~msg:"[9; 2; 7; 3; 8; 6] repeated success"
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (list_size (int_bound 8) (int_bound 10))) |> repeated_success)
          ~expected:[[9; 2; 7; 3; 8; 6]; []; ])
+
+  let test_list_int () =
+    if ocaml_major_version < 5
+    then
+      (Alcotest.(check' (list (list int)))
+         ~msg:"[5; 9; 4; 10] on repeated failure"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3344) (list (int_bound 10))) |> repeated_failure)
+         ~expected:[ [5; 9; 4; 10]; []; [5; 9]; [5; 9; 4];
+                     [0; 9; 4; 10]; [2; 9; 4; 10]; [3; 9; 4; 10]; [4; 9; 4; 10];
+                     [5; 0; 4; 10]; [5; 4; 4; 10]; [5; 6; 4; 10]; [5; 7; 4; 10]; [5; 8; 4; 10];
+                     [5; 9; 0; 10]; [5; 9; 2; 10]; [5; 9; 3; 10];
+                     [5; 9; 4; 0]; [5; 9; 4; 5]; [5; 9; 4; 8]; [5; 9; 4; 9]; ];
+       Alcotest.(check' (list (list int)))
+         ~msg:"[5; 9; 4; 10] on repeated success"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3344) (list (int_bound 10))) |> repeated_success)
+         ~expected:[ [5; 9; 4; 10]; []; ])
+    else
+      (Alcotest.(check' (list (list int)))
+         ~msg:"[1; 10; 10; 7; 3] on repeated failure"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3347) (list (int_bound 10))) |> repeated_failure)
+         ~expected:[ [1; 10; 10; 7; 3]; []; [1; 10]; [1; 10; 10]; [1; 10; 10; 7];
+                     [0; 10; 10; 7; 3];
+                     [1; 0; 10; 7; 3]; [1; 5; 10; 7; 3]; [1; 8; 10; 7; 3]; [1; 9; 10; 7; 3];
+                     [1; 10; 0; 7; 3]; [1; 10; 5; 7; 3]; [1; 10; 8; 7; 3]; [1; 10; 9; 7; 3];
+                     [1; 10; 10; 0; 3]; [1; 10; 10; 3; 3]; [1; 10; 10; 5; 3]; [1; 10; 10; 6; 3];
+                     [1; 10; 10; 7; 0]; [1; 10; 10; 7; 1]; [1; 10; 10; 7; 2]; ];
+       Alcotest.(check' (list (list int)))
+         ~msg:"[1; 10; 10; 7; 3] on repeated success"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3347) (list (int_bound 10))) |> repeated_success)
+         ~expected:[ [1; 10; 10; 7; 3]; []; ])
 
   let test_bytes_size () =
     if ocaml_major_version < 5
@@ -241,7 +271,8 @@ module Shrink = struct
       test_case "Gen.printable tree" `Quick test_char_printable;
       test_case "Gen.(pair small_int small_int) tree" `Quick test_pair_small_int;
       test_case "Gen.bind small_int tree" `Quick test_bind_small_int;
-      test_case "Gen.list_size int" `Quick test_list_int;
+      test_case "Gen.list_size int" `Quick test_list_size_int;
+      test_case "Gen.list int" `Quick test_list_int;
       test_case "Gen.bytes_size" `Quick test_bytes_size;
     ])
 end
