@@ -583,7 +583,50 @@ module Gen = struct
     in
     loop size []
 
-  let list (gen : 'a t) : 'a list t = list_size nat gen
+  let rec split l len acc = match len,l with
+    | _,[]
+    | 0,_ -> List.rev acc, l
+    | _,x::xs -> split xs (len-1) (x::acc)
+
+  let rec build_shrink_tree (l : 'a Tree.t list) : 'a list Tree.t Seq.t = match l with
+    | [] -> Seq.empty
+    | [_] ->
+      fun () -> Seq.cons (Tree.Tree ([], Seq.empty)) (* only empty list to try *)
+                  (Tree.children (Tree.sequence_list l)) () (* otherwise, reduce element(s) *)
+    | _::_ ->
+      fun () ->
+        let len = List.length l in
+        let xs,ys = split l ((1 + len) / 2) [] in
+        let xs_roots = List.map Tree.root xs in
+        let ys_roots = List.map Tree.root ys in
+        Seq.cons (Tree.Tree (xs_roots, build_shrink_tree xs))    (* try first half *)
+          (Seq.cons (Tree.Tree (ys_roots, build_shrink_tree ys)) (* then second half *)
+             (if len >= 4
+              then
+                let rest = List.tl l in
+                let rest_roots = List.map Tree.root rest in
+                (Seq.cons (Tree.Tree (rest_roots, build_shrink_tree rest)) (* drop head *)
+                   (Seq.cons (Tree.Tree (xs_roots@(List.tl ys_roots), build_shrink_tree (xs@(List.tl ys)))) (* drop ys head *)
+                      (Tree.children (Tree.sequence_list l))     (* at bottom: reduce elements *)
+                   ))
+              else
+                (Tree.children (Tree.sequence_list l))
+             )) ()
+
+  let list (gen : 'a t) : 'a list t = fun st ->
+    let st' = RS.split st in
+    let size = Tree.root (nat st) in
+    (*Tree.bind (nat st) @@ fun size ->*)
+    let st' = RS.copy st' in (* start each loop from same Random.State to recreate same element (prefix) *)
+    let rec loop n acc = (* phase 1: build a list of element trees, tail recursively *)
+      if n <= 0          (* phase 2: build a list shrink Tree of element trees, tail recursively *)
+      then
+        let l = List.rev acc in
+        (*let l = List.map Tree.root l in*)
+        Tree.Tree (List.map Tree.root l, build_shrink_tree l)
+      else (loop [@tailcall]) (n - 1) ((gen st')::acc)
+    in
+    loop size []
 
   let list_repeat (n : int) (gen : 'a t) : 'a list t = list_size (pure n) gen
 
