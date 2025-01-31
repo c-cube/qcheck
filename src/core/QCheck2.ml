@@ -613,9 +613,11 @@ module Gen = struct
     in
     loop size []
 
-  let list (gen : 'a t) : 'a list t = fun st ->
+  (** [list_ignore_size_tree] is a helper applying its own size shrinking heuristic,
+      and thus using only the root of [size]'s output shrink [Tree]. *)
+  let list_ignore_size_tree (size : int t) (gen : 'a t) : 'a list t = fun st ->
     let st' = RS.split st in
-    let size = Tree.root (nat st) in
+    let size = Tree.root (size st) in
     let st' = RS.copy st' in (* start each loop from same Random.State to recreate same element (prefix) *)
     let rec loop n acc = (* phase 1: build a list of element trees, tail recursively *)
       if n <= 0          (* phase 2: build a list shrink Tree of element trees, tail recursively *)
@@ -625,6 +627,8 @@ module Gen = struct
       else (loop [@tailcall]) (n - 1) ((gen st')::acc)
     in
     loop size []
+
+  let list (gen : 'a t) : 'a list t = list_ignore_size_tree nat gen
 
   let list_repeat (n : int) (gen : 'a t) : 'a list t = list_size (pure n) gen
 
