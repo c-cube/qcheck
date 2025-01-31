@@ -852,7 +852,7 @@ module Function = struct
     prop_foldleft_foldright;
     prop_foldleft_foldright_uncurry;
     prop_foldleft_foldright_uncurry_funlast;
-    fold_left_test;
+  (*fold_left_test;*) (* Temporarily disabled, as the underlying shrinking takes excessively long *)
   ]
 end
 

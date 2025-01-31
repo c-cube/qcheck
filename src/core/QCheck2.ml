@@ -12,6 +12,10 @@ let poly_compare=compare
 module RS = struct
   (* Poor man's splitter for version < 5.0                       *)
   (* This definition is shadowed by the [include] on OCaml >=5.0 *)
+  (* For the record, this is a hack:
+     Seeding a child RNG based on the output of a parent RNG
+     does not create an independent RNG. As an added bonus,
+     performance is bad. *)
   let split rs =
     let bits = Random.State.bits rs in
     let rs' = Random.State.make [|bits|] in
@@ -252,7 +256,11 @@ module Gen = struct
 
   let pure (a : 'a) : 'a t = fun _ -> Tree.pure a
 
-  let ap (f : ('a -> 'b) t) (x : 'a t) : 'b t = fun st -> Tree.ap (f st)  (x st)
+  let ap (f : ('a -> 'b) t) (x : 'a t) : 'b t = fun st ->
+    let st' = RS.split st in
+    let ftree = f st in
+    let xtree = x st' in
+    Tree.ap ftree xtree
 
   let (<*>) = ap
 
@@ -268,7 +276,10 @@ module Gen = struct
 
   let return = pure
 
-  let bind (gen : 'a t) (f : 'a -> ('b t)) : 'b t = fun st -> Tree.bind (gen st) (fun a -> f a st)
+  let bind (gen : 'a t) (f : 'a -> ('b t)) : 'b t = fun st ->
+    let st' = RS.split st in
+    let gentree = gen st in
+    Tree.bind gentree (fun a -> f a (RS.copy st'))
 
   let (>>=) = bind
 
@@ -496,13 +507,13 @@ module Gen = struct
   let (--) low high = int_range ?origin:None low high
 
   let oneof (l : 'a t list) : 'a t =
-    int_range 0 (List.length l - 1) >>= List.nth l
+    int_bound (List.length l - 1) >>= List.nth l
 
   let oneofl (l : 'a list) : 'a t =
-    int_range 0 (List.length l - 1) >|= List.nth l
+    int_bound (List.length l - 1) >|= List.nth l
 
   let oneofa (a : 'a array) : 'a t =
-    int_range 0 (Array.length a - 1) >|= Array.get a
+    int_bound (Array.length a - 1) >|= Array.get a
 
   (* NOTE: we keep this alias to not break code that uses [small_int]
      for sizes of strings, arrays, etc. *)
@@ -562,13 +573,15 @@ module Gen = struct
   (* A tail-recursive implementation over Tree.t *)
   let list_size (size : int t) (gen : 'a t) : 'a list t =
     fun st ->
+    let st' = RS.split st in
     Tree.bind (size st) @@ fun size ->
-    let rec loop n acc =
-      if n <= 0
-      then acc
-      else (loop [@tailcall]) (n - 1) (Tree.liftA2 List.cons (gen st) acc)
+    let st' = RS.copy st' in (* start each loop from same Random.State to recreate same element (prefix) *)
+    let rec loop n acc = (* phase 1: build a list of element trees, tail recursively *)
+      if n <= 0          (* phase 2: build a list shrink Tree of element trees, tail recursively *)
+      then List.fold_left (fun acc t -> Tree.liftA2 List.cons t acc) (Tree.pure []) acc
+      else (loop [@tailcall]) (n - 1) ((gen st')::acc)
     in
-    loop size (Tree.pure [])
+    loop size []
 
   let list (gen : 'a t) : 'a list t = list_size nat gen
 
@@ -686,12 +699,14 @@ module Gen = struct
 
   let bytes_size ?(gen = char) (size : int t) : bytes t = fun st ->
     let open Tree in
+    let st' = RS.split st in
     size st >>= fun size ->
     (* Adding char shrinks to a mutable list is expensive: ~20-30% cost increase *)
     (* Adding char shrinks to a mutable lazy list is less expensive: ~15% cost increase *)
+    let st' = RS.copy st' in (* start char generation from same Random.State to recreate same char prefix (when size shrinking) *)
     let char_trees_rev = ref [] in
     let bytes = Bytes.init size (fun _ ->
-                    let char_tree = gen st in
+                    let char_tree = gen st' in
                     char_trees_rev := char_tree :: !char_trees_rev ;
                     (* Performance: return the root right now, the heavy processing of shrinks can wait until/if there is a need to shrink *)
                     root char_tree) in
