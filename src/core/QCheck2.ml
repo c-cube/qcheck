@@ -770,31 +770,45 @@ module Gen = struct
   let string_size ?(gen = char) (size : int t) : string t =
     bytes_size ~gen size >|= Bytes.unsafe_to_string
 
-  let bytes : bytes t = bytes_size nat
+  let bytes_of_char_list cs =
+    let b = Buffer.create (List.length cs) in
+    List.iter (fun c -> Buffer.add_char b c) cs;
+    let bytes = Buffer.to_bytes b in
+    Buffer.clear b;
+    bytes
 
-  let bytes_of gen = bytes_size ~gen nat
+  let bytes : bytes t = list char >|= bytes_of_char_list
 
-  let bytes_printable = bytes_size ~gen:printable nat
+  let bytes_of gen = list gen >|= bytes_of_char_list
 
-  let bytes_small st = bytes_size small_nat st
+  let bytes_printable = list printable >|= bytes_of_char_list
 
-  let bytes_small_of gen st = bytes_size ~gen small_nat st
+  let bytes_small = list_ignore_size_tree small_nat char >|= bytes_of_char_list
 
-  let string : string t = string_size nat
+  let bytes_small_of gen = list_ignore_size_tree small_nat gen >|= bytes_of_char_list
 
-  let string_of gen = string_size ~gen nat
+  let string_of_char_list cs =
+    let b = Buffer.create (List.length cs) in
+    List.iter (fun c -> Buffer.add_char b c) cs;
+    let str = Buffer.contents b in
+    Buffer.clear b;
+    str
 
-  let string_printable = string_size ~gen:printable nat
+  let string : string t = list char >|= string_of_char_list
 
-  let string_small st = string_size small_nat st
+  let string_of gen = list gen >|= string_of_char_list
 
-  let string_small_of gen st = string_size ~gen small_nat st
+  let string_printable = list printable >|= string_of_char_list
+
+  let string_small = list_ignore_size_tree small_nat char >|= string_of_char_list
+
+  let string_small_of gen = list_ignore_size_tree small_nat gen >|= string_of_char_list
 
   let small_string ?(gen=char) = string_small_of gen
 
-  let small_list gen = list_size small_nat gen
+  let small_list gen = list_ignore_size_tree small_nat gen
 
-  let small_array gen = array_size small_nat gen
+  let small_array gen = list_ignore_size_tree small_nat gen >|= Array.of_list
 
   let join (gen : 'a t t) : 'a t = gen >>= Fun.id
 
