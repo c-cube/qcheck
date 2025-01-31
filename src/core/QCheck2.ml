@@ -1259,14 +1259,14 @@ end = struct
       (* This only gets evaluated *after* the test was run for [tbl], meaning it is correctly
          populated with bindings recorded during the test already *)
       let current_bindings : (k * v Tree.t) list = List.rev !(root.p_tree_bindings_rev) in
-      let take_at_most_tree : int Tree.t = Tree.make_primitive (Shrink.int_towards 0) (List.length current_bindings) in
       let current_tree_bindings : (k * v) Tree.t list = List.map (fun (k, tree) -> Tree.map (fun v -> (k, v)) tree) current_bindings in
-      let shrunk_bindings_tree : (k * v) list Tree.t = Tree.bind take_at_most_tree (fun take_at_most -> Tree.applicative_take take_at_most current_tree_bindings) in
+      let shrunk_bindings_tree_seq : (k * v) list Tree.t Seq.t = Tree.build_list_shrink_tree current_tree_bindings in
       (* During shrinking, we don't want to record/add bindings, so [~extend:false]. *)
-      let shrunk_poly_tbl_tree : (k, v) t Tree.t = Tree.map (fun bindings -> List.to_seq bindings |> T.of_seq |> make ~extend:false) shrunk_bindings_tree in
-      (* [shrunk_poly_tbl_tree] is a bit misleading: its root *should* be the same as [root] but because of the required laziness
-         induced by the mutation of bindings, we don't use it, only graft its children to the original [root]. *)
-      Tree.children shrunk_poly_tbl_tree ()
+      let shrunk_poly_tbl_tree_seq : (k, v) t Tree.t Seq.t =
+        Seq.map (fun t -> Tree.map (fun bindings -> List.to_seq bindings |> T.of_seq |> make ~extend:false) t) shrunk_bindings_tree_seq in
+      (* [shrunk_poly_tbl_tree_seq] is a bit misleading: its head *should* be the same as [root] but because of the required laziness
+         induced by the mutation of bindings, we don't use it, only graft its tail to the original [root]. *)
+      Seq.drop 1 shrunk_poly_tbl_tree_seq ()
     in
     Tree.Tree (root, shrinks)
 
