@@ -338,51 +338,51 @@ Test printable never produces less than '5 failed (1 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test bytes are empty failed (2 shrink steps):
+Test bytes are empty failed (3 shrink steps):
 
 "a"
 
 --- Failure --------------------------------------------------------------------
 
-Test bytes never has a \000 char failed (198 shrink steps):
+Test bytes never has a \000 char failed (9 shrink steps):
 
-"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\000"
-
---- Failure --------------------------------------------------------------------
-
-Test bytes never has a \255 char failed (20 shrink steps):
-
-"aaaaaaaaaaaaaaaaa\255"
+"\000"
 
 --- Failure --------------------------------------------------------------------
 
-Test bytes have unique chars failed (28 shrink steps):
+Test bytes never has a \255 char failed (5 shrink steps):
 
-"aaaaaaaaaaaaaaaaaaaaaaaaaaa"
+"\255"
 
 --- Failure --------------------------------------------------------------------
 
-Test strings are empty failed (2 shrink steps):
+Test bytes have unique chars failed (31 shrink steps):
+
+"aaaaaaaaaaa"
+
+--- Failure --------------------------------------------------------------------
+
+Test strings are empty failed (3 shrink steps):
 
 "a"
 
 --- Failure --------------------------------------------------------------------
 
-Test string never has a \000 char failed (198 shrink steps):
+Test string never has a \000 char failed (9 shrink steps):
 
-"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\000"
-
---- Failure --------------------------------------------------------------------
-
-Test string never has a \255 char failed (20 shrink steps):
-
-"aaaaaaaaaaaaaaaaa\255"
+"\000"
 
 --- Failure --------------------------------------------------------------------
 
-Test strings have unique chars failed (28 shrink steps):
+Test string never has a \255 char failed (5 shrink steps):
 
-"aaaaaaaaaaaaaaaaaaaaaaaaaaa"
+"\255"
+
+--- Failure --------------------------------------------------------------------
+
+Test strings have unique chars failed (31 shrink steps):
+
+"aaaaaaaaaaa"
 
 --- Failure --------------------------------------------------------------------
 
@@ -590,7 +590,7 @@ None
 
 --- Failure --------------------------------------------------------------------
 
-Test (int,string) result are Ok failed (1 shrink steps):
+Test (int,string) result are Ok failed (2 shrink steps):
 
 Error ("")
 
@@ -614,21 +614,21 @@ Test sum list = 0 failed (0 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test fail_pred_map_commute_int failed (31 shrink steps):
+Test fail_pred_map_commute_int failed (28 shrink steps):
 
-([0; 0; 0; 0; 0; 0], {0 -> -1; 1 -> 0; 2 -> 0; 5 -> 0; 21 -> 0; 7 -> 0; 9 -> 0; 78 -> 0; _ -> 0}, {0 -> true; -3049580483007556080 -> false; 1 -> false; 2 -> false; -4368949366664347629 -> false; 2099003838291149429 -> false; 5 -> false; 21 -> false; 7 -> false; 9 -> false; 3703556273698913451 -> false; -4370157698609639012 -> false; -2235000253316812931 -> false; 78 -> false; 2211700024537999903 -> false; _ -> false})
-
---- Failure --------------------------------------------------------------------
-
-Test fail_pred_map_commute_int32 failed (70 shrink steps):
-
-([0l; 0l; 0l; 0l; 0l; 0l], {480624048l -> 0l; -1054565120l -> 0l; 708270421l -> 0l; -1441877194l -> 0l; -239944349l -> 0l; 0l -> 1l; -973889953l -> 0l; 1395009590l -> 0l; _ -> 0l}, {-1990017031l -> false; 443535120l -> false; 480624048l -> false; -1054565120l -> false; 829558403l -> false; -1311148841l -> false; 2084431360l -> false; 708270421l -> false; 79063824l -> false; -1441877194l -> false; -239944349l -> false; 0l -> true; 457187395l -> false; 1395009590l -> false; -973889953l -> false; _ -> false})
+([0], {0 -> -1; 1 -> 0; 2 -> 0; 5 -> 0; 21 -> 0; 7 -> 0; 9 -> 0; 78 -> 0; _ -> 0}, {0 -> true; -3049580483007556080 -> false; 1 -> false; 2 -> false; -4368949366664347629 -> false; 2099003838291149429 -> false; 5 -> false; 21 -> false; 7 -> false; 9 -> false; 3703556273698913451 -> false; -4370157698609639012 -> false; -2235000253316812931 -> false; 78 -> false; 2211700024537999903 -> false; _ -> false})
 
 --- Failure --------------------------------------------------------------------
 
-Test fail_pred_map_commute_int64 failed (125 shrink steps):
+Test fail_pred_map_commute_int32 failed (67 shrink steps):
 
-([0L; 0L; 0L; 0L; 0L; 0L], {-5912897149740583042L -> 0L; 2064264570832434420L -> 0L; 8769531915837689755L -> 0L; -1030553128493932961L -> 0L; 0L -> 1L; 6077417419721789289L -> 0L; -4529322700507305930L -> 0L; -6192815392369977003L -> 0L; _ -> 0L}, {-8367471897177334538L -> false; 8952564522059662897L -> false; -5912897149740583042L -> false; -5897649978982613650L -> false; 339576540681650169L -> false; 2064264570832434420L -> false; 1963604910111969040L -> false; 8769531915837689755L -> false; -1030553128493932961L -> false; 0L -> true; 6077417419721789289L -> false; -3575913752036838904L -> false; 3562926213990806743L -> false; -6192815392369977003L -> false; -4529322700507305930L -> false; _ -> false})
+([0l], {480624048l -> 0l; -1054565120l -> 0l; 708270421l -> 0l; -1441877194l -> 0l; -239944349l -> 0l; 0l -> 1l; -973889953l -> 0l; 1395009590l -> 0l; _ -> 0l}, {-1990017031l -> false; 443535120l -> false; 480624048l -> false; -1054565120l -> false; 829558403l -> false; -1311148841l -> false; 2084431360l -> false; 708270421l -> false; 79063824l -> false; -1441877194l -> false; -239944349l -> false; 0l -> true; 457187395l -> false; 1395009590l -> false; -973889953l -> false; _ -> false})
+
+--- Failure --------------------------------------------------------------------
+
+Test fail_pred_map_commute_int64 failed (122 shrink steps):
+
+([0L], {-5912897149740583042L -> 0L; 2064264570832434420L -> 0L; 8769531915837689755L -> 0L; -1030553128493932961L -> 0L; 0L -> 1L; 6077417419721789289L -> 0L; -4529322700507305930L -> 0L; -6192815392369977003L -> 0L; _ -> 0L}, {-8367471897177334538L -> false; 8952564522059662897L -> false; -5912897149740583042L -> false; -5897649978982613650L -> false; 339576540681650169L -> false; 2064264570832434420L -> false; 1963604910111969040L -> false; 8769531915837689755L -> false; -1030553128493932961L -> false; 0L -> true; 6077417419721789289L -> false; -3575913752036838904L -> false; 3562926213990806743L -> false; -6192815392369977003L -> false; -4529322700507305930L -> false; _ -> false})
 
 --- Failure --------------------------------------------------------------------
 
