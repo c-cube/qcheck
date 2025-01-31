@@ -88,6 +88,25 @@ module Seq = struct
 
   let cons x next () = Cons (x, next)
 
+  let rec force_drop n xs =
+    match xs() with
+    | Nil ->
+      Nil
+    | Cons (_, xs) ->
+      let n = n - 1 in
+      if n = 0 then
+        xs()
+      else
+        force_drop n xs
+
+  let drop n xs =
+    if n < 0 then invalid_arg "Seq.drop"
+    else if n = 0 then
+      xs
+    else
+      fun () ->
+        force_drop n xs
+
   (* End of copy of old functions. *)
 
   let is_empty (seq : _ t) : bool = match seq () with
