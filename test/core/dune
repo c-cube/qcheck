@@ -66,3 +66,8 @@
   (name shrink_benchmark)
   (modules shrink_benchmark)
   (libraries qcheck-core qcheck-core.runner QCheck_tests QCheck2_tests))
+
+(executable
+  (name rng_independence)
+  (modules rng_independence)
+  (libraries qcheck-core qcheck-core.runner))
