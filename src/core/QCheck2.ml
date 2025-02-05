@@ -52,6 +52,11 @@ let _opt_sum a b = match a, b with
 
 let sum_int = List.fold_left (+) 0
 
+let rec list_split l len acc = match len,l with
+  | _,[]
+  | 0,_ -> List.rev acc, l
+  | _,x::xs -> list_split xs (len-1) (x::acc)
+
 exception Failed_precondition
 (* raised if precondition is false *)
 
@@ -82,6 +87,25 @@ module Seq = struct
     | Cons (x, next) -> Cons (x, append next seq2)
 
   let cons x next () = Cons (x, next)
+
+  let rec force_drop n xs =
+    match xs() with
+    | Nil ->
+      Nil
+    | Cons (_, xs) ->
+      let n = n - 1 in
+      if n = 0 then
+        xs()
+      else
+        force_drop n xs
+
+  let drop n xs =
+    if n < 0 then invalid_arg "Seq.drop"
+    else if n = 0 then
+      xs
+    else
+      fun () ->
+        force_drop n xs
 
   (* End of copy of old functions. *)
 
@@ -239,6 +263,31 @@ module Tree = struct
   let rec applicative_take (n : int) (l : 'a t list) : 'a list t = match (n, l) with
     | (0, _) | (_, []) -> pure []
     | (n, (tree :: trees)) -> liftA2 List.cons tree (applicative_take (pred n) trees)
+
+  let rec build_list_shrink_tree (l : 'a t list) : 'a list t Seq.t = match l with
+    | [] -> Seq.empty
+    | [_] ->
+      fun () -> Seq.cons (Tree ([], Seq.empty))   (* [x] leaves only empty list to try *)
+                  (children (sequence_list l)) () (* otherwise, reduce element(s) *)
+    | _::_ ->
+      fun () ->
+        let len = List.length l in
+        let xs,ys = list_split l ((1 + len) / 2) [] in
+        let xs_roots = List.map root xs in
+        let ys_roots = List.map root ys in
+        (* Try reducing a list [1;2;3;4] in halves: [1;2] and [3;4] *)
+        Seq.cons (Tree (xs_roots, build_list_shrink_tree xs))
+          (Seq.cons (Tree (ys_roots, build_list_shrink_tree ys))
+             (fun () ->
+                (if len >= 4
+                 then (* Try dropping an element from either half: [2;3;4] and [1;2;4] *)
+                   let rest = List.tl l in
+                   let rest_roots = List.map root rest in
+                   (Seq.cons (Tree (rest_roots, build_list_shrink_tree rest))
+                      (Seq.cons (Tree (xs_roots@(List.tl ys_roots), build_list_shrink_tree (xs@(List.tl ys))))
+                         (children (sequence_list l))))     (* at bottom: reduce elements *)
+                 else
+                   children (sequence_list l)) ())) ()
 end
 
 module Gen = struct
@@ -583,7 +632,22 @@ module Gen = struct
     in
     loop size []
 
-  let list (gen : 'a t) : 'a list t = list_size nat gen
+  (** [list_ignore_size_tree] is a helper applying its own size shrinking heuristic,
+      and thus using only the root of [size]'s output shrink [Tree]. *)
+  let list_ignore_size_tree (size : int t) (gen : 'a t) : 'a list t = fun st ->
+    let st' = RS.split st in
+    let size = Tree.root (size st) in
+    let st' = RS.copy st' in (* start each loop from same Random.State to recreate same element (prefix) *)
+    let rec loop n acc = (* phase 1: build a list of element trees, tail recursively *)
+      if n <= 0          (* phase 2: build a list shrink Tree of element trees, tail recursively *)
+      then
+        let l = List.rev acc in
+        Tree.Tree (List.map Tree.root l, Tree.build_list_shrink_tree l)
+      else (loop [@tailcall]) (n - 1) ((gen st')::acc)
+    in
+    loop size []
+
+  let list (gen : 'a t) : 'a list t = list_ignore_size_tree nat gen
 
   let list_repeat (n : int) (gen : 'a t) : 'a list t = list_size (pure n) gen
 
@@ -725,31 +789,45 @@ module Gen = struct
   let string_size ?(gen = char) (size : int t) : string t =
     bytes_size ~gen size >|= Bytes.unsafe_to_string
 
-  let bytes : bytes t = bytes_size nat
+  let bytes_of_char_list cs =
+    let b = Buffer.create (List.length cs) in
+    List.iter (fun c -> Buffer.add_char b c) cs;
+    let bytes = Buffer.to_bytes b in
+    Buffer.clear b;
+    bytes
 
-  let bytes_of gen = bytes_size ~gen nat
+  let bytes : bytes t = list char >|= bytes_of_char_list
 
-  let bytes_printable = bytes_size ~gen:printable nat
+  let bytes_of gen = list gen >|= bytes_of_char_list
 
-  let bytes_small st = bytes_size small_nat st
+  let bytes_printable = list printable >|= bytes_of_char_list
 
-  let bytes_small_of gen st = bytes_size ~gen small_nat st
+  let bytes_small = list_ignore_size_tree small_nat char >|= bytes_of_char_list
 
-  let string : string t = string_size nat
+  let bytes_small_of gen = list_ignore_size_tree small_nat gen >|= bytes_of_char_list
 
-  let string_of gen = string_size ~gen nat
+  let string_of_char_list cs =
+    let b = Buffer.create (List.length cs) in
+    List.iter (fun c -> Buffer.add_char b c) cs;
+    let str = Buffer.contents b in
+    Buffer.clear b;
+    str
 
-  let string_printable = string_size ~gen:printable nat
+  let string : string t = list char >|= string_of_char_list
 
-  let string_small st = string_size small_nat st
+  let string_of gen = list gen >|= string_of_char_list
 
-  let string_small_of gen st = string_size ~gen small_nat st
+  let string_printable = list printable >|= string_of_char_list
+
+  let string_small = list_ignore_size_tree small_nat char >|= string_of_char_list
+
+  let string_small_of gen = list_ignore_size_tree small_nat gen >|= string_of_char_list
 
   let small_string ?(gen=char) = string_small_of gen
 
-  let small_list gen = list_size small_nat gen
+  let small_list gen = list_ignore_size_tree small_nat gen
 
-  let small_array gen = array_size small_nat gen
+  let small_array gen = list_ignore_size_tree small_nat gen >|= Array.of_list
 
   let join (gen : 'a t t) : 'a t = gen >>= Fun.id
 
@@ -1200,14 +1278,14 @@ end = struct
       (* This only gets evaluated *after* the test was run for [tbl], meaning it is correctly
          populated with bindings recorded during the test already *)
       let current_bindings : (k * v Tree.t) list = List.rev !(root.p_tree_bindings_rev) in
-      let take_at_most_tree : int Tree.t = Tree.make_primitive (Shrink.int_towards 0) (List.length current_bindings) in
       let current_tree_bindings : (k * v) Tree.t list = List.map (fun (k, tree) -> Tree.map (fun v -> (k, v)) tree) current_bindings in
-      let shrunk_bindings_tree : (k * v) list Tree.t = Tree.bind take_at_most_tree (fun take_at_most -> Tree.applicative_take take_at_most current_tree_bindings) in
+      let shrunk_bindings_tree_seq : (k * v) list Tree.t Seq.t = Tree.build_list_shrink_tree current_tree_bindings in
       (* During shrinking, we don't want to record/add bindings, so [~extend:false]. *)
-      let shrunk_poly_tbl_tree : (k, v) t Tree.t = Tree.map (fun bindings -> List.to_seq bindings |> T.of_seq |> make ~extend:false) shrunk_bindings_tree in
-      (* [shrunk_poly_tbl_tree] is a bit misleading: its root *should* be the same as [root] but because of the required laziness
-         induced by the mutation of bindings, we don't use it, only graft its children to the original [root]. *)
-      Tree.children shrunk_poly_tbl_tree ()
+      let shrunk_poly_tbl_tree_seq : (k, v) t Tree.t Seq.t =
+        Seq.map (fun t -> Tree.map (fun bindings -> List.to_seq bindings |> T.of_seq |> make ~extend:false) t) shrunk_bindings_tree_seq in
+      (* [shrunk_poly_tbl_tree_seq] is a bit misleading: its head *should* be the same as [root] but because of the required laziness
+         induced by the mutation of bindings, we don't use it, only graft its tail to the original [root]. *)
+      Seq.drop 1 shrunk_poly_tbl_tree_seq ()
     in
     Tree.Tree (root, shrinks)
 

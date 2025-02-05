@@ -2,6 +2,8 @@
 
 ## NEXT RELEASE
 
+- Improve the `QCheck2.Gen.list` shrinker heuristic and utilize the improved
+  shrinker in other `QCheck2` `{list,array,bytes,string,function}*` shrinkers
 - Use `split` and `copy` in `Random.State` underlying `QCheck2` to
   avoid non-deterministic shrinking behaviour
 - Add missing documentation strings for `QCheck.{Print,Iter,Shrink,Gen}` and `QCheck2.Gen`.
