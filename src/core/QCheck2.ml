@@ -14,12 +14,15 @@ module RS = struct
   (* This definition is shadowed by the [include] on OCaml >=5.0 *)
   (* For the record, this is a hack:
      Seeding a child RNG based on the output of a parent RNG
-     does not create an independent RNG. As an added bonus,
-     performance is bad. *)
-  let split rs =
-    let bits = Random.State.bits rs in
-    let rs' = Random.State.make [|bits|] in
-    rs'
+     does not create an independent RNG. *)
+  (* copy of 4.14 Random.State.t to create a record of the right shape *)
+  type rs = { st : int array; mutable idx : int } [@@warning "-69"]
+  let split rs : Random.State.t =
+    let rs' = { st = Array.init 55 (fun _i -> Random.State.bits rs); idx = 0 } in
+    for i = 0 to 54 do
+      rs'.st.(i) <- (rs'.st.(i) lxor rs'.st.((i+1) mod 55)) land 0x3FFFFFFF;
+    done;
+    Obj.magic rs' (* sorry! *)
   include Random.State
   (* This is how OCaml 5.0 splits:       *)
   (* Split a new PRNG off the given PRNG *)
