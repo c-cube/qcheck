@@ -133,13 +133,13 @@ module Shrink = struct
     if ocaml_major_version < 5
     then
       (Alcotest.(check' (list (pair int int)))
-         ~msg:"1,3 on repeated failure"
+         ~msg:"9,1 on repeated failure"
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (pair small_int small_int)) |> repeated_failure)
-         ~expected:[(1, 3); (0, 3); (1, 0); (1, 1); (1, 2)];
+         ~expected:[(9, 1); (0, 1); (4, 1); (6, 1); (7, 1); (8, 1); (9, 0)];
        Alcotest.(check' (list (pair int int)))
-         ~msg:"1,3 on repeated success"
+         ~msg:"9,1 on repeated success"
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (pair small_int small_int)) |> repeated_success)
-         ~expected:[(1, 3); (0, 3); (0, 0)])
+         ~expected:[(9, 1); (0, 1); (0, 0)])
     else
       (Alcotest.(check' (list (pair int int)))
          ~msg:"2,6 on repeated failure"
@@ -154,13 +154,13 @@ module Shrink = struct
     if ocaml_major_version < 5
     then
       (Alcotest.(check' (list (pair int int)))
-         ~msg:"1,3 on repeated failure"
+         ~msg:"9,1 on repeated failure"
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (small_int >>= fun i -> map (fun j -> (i,j)) small_int)) |> repeated_failure)
-         ~expected:[(1, 3); (0, 3); (1, 0); (1, 1); (1, 2)];
+         ~expected:[(9, 1); (0, 1); (4, 1); (6, 1); (7, 1); (8, 1); (9, 0)];
        Alcotest.(check' (list (pair int int)))
-         ~msg:"1,3 on repeated success"
+         ~msg:"9,1 on repeated success"
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (small_int >>= fun i -> map (fun j -> (i,j)) small_int)) |> repeated_success)
-         ~expected:[(1, 3); (0, 3); (0, 0)])
+         ~expected:[(9, 1); (0, 1); (0, 0)])
     else
       (Alcotest.(check' (list (pair int int)))
          ~msg:"2,6 on repeated failure"
@@ -175,15 +175,18 @@ module Shrink = struct
     if ocaml_major_version < 5
     then
       (Alcotest.(check' (list (list int)))
-         ~msg:"[10; 8] on repeated failure"
+         ~msg:"[8; 0; 9; 0; 8; 8; 2] on repeated failure"
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (list_size (int_bound 8) (int_bound 10))) |> repeated_failure)
-         ~expected:[ [10; 8]; []; [10];
-                     [0; 8]; [5; 8]; [8; 8]; [9; 8];
-                     [10; 0]; [10; 4]; [10; 6]; [10; 7]; ];
+         ~expected:[ [8; 0; 9; 0; 8; 8; 2]; []; [8; 0; 9]; [8; 0; 9; 0; 8]; [8; 0; 9; 0; 8; 8];
+                     [0; 0; 9; 0; 8; 8; 2]; [4; 0; 9; 0; 8; 8; 2]; [6; 0; 9; 0; 8; 8; 2]; [7; 0; 9; 0; 8; 8; 2];
+                     [8; 0; 0; 0; 8; 8; 2]; [8; 0; 4; 0; 8; 8; 2]; [8; 0; 6; 0; 8; 8; 2]; [8; 0; 7; 0; 8; 8; 2]; [8; 0; 8; 0; 8; 8; 2];
+                     [8; 0; 9; 0; 0; 8; 2]; [8; 0; 9; 0; 4; 8; 2]; [8; 0; 9; 0; 6; 8; 2]; [8; 0; 9; 0; 7; 8; 2];
+                     [8; 0; 9; 0; 8; 0; 2]; [8; 0; 9; 0; 8; 4; 2]; [8; 0; 9; 0; 8; 6; 2]; [8; 0; 9; 0; 8; 7; 2];
+                     [8; 0; 9; 0; 8; 8; 0]; [8; 0; 9; 0; 8; 8; 1]; ];
        Alcotest.(check' (list (list int)))
-         ~msg:"[10; 8] on repeated success"
+         ~msg:"[8; 0; 9; 0; 8; 8; 2] on repeated success"
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (list_size (int_bound 8) (int_bound 10))) |> repeated_success)
-         ~expected:[ [10; 8]; []; ])
+         ~expected:[ [8; 0; 9; 0; 8; 8; 2]; []; ])
     else
       (Alcotest.(check' (list (list int)))
          ~msg:"[9; 2; 7; 3; 8; 6] repeated failure"
@@ -204,17 +207,16 @@ module Shrink = struct
     if ocaml_major_version < 5
     then
       (Alcotest.(check' (list (list int)))
-         ~msg:"[5; 9; 4; 10] on repeated failure"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3344) (list (int_bound 10))) |> repeated_failure)
-         ~expected:[ [5; 9; 4; 10]; [5; 9]; [4; 10]; [9; 4; 10]; [5; 9; 10];
-                     [0; 9; 4; 10]; [2; 9; 4; 10]; [3; 9; 4; 10]; [4; 9; 4; 10];
-                     [5; 0; 4; 10]; [5; 4; 4; 10]; [5; 6; 4; 10]; [5; 7; 4; 10]; [5; 8; 4; 10];
-                     [5; 9; 0; 10]; [5; 9; 2; 10]; [5; 9; 3; 10];
-                     [5; 9; 4; 0]; [5; 9; 4; 5]; [5; 9; 4; 8]; [5; 9; 4; 9]; ];
+         ~msg:"[0; 5; 3; 7] on repeated failure"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3345) (list (int_bound 10))) |> repeated_failure)
+         ~expected:[ [0; 5; 3; 7]; [0; 5]; [3; 7]; [5; 3; 7]; [0; 5; 7];
+                     [0; 0; 3; 7]; [0; 2; 3; 7]; [0; 3; 3; 7]; [0; 4; 3; 7];
+                     [0; 5; 0; 7]; [0; 5; 1; 7]; [0; 5; 2; 7];
+                     [0; 5; 3; 0]; [0; 5; 3; 3]; [0; 5; 3; 5]; [0; 5; 3; 6]; ];
        Alcotest.(check' (list (list int)))
-         ~msg:"[5; 9; 4; 10] on repeated success"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3344) (list (int_bound 10))) |> repeated_success)
-         ~expected:[ [5; 9; 4; 10]; [5; 9]; [5]; []; ])
+         ~msg:"[0; 5; 3; 7] on repeated success"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3345) (list (int_bound 10))) |> repeated_success)
+         ~expected:[ [0; 5; 3; 7]; [0; 5]; [0]; []; ])
     else
       (Alcotest.(check' (list (list int)))
          ~msg:"[1; 10; 10; 7; 3] on repeated failure"
@@ -234,17 +236,16 @@ module Shrink = struct
     if ocaml_major_version < 5
     then
       (Alcotest.(check' (list (list int)))
-         ~msg:"[5; 9; 4; 10] on repeated failure"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3344) (small_list (int_bound 10))) |> repeated_failure)
-         ~expected:[ [5; 9; 4; 10]; [5; 9]; [4; 10]; [9; 4; 10]; [5; 9; 10];
-                     [0; 9; 4; 10]; [2; 9; 4; 10]; [3; 9; 4; 10]; [4; 9; 4; 10];
-                     [5; 0; 4; 10]; [5; 4; 4; 10]; [5; 6; 4; 10]; [5; 7; 4; 10]; [5; 8; 4; 10];
-                     [5; 9; 0; 10]; [5; 9; 2; 10]; [5; 9; 3; 10];
-                     [5; 9; 4; 0]; [5; 9; 4; 5]; [5; 9; 4; 8]; [5; 9; 4; 9]; ];
+         ~msg:"[0; 5; 3; 7] on repeated failure"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3345) (small_list (int_bound 10))) |> repeated_failure)
+         ~expected:[[0; 5; 3; 7]; [0; 5]; [3; 7]; [5; 3; 7]; [0; 5; 7];
+                    [0; 0; 3; 7]; [0; 2; 3; 7]; [0; 3; 3; 7]; [0; 4; 3; 7];
+                    [0; 5; 0; 7]; [0; 5; 1; 7]; [0; 5; 2; 7];
+                    [0; 5; 3; 0]; [0; 5; 3; 3]; [0; 5; 3; 5]; [0; 5; 3; 6]; ];
        Alcotest.(check' (list (list int)))
-         ~msg:"[5; 9; 4; 10] on repeated success"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3344) (small_list (int_bound 10))) |> repeated_success)
-         ~expected:[ [5; 9; 4; 10]; [5; 9]; [5]; []; ])
+         ~msg:"[0; 5; 3; 7] on repeated success"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3345) (small_list (int_bound 10))) |> repeated_success)
+         ~expected:[ [0; 5; 3; 7]; [0; 5]; [0]; []; ])
     else
       (Alcotest.(check' (list (list int)))
          ~msg:"[1; 10; 10; 7; 3] on repeated failure"
@@ -264,15 +265,16 @@ module Shrink = struct
     if ocaml_major_version < 5
     then
       (Alcotest.(check' (list (array int)))
-         ~msg:"[|10; 8|] on repeated failure"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (array_size (int_bound 8) (int_bound 10))) |> repeated_failure)
-         ~expected:[ [|10; 8|]; [||]; [|10|];
-                     [|0; 8|]; [|5; 8|]; [|8; 8|]; [|9; 8|];
-                     [|10; 0|]; [|10; 4|]; [|10; 6|]; [|10; 7|]; ];
+         ~msg:"[|2; 5; 1|] on repeated failure"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3347) (array_size (int_bound 8) (int_bound 10))) |> repeated_failure)
+         ~expected:[ [|2; 5; 1|]; [||]; [|2|]; [|2; 5|];
+                     [|0; 5; 1|]; [|1; 5; 1|];
+                     [|2; 0; 1|]; [|2; 2; 1|]; [|2; 3; 1|]; [|2; 4; 1|];
+                     [|2; 5; 0|]; ];
        Alcotest.(check' (list (array int)))
-         ~msg:"[|10; 8|] on repeated success"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (array_size (int_bound 8) (int_bound 10))) |> repeated_success)
-         ~expected:[ [|10; 8|]; [| |]; ])
+         ~msg:"[|2; 5; 1|] on repeated success"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3347) (array_size (int_bound 8) (int_bound 10))) |> repeated_success)
+         ~expected:[ [|2; 5; 1|]; [| |]; ])
     else
       (Alcotest.(check' (list (array int)))
          ~msg:"[|9; 2; 7; 3; 8; 6|] repeated failure"
@@ -293,17 +295,16 @@ module Shrink = struct
     if ocaml_major_version < 5
     then
       (Alcotest.(check' (list (array int)))
-         ~msg:"[|5; 9; 4; 10|] on repeated failure"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3344) (array (int_bound 10))) |> repeated_failure)
-         ~expected:[ [|5; 9; 4; 10|]; [|5; 9|]; [|4; 10|]; [|9; 4; 10|]; [|5; 9; 10|];
-                     [|0; 9; 4; 10|]; [|2; 9; 4; 10|]; [|3; 9; 4; 10|]; [|4; 9; 4; 10|];
-                     [|5; 0; 4; 10|]; [|5; 4; 4; 10|]; [|5; 6; 4; 10|]; [|5; 7; 4; 10|]; [|5; 8; 4; 10|];
-                     [|5; 9; 0; 10|]; [|5; 9; 2; 10|]; [|5; 9; 3; 10|];
-                     [|5; 9; 4; 0|]; [|5; 9; 4; 5|]; [|5; 9; 4; 8|]; [|5; 9; 4; 9|]; ];
+         ~msg:"[|0; 5; 3; 7|] on repeated failure"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3345) (array (int_bound 10))) |> repeated_failure)
+         ~expected:[ [|0; 5; 3; 7|]; [|0; 5|]; [|3; 7|]; [|5; 3; 7|]; [|0; 5; 7|];
+                     [|0; 0; 3; 7|]; [|0; 2; 3; 7|]; [|0; 3; 3; 7|]; [|0; 4; 3; 7|];
+                     [|0; 5; 0; 7|]; [|0; 5; 1; 7|]; [|0; 5; 2; 7|];
+                     [|0; 5; 3; 0|]; [|0; 5; 3; 3|]; [|0; 5; 3; 5|]; [|0; 5; 3; 6|]; ];
        Alcotest.(check' (list (array int)))
-         ~msg:"[|5; 9; 4; 10|] on repeated success"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3344) (array (int_bound 10))) |> repeated_success)
-         ~expected:[ [|5; 9; 4; 10|]; [|5; 9|]; [|5|]; [||]; ])
+         ~msg:"[|0; 5; 3; 7|] on repeated success"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3345) (array (int_bound 10))) |> repeated_success)
+         ~expected:[ [|0; 5; 3; 7|]; [|0; 5|]; [|0|]; [||]; ])
     else
       (Alcotest.(check' (list (array int)))
          ~msg:"[|1; 10; 10; 7; 3|] on repeated failure"
@@ -323,17 +324,16 @@ module Shrink = struct
     if ocaml_major_version < 5
     then
       (Alcotest.(check' (list (array int)))
-         ~msg:"[|5; 9; 4; 10|] on repeated failure"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3344) (small_array (int_bound 10))) |> repeated_failure)
-         ~expected:[ [|5; 9; 4; 10|]; [|5; 9|]; [|4; 10|]; [|9; 4; 10|]; [|5; 9; 10|];
-                     [|0; 9; 4; 10|]; [|2; 9; 4; 10|]; [|3; 9; 4; 10|]; [|4; 9; 4; 10|];
-                     [|5; 0; 4; 10|]; [|5; 4; 4; 10|]; [|5; 6; 4; 10|]; [|5; 7; 4; 10|]; [|5; 8; 4; 10|];
-                     [|5; 9; 0; 10|]; [|5; 9; 2; 10|]; [|5; 9; 3; 10|];
-                     [|5; 9; 4; 0|]; [|5; 9; 4; 5|]; [|5; 9; 4; 8|]; [|5; 9; 4; 9|]; ];
+         ~msg:"[|0; 5; 3; 7|] on repeated failure"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3345) (small_array (int_bound 10))) |> repeated_failure)
+         ~expected:[ [|0; 5; 3; 7|]; [|0; 5|]; [|3; 7|]; [|5; 3; 7|]; [|0; 5; 7|];
+                     [|0; 0; 3; 7|]; [|0; 2; 3; 7|]; [|0; 3; 3; 7|]; [|0; 4; 3; 7|];
+                     [|0; 5; 0; 7|]; [|0; 5; 1; 7|]; [|0; 5; 2; 7|];
+                     [|0; 5; 3; 0|]; [|0; 5; 3; 3|]; [|0; 5; 3; 5|]; [|0; 5; 3; 6|]; ];
        Alcotest.(check' (list (array int)))
-         ~msg:"[|5; 9; 4; 10|] on repeated success"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3344) (small_array (int_bound 10))) |> repeated_success)
-         ~expected:[ [|5; 9; 4; 10|]; [|5; 9|]; [|5|]; [||]; ])
+         ~msg:"[|0; 5; 3; 7|] on repeated success"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3345) (small_array (int_bound 10))) |> repeated_success)
+         ~expected:[ [|0; 5; 3; 7|]; [|0; 5|]; [|0|]; [||]; ])
     else
       (Alcotest.(check' (list (array int)))
          ~msg:"[|1; 10; 10; 7; 3|] on repeated failure"
@@ -353,16 +353,21 @@ module Shrink = struct
     if ocaml_major_version < 5
     then
       (Alcotest.(check' (list bytes))
-         ~msg:"\"_!\" on repeated failure"
+         ~msg:"\"H Ap>&U\" on repeated failure"
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (bytes_size ~gen:printable (int_bound 8))) |> repeated_failure)
          ~expected:(List.map Bytes.of_string
-                      [ "_!"; ""; "_";
-                        "a!"; "2!"; "H!"; "S!"; "Y!"; "\\!"; "]!"; "^!";
-                        "_a"; "_n"; "_u"; "_x"; "_z"; "_ "; ] );
+                      [ "H Ap>&U"; ""; "H A"; "H Ap>"; "H Ap>&"; "a Ap>&U"; "' Ap>&U";
+                        "8 Ap>&U"; "@ Ap>&U"; "D Ap>&U"; "F Ap>&U"; "G Ap>&U";
+                        "HaAp>&U"; "HnAp>&U"; "HuAp>&U"; "HxAp>&U"; "HzAp>&U";
+                        "H ap>&U"; "H #p>&U"; "H 2p>&U"; "H 9p>&U"; "H =p>&U"; "H ?p>&U"; "H @p>&U";
+                        "H Aa>&U"; "H Ah>&U"; "H Al>&U"; "H An>&U"; "H Ao>&U";
+                        "H Apa&U"; "H Ap\"&U"; "H Ap0&U"; "H Ap7&U"; "H Ap;&U"; "H Ap=&U";
+                        "H Ap>aU"; "H Ap>qU"; "H Ap>yU"; "H Ap>\"U"; "H Ap>$U"; "H Ap>%U";
+                        "H Ap>&a"; "H Ap>&-"; "H Ap>&A"; "H Ap>&K"; "H Ap>&P"; "H Ap>&R"; "H Ap>&S"; "H Ap>&T"; ] );
        Alcotest.(check' (list bytes))
-         ~msg:"\"_!\" on repeated success"
+         ~msg:"\"H Ap>&U\" on repeated success"
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (bytes_size ~gen:printable (int_bound 8))) |> repeated_success)
-         ~expected:(List.map Bytes.of_string ["_!"; ""]))
+         ~expected:(List.map Bytes.of_string ["H Ap>&U"; ""]))
     else
       (Alcotest.(check' (list bytes))
          ~msg:"\"Ns<>W\\\" on repeated failure"
@@ -384,18 +389,18 @@ module Shrink = struct
     if ocaml_major_version < 5
     then
       (Alcotest.(check' (list bytes))
-         ~msg:"\"u\238\154I\" on repeated failure"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3344) bytes) |> repeated_failure)
+         ~msg:"\"9\007\127\250\" on repeated failure"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3345) bytes) |> repeated_failure)
          ~expected:(List.map Bytes.of_string
-                      [ "u\238\154I"; "u\238"; "\154I"; "\238\154I"; "u\238I";
-                        "a\238\154I"; "k\238\154I"; "p\238\154I"; "r\238\154I"; "s\238\154I"; "t\238\154I";
-                        "ua\154I"; "u\168\154I"; "u\203\154I"; "u\221\154I"; "u\230\154I"; "u\234\154I"; "u\236\154I"; "u\237\154I";
-                        "u\238aI"; "u\238~I"; "u\238\140I"; "u\238\147I"; "u\238\151I"; "u\238\153I";
-                        "u\238\154a"; "u\238\154U"; "u\238\154O"; "u\238\154L"; "u\238\154J"; ] );
+                      [ "9\007\127\250"; "9\007"; "\127\250"; "\007\127\250"; "9\007\250";
+                        "a\007\127\250"; "M\007\127\250"; "C\007\127\250"; ">\007\127\250"; ";\007\127\250"; ":\007\127\250";
+                        "9a\127\250"; "94\127\250"; "9\029\127\250"; "9\018\127\250"; "9\012\127\250"; "9\t\127\250"; "9\b\127\250";
+                        "9\007a\250"; "9\007p\250"; "9\007w\250"; "9\007{\250"; "9\007}\250"; "9\007~\250";
+                        "9\007\127a"; "9\007\127\174"; "9\007\127\212"; "9\007\127\231"; "9\007\127\241"; "9\007\127\246"; "9\007\127\248"; "9\007\127\249"; ] );
        Alcotest.(check' (list bytes))
-         ~msg:"\"u\238\154I\" on repeated success"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3344) bytes) |> repeated_success)
-         ~expected:(List.map Bytes.of_string ["u\238\154I"; "u\238"; "u"; ""; ]))
+         ~msg:"\"9\007\127\250\" on repeated success"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3345) bytes) |> repeated_success)
+         ~expected:(List.map Bytes.of_string [ "9\007\127\250"; "9\007"; "9"; ""; ]))
     else
       (Alcotest.(check' (list bytes))
          ~msg:"\"\253NS\173\" on repeated failure"
@@ -415,18 +420,18 @@ module Shrink = struct
     if ocaml_major_version < 5
     then
       (Alcotest.(check' (list bytes))
-         ~msg:"\"u\238\154I\" on repeated failure"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3344) bytes_small) |> repeated_failure)
+         ~msg:"\"9\007\127\250\" on repeated failure"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3345) bytes_small) |> repeated_failure)
          ~expected:(List.map Bytes.of_string
-                      [ "u\238\154I"; "u\238"; "\154I"; "\238\154I"; "u\238I";
-                        "a\238\154I"; "k\238\154I"; "p\238\154I"; "r\238\154I"; "s\238\154I"; "t\238\154I";
-                        "ua\154I"; "u\168\154I"; "u\203\154I"; "u\221\154I"; "u\230\154I"; "u\234\154I"; "u\236\154I"; "u\237\154I";
-                        "u\238aI"; "u\238~I"; "u\238\140I"; "u\238\147I"; "u\238\151I"; "u\238\153I";
-                        "u\238\154a"; "u\238\154U"; "u\238\154O"; "u\238\154L"; "u\238\154J"; ] );
+                      [ "9\007\127\250"; "9\007"; "\127\250"; "\007\127\250"; "9\007\250";
+                        "a\007\127\250"; "M\007\127\250"; "C\007\127\250"; ">\007\127\250"; ";\007\127\250"; ":\007\127\250";
+                        "9a\127\250"; "94\127\250"; "9\029\127\250"; "9\018\127\250"; "9\012\127\250"; "9\t\127\250"; "9\b\127\250";
+                        "9\007a\250"; "9\007p\250"; "9\007w\250"; "9\007{\250"; "9\007}\250"; "9\007~\250";
+                        "9\007\127a"; "9\007\127\174"; "9\007\127\212"; "9\007\127\231"; "9\007\127\241"; "9\007\127\246"; "9\007\127\248"; "9\007\127\249"; ] );
        Alcotest.(check' (list bytes))
-         ~msg:"\"u\238\154I\" on repeated success"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3344) bytes_small) |> repeated_success)
-         ~expected:(List.map Bytes.of_string ["u\238\154I"; "u\238"; "u"; ""; ]))
+         ~msg:"\"9\007\127\250\" on repeated success"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3345) bytes_small) |> repeated_success)
+         ~expected:(List.map Bytes.of_string [ "9\007\127\250"; "9\007"; "9"; ""; ]))
     else
       (Alcotest.(check' (list bytes))
          ~msg:"\"\253NS\173\" on repeated failure"
@@ -446,17 +451,20 @@ module Shrink = struct
     if ocaml_major_version < 5
     then
       (Alcotest.(check' (list string))
-         ~msg:"\";T /\" on repeated failure"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3344) (string_size ~gen:printable (int_bound 8))) |> repeated_failure)
-         ~expected:[ ";T /"; ""; ";T"; ";T ";
-                     "aT /"; " T /"; "-T /"; "4T /"; "7T /"; "9T /"; ":T /";
-                     ";a /"; ";- /"; ";A /"; ";K /"; ";P /"; ";R /"; ";S /";
-                     ";Ta/"; ";Tn/"; ";Tu/"; ";Tx/"; ";Tz/";
-                     ";T a"; ";T u"; ";T $"; ";T )"; ";T ,"; ";T -"; ";T ."; ];
+         ~msg:"\"H Ap>&U\" on repeated failure"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (string_size ~gen:printable (int_bound 8))) |> repeated_failure)
+         ~expected:[ "H Ap>&U"; ""; "H A"; "H Ap>"; "H Ap>&"; "a Ap>&U"; "' Ap>&U";
+                     "8 Ap>&U"; "@ Ap>&U"; "D Ap>&U"; "F Ap>&U"; "G Ap>&U";
+                     "HaAp>&U"; "HnAp>&U"; "HuAp>&U"; "HxAp>&U"; "HzAp>&U";
+                     "H ap>&U"; "H #p>&U"; "H 2p>&U"; "H 9p>&U"; "H =p>&U"; "H ?p>&U"; "H @p>&U";
+                     "H Aa>&U"; "H Ah>&U"; "H Al>&U"; "H An>&U"; "H Ao>&U";
+                     "H Apa&U"; "H Ap\"&U"; "H Ap0&U"; "H Ap7&U"; "H Ap;&U"; "H Ap=&U";
+                     "H Ap>aU"; "H Ap>qU"; "H Ap>yU"; "H Ap>\"U"; "H Ap>$U"; "H Ap>%U";
+                     "H Ap>&a"; "H Ap>&-"; "H Ap>&A"; "H Ap>&K"; "H Ap>&P"; "H Ap>&R"; "H Ap>&S"; "H Ap>&T"; ];
        Alcotest.(check' (list string))
-         ~msg:"\";T /\" on repeated success"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3344) (string_size ~gen:printable (int_bound 8))) |> repeated_success)
-         ~expected:[ ";T /"; ""; ])
+         ~msg:"\"H Ap>&U\" on repeated success"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (string_size ~gen:printable (int_bound 8))) |> repeated_success)
+         ~expected:[ "H Ap>&U"; ""; ])
     else
       (Alcotest.(check' (list string))
          ~msg:"\"Ns<>W\\\" on repeated failure"
@@ -477,17 +485,17 @@ module Shrink = struct
     if ocaml_major_version < 5
     then
       (Alcotest.(check' (list string))
-         ~msg:"\"u\238\154I\" on repeated failure"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3344) string) |> repeated_failure)
-         ~expected:[ "u\238\154I"; "u\238"; "\154I"; "\238\154I"; "u\238I";
-                     "a\238\154I"; "k\238\154I"; "p\238\154I"; "r\238\154I"; "s\238\154I"; "t\238\154I";
-                     "ua\154I"; "u\168\154I"; "u\203\154I"; "u\221\154I"; "u\230\154I"; "u\234\154I"; "u\236\154I"; "u\237\154I";
-                     "u\238aI"; "u\238~I"; "u\238\140I"; "u\238\147I"; "u\238\151I"; "u\238\153I";
-                     "u\238\154a"; "u\238\154U"; "u\238\154O"; "u\238\154L"; "u\238\154J"; ];
+         ~msg:"\"9\007\127\250\" on repeated failure"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3345) string) |> repeated_failure)
+         ~expected:[ "9\007\127\250"; "9\007"; "\127\250"; "\007\127\250"; "9\007\250";
+                     "a\007\127\250"; "M\007\127\250"; "C\007\127\250"; ">\007\127\250"; ";\007\127\250"; ":\007\127\250";
+                     "9a\127\250"; "94\127\250"; "9\029\127\250"; "9\018\127\250"; "9\012\127\250"; "9\t\127\250"; "9\b\127\250";
+                     "9\007a\250"; "9\007p\250"; "9\007w\250"; "9\007{\250"; "9\007}\250"; "9\007~\250";
+                     "9\007\127a"; "9\007\127\174"; "9\007\127\212"; "9\007\127\231"; "9\007\127\241"; "9\007\127\246"; "9\007\127\248"; "9\007\127\249"; ];
        Alcotest.(check' (list string))
-         ~msg:"\"u\238\154I\" on repeated success"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3344) string) |> repeated_success)
-         ~expected:[ "u\238\154I"; "u\238"; "u"; ""; ])
+         ~msg:"\"9\007\127\250\" on repeated success"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3345) string) |> repeated_success)
+         ~expected:[ "9\007\127\250"; "9\007"; "9"; ""; ])
     else
       (Alcotest.(check' (list string))
          ~msg:"\"\253NS\173\" on repeated failure"
@@ -506,17 +514,17 @@ module Shrink = struct
     if ocaml_major_version < 5
     then
       (Alcotest.(check' (list string))
-         ~msg:"\"u\238\154I\" on repeated failure"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3344) string_small) |> repeated_failure)
-         ~expected:[ "u\238\154I"; "u\238"; "\154I"; "\238\154I"; "u\238I";
-                     "a\238\154I"; "k\238\154I"; "p\238\154I"; "r\238\154I"; "s\238\154I"; "t\238\154I";
-                     "ua\154I"; "u\168\154I"; "u\203\154I"; "u\221\154I"; "u\230\154I"; "u\234\154I"; "u\236\154I"; "u\237\154I";
-                     "u\238aI"; "u\238~I"; "u\238\140I"; "u\238\147I"; "u\238\151I"; "u\238\153I";
-                     "u\238\154a"; "u\238\154U"; "u\238\154O"; "u\238\154L"; "u\238\154J"; ];
+         ~msg:"\"9\007\127\250\" on repeated failure"
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3345) string_small) |> repeated_failure)
+         ~expected:[ "9\007\127\250"; "9\007"; "\127\250"; "\007\127\250"; "9\007\250";
+                     "a\007\127\250"; "M\007\127\250"; "C\007\127\250"; ">\007\127\250"; ";\007\127\250"; ":\007\127\250";
+                     "9a\127\250"; "94\127\250"; "9\029\127\250"; "9\018\127\250"; "9\012\127\250"; "9\t\127\250"; "9\b\127\250";
+                     "9\007a\250"; "9\007p\250"; "9\007w\250"; "9\007{\250"; "9\007}\250"; "9\007~\250";
+                     "9\007\127a"; "9\007\127\174"; "9\007\127\212"; "9\007\127\231"; "9\007\127\241"; "9\007\127\246"; "9\007\127\248"; "9\007\127\249"; ];
        Alcotest.(check' (list string))
          ~msg:"\"u\238\154I\" on repeated success"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3344) string_small) |> repeated_success)
-         ~expected:[ "u\238\154I"; "u\238"; "u"; ""; ])
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3345) string_small) |> repeated_success)
+         ~expected:[ "9\007\127\250"; "9\007"; "9"; ""; ])
     else
       (Alcotest.(check' (list string))
          ~msg:"\"\253NS\173\" on repeated failure"

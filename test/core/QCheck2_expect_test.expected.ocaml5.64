@@ -667,6 +667,12 @@ Test fold_left fold_right uncurried fun last failed (21 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
+Test fold_left test, fun first failed (50 shrink steps):
+
+({("", 5) -> "a"; _ -> ""}, "", [0; 0; 5], [0])
+
+--- Failure --------------------------------------------------------------------
+
 Test FAIL_#99_1 failed:
 
 ERROR: uncaught exception in generator for test FAIL_#99_1 after 100 steps:
@@ -1702,7 +1708,7 @@ stats dist:
    -3..  0: #######################################################        1631
 ================================================================================
 1 warning(s)
-failure (73 tests failed, 3 tests errored, ran 165 tests)
+failure (74 tests failed, 3 tests errored, ran 166 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++

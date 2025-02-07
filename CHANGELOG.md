@@ -2,6 +2,7 @@
 
 ## NEXT RELEASE
 
+- Replace the `QCheck2` OCaml 4 `Random.State.split` hack with a faster one
 - Improve the `QCheck2.Gen.list` shrinker heuristic and utilize the improved
   shrinker in other `QCheck2` `{list,array,bytes,string,function}*` shrinkers
 - Use `split` and `copy` in `Random.State` underlying `QCheck2` to
