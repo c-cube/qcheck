@@ -73,8 +73,9 @@ random seed: 1234
 [0; 13; 4; 6; 14; 6; 47; 3]
 [0; 13; 4; 6]
 [0; 13]
-[0]
+[13]
 []
+[0]
 [0; 13; 4; 6; 14; 6; 47; 3; 4; 3; 6; 6; 9; 4; 3; 65; 2; 4; 55; 2; 4; 87; 9; 5; 35; 73; 9; 9; 2; 74; 5; 9; 10; 93; 2; 7; 1; 4; 6; 91; 8; 8; 2; 9; 47; 6; 26; 3; 60; 1; 0; 5; 26; 4; 28; 6; 0; 5; 88; 3; 7]
 [0; 13; 4; 6; 14; 6; 47; 3; 4; 3; 6; 6; 9; 4; 3; 65; 2; 4; 55; 2; 4; 87; 9; 5; 35; 73; 9; 9; 2; 74; 5]
 [0; 13; 4; 6; 14; 6; 47; 3; 4; 3; 6; 6; 9; 4; 3; 65]
@@ -89,14 +90,16 @@ random seed: 1234
 [6; 47; 3]
 [6; 14; 6; 47; 3]
 [6; 14; 6]
-[6; 14]
+[14; 6]
+[6; 6]
 [6]
-[0; 14; 6]
-[3; 14; 6]
-[5; 14; 6]
-[6; 0; 6]
-[0; 0; 6]
-[0; 0; 0]
+[6]
+[0; 6]
+[3; 6]
+[5; 6]
+[6; 0]
+[6; 3]
+[6; 5]
 
 --- Failure --------------------------------------------------------------------
 
@@ -308,15 +311,15 @@ Test bytes never has a \000 char failed (13 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test bytes never has a \255 char failed (5 shrink steps):
+Test bytes never has a \255 char failed (6 shrink steps):
 
 "\255"
 
 --- Failure --------------------------------------------------------------------
 
-Test bytes have unique chars failed (16 shrink steps):
+Test bytes have unique chars failed (13 shrink steps):
 
-"aaa"
+"**"
 
 --- Failure --------------------------------------------------------------------
 
@@ -332,15 +335,15 @@ Test string never has a \000 char failed (13 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test string never has a \255 char failed (5 shrink steps):
+Test string never has a \255 char failed (6 shrink steps):
 
 "\255"
 
 --- Failure --------------------------------------------------------------------
 
-Test strings have unique chars failed (16 shrink steps):
+Test strings have unique chars failed (13 shrink steps):
 
-"aaa"
+"**"
 
 --- Failure --------------------------------------------------------------------
 
@@ -386,13 +389,13 @@ Test pairs sum to less than 128 failed (26 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test pairs lists rev concat failed (34 shrink steps):
+Test pairs lists rev concat failed (30 shrink steps):
 
 ([0], [1])
 
 --- Failure --------------------------------------------------------------------
 
-Test pairs lists no overlap failed (12 shrink steps):
+Test pairs lists no overlap failed (13 shrink steps):
 
 ([0], [0])
 
@@ -506,7 +509,7 @@ Test bind list_size constant failed (12 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test lists are empty failed (6 shrink steps):
+Test lists are empty failed (7 shrink steps):
 
 [0]
 
@@ -530,9 +533,9 @@ Test lists shorter than 4332 failed (4022 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test lists have unique elems failed (10 shrink steps):
+Test lists have unique elems failed (8 shrink steps):
 
-[0; 0; 0]
+[6; 6]
 
 --- Failure --------------------------------------------------------------------
 
@@ -572,31 +575,31 @@ Test sum list = 0 failed (0 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test fail_pred_map_commute_int failed (53 shrink steps):
+Test fail_pred_map_commute_int failed (55 shrink steps):
 
 ([0], {0 -> 5; _ -> 0}, {5 -> true; _ -> false})
 
 --- Failure --------------------------------------------------------------------
 
-Test fail_pred_map_commute_int32 failed (54 shrink steps):
+Test fail_pred_map_commute_int32 failed (57 shrink steps):
 
 ([0l], {0l -> -15l; _ -> 0l}, {-15l -> true; _ -> false})
 
 --- Failure --------------------------------------------------------------------
 
-Test fail_pred_map_commute_int64 failed (105 shrink steps):
+Test fail_pred_map_commute_int64 failed (107 shrink steps):
 
 ([0L], {0L -> -71L; _ -> 0L}, {-71L -> true; _ -> false})
 
 --- Failure --------------------------------------------------------------------
 
-Test fail_pred_strings failed (0 shrink steps):
+Test fail_pred_strings failed (1 shrink steps):
 
-{"some random string" -> true; "some other string" -> false; _ -> false}
+{"some random string" -> true; _ -> false}
 
 --- Failure --------------------------------------------------------------------
 
-Test fold_left fold_right failed (17 shrink steps):
+Test fold_left fold_right failed (20 shrink steps):
 
 (0, [1], {(0, 1) -> 1; _ -> 0})
 
@@ -609,9 +612,9 @@ l=[1], fold_left=0, fold_right=1
 
 --- Failure --------------------------------------------------------------------
 
-Test fold_left fold_right uncurried failed (14 shrink steps):
+Test fold_left fold_right uncurried failed (17 shrink steps):
 
-({(9, 6) -> 0; (1, 5) -> 0; (4, 8) -> 1; (9, 8) -> 0; _ -> 0}, 8, [4])
+({(9, 6) -> 0; (1, 5) -> 0; (4, 8) -> 0; (9, 8) -> 1; _ -> 0}, 8, [9])
 
 --- Failure --------------------------------------------------------------------
 

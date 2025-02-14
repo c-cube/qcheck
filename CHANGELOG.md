@@ -2,6 +2,7 @@
 
 ## NEXT RELEASE
 
+- Adjust the `QCheck2.Gen.list` shrinker to produce minimal counterexamples at size 3 too
 - Replace the `QCheck2` OCaml 4 `Random.State.split` hack with a faster one
 - Improve the `QCheck2.Gen.list` shrinker heuristic and utilize the improved
   shrinker in other `QCheck2` `{list,array,bytes,string,function}*` shrinkers

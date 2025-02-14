@@ -267,30 +267,38 @@ module Tree = struct
     | (0, _) | (_, []) -> pure []
     | (n, (tree :: trees)) -> liftA2 List.cons tree (applicative_take (pred n) trees)
 
+  (** [drop_one l []] returns all versions of [l] with one element removed, for example
+      [drop_one [1;2;3] [] = [ [2;3]; [1;3]; [1;2] ]] *)
+  let rec drop_one (l : 'a list) (rev_prefix : 'a list) : 'a list list = match l with
+    | [] -> []
+    | x::xs -> (List.rev rev_prefix @ xs) :: drop_one xs (x::rev_prefix)
+
   let rec build_list_shrink_tree (l : 'a t list) : 'a list t Seq.t = match l with
     | [] -> Seq.empty
-    | [_] ->
-      fun () -> Seq.cons (Tree ([], Seq.empty))   (* [x] leaves only empty list to try *)
-                  (children (sequence_list l)) () (* otherwise, reduce element(s) *)
     | _::_ ->
       fun () ->
         let len = List.length l in
-        let xs,ys = list_split l ((1 + len) / 2) [] in
-        let xs_roots = List.map root xs in
-        let ys_roots = List.map root ys in
-        (* Try reducing a list [1;2;3;4] in halves: [1;2] and [3;4] *)
-        Seq.cons (Tree (xs_roots, build_list_shrink_tree xs))
-          (Seq.cons (Tree (ys_roots, build_list_shrink_tree ys))
-             (fun () ->
-                (if len >= 4
-                 then (* Try dropping an element from either half: [2;3;4] and [1;2;4] *)
-                   let rest = List.tl l in
-                   let rest_roots = List.map root rest in
-                   (Seq.cons (Tree (rest_roots, build_list_shrink_tree rest))
-                      (Seq.cons (Tree (xs_roots@(List.tl ys_roots), build_list_shrink_tree (xs@(List.tl ys))))
-                         (children (sequence_list l))))     (* at bottom: reduce elements *)
-                 else
-                   children (sequence_list l)) ())) ()
+        if len < 4 then
+          let candidates = drop_one l [] in
+          List.fold_right (* try dropping each element in turn, starting with the list head *)
+            (fun cand acc -> Seq.cons (Tree (List.map root cand, build_list_shrink_tree cand)) acc)
+            candidates
+            (fun () -> children (sequence_list l) ()) ()  (* otherwise, reduce element(s) *)
+        else
+          let xs,ys = list_split l ((1 + len) / 2) [] in
+          let xs_roots = List.map root xs in
+          let ys_roots = List.map root ys in
+          (* Try reducing a list [1;2;3;4] in halves: [1;2] and [3;4] *)
+          Seq.cons (Tree (xs_roots, build_list_shrink_tree xs))
+            (Seq.cons (Tree (ys_roots, build_list_shrink_tree ys))
+               (fun () ->
+                  (* Try dropping an element from either half: [2;3;4] and [1;2;4] *)
+                  let rest = List.tl l in
+                  let rest_roots = List.map root rest in
+                  (Seq.cons (Tree (rest_roots, build_list_shrink_tree rest))
+                     (Seq.cons (Tree (xs_roots@(List.tl ys_roots), build_list_shrink_tree (xs@(List.tl ys))))
+                        (fun () -> children (sequence_list l) ())))  (* at bottom: reduce elements *)
+                    () )) ()
 end
 
 module Gen = struct
