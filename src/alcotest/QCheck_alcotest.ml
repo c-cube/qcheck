@@ -34,8 +34,8 @@ let long_ = lazy (
 
 let to_alcotest
     ?(colors=false) ?(verbose=Lazy.force verbose_) ?(long=Lazy.force long_)
-    ?(debug_shrink = None) ?debug_shrink_list ?(rand=default_rand())
-    (t:T.t) =
+    ?(debug_shrink = None) ?debug_shrink_list ?(speed_level = `Slow)
+    ?(rand=default_rand()) (t:T.t) =
   let T.Test cell = t in
   let handler name cell r =
     match r, debug_shrink with
@@ -56,4 +56,4 @@ let to_alcotest
     let call = Raw.callback ~colors ~verbose ~print_res:true ~print in
     T.check_cell_exn ~long ~call ~handler ~rand cell
   in
-  ((name, `Slow, run) : unit Alcotest.test_case)
+  ((name, speed_level, run) : unit Alcotest.test_case)
