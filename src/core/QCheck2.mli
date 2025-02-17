@@ -709,7 +709,7 @@ module Gen : sig
       @param ratio a float between [0.] and [1.] indicating the probability of a sample to
       be [Ok _] rather than [Error _].
 
-      @since NEXT_RELEASE *)
+      @since 0.24 *)
 
 
   (** {3 Combining generators} *)
@@ -1134,11 +1134,11 @@ module Print : sig
 
   val int32 : int32 t
   (** [int32] is a printer of 32-bit integers.
-      @since NEXT_RELEASE *)
+      @since 0.24 *)
 
   val int64 : int64 t
   (** [int64] is a printer of 64-bit integers.
-      @since NEXT_RELEASE *)
+      @since 0.24 *)
 
   val bool : bool t
   (** [bool] is a printer of boolean. *)
@@ -1163,7 +1163,7 @@ module Print : sig
   (** [result okp errp] is a printer of [('a,'e) result], using [okp] for printing [Ok _]
       and [errp] for printing [Error _].
 
-      @since NEXT_RELEASE *)
+      @since 0.24 *)
 
   val pair : 'a t -> 'b t -> ('a*'b) t
   (** [pair p1 p2] is a printer of pair. *)
@@ -1369,11 +1369,11 @@ module Observable : sig
 
   val int32 : int32 t
   (** [int32] is an observable of [int32].
-      @since NEXT_RELEASE *)
+      @since 0.24 *)
 
   val int64 : int64 t
   (** [int64] is an observable of [int64].
-      @since NEXT_RELEASE *)
+      @since 0.24 *)
 
   val float : float t
   (** [float] is an observable of [float]. *)
@@ -1407,7 +1407,7 @@ module Observable : sig
   val result : 'a t -> 'e t -> ('a, 'e) result t
   (** [result ok_o err_o] creates an [('a, 'e) result] observable out of
       two observables [ok_o] and [err_o].
-      @since NEXT_RELEASE *)
+      @since 0.24 *)
 
   val list : 'a t -> 'a list t
   (** [list o] wraps the observable [o] of ['a] into an observable of

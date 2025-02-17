@@ -339,11 +339,11 @@ module Gen : sig
 
   val int32 : int32 t
   (** Generates [int32] values uniformly.
-      @since NEXT_RELEASE *)
+      @since 0.24 *)
 
   val int64 : int64 t
   (** Generates [int64] values uniformly.
-      @since NEXT_RELEASE *)
+      @since 0.24 *)
 
   val ui32 : int32 t
   (** Generates [int32] values.
@@ -392,7 +392,7 @@ module Gen : sig
       @param ratio a float between [0.] and [1.] indicating the probability of a sample to be [Ok _]
       rather than [Error _].
 
-      @since NEXT_RELEASE
+      @since 0.24
   *)
 
   val char : char t
@@ -677,11 +677,11 @@ module Print : sig
 
   val int32 : int32 t
   (** 32-bit integer printer.
-      @since NEXT_RELEASE *)
+      @since 0.24 *)
 
   val int64 : int64 t
   (** 64-bit integer printer.
-      @since NEXT_RELEASE *)
+      @since 0.24 *)
 
   val bool : bool t (** Boolean printer. *)
 
@@ -699,7 +699,7 @@ module Print : sig
 
   val result : 'a t -> 'e t -> ('a, 'e) result t
   (** Result printer.
-      @since NEXT_RELEASE *)
+      @since 0.24 *)
 
   val pair : 'a t -> 'b t -> ('a*'b) t
   (** Pair printer. Expects printers for each component. *)
@@ -902,7 +902,7 @@ module Shrink : sig
   val result : 'a t -> 'e t -> ('a, 'e) result t
   (** result shrinker.
       [result ashk eshk] reduces [Ok a] values using [ashk] and [Error e] values using [eshk].
-      @since NEXT_RELEASE *)
+      @since 0.24 *)
 
   val bytes : ?shrink:(char t) -> bytes t
   (** bytes shrinker. Shrinks towards shorter byte strings.
@@ -1285,7 +1285,7 @@ val result : ?ratio:float -> 'a arbitrary -> 'e arbitrary -> ('a, 'e) result arb
     is a float between [0.] and [1.] indicating the probability of a sample to
     be [Ok _] rather than [Error _].
 
-    @since NEXT_RELEASE *)
+    @since 0.24 *)
 
 
 (** {2 Tuples of arbitrary generators}
@@ -1745,8 +1745,8 @@ module Observable : sig
   val unit : unit t
   val bool : bool t
   val int : int t
-  val int32 : int32 t (** @since NEXT_RELEASE *)
-  val int64 : int64 t (** @since NEXT_RELEASE *)
+  val int32 : int32 t (** @since 0.24 *)
+  val int64 : int64 t (** @since 0.24 *)
   val float : float t
   val string : string t
   val bytes : bytes t (** @since 0.20 *)
@@ -1761,7 +1761,7 @@ module Observable : sig
   val map : ('a -> 'b) -> 'b t -> 'a t
 
   val option : 'a t -> 'a option t
-  val result : 'a t -> 'e t -> ('a, 'e) result t (** @since NEXT_RELEASE *)
+  val result : 'a t -> 'e t -> ('a, 'e) result t (** @since 0.24 *)
   val list : 'a t -> 'a list t
   val array : 'a t -> 'a array t
 

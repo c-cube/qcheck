@@ -1,6 +1,6 @@
 # Changes
 
-## NEXT RELEASE
+## 0.24
 
 - [qcheck-alcotest] Add an optional `speed_level` parameter to `to_alcotest`
 - Adjust the `QCheck2.Gen.list` shrinker to produce minimal counterexamples at size 3 too
