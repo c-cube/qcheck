@@ -1,5 +1,9 @@
 # Changes
 
+## NEXT RELEASE
+
+- ...
+
 ## 0.24
 
 - [qcheck-alcotest] Add an optional `speed_level` parameter to `to_alcotest`
