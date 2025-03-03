@@ -2049,8 +2049,10 @@ module Test = struct
        https://en.wikipedia.org/wiki/Standard_deviation *)
     let stddev =
       Hashtbl.fold
-        (fun i res m -> m +. (float_of_int i -. !avg) ** 2. *. float_of_int res)
-        tbl 0.
+        (fun i res acc -> float_of_int res *. ((float_of_int i -. !avg) ** 2.) :: acc)
+        tbl []
+      |> List.sort Float.compare (* add summands in increasing order to preserve precision *)
+      |> List.fold_left (+.) 0.
       |> (fun s -> if !num>0 then s /. float_of_int !num else s)
       |> sqrt
     in
