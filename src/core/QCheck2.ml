@@ -2100,7 +2100,13 @@ module Test = struct
          max_val := max !max_val new_count) tbl;
     (* print entries of the table, sorted by increasing index *)
     let out = Buffer.create 128 in
-    let fmt_float f = if f > 1e7 || f < -1e7 then Printf.sprintf "%.3e" f else Printf.sprintf "%.2f" f in
+    (* Windows workaround to avoid annoying exponent zero such as "1.859e+018" *)
+    let cut_exp_zero s =
+      match String.split_on_char '+' s with
+      | [signif;exponent] -> Printf.sprintf "%s+%i" signif (int_of_string exponent)
+      | _ -> failwith "cut_exp_zero failed to parse scientific notation " ^ s in
+    let fmt_float f =
+      if f > 1e7 || f < -1e7 then cut_exp_zero (Printf.sprintf "%.3e" f) else Printf.sprintf "%.2f" f in
     Printf.bprintf out "stats %s:\n" name;
     Printf.bprintf out
       "  num: %d, avg: %s, stddev: %s, median %d, min %d, max %d\n"
