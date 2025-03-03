@@ -2031,17 +2031,24 @@ module Test = struct
   let stat_max_lines = 20 (* maximum number of lines for a histogram *)
 
   let print_stat ((name,_), tbl) =
-    let avg = ref 0. in
+    let neg_avg_summands = ref [] in
+    let pos_avg_summands = ref [] in
     let num = ref 0 in
     let min_idx, max_idx =
       Hashtbl.fold
         (fun i res (m1,m2) ->
-           avg := !avg +. float_of_int (i * res);
+           let avg_summand = float_of_int (i * res) in
+           if avg_summand < 0.
+           then neg_avg_summands := avg_summand::!neg_avg_summands
+             else pos_avg_summands := avg_summand::!pos_avg_summands;
            num := !num + res;
            min i m1, max i m2)
         tbl (max_int,min_int)
     in
-    (* compute average *)
+    (* compute average, summing positive/negative separately by order of magnitude *)
+    let neg_avg_sums = List.sort Float.compare !neg_avg_summands |> fun xs -> List.fold_right (+.) xs 0. in
+    let pos_avg_sums = List.sort Float.compare !pos_avg_summands |> List.fold_left (+.) 0. in
+    let avg = ref (neg_avg_sums +. pos_avg_sums) in
     if !num > 0 then (
       avg := !avg /. float_of_int !num
     );
