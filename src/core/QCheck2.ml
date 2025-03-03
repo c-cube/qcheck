@@ -2100,10 +2100,11 @@ module Test = struct
          max_val := max !max_val new_count) tbl;
     (* print entries of the table, sorted by increasing index *)
     let out = Buffer.create 128 in
+    let fmt_float f = if f > 1e7 || f < -1e7 then Printf.sprintf "%.3e" f else Printf.sprintf "%.2f" f in
     Printf.bprintf out "stats %s:\n" name;
     Printf.bprintf out
-      "  num: %d, avg: %.2f, stddev: %.2f, median %d, min %d, max %d\n"
-      !num !avg stddev !median min_idx max_idx;
+      "  num: %d, avg: %s, stddev: %s, median %d, min %d, max %d\n"
+      !num (fmt_float !avg) (fmt_float stddev) !median min_idx max_idx;
     let indwidth =
       let str_width i = String.length (Printf.sprintf "%d" i) in
       List.map str_width [min_idx; max_idx; min_idx + bucket_size * hist_size] |> List.fold_left max min_int in
