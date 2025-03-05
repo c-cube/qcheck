@@ -60,6 +60,11 @@ module Overall = struct
     Test.make ~name:"should_fail_sort_id" ~count:10
       (small_list small_int) (fun l -> l = List.sort compare l)
 
+  let max_fail =
+    Test.make ~name:"max_fail" ~count:1000 ~max_fail:3
+      (list small_nat)
+      (fun l -> l = List.rev l)
+
   exception Error
 
   let error =
@@ -152,6 +157,7 @@ module Overall = struct
   let tests = [
     passing;
     failing;
+    max_fail;
     error;
     collect;
     stats;
