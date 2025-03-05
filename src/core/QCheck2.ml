@@ -884,7 +884,7 @@ module Gen = struct
     make_primitive
       ~gen:(fun st -> gen st |> Tree.root)
       ~shrink
-  
+
   let no_shrink (gen: 'a t) : 'a t = set_shrink (fun _ -> Seq.empty) gen
 
   let (let+) = (>|=)
@@ -1868,6 +1868,7 @@ module Test = struct
     state.step state.test.name state.test input Failure;
     state.cur_max_fail <- state.cur_max_fail - 1;
     R.fail state.res ~steps ~msg_l input;
+    if state.cur_max_fail > 0 then CR_continue else
     CR_yield state.res
 
   (* [check_state state] applies [state.test] repeatedly ([iter] times)
