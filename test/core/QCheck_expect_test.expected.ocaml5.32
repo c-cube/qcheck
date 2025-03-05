@@ -93,6 +93,24 @@ Test should_fail_sort_id failed (10 shrink steps):
 
 [1; 0]
 
+--- Failure --------------------------------------------------------------------
+
+Test max_fail failed (20 shrink steps):
+
+[0; 1]
+
+--- Failure --------------------------------------------------------------------
+
+Test max_fail failed (14 shrink steps):
+
+[0; 1]
+
+--- Failure --------------------------------------------------------------------
+
+Test max_fail failed (16 shrink steps):
+
+[1; 0]
+
 === Error ======================================================================
 
 Test should_error_raise_exn errored on (30 shrink steps):
@@ -1652,7 +1670,7 @@ stats dist:
    -3..  0: #######################################################        1631
 ================================================================================
 1 warning(s)
-failure (74 tests failed, 3 tests errored, ran 174 tests)
+failure (75 tests failed, 3 tests errored, ran 175 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
