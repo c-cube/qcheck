@@ -2,7 +2,7 @@
 
 ## NEXT RELEASE
 
-- ...
+- Restore `Test.make`'s `max_fail` parameter which was accidentally broken in 0.18
 
 ## 0.24
 
