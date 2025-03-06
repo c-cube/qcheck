@@ -6,6 +6,8 @@
 - Adjust `stats` computation of average and standard deviation to
   limit precision loss, print both using scientific notation, and
   workaround MinGW float printing to also pass expect tests
+- Fix dune snippets missing a language specifier in README.adoc
+  causing `asciidoc` to error
 
 ## 0.24
 
