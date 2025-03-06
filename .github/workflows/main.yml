@@ -32,10 +32,39 @@ jobs:
             ocaml-compiler: "4.12"
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v4
-    - uses: ocaml/setup-ocaml@v3
-      with:
-        ocaml-compiler: ${{ matrix.ocaml-compiler }}
-    - run: opam install . --deps-only --with-test
-    - run: opam exec -- dune build
-    - run: opam exec -- dune runtest
+      - uses: actions/checkout@v4
+      - uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+      - run: opam install . --deps-only --with-test
+      - run: opam exec -- dune build
+      - run: opam exec -- dune runtest
+
+  i386:
+    strategy:
+      fail-fast: false
+      matrix:
+        container-image:
+          - ocaml/opam:debian-12-ocaml-4.14
+          - ocaml/opam:debian-12-ocaml-5.3
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.container-image }}
+      options: --platform linux/i386
+    steps:
+      # GitHub insists on HOME=/github/home which clashes with the opam image setup
+      - name: Setup and init opam
+        run: |
+          sudo cp /usr/bin/opam-2.3 /usr/bin/opam
+          cd /home/opam && HOME=/home/opam opam init -y
+      - name: Checkout repository
+        # See https://github.com/actions/checkout/issues/334
+        uses: actions/checkout@v1
+      - name: Setup repo and install dependencies
+        run: |
+          sudo chown -R opam:opam .
+          HOME=/home/opam opam install . --deps-only --with-test
+      - name: Build
+        run: HOME=/home/opam opam exec -- dune build
+      - name: Run the testsuite
+        run: HOME=/home/opam opam exec -- dune runtest
