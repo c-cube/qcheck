@@ -3,6 +3,9 @@
 ## NEXT RELEASE
 
 - Restore `Test.make`'s `max_fail` parameter which was accidentally broken in 0.18
+- Adjust `stats` computation of average and standard deviation to
+  limit precision loss, print both using scientific notation, and
+  workaround MinGW float printing to also pass expect tests
 
 ## 0.24
 

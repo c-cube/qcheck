@@ -2031,17 +2031,24 @@ module Test = struct
   let stat_max_lines = 20 (* maximum number of lines for a histogram *)
 
   let print_stat ((name,_), tbl) =
-    let avg = ref 0. in
+    let neg_avg_summands = ref [] in
+    let pos_avg_summands = ref [] in
     let num = ref 0 in
     let min_idx, max_idx =
       Hashtbl.fold
         (fun i res (m1,m2) ->
-           avg := !avg +. float_of_int (i * res);
+           let avg_summand = float_of_int (i * res) in
+           if avg_summand < 0.
+           then neg_avg_summands := avg_summand::!neg_avg_summands
+             else pos_avg_summands := avg_summand::!pos_avg_summands;
            num := !num + res;
            min i m1, max i m2)
         tbl (max_int,min_int)
     in
-    (* compute average *)
+    (* compute average, summing positive/negative separately by order of magnitude *)
+    let neg_avg_sums = List.sort Float.compare !neg_avg_summands |> fun xs -> List.fold_right (+.) xs 0. in
+    let pos_avg_sums = List.sort Float.compare !pos_avg_summands |> List.fold_left (+.) 0. in
+    let avg = ref (neg_avg_sums +. pos_avg_sums) in
     if !num > 0 then (
       avg := !avg /. float_of_int !num
     );
@@ -2049,8 +2056,10 @@ module Test = struct
        https://en.wikipedia.org/wiki/Standard_deviation *)
     let stddev =
       Hashtbl.fold
-        (fun i res m -> m +. (float_of_int i -. !avg) ** 2. *. float_of_int res)
-        tbl 0.
+        (fun i res acc -> float_of_int res *. ((float_of_int i -. !avg) ** 2.) :: acc)
+        tbl []
+      |> List.sort Float.compare (* add summands in increasing order to preserve precision *)
+      |> List.fold_left (+.) 0.
       |> (fun s -> if !num>0 then s /. float_of_int !num else s)
       |> sqrt
     in
@@ -2091,10 +2100,17 @@ module Test = struct
          max_val := max !max_val new_count) tbl;
     (* print entries of the table, sorted by increasing index *)
     let out = Buffer.create 128 in
+    (* Windows workaround to avoid annoying exponent zero such as "1.859e+018" *)
+    let cut_exp_zero s =
+      match String.split_on_char '+' s with
+      | [signif;exponent] -> Printf.sprintf "%s+%i" signif (int_of_string exponent)
+      | _ -> failwith "cut_exp_zero failed to parse scientific notation " ^ s in
+    let fmt_float f =
+      if f > 1e7 || f < -1e7 then cut_exp_zero (Printf.sprintf "%.3e" f) else Printf.sprintf "%.2f" f in
     Printf.bprintf out "stats %s:\n" name;
     Printf.bprintf out
-      "  num: %d, avg: %.2f, stddev: %.2f, median %d, min %d, max %d\n"
-      !num !avg stddev !median min_idx max_idx;
+      "  num: %d, avg: %s, stddev: %s, median %d, min %d, max %d\n"
+      !num (fmt_float !avg) (fmt_float stddev) !median min_idx max_idx;
     let indwidth =
       let str_width i = String.length (Printf.sprintf "%d" i) in
       List.map str_width [min_idx; max_idx; min_idx + bucket_size * hist_size] |> List.fold_left max min_int in
