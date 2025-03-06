@@ -23,8 +23,6 @@ of interest:
 Jan Midtgaard (@jmid) has http://janmidtgaard.dk/quickcheck/index.html[a lecture] about
 property-based testing that relies on QCheck.
 
-toc::[]
-
 == Use
 
 See the documentation. I also wrote
