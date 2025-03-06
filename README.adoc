@@ -457,7 +457,7 @@ let _ = QCheck_runner.run_tests_main [test]
 
 with the following `dune` file:
 
-[source]
+[source,lisp]
 ----
 (test
  (name test)
@@ -487,7 +487,7 @@ let _ = QCheck_base_runner.run_tests_main [test]
 and adjust the `dune` file accordingly to use `qcheck-core` and its
 `qcheck-core.runner` sub-package:
 
-[source]
+[source,lisp]
 ----
 (test
  (name test)
