@@ -54,10 +54,11 @@ jobs:
       options: --platform linux/i386
     steps:
       # GitHub insists on HOME=/github/home which clashes with the opam image setup
-      - name: Setup and init opam
+      - name: Setup, init, and update opam
         run: |
           sudo cp /usr/bin/opam-2.3 /usr/bin/opam
           cd /home/opam && HOME=/home/opam opam init -y
+          git -C /home/opam/opam-repository pull origin master && HOME=/home/opam opam update -y
       - name: Checkout repository
         # See https://github.com/actions/checkout/issues/334
         uses: actions/checkout@v1
