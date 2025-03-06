@@ -24,6 +24,8 @@ jobs:
           - "5.2"
           - "5.3"
         exclude:
+          - os: macos-latest
+            ocaml-compiler: "4.08"
           - os: windows-latest
             ocaml-compiler: "4.08"
           - os: windows-latest
