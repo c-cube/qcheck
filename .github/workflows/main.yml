@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - macos-13
+          - macos-latest
           - ubuntu-latest
           - windows-latest
         ocaml-compiler:
@@ -22,7 +22,10 @@ jobs:
           - "4.14"
           - "5.0"
           - "5.2"
+          - "5.3"
         exclude:
+          - os: macos-latest
+            ocaml-compiler: "4.08"
           - os: windows-latest
             ocaml-compiler: "4.08"
           - os: windows-latest
