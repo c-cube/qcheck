@@ -325,6 +325,12 @@ module Gen : sig
   val graft_corners : 'a t -> 'a list -> unit -> 'a t
   (** [graft_corners gen l ()] makes a new generator that enumerates
       the corner cases in [l] and then behaves like [g].
+
+      Note that [graft_corners gen l ()] is stateful, meaning that once the
+      elements of [l] have been emitted, subsequent calls will not reproduce
+      them. It is therefore recommended that separate tests each use a fresh
+      generator.
+
       @since 0.6 *)
 
   val int_pos_corners : int list
