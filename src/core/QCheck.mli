@@ -646,7 +646,7 @@ module Gen : sig
   (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!pair}. *)
 
   val ( let* ) : 'a t -> ('a -> 'b t) -> 'b t
-  (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!bind}. *)
+  (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!(>>=)}. *)
 
   val ( and* ) : 'a t -> 'b t -> ('a * 'b) t
   (** {{: https://ocaml.org/manual/bindingops.html} Binding operator} alias for {!pair}. *)
