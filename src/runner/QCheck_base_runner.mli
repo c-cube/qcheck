@@ -25,7 +25,7 @@ all rights reserved.
     will be 0 if all tests pass, 1 otherwise.
 
     {!run_tests_main} can be used as a shortcut for that, also
-    featuring command-line parsing (using {!Arg}) to activate
+    featuring command-line parsing (using [Arg]) to activate
     verbose mode and others.
 *)
 
