@@ -34,7 +34,7 @@ content will appear. *)
 
     {1 Examples}
 
-    - "{!List.rev} is involutive" (the test passes so [check_exn] returns [()]):
+    - "[List.rev] is involutive" (the test passes so [check_exn] returns [()]):
 
     {[
       let test =
