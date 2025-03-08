@@ -1417,7 +1417,7 @@ val tup9 :
 
 val choose : 'a arbitrary list -> 'a arbitrary
 (** Choose among the given list of generators. The list must not
-    be empty; if it is Invalid_argument is raised. *)
+    be empty; if it is [Invalid_argument] is raised. *)
 
 val oneofl : ?print:'a Print.t -> ?collect:('a -> string) ->
   'a list -> 'a arbitrary
