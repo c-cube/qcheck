@@ -78,7 +78,7 @@ all rights reserved.
     ]}
 
     More complex and powerful combinators can be found in Gabriel Scherer's
-    {!Generator} module. Its documentation can be found
+    {{:https://github.com/gasche/random-generator}[Generator]} module. Its documentation can be found
     {{:http://gasche.github.io/random-generator/doc/Generator.html } here}.
 *)
 
