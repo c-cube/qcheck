@@ -3,7 +3,7 @@ open Ppxlib
 (** This module contains all generators from QCheck used to
     derive a type declaration *)
 
-(** {2. Version} *)
+(** {2 Version} *)
 
 type version = [`QCheck | `QCheck2]
 
@@ -28,11 +28,11 @@ let apply3 loc f a b c  = [%expr [%e f] [%e a] [%e b] [%e c]]
 
 let apply4 loc f a b c d = [%expr [%e f] [%e a] [%e b] [%e c] [%e d]]
 
-(** {2. Type} *)
+(** {2 Type} *)
 
 let ty version = Ldot (Ldot (Lident (to_module version), "Gen"), "t")
 
-(** {2. Primitive generators} *)
+(** {2 Primitive generators} *)
 
 let unit loc version = with_prefix_gen loc version "unit"
 
@@ -62,7 +62,7 @@ let array ~loc ~version e =
   let gen = with_prefix_gen loc version "array" in
   apply1 loc gen e
 
-(** {2. Generator combinators} *)
+(** {2 Generator combinators} *)
 
 let pure ~loc ~version e =
   let gen = with_prefix_gen loc version "pure" in
@@ -101,7 +101,7 @@ let fix ~loc ~version e =
 
 (** Observable generators *)
 module Observable = struct
-  (** {2. Primitive generators} *)
+  (** {2 Primitive generators} *)
   let unit loc version = with_prefix_obs loc version "unit"
 
   let int loc version = with_prefix_obs loc version "int"
@@ -130,7 +130,7 @@ module Observable = struct
     let obs = with_prefix_obs loc version "array" in
     apply1 loc obs e
 
-  (** {2. Observable combinators} *)
+  (** {2 Observable combinators} *)
   let pair ~loc ~version a b =
     let obs = with_prefix_obs loc version "pair" in
     apply2 loc obs a b
