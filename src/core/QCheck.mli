@@ -1906,7 +1906,7 @@ module Tuple : sig
     (** Alias to {!cons}. *)
 
     val (@->) : 'a Observable.t -> 'b obs -> ('a * 'b) obs
-    (** Alias to {!B_cons}. *)
+    (** Alias to {!o_cons}. *)
   end
 
   include module type of Infix
