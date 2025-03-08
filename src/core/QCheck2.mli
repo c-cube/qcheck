@@ -427,7 +427,7 @@ module Gen : sig
 
   val make_primitive : gen : (Random.State.t -> 'a) -> shrink : ('a -> 'a Seq.t) -> 'a t
   (** [make_primitive ~gen ~shrink] creates a generator from a function [gen] that creates
-      a random value (this function must only use the given {!Random.State.t} for randomness)
+      a random value (this function must only use the given [Random.State.t] for randomness)
       and a function [shrink] that, given a value [a], returns a lazy list of
       "smaller" values (used when a test fails).
 
