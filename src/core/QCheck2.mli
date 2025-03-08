@@ -2043,7 +2043,7 @@ val find_example_gen :
     - as shrinking is now integrated, several function arguments like [~shrink] or [~rev] have been removed: you
       can remove such reverse functions, they will no longer be necessary.
     - accessor functions like {!QCheck.gen} have been renamed to consistent names like {!get_gen}.
-    - {!QCheck.map_keep_input} has been removed: you can use {!map} directly.
+    - {!QCheck.map_keep_input} has been removed: you can use {!Gen.map} directly.
     - {!Gen.t} is no longer public, it is now abstract: it is recommended to use
       {{!section:Gen.composing_generators} generator composition} to make generators. {!Gen.make_primitive}
       was added to create generators with finer control (in particular of shrinking).
