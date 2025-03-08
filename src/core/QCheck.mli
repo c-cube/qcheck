@@ -1895,7 +1895,7 @@ module Tuple : sig
   val nil : unit t
   val cons : 'a -> 'b t -> ('a * 'b) t
 
-  (** How to observe a  {!'a t} *)
+  (** How to observe a  {{!t}['a t]} *)
   type 'a obs
 
   val o_nil : unit obs
