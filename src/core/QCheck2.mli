@@ -1287,16 +1287,16 @@ module Shrink : sig
   *)
 
   val int_towards : int -> int -> int Seq.t
-  (** {!number_towards} specialized to {!int}. *)
+  (** {!number_towards} specialized to [int]. *)
 
   val int32_towards : int32 -> int32 -> int32 Seq.t
-  (** {!number_towards} specialized to {!int32}. *)
+  (** {!number_towards} specialized to [int32]. *)
 
   val int64_towards : int64 -> int64 -> int64 Seq.t
-  (** {!number_towards} specialized to {!int64}. *)
+  (** {!number_towards} specialized to [int64]. *)
 
   val float_towards : float -> float -> float Seq.t
-  (** {!number_towards} specialized to {!float}.
+  (** {!number_towards} specialized to [float].
 
       There are various ways to shrink a float:
       - try removing floating digits, i.e. towards integer values
