@@ -64,14 +64,16 @@ chapter about property-based testing with QCheck].
 
 == Build and Install
 
-You can install qcheck via opam:
-
-    $ opam install qcheck
-
-The `qcheck` package is offered for compatibility.
-For a bare-bones installation you can use the `qcheck-core` package:
+You can install QCheck via `opam`:
 
     $ opam install qcheck-core
+
+This provides a minimal installation without needless dependencies.
+
+Install the bigger `qcheck` package instead for compatibility with qcheck.0.8
+and before:
+
+    $ opam install qcheck
 
 To build the library from source
 
