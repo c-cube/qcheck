@@ -34,7 +34,7 @@ content will appear. *)
 
     {1 Examples}
 
-    - "{!List.rev} is involutive" (the test passes so [check_exn] returns [()]):
+    - "[List.rev] is involutive" (the test passes so [check_exn] returns [()]):
 
     {[
       let test =
@@ -233,8 +233,18 @@ module Gen : sig
 
   val small_int_corners : unit -> int t
   (** As {!small_int}, but each newly created generator starts with
-    a list of corner cases before falling back on random generation. *)
+    a list of corner cases before falling back on random generation.
 
+    Note that [small_int_corners ()] is stateful, meaning that once the list of
+    corner cases has been emitted, subsequent calls will not reproduce them.
+    As a consequence, in the following example, the first test fails with a
+    counter example, whereas the second rerun does not:
+    {[
+      let gen = QCheck2.Gen.small_int_corners ()
+      let t = QCheck2.Test.make ~name:"never max_int" gen (fun i -> i <> max_int)
+      let _ = QCheck_base_runner.run_tests ~verbose:true [t;t]
+    ]}
+  *)
 
   val int32 : int32 t
   (** Generates uniform {!int32} values.
@@ -417,7 +427,7 @@ module Gen : sig
 
   val make_primitive : gen : (Random.State.t -> 'a) -> shrink : ('a -> 'a Seq.t) -> 'a t
   (** [make_primitive ~gen ~shrink] creates a generator from a function [gen] that creates
-      a random value (this function must only use the given {!Random.State.t} for randomness)
+      a random value (this function must only use the given [Random.State.t] for randomness)
       and a function [shrink] that, given a value [a], returns a lazy list of
       "smaller" values (used when a test fails).
 
@@ -624,6 +634,11 @@ module Gen : sig
       Does not shrink if the test fails on a grafted value.
       Shrinks towards [gen] otherwise.
 
+      Note that [graft_corners gen l ()] is stateful, meaning that once the
+      elements of [l] have been emitted, subsequent calls will not reproduce
+      them. It is therefore recommended that separate tests each use a fresh
+      generator.
+
       @since 0.6 *)
 
   val int_pos_corners : int list
@@ -691,7 +706,7 @@ module Gen : sig
   val option : ?ratio:float -> 'a t -> 'a option t
   (** [option gen] is an [option] generator that uses [gen] when generating [Some] values.
 
-      Shrinks towards {!None} then towards shrinks of [gen].
+      Shrinks towards [None] then towards shrinks of [gen].
 
       @param ratio a float between [0.] and [1.] indicating the probability of a sample to be [Some _]
       rather than [None] (value is [0.85]).
@@ -782,7 +797,7 @@ module Gen : sig
   val flatten_opt : 'a t option -> 'a option t
   (** Generate an option from an optional generator.
 
-      Shrinks towards {!None} then shrinks on the value.
+      Shrinks towards [None] then shrinks on the value.
 
       @since 0.13 *)
 
@@ -1272,16 +1287,16 @@ module Shrink : sig
   *)
 
   val int_towards : int -> int -> int Seq.t
-  (** {!number_towards} specialized to {!int}. *)
+  (** {!number_towards} specialized to [int]. *)
 
   val int32_towards : int32 -> int32 -> int32 Seq.t
-  (** {!number_towards} specialized to {!int32}. *)
+  (** {!number_towards} specialized to [int32]. *)
 
   val int64_towards : int64 -> int64 -> int64 Seq.t
-  (** {!number_towards} specialized to {!int64}. *)
+  (** {!number_towards} specialized to [int64]. *)
 
   val float_towards : float -> float -> float Seq.t
-  (** {!number_towards} specialized to {!float}.
+  (** {!number_towards} specialized to [float].
 
       There are various ways to shrink a float:
       - try removing floating digits, i.e. towards integer values
@@ -2027,8 +2042,8 @@ val find_example_gen :
     Below are the most common situations you may encounter:
     - as shrinking is now integrated, several function arguments like [~shrink] or [~rev] have been removed: you
       can remove such reverse functions, they will no longer be necessary.
-    - accessor functions like {!QCheck.gen} have been renamed to consistent names like {!get_gen}.
-    - {!QCheck.map_keep_input} has been removed: you can use {!map} directly.
+    - accessor functions like {!val:QCheck.gen} have been renamed to consistent names like {!Test.get_gen}.
+    - {!QCheck.map_keep_input} has been removed: you can use {!Gen.map} directly.
     - {!Gen.t} is no longer public, it is now abstract: it is recommended to use
       {{!section:Gen.composing_generators} generator composition} to make generators. {!Gen.make_primitive}
       was added to create generators with finer control (in particular of shrinking).

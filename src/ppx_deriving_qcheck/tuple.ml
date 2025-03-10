@@ -2,7 +2,7 @@ open Ppxlib
 module G = QCheck_generators
 module O = G.Observable
 
-(** {1. Tuple } *)
+(** {1 Tuple } *)
 
 (** This module implements nested tuples based on QCheck tuples generators (or observables):
     - [Gen.pair]
