@@ -211,7 +211,6 @@ let arbitrary_tree =
       (shrink_tree b >|= fun b' -> node a b')
   in
   QCheck.make tree_gen ~print:print_tree ~shrink:shrink_tree;;
-
 ----
 
 Here we write a generator of random trees, `tree_gen`, using
@@ -295,6 +294,58 @@ let test_mirror =
     (fun t -> List.rev (tree_infix t) = tree_infix (mirror_tree t));;
 
 QCheck_base_runner.run_tests [test_mirror];;
+----
+
+
+=== Integrated shrinking with `QCheck2`
+
+You may have noticed the `shrink_tree` function above to reduce tree
+counterexamples. With the newer `QCheck2` module, this is not needed
+as shrinking is built into its generators.
+
+For example, we can rewriting the above tree generator to `QCheck2` by just
+changing the `QCheck` occurrences to `QCheck2`:
+
+[source,OCaml]
+----
+type tree = Leaf of int | Node of tree * tree
+
+let leaf x = Leaf x
+let node x y = Node (x,y)
+
+let tree_gen = QCheck2.Gen.(sized @@ fix
+  (fun self n -> match n with
+    | 0 -> map leaf nat
+    | n ->
+      frequency
+        [1, map leaf nat;
+         2, map2 node (self (n/2)) (self (n/2))]
+    ));;
+
+(* generate a few trees with QCheck2, just to check what they look like: *)
+QCheck2.Gen.generate ~n:20 tree_gen;;
+----
+
+
+`QCheck2.Test.make` has a slightly different API than `QCheck.Test.make`,
+in that it accepts an optional `~print` argument and consumes generators
+directly built with `QCheck2.Gen`:
+
+[source,OCaml]
+----
+let rec print_tree = function
+  | Leaf i -> "Leaf " ^ (string_of_int i)
+  | Node (a,b) -> "Node (" ^ (print_tree a) ^ "," ^ (print_tree b) ^ ")";;
+
+let rec mirror_tree (t:tree) : tree = match t with
+  | Leaf _ -> t
+  | Node (a,b) -> node (mirror_tree b) (mirror_tree a);;
+
+let test_buggy =
+  QCheck2.Test.make ~name:"buggy_mirror" ~count:200 ~print:print_tree
+    tree_gen (fun t -> t = mirror_tree t);;
+
+QCheck_base_runner.run_tests [test_buggy];;
 ----
 
 
