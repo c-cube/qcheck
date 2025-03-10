@@ -95,7 +95,7 @@ and type the following to load QCheck:
 
 [source,OCaml]
 ----
-#require "qcheck";;
+#require "qcheck-core";;
 ----
 
 NOTE: alternatively, it is now possible to locally do: `dune utop src`
@@ -140,22 +140,24 @@ When we run this test we are presented with a counterexample:
 ----
 # QCheck.Test.check_exn test;;
 Exception:
-QCheck.Test.Test_fail ("my_buggy_test", ["[0; 1] (after 23 shrink steps)"]).
+test `my_buggy_test` failed on ≥ 1 cases: [0; 1] (after 11 shrink steps)
 ----
 
 In this case QCheck found the minimal counterexample `[0;1]` to the property
-`List.rev l = l` and it spent 23 steps shrinking it.
+`List.rev l = l` and it spent 11 steps shrinking it.
 
 
 Now, let's run the buggy test with a decent runner that will print the results
 nicely (the exact output will change at each run, because of the random seed):
 
 ----
-# QCheck_runner.run_tests [test];;
+# #require "qcheck-core.runner";;
+# QCheck_base_runner.run_tests [test];;
+random seed: 452768242
 
 --- Failure --------------------------------------------------------------------
 
-Test my_buggy_test failed (10 shrink steps):
+Test my_buggy_test failed (14 shrink steps):
 
 [0; 1]
 ================================================================================
@@ -163,15 +165,14 @@ failure (1 tests failed, 0 tests errored, ran 1 tests)
 - : int = 1
 ----
 
-For an even nicer output `QCheck_runner.run_tests` also accepts an optional
+For an even nicer output `QCheck_base_runner.run_tests` also accepts an optional
 parameter `~verbose:true`.
 
 
 === Mirrors and Trees
 
-`QCheck` provides many useful combinators to write
-generators, especially for recursive types, algebraic types,
-and tuples.
+`QCheck` provides many useful combinators to write generators, especially for
+recursive types, algebraic types, and tuples.
 
 Let's see how to generate random trees:
 
@@ -255,7 +256,7 @@ let test_buggy =
   QCheck.Test.make ~name:"buggy_mirror" ~count:200
     arbitrary_tree (fun t -> t = mirror_tree t);;
 
-QCheck_runner.run_tests [test_buggy];;
+QCheck_base_runner.run_tests [test_buggy];;
 ----
 
 This test fails with:
@@ -293,8 +294,7 @@ let test_mirror =
     arbitrary_tree
     (fun t -> List.rev (tree_infix t) = tree_infix (mirror_tree t));;
 
-QCheck_runner.run_tests [test_mirror];;
-
+QCheck_base_runner.run_tests [test_mirror];;
 ----
 
 
@@ -314,26 +314,34 @@ let test_hd_tl =
       assume (l <> []);
       l = List.hd l :: List.tl l));;
 
-QCheck_runner.run_tests [test_hd_tl];;
+QCheck_base_runner.run_tests [test_hd_tl];;
 ----
+
+By including a precondition QCheck will only run a property on input
+satisfying `assume`'s condition, potentially generating extra test inputs.
+
 
 === Long tests
 
 It is often useful to have two version of a testsuite: a short one that runs
-reasonably fast (so that it is effectively run each time a projet is built),
+reasonably fast (so that it is effectively run each time a project is built),
 and a long one that might be more exhaustive (but whose running time makes it
 impossible to run at each build). To that end, each test has a 'long' version.
 In the long version of a test, the number of tests to run is multiplied by
 the `~long_factor` argument of `QCheck.Test.make`.
 
+
 === Runners
 
-The module `QCheck_runner` defines several functions to run tests, including
-compatibility with `OUnit`.
+The module `QCheck_base_runner` defines several functions to run tests.
 The easiest one is probably `run_tests`, but if you write your tests in
 a separate executable you can also use `run_tests_main` which parses
 command line arguments and exits with `0` in case of success,
 or an error number otherwise.
+
+The module `QCheck_runner` from the `qcheck` opam package is similar, and
+includes compatibility with `OUnit`.
+
 
 === Integration within OUnit
 
@@ -362,11 +370,8 @@ let _ =
   run_test_tt_main
     ("tests" >:::
        List.map QCheck_ounit.to_ounit_test [passing; failing])
-
 ----
 
-NOTE: the package `qcheck` contains the module `QCheck_runner`
-which contains both custom runners and OUnit-based runners.
 
 === Integration within alcotest
 
@@ -389,7 +394,6 @@ let failing =
     QCheck.(list small_int)
     (fun l -> l = List.sort compare l);;
 
-
 let () =
   let suite =
     List.map QCheck_alcotest.to_alcotest
@@ -398,14 +402,14 @@ let () =
   Alcotest.run "my test" [
     "suite", suite
   ]
-
 ----
+
 
 === Integration within Rely
 
-https://reason-native.com/docs/rely/[Rely] is a Jest-inspire native reason testing framework.
-@reason-native/qcheck-rely is available via NPM and provides matchers for the easy
-use of qCheck within Rely.
+https://reason-native.com/docs/rely/[Rely] is a Jest-inspire native reason
+testing framework. @reason-native/qcheck-rely is available via NPM and provides
+matchers for the easy use of qCheck within Rely.
 
 [source, Reason]
 ----
@@ -441,9 +445,11 @@ describe("qcheck-rely", ({test}) => {
 
 ----
 
-=== Deriver
 
-A ppx_deriver is provided to derive QCheck generators from a type declaration.
+=== Deriving generators
+
+The `ppx_deriving_qcheck` opam package provides a ppx_deriver to derive QCheck
+generators from a type declaration:
 
 [source,OCaml]
 ----
@@ -457,7 +463,37 @@ for more information and examples.
 
 === Usage from dune
 
-We can use the buggy test from above using the `qcheck` opam package:
+We can use the buggy test from above using the `qcheck-core` opam package:
+
+[source,OCaml]
+----
+(* test.ml *)
+let test =
+  QCheck.Test.make ~count:1000 ~name:"my_buggy_test"
+   QCheck.(list small_nat)
+   (fun l -> List.rev l = l)
+
+let _ = QCheck_base_runner.run_tests_main [test]
+----
+
+with the following `dune` file (note the `qcheck-core.runner` sub-package):
+
+[source,lisp]
+----
+(test
+ (name test)
+ (modules test)
+ (libraries qcheck-core qcheck-core.runner)
+)
+----
+
+and run it with `dune exec ./test.exe` or `dune runtest`.
+
+We recommend using the `qcheck-core` package as it has a minimal set of
+dependencies and also avoids problems with using
+`(implicit_transitive_deps false)` in dune.
+
+To instead use the `qcheck` opam package and its included `QCheck_runner`:
 
 [source,OCaml]
 ----
@@ -478,35 +514,5 @@ with the following `dune` file:
  (name test)
  (modules test)
  (libraries qcheck)
-)
-----
-
-and run it with `dune exec ./test.exe` or `dune runtest`.
-
-
-To keep things minimal or if you are using `(implicit_transitive_deps false)`
-in dune, you may want to use the `qcheck-core` package instead. To do so,
-we have to adapt the last line of the example to use `QCheck_base_runner`:
-
-[source,OCaml]
-----
-(* test.ml *)
-let test =
-  QCheck.Test.make ~count:1000 ~name:"my_buggy_test"
-   QCheck.(list small_nat)
-   (fun l -> List.rev l = l)
-
-let _ = QCheck_base_runner.run_tests_main [test]
-----
-
-and adjust the `dune` file accordingly to use `qcheck-core` and its
-`qcheck-core.runner` sub-package:
-
-[source,lisp]
-----
-(test
- (name test)
- (modules test)
- (libraries qcheck-core qcheck-core.runner)
 )
 ----
