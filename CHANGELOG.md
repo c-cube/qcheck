@@ -8,6 +8,8 @@
   workaround MinGW float printing to also pass expect tests
 - Fix dune snippets missing a language specifier in README.adoc
   causing `asciidoc` to error
+- Add a note to `QCheck{,2.Gen}.small_int_corners` and `QCheck{,2}.Gen.graft_corners`
+  about internal state, and fix a range of documentation reference warnings
 
 ## 0.24
 
