@@ -13,14 +13,10 @@ image::https://github.com/c-cube/qcheck/actions/workflows/main.yml/badge.svg[alt
 
 - `qcheck-core` - provides the core property-based testing API and depends only
   on `unix` and `dune`.
-  * It contains the modules `QCheck` and `QCheck2` and a `QCheck_base_runner`
-    module with our custom runners.
 - `qcheck-ounit` - provides an integration layer for https://github.com/gildor478/ounit[`OUnit`]
-- `qcheck-alcotest` - provides an integration layer with https://github.com/mirage/alcotest[`alcotest`]
+- `qcheck-alcotest` - provides an integration layer for https://github.com/mirage/alcotest[`alcotest`]
 - `qcheck` - provides a compatibility API with older versions of `qcheck`,
   using both `qcheck-core` and `qcheck-ounit`.
-  * It provides `QCheck_runner` which is similar to older versions and contains
-    both custom and `OUnit`-based runners.
 - `ppx_deriving_qcheck` - provides a preprocessor to automatically derive
    generators
 
@@ -48,7 +44,7 @@ but was since made standalone again.
 
 The documentation for the 5 opam packages https://c-cube.github.io/qcheck/[is available here].
 
-The <<examples>> below offer a brief introduction to the
+The section <<examples>> below offer a brief introduction to the
 library. These examples are based on an earlier
 https://cedeela.fr/quickcheck-for-ocaml[blog post by Simon] that also
 discusses some design choices; however, be warned that the API changed
@@ -303,7 +299,7 @@ You may have noticed the `shrink_tree` function above to reduce tree
 counterexamples. With the newer `QCheck2` module, this is not needed
 as shrinking is built into its generators.
 
-For example, we can rewriting the above tree generator to `QCheck2` by just
+For example, we can rewrite the above tree generator to `QCheck2` by just
 changing the `QCheck` occurrences to `QCheck2`:
 
 [source,OCaml]
