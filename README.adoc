@@ -3,34 +3,64 @@
 :toclevels: 4
 :source-highlighter: pygments
 
-QuickCheck inspired property-based testing for OCaml, and combinators to
-generate random values to run tests on.
+QuickCheck inspired property-based testing for OCaml.
 
 image::https://github.com/c-cube/qcheck/actions/workflows/main.yml/badge.svg[alt="build", link=https://github.com/c-cube/qcheck/actions/workflows/main.yml]
 
+== Overview
 
-The documentation can be found https://c-cube.github.io/qcheck/[here].
-This library spent some time in
-https://github.com/vincent-hugot/iTeML[qtest], but is now
-standalone again!
+`QCheck` consists of a collection of `opam` packages and extensions:
 
-To construct advanced random generators, the following libraries might be
+- `qcheck-core` - provides the core property-based testing API and depends only
+  on `unix` and `dune`.
+  * It contains the modules `QCheck` and `QCheck2` and a `QCheck_base_runner`
+    module with our custom runners.
+- `qcheck-ounit` - provides an integration layer for https://github.com/gildor478/ounit[`OUnit`]
+- `qcheck-alcotest` - provides an integration layer with https://github.com/mirage/alcotest[`alcotest`]
+- `qcheck` - provides a compatibility API with older versions of `qcheck`,
+  using both `qcheck-core` and `qcheck-ounit`.
+  * It provides `QCheck_runner` which is similar to older versions and contains
+    both custom and `OUnit`-based runners.
+- `ppx_deriving_qcheck` - provides a preprocessor to automatically derive
+   generators
+
+In addition, the https://github.com/ocaml-multicore/multicoretests[`multicoretests`]
+repository offers
+
+- `qcheck-stm` - for running sequential and parallel model-based tests
+- `qcheck-lin` - for testing an API for sequential consistency
+- `qcheck-multicoretests-util` - a small library of utility extensions, such as
+  properties with time outs
+
+To construct advanced random generators, the following libraries might also be
 of interest:
 
-- https://gitlab.inria.fr/fpottier/feat/[Feat]
-- @gasche's https://github.com/gasche/random-generator/[generator library]
+- https://gitlab.inria.fr/fpottier/feat/[`feat`] - a library for functional
+  enumeration and sampling of algebraic data types
+- https://github.com/gasche/random-generator/[`random-generator`] - a library
+  experimenting with APIs for random generation
 
-Jan Midtgaard (@jmid) has http://janmidtgaard.dk/quickcheck/index.html[a lecture] about
-property-based testing that relies on QCheck.
+Earlier `qcheck` spent some time in https://github.com/vincent-hugot/iTeML[qtest],
+but was since made standalone again.
 
-== Use
 
-See the documentation. I also wrote
-https://cedeela.fr/quickcheck-for-ocaml[a blog post] that explains
-how to use it and some design choices; however, be warned that the API
-changed in lots of small ways (in the right direction, I hope) so the code
-will not work any more.
-<<examples>> is an updated version of the blog post's examples.
+== Documentation
+
+The documentation for the 5 opam packages https://c-cube.github.io/qcheck/[is available here].
+
+The <<examples>> below offer a brief introduction to the
+library. These examples are based on an earlier
+https://cedeela.fr/quickcheck-for-ocaml[blog post by Simon] that also
+discusses some design choices; however, be warned that the API changed
+since then, so the blog post code will not work as is.
+
+Jan's http://janmidtgaard.dk/quickcheck/index.html[course material on
+ FP and property-based testing] also offers an introduction to QCheck.
+
+The OCaml textbook from Cornell University also contains
+https://cs3110.github.io/textbook/chapters/correctness/randomized.html[a
+chapter about property-based testing with QCheck].
+
 
 == Build and Install
 
@@ -46,6 +76,9 @@ For a bare-bones installation you can use the `qcheck-core` package:
 To build the library from source
 
     $ make
+
+Normally, for contributors, `opam pin https://github.com/c-cube/qcheck`
+will pin the 5 opam packages from this repository.
 
 
 == License
@@ -128,14 +161,11 @@ failure (1 tests failed, 0 tests errored, ran 1 tests)
 - : int = 1
 ----
 
-
 For an even nicer output `QCheck_runner.run_tests` also accepts an optional
 parameter `~verbose:true`.
 
 
-
 === Mirrors and Trees
-
 
 `QCheck` provides many useful combinators to write
 generators, especially for recursive types, algebraic types,
@@ -370,6 +400,7 @@ let () =
 ----
 
 === Integration within Rely
+
 https://reason-native.com/docs/rely/[Rely] is a Jest-inspire native reason testing framework.
 @reason-native/qcheck-rely is available via NPM and provides matchers for the easy
 use of qCheck within Rely.
@@ -420,22 +451,6 @@ type tree = Leaf of int | Node of tree * tree
 
 See the according https://github.com/c-cube/qcheck/tree/master/src/ppx_deriving_qcheck/[README]
 for more information and examples.
-
-=== Compatibility notes
-
-Starting with 0.9, the library is split into several components:
-
-- `qcheck-core` depends only on unix and bytes. It contains the module
-  `QCheck` and a `QCheck_base_runner` module with our custom runners.
-- `qcheck-ounit` provides an integration layer for `OUnit`
-- `qcheck` provides a compatibility API with older versions of qcheck,
-  using both `qcheck-core` and `qcheck-ounit`.
-  It provides `QCheck_runner` which is similar to older versions and contains
-  both custom and Ounit-based runners.
-- `qcheck-alcotest` provides an integration layer with `alcotest`
-
-Normally, for contributors,
-`opam pin https://github.com/c-cube/qcheck` will pin all these packages.
 
 
 === Usage from dune
