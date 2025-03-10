@@ -10,6 +10,8 @@
   causing `asciidoc` to error
 - Add a note to `QCheck{,2.Gen}.small_int_corners` and `QCheck{,2}.Gen.graft_corners`
   about internal state, and fix a range of documentation reference warnings
+- Reorganize and polish the `README`, rewrite it to use `qcheck-core`, and add
+  a `QCheck2` integrated shrinking example
 
 ## 0.24
 
