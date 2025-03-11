@@ -3,49 +3,80 @@
 :toclevels: 4
 :source-highlighter: pygments
 
-QuickCheck inspired property-based testing for OCaml, and combinators to
-generate random values to run tests on.
+QuickCheck inspired property-based testing for OCaml.
 
 image::https://github.com/c-cube/qcheck/actions/workflows/main.yml/badge.svg[alt="build", link=https://github.com/c-cube/qcheck/actions/workflows/main.yml]
 
+== Overview
 
-The documentation can be found https://c-cube.github.io/qcheck/[here].
-This library spent some time in
-https://github.com/vincent-hugot/iTeML[qtest], but is now
-standalone again!
+`QCheck` consists of a collection of `opam` packages and extensions:
 
-To construct advanced random generators, the following libraries might be
+- `qcheck-core` - provides the core property-based testing API and depends only
+  on `unix` and `dune`.
+- `qcheck-ounit` - provides an integration layer for https://github.com/gildor478/ounit[`OUnit`]
+- `qcheck-alcotest` - provides an integration layer for https://github.com/mirage/alcotest[`alcotest`]
+- `qcheck` - provides a compatibility API with older versions of `qcheck`,
+  using both `qcheck-core` and `qcheck-ounit`.
+- `ppx_deriving_qcheck` - provides a preprocessor to automatically derive
+   generators
+
+In addition, the https://github.com/ocaml-multicore/multicoretests[`multicoretests`]
+repository offers
+
+- `qcheck-stm` - for running sequential and parallel model-based tests
+- `qcheck-lin` - for testing an API for sequential consistency
+- `qcheck-multicoretests-util` - a small library of utility extensions, such as
+  properties with time outs
+
+To construct advanced random generators, the following libraries might also be
 of interest:
 
-- https://gitlab.inria.fr/fpottier/feat/[Feat]
-- @gasche's https://github.com/gasche/random-generator/[generator library]
+- https://gitlab.inria.fr/fpottier/feat/[`feat`] - a library for functional
+  enumeration and sampling of algebraic data types
+- https://github.com/gasche/random-generator/[`random-generator`] - a library
+  experimenting with APIs for random generation
 
-Jan Midtgaard (@jmid) has http://janmidtgaard.dk/quickcheck/index.html[a lecture] about
-property-based testing that relies on QCheck.
+Earlier `qcheck` spent some time in https://github.com/vincent-hugot/iTeML[qtest],
+but was since made standalone again.
 
-== Use
 
-See the documentation. I also wrote
-https://cedeela.fr/quickcheck-for-ocaml[a blog post] that explains
-how to use it and some design choices; however, be warned that the API
-changed in lots of small ways (in the right direction, I hope) so the code
-will not work any more.
-<<examples>> is an updated version of the blog post's examples.
+== Documentation
+
+The documentation for the 5 opam packages https://c-cube.github.io/qcheck/[is available here].
+
+The section <<examples>> below offer a brief introduction to the
+library. These examples are based on an earlier
+https://cedeela.fr/quickcheck-for-ocaml[blog post by Simon] that also
+discusses some design choices; however, be warned that the API changed
+since then, so the blog post code will not work as is.
+
+Jan's http://janmidtgaard.dk/quickcheck/index.html[course material on
+ FP and property-based testing] also offers an introduction to QCheck.
+
+The OCaml textbook from Cornell University also contains
+https://cs3110.github.io/textbook/chapters/correctness/randomized.html[a
+chapter about property-based testing with QCheck].
+
 
 == Build and Install
 
-You can install qcheck via opam:
-
-    $ opam install qcheck
-
-The `qcheck` package is offered for compatibility.
-For a bare-bones installation you can use the `qcheck-core` package:
+You can install QCheck via `opam`:
 
     $ opam install qcheck-core
+
+This provides a minimal installation without needless dependencies.
+
+Install the bigger `qcheck` package instead for compatibility with qcheck.0.8
+and before:
+
+    $ opam install qcheck
 
 To build the library from source
 
     $ make
+
+Normally, for contributors, `opam pin https://github.com/c-cube/qcheck`
+will pin the 5 opam packages from this repository.
 
 
 == License
@@ -60,7 +91,7 @@ and type the following to load QCheck:
 
 [source,OCaml]
 ----
-#require "qcheck";;
+#require "qcheck-core";;
 ----
 
 NOTE: alternatively, it is now possible to locally do: `dune utop src`
@@ -105,22 +136,24 @@ When we run this test we are presented with a counterexample:
 ----
 # QCheck.Test.check_exn test;;
 Exception:
-QCheck.Test.Test_fail ("my_buggy_test", ["[0; 1] (after 23 shrink steps)"]).
+test `my_buggy_test` failed on ≥ 1 cases: [0; 1] (after 11 shrink steps)
 ----
 
 In this case QCheck found the minimal counterexample `[0;1]` to the property
-`List.rev l = l` and it spent 23 steps shrinking it.
+`List.rev l = l` and it spent 11 steps shrinking it.
 
 
 Now, let's run the buggy test with a decent runner that will print the results
 nicely (the exact output will change at each run, because of the random seed):
 
 ----
-# QCheck_runner.run_tests [test];;
+# #require "qcheck-core.runner";;
+# QCheck_base_runner.run_tests [test];;
+random seed: 452768242
 
 --- Failure --------------------------------------------------------------------
 
-Test my_buggy_test failed (10 shrink steps):
+Test my_buggy_test failed (14 shrink steps):
 
 [0; 1]
 ================================================================================
@@ -128,18 +161,14 @@ failure (1 tests failed, 0 tests errored, ran 1 tests)
 - : int = 1
 ----
 
-
-For an even nicer output `QCheck_runner.run_tests` also accepts an optional
+For an even nicer output `QCheck_base_runner.run_tests` also accepts an optional
 parameter `~verbose:true`.
-
 
 
 === Mirrors and Trees
 
-
-`QCheck` provides many useful combinators to write
-generators, especially for recursive types, algebraic types,
-and tuples.
+`QCheck` provides many useful combinators to write generators, especially for
+recursive types, algebraic types, and tuples.
 
 Let's see how to generate random trees:
 
@@ -178,7 +207,6 @@ let arbitrary_tree =
       (shrink_tree b >|= fun b' -> node a b')
   in
   QCheck.make tree_gen ~print:print_tree ~shrink:shrink_tree;;
-
 ----
 
 Here we write a generator of random trees, `tree_gen`, using
@@ -223,7 +251,7 @@ let test_buggy =
   QCheck.Test.make ~name:"buggy_mirror" ~count:200
     arbitrary_tree (fun t -> t = mirror_tree t);;
 
-QCheck_runner.run_tests [test_buggy];;
+QCheck_base_runner.run_tests [test_buggy];;
 ----
 
 This test fails with:
@@ -261,8 +289,59 @@ let test_mirror =
     arbitrary_tree
     (fun t -> List.rev (tree_infix t) = tree_infix (mirror_tree t));;
 
-QCheck_runner.run_tests [test_mirror];;
+QCheck_base_runner.run_tests [test_mirror];;
+----
 
+
+=== Integrated shrinking with `QCheck2`
+
+You may have noticed the `shrink_tree` function above to reduce tree
+counterexamples. With the newer `QCheck2` module, this is not needed
+as shrinking is built into its generators.
+
+For example, we can rewrite the above tree generator to `QCheck2` by just
+changing the `QCheck` occurrences to `QCheck2`:
+
+[source,OCaml]
+----
+type tree = Leaf of int | Node of tree * tree
+
+let leaf x = Leaf x
+let node x y = Node (x,y)
+
+let tree_gen = QCheck2.Gen.(sized @@ fix
+  (fun self n -> match n with
+    | 0 -> map leaf nat
+    | n ->
+      frequency
+        [1, map leaf nat;
+         2, map2 node (self (n/2)) (self (n/2))]
+    ));;
+
+(* generate a few trees with QCheck2, just to check what they look like: *)
+QCheck2.Gen.generate ~n:20 tree_gen;;
+----
+
+
+`QCheck2.Test.make` has a slightly different API than `QCheck.Test.make`,
+in that it accepts an optional `~print` argument and consumes generators
+directly built with `QCheck2.Gen`:
+
+[source,OCaml]
+----
+let rec print_tree = function
+  | Leaf i -> "Leaf " ^ (string_of_int i)
+  | Node (a,b) -> "Node (" ^ (print_tree a) ^ "," ^ (print_tree b) ^ ")";;
+
+let rec mirror_tree (t:tree) : tree = match t with
+  | Leaf _ -> t
+  | Node (a,b) -> node (mirror_tree b) (mirror_tree a);;
+
+let test_buggy =
+  QCheck2.Test.make ~name:"buggy_mirror" ~count:200 ~print:print_tree
+    tree_gen (fun t -> t = mirror_tree t);;
+
+QCheck_base_runner.run_tests [test_buggy];;
 ----
 
 
@@ -282,26 +361,34 @@ let test_hd_tl =
       assume (l <> []);
       l = List.hd l :: List.tl l));;
 
-QCheck_runner.run_tests [test_hd_tl];;
+QCheck_base_runner.run_tests [test_hd_tl];;
 ----
+
+By including a precondition QCheck will only run a property on input
+satisfying `assume`'s condition, potentially generating extra test inputs.
+
 
 === Long tests
 
 It is often useful to have two version of a testsuite: a short one that runs
-reasonably fast (so that it is effectively run each time a projet is built),
+reasonably fast (so that it is effectively run each time a project is built),
 and a long one that might be more exhaustive (but whose running time makes it
 impossible to run at each build). To that end, each test has a 'long' version.
 In the long version of a test, the number of tests to run is multiplied by
 the `~long_factor` argument of `QCheck.Test.make`.
 
+
 === Runners
 
-The module `QCheck_runner` defines several functions to run tests, including
-compatibility with `OUnit`.
+The module `QCheck_base_runner` defines several functions to run tests.
 The easiest one is probably `run_tests`, but if you write your tests in
 a separate executable you can also use `run_tests_main` which parses
 command line arguments and exits with `0` in case of success,
 or an error number otherwise.
+
+The module `QCheck_runner` from the `qcheck` opam package is similar, and
+includes compatibility with `OUnit`.
+
 
 === Integration within OUnit
 
@@ -330,11 +417,8 @@ let _ =
   run_test_tt_main
     ("tests" >:::
        List.map QCheck_ounit.to_ounit_test [passing; failing])
-
 ----
 
-NOTE: the package `qcheck` contains the module `QCheck_runner`
-which contains both custom runners and OUnit-based runners.
 
 === Integration within alcotest
 
@@ -357,7 +441,6 @@ let failing =
     QCheck.(list small_int)
     (fun l -> l = List.sort compare l);;
 
-
 let () =
   let suite =
     List.map QCheck_alcotest.to_alcotest
@@ -366,13 +449,14 @@ let () =
   Alcotest.run "my test" [
     "suite", suite
   ]
-
 ----
 
+
 === Integration within Rely
-https://reason-native.com/docs/rely/[Rely] is a Jest-inspire native reason testing framework.
-@reason-native/qcheck-rely is available via NPM and provides matchers for the easy
-use of qCheck within Rely.
+
+https://reason-native.com/docs/rely/[Rely] is a Jest-inspire native reason
+testing framework. @reason-native/qcheck-rely is available via NPM and provides
+matchers for the easy use of qCheck within Rely.
 
 [source, Reason]
 ----
@@ -408,9 +492,11 @@ describe("qcheck-rely", ({test}) => {
 
 ----
 
-=== Deriver
 
-A ppx_deriver is provided to derive QCheck generators from a type declaration.
+=== Deriving generators
+
+The `ppx_deriving_qcheck` opam package provides a ppx_deriver to derive QCheck
+generators from a type declaration:
 
 [source,OCaml]
 ----
@@ -421,26 +507,40 @@ type tree = Leaf of int | Node of tree * tree
 See the according https://github.com/c-cube/qcheck/tree/master/src/ppx_deriving_qcheck/[README]
 for more information and examples.
 
-=== Compatibility notes
-
-Starting with 0.9, the library is split into several components:
-
-- `qcheck-core` depends only on unix and bytes. It contains the module
-  `QCheck` and a `QCheck_base_runner` module with our custom runners.
-- `qcheck-ounit` provides an integration layer for `OUnit`
-- `qcheck` provides a compatibility API with older versions of qcheck,
-  using both `qcheck-core` and `qcheck-ounit`.
-  It provides `QCheck_runner` which is similar to older versions and contains
-  both custom and Ounit-based runners.
-- `qcheck-alcotest` provides an integration layer with `alcotest`
-
-Normally, for contributors,
-`opam pin https://github.com/c-cube/qcheck` will pin all these packages.
-
 
 === Usage from dune
 
-We can use the buggy test from above using the `qcheck` opam package:
+We can use the buggy test from above using the `qcheck-core` opam package:
+
+[source,OCaml]
+----
+(* test.ml *)
+let test =
+  QCheck.Test.make ~count:1000 ~name:"my_buggy_test"
+   QCheck.(list small_nat)
+   (fun l -> List.rev l = l)
+
+let _ = QCheck_base_runner.run_tests_main [test]
+----
+
+with the following `dune` file (note the `qcheck-core.runner` sub-package):
+
+[source,lisp]
+----
+(test
+ (name test)
+ (modules test)
+ (libraries qcheck-core qcheck-core.runner)
+)
+----
+
+and run it with `dune exec ./test.exe` or `dune runtest`.
+
+We recommend using the `qcheck-core` package as it has a minimal set of
+dependencies and also avoids problems with using
+`(implicit_transitive_deps false)` in dune.
+
+To instead use the `qcheck` opam package and its included `QCheck_runner`:
 
 [source,OCaml]
 ----
@@ -461,35 +561,5 @@ with the following `dune` file:
  (name test)
  (modules test)
  (libraries qcheck)
-)
-----
-
-and run it with `dune exec ./test.exe` or `dune runtest`.
-
-
-To keep things minimal or if you are using `(implicit_transitive_deps false)`
-in dune, you may want to use the `qcheck-core` package instead. To do so,
-we have to adapt the last line of the example to use `QCheck_base_runner`:
-
-[source,OCaml]
-----
-(* test.ml *)
-let test =
-  QCheck.Test.make ~count:1000 ~name:"my_buggy_test"
-   QCheck.(list small_nat)
-   (fun l -> List.rev l = l)
-
-let _ = QCheck_base_runner.run_tests_main [test]
-----
-
-and adjust the `dune` file accordingly to use `qcheck-core` and its
-`qcheck-core.runner` sub-package:
-
-[source,lisp]
-----
-(test
- (name test)
- (modules test)
- (libraries qcheck-core qcheck-core.runner)
 )
 ----
