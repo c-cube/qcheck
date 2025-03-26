@@ -70,7 +70,7 @@ val get_time_between_msg : unit -> float
     @since 0.9 *)
 
 val set_time_between_msg : float -> unit
-(** Set the minimum tiem between messages.
+(** Set the minimum time between messages.
     @since 0.9 *)
 
 
