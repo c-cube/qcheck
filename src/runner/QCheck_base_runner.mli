@@ -6,9 +6,9 @@ all rights reserved.
 
 (** {1 Runners for Tests}
 
-    Once you built some tests using {!QCheck2.Test.make}, you need to
-    run the tests. This module contains several {b runners},
-    which are designed to run every test and report the result.
+    Once you have built tests using {!QCheck.Test.make} or {!QCheck2.Test.make},
+    you need to run them. This module contains several {b runners}, which are
+    designed to run every test and report the result.
 
     By default, you can use {!run_tests} in a test program as follows:
     {[
