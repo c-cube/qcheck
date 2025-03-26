@@ -12,6 +12,7 @@
   about internal state, and fix a range of documentation reference warnings
 - Reorganize and polish the `README`, rewrite it to use `qcheck-core`, and add
   a `QCheck2` integrated shrinking example
+- Document `QCHECK_MSG_INTERVAL` introduced in 0.20
 
 ## 0.24
 
