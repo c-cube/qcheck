@@ -50,6 +50,21 @@ val set_verbose : bool -> unit
 val set_long_tests : bool -> unit
 (** Change the value of [long_tests ()] *)
 
+
+(** {2 Console message printing}
+
+    In verbose mode, by default [QCheck_base_runner] prints frequent sub-second
+    messages suitable for an interactive console test run. This behaviour can be
+    changed by the environment variable [QCHECK_MSG_INTERVAL]. Intervals are
+    given in seconds and can also be decimal numbers. For example, setting
+    {[
+       QCHECK_MSG_INTERVAL=7.5
+    ]}
+    will only print a console message every 7.5 seconds. This feature can be
+    useful in a CI context, where updates are printed on consecutive lines and
+    one may want to avoid overflowing the CI log files with too many lines.
+*)
+
 val get_time_between_msg : unit -> float
 (** Get the minimum time to wait between printing messages.
     @since 0.9 *)
