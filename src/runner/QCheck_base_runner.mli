@@ -6,9 +6,9 @@ all rights reserved.
 
 (** {1 Runners for Tests}
 
-    Once you built some tests using {!QCheck2.Test.make}, you need to
-    run the tests. This module contains several {b runners},
-    which are designed to run every test and report the result.
+    Once you have built tests using {!QCheck.Test.make} or {!QCheck2.Test.make},
+    you need to run them. This module contains several {b runners}, which are
+    designed to run every test and report the result.
 
     By default, you can use {!run_tests} in a test program as follows:
     {[
@@ -50,12 +50,27 @@ val set_verbose : bool -> unit
 val set_long_tests : bool -> unit
 (** Change the value of [long_tests ()] *)
 
+
+(** {2 Console message printing}
+
+    In verbose mode, by default [QCheck_base_runner] prints frequent sub-second
+    messages suitable for an interactive console test run. This behaviour can be
+    changed by the environment variable [QCHECK_MSG_INTERVAL]. Intervals are
+    given in seconds and can also be decimal numbers. For example, setting
+    {[
+       QCHECK_MSG_INTERVAL=7.5
+    ]}
+    will only print a console message every 7.5 seconds. This feature can be
+    useful in a CI context, where updates are printed on consecutive lines and
+    one may want to avoid overflowing the CI log files with too many lines.
+*)
+
 val get_time_between_msg : unit -> float
-(** Get the minimum time to wait between printing messages.
+(** Get the minimum time (in seconds) to wait between printing messages.
     @since 0.9 *)
 
 val set_time_between_msg : float -> unit
-(** Set the minimum tiem between messages.
+(** Set the minimum time (in seconds) between messages.
     @since 0.9 *)
 
 
