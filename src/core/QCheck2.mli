@@ -924,13 +924,13 @@ module Gen : sig
       {b and the values are unrelated}. A good rule of thumb is: if the values could be generated
       in parallel, then you can use an applicative function to combine those generators.
 
-      Note that while [map2] and [map3] are provided, you can use functions with more than 3
-      arguments (and that is where the [<*>] operator alias really shines):
+      Note that while [map2], [map3], [map4], and [map5] are provided, you can use functions
+      with more than 5 arguments (this is where the [<*>] operator alias shines):
 
       {[
         val complex_function : bool -> string -> int -> string -> int64 -> some_big_type
 
-        (* Verbose version, using map3 and ap *)
+        (* Verbose version, using map3 and ap to mimic map5 *)
         let big_type_gen : some_big_type Gen.t = Gen.(
             ap (
               ap (
@@ -1020,6 +1020,20 @@ module Gen : sig
       to each triple of generated elements.
 
       Shrinks on [gen1], then [gen2], and then [gen3].
+  *)
+
+  val map4 : ('a -> 'b -> 'c -> 'd -> 'e) -> 'a t -> 'b t -> 'c t -> 'd t -> 'e t
+  (** [map4 f gen1 gen2 gen3 gen4] transforms four generators [gen1], [gen2], [gen3],
+      and [gen4] by applying [f] to each quadruple of generated elements.
+
+      Shrinks on [gen1], then [gen2], [gen3], and then [gen4].
+  *)
+
+  val map5 : ('a -> 'b -> 'c -> 'd -> 'e -> 'f) -> 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t
+  (** [map5 f gen1 gen2 gen3 gen4 gen5] transforms five generators [gen1], [gen2], [gen3], [gen4],
+      and [gen5] by applying [f] to each quintuple of generated elements.
+
+      Shrinks on [gen1], then [gen2], [gen3], [gen4], and then [gen5].
   *)
 
   val ap : ('a -> 'b) t -> 'a t -> 'b t
