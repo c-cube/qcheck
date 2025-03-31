@@ -330,9 +330,19 @@ module Gen = struct
   let liftA3 (f : 'a -> 'b -> 'c -> 'd) (a : 'a t) (b : 'b t) (c : 'c t) : 'd t =
     (a >|= f) <*> b <*> c
 
+  let liftA4 (f : 'a -> 'b -> 'c -> 'd -> 'e) (a : 'a t) (b : 'b t) (c : 'c t) (d : 'd t) : 'e t =
+    (a >|= f) <*> b <*> c <*> d
+
+  let liftA5 (f : 'a -> 'b -> 'c -> 'd -> 'e -> 'f) (a : 'a t) (b : 'b t) (c : 'c t) (d : 'd t) (e : 'e t) : 'f t =
+    (a >|= f) <*> b <*> c <*> d <*> e
+
   let map2 = liftA2
 
   let map3 = liftA3
+
+  let map4 = liftA4
+
+  let map5 = liftA5
 
   let return = pure
 

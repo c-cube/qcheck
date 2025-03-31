@@ -13,6 +13,7 @@
 - Reorganize and polish the `README`, rewrite it to use `qcheck-core`, and add
   a `QCheck2` integrated shrinking example
 - Document `QCHECK_MSG_INTERVAL` introduced in 0.20
+- Add `QCheck{,2}.Gen.map{4,5}` combinators
 
 ## 0.24
 

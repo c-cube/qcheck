@@ -169,6 +169,14 @@ module Gen : sig
   (** [map3 f g1 g2 g3] transforms three generators [g1], [g2], and [g3] by applying [f]
       to each triple of generated elements. *)
 
+  val map4 : ('a -> 'b -> 'c -> 'd -> 'e) -> 'a t -> 'b t -> 'c t -> 'd t -> 'e t
+  (** [map4 f g1 g2 g3 g4] transforms four generators [g1], [g2], [g3], and [g4]
+      by applying [f] to each quadruple of generated elements. *)
+
+  val map5 : ('a -> 'b -> 'c -> 'd -> 'e -> 'f) -> 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t
+  (** [map5 f g1 g2 g3 g4 g5] transforms five generators [g1], [g2], [g3], [g4],
+      and [g5] by applying [f] to each quintuple of generated elements. *)
+
   val map_keep_input : ('a -> 'b) -> 'a t -> ('a * 'b) t
   (** [map_keep_input f g] transforms a generator [g] by applying [f] to each generated element.
       Returns both the generated element from [g] and the output from [f]. *)

@@ -121,6 +121,8 @@ module Gen = struct
   let map f x st = f (x st)
   let map2 f x y st = f (x st) (y st)
   let map3 f x y z st = f (x st) (y st) (z st)
+  let map4 f x y z v st = f (x st) (y st) (z st) (v st)
+  let map5 f x y z v w st = f (x st) (y st) (z st) (v st) (w st)
   let map_keep_input f gen st = let x = gen st in x, f x
   let (>|=) x f st = f (x st)
   let (<$>) f x st = f (x st)
