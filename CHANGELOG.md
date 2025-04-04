@@ -14,6 +14,7 @@
   a `QCheck2` integrated shrinking example
 - Document `QCHECK_MSG_INTERVAL` introduced in 0.20
 - Add `QCheck{,2}.Gen.map{4,5}` combinators
+- [ppx_deriving_qcheck] Support `ppxlib.0.36.0` based on the OCaml 5.2 AST
 
 ## 0.24
 
