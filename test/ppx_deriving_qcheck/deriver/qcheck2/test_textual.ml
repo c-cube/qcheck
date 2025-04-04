@@ -89,7 +89,7 @@ let test_int64' () =
  *     ]
  *   in
  *   let actual = f @@ extract [%stri type t = Bytes.t ] in
- * 
+ *
  *   check_eq ~expected ~actual "deriving int64" *)
 
 let test_tuple () =
@@ -454,7 +454,7 @@ let test_expr () =
               | Lt of expr * expr]
   in
   check_eq ~expected ~actual "deriving expr"
-  
+
 let test_forest () =
   let expected =
     [
@@ -719,7 +719,13 @@ let test_recursive_poly_variant () =
   let actual =
     f @@ extract [%stri type 'a tree = [ `Leaf of 'a | `Node of 'a tree * 'a tree ]]
   in
-  check_eq ~expected ~actual "deriving recursive polymorphic variants"
+  (* On OCaml 5.1 and earlier this test hits a cornercase of the ppxlib AST-mappings
+     to move the type annotation when pretty printed and ultimately fail this test
+     https://github.com/ocaml-ppx/ppxlib/blob/37d7ee13f4dcac44de5244a1c1e19652a5880075/astlib/migrate_501_502.ml#L173-L181
+  *)
+  if Sys.(ocaml_release.major,ocaml_release.minor) < (5,1)
+  then ()
+  else check_eq ~expected ~actual "deriving recursive polymorphic variants"
 
 let () =
   Alcotest.(

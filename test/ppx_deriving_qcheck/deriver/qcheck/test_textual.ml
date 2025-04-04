@@ -807,7 +807,13 @@ let test_recursive_poly_variant () =
   let actual =
     f @@ extract [%stri type 'a tree = [ `Leaf of 'a | `Node of 'a tree * 'a tree ]]
   in
-  check_eq ~expected ~actual "deriving recursive polymorphic variants"
+  (* On OCaml 5.1 and earlier this test hits a cornercase of the ppxlib AST-mappings
+     to move the type annotation when pretty printed and ultimately fail this test
+     https://github.com/ocaml-ppx/ppxlib/blob/37d7ee13f4dcac44de5244a1c1e19652a5880075/astlib/migrate_501_502.ml#L173-L181
+  *)
+  if Sys.(ocaml_release.major,ocaml_release.minor) < (5,1)
+  then ()
+  else check_eq ~expected ~actual "deriving recursive polymorphic variants"
 
 (* Regression test: https://github.com/c-cube/qcheck/issues/213 *)
 let test_unused_variable () =
