@@ -811,7 +811,9 @@ let test_recursive_poly_variant () =
      to move the type annotation when pretty printed and ultimately fail this test
      https://github.com/ocaml-ppx/ppxlib/blob/37d7ee13f4dcac44de5244a1c1e19652a5880075/astlib/migrate_501_502.ml#L173-L181
   *)
-  if Sys.(ocaml_release.major,ocaml_release.minor) < (5,1)
+  let ocaml_release =
+    Scanf.sscanf Sys.ocaml_version "%i.%i" (fun major minor -> (major,minor)) in
+  if ocaml_release < (5,1)
   then ()
   else check_eq ~expected ~actual "deriving recursive polymorphic variants"
 
