@@ -725,7 +725,7 @@ let test_recursive_poly_variant () =
   *)
   let ocaml_release =
     Scanf.sscanf Sys.ocaml_version "%i.%i" (fun major minor -> (major,minor)) in
-  if ocaml_release < (5,1)
+  if ocaml_release <= (5,1)
   then ()
   else check_eq ~expected ~actual "deriving recursive polymorphic variants"
 
