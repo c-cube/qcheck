@@ -2,6 +2,10 @@
 
 ## NEXT RELEASE
 
+- ...
+
+## 0.25
+
 - Restore `Test.make`'s `max_fail` parameter which was accidentally broken in 0.18
 - Adjust `stats` computation of average and standard deviation to
   limit precision loss, print both using scientific notation, and
