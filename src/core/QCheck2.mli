@@ -1027,6 +1027,8 @@ module Gen : sig
       and [gen4] by applying [f] to each quadruple of generated elements.
 
       Shrinks on [gen1], then [gen2], [gen3], and then [gen4].
+
+      @since 0.25
   *)
 
   val map5 : ('a -> 'b -> 'c -> 'd -> 'e -> 'f) -> 'a t -> 'b t -> 'c t -> 'd t -> 'e t -> 'f t
@@ -1034,6 +1036,8 @@ module Gen : sig
       and [gen5] by applying [f] to each quintuple of generated elements.
 
       Shrinks on [gen1], then [gen2], [gen3], [gen4], and then [gen5].
+
+      @since 0.25
   *)
 
   val ap : ('a -> 'b) t -> 'a t -> 'b t
