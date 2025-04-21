@@ -415,7 +415,9 @@ let run_tests
       start; expected; gen = 0;
       passed = 0; failed = 0; errored = 0;
     } in
-    if verbose then
+    let now=Unix.gettimeofday() in
+    if verbose && now -. !last_msg > get_time_between_msg () then
+      last_msg := now;
       Printf.fprintf out "%s[ ] %a %s%!"
         (if colors then Color.reset_line else "")
         (pp_counter ~size) c (T.get_name cell);
