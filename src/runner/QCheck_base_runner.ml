@@ -417,10 +417,10 @@ let run_tests
     } in
     let now=Unix.gettimeofday() in
     if verbose && now -. !last_msg > get_time_between_msg () then
-      last_msg := now;
+      (last_msg := now;
       Printf.fprintf out "%s[ ] %a %s%!"
         (if colors then Color.reset_line else "")
-        (pp_counter ~size) c (T.get_name cell);
+        (pp_counter ~size) c (T.get_name cell));
     let r = QCheck2.Test.check_cell ~long ~rand
         ~handler:(handler ~colors ~debug_shrink ~debug_shrink_list
                     ~size ~out ~verbose c).handler
