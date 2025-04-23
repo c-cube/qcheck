@@ -407,10 +407,14 @@ let run_tests
       "%*s %*s %*s %*s / %*s     time test name\n%!"
       (size + 4) "generated" size "error"
       size "fail" size "pass" size "total";
+
   let aux_map (T.Test cell) =
     let rand = Random.State.copy rand in
     let expected = expect long cell in
     let start = Unix.gettimeofday () in
+    (* Reset last message timing to always print out a starting 0/X message for
+    each test *)
+    last_msg := 0.0;
     let c = {
       start; expected; gen = 0;
       passed = 0; failed = 0; errored = 0;
