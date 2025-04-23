@@ -412,16 +412,12 @@ let run_tests
     let rand = Random.State.copy rand in
     let expected = expect long cell in
     let start = Unix.gettimeofday () in
-    (* Reset last message timing to always print out a starting 0/X message for
-    each test *)
-    last_msg := 0.0;
     let c = {
       start; expected; gen = 0;
       passed = 0; failed = 0; errored = 0;
     } in
-    let now=Unix.gettimeofday() in
-    if verbose && now -. !last_msg > get_time_between_msg () then
-      (last_msg := now;
+    if verbose then
+      (last_msg := Unix.gettimeofday();
       Printf.fprintf out "%s[ ] %a %s%!"
         (if colors then Color.reset_line else "")
         (pp_counter ~size) c (T.get_name cell));
