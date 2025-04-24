@@ -308,6 +308,7 @@ let callback ~size ~out ~verbose ~colors c name cell r =
     else QCheck2.TestResult.is_failed r in
   let color = if pass then `Green else `Red in
   if verbose then (
+    (* print final test status line regardless of rate-limiting for responsive user feedback *)
     Printf.fprintf out "%s[%a] %a %s\n%!"
       (if colors then Color.reset_line else "\n")
       (Color.pp_str_c ~bold:true ~colors color) (if pass then "✓" else "✗")
@@ -415,10 +416,12 @@ let run_tests
       start; expected; gen = 0;
       passed = 0; failed = 0; errored = 0;
     } in
-    if verbose then
+    if verbose then (
+      (* print initial test status line regardless of rate-limiting for responsive user feedback *)
+      last_msg := Unix.gettimeofday();
       Printf.fprintf out "%s[ ] %a %s%!"
         (if colors then Color.reset_line else "")
-        (pp_counter ~size) c (T.get_name cell);
+        (pp_counter ~size) c (T.get_name cell));
     let r = QCheck2.Test.check_cell ~long ~rand
         ~handler:(handler ~colors ~debug_shrink ~debug_shrink_list
                     ~size ~out ~verbose c).handler

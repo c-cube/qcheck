@@ -63,6 +63,9 @@ val set_long_tests : bool -> unit
     will only print a console message every 7.5 seconds. This feature can be
     useful in a CI context, where updates are printed on consecutive lines and
     one may want to avoid overflowing the CI log files with too many lines.
+
+    Note: The start and finishing message for each test is printed eagerly
+    in verbose mode regardless of the specified message interval.
 *)
 
 val get_time_between_msg : unit -> float
