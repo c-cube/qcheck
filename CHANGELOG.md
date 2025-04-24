@@ -2,7 +2,7 @@
 
 ## NEXT RELEASE
 
-- ...
+- Fix `QCHECK_MSG_INTERVAL` not being applied to the first in-progress message
 
 ## 0.25
 
