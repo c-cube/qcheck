@@ -407,7 +407,6 @@ let run_tests
       "%*s %*s %*s %*s / %*s     time test name\n%!"
       (size + 4) "generated" size "error"
       size "fail" size "pass" size "total";
-
   let aux_map (T.Test cell) =
     let rand = Random.State.copy rand in
     let expected = expect long cell in
@@ -416,8 +415,8 @@ let run_tests
       start; expected; gen = 0;
       passed = 0; failed = 0; errored = 0;
     } in
-    if verbose then
-      (last_msg := Unix.gettimeofday();
+    if verbose then (
+      last_msg := Unix.gettimeofday();
       Printf.fprintf out "%s[ ] %a %s%!"
         (if colors then Color.reset_line else "")
         (pp_counter ~size) c (T.get_name cell));
