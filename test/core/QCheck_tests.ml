@@ -418,6 +418,9 @@ module Generator = struct
          && Array.for_all (fun k -> 0 < k) arr
          && Array.fold_left (+) 0 arr = n)
 
+  let float_test =
+    Test.make ~name:"regression test negative float range" ~count:1000 (float_range (-2.) (-1.)) (fun _ -> false)
+
   let tests = [
     char_dist_issue_23;
     char_test;
@@ -454,6 +457,7 @@ module Generator = struct
     nat_split_n_way;
     nat_split_smaller;
     pos_split;
+    float_test;
   ]
 end
 
