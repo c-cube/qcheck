@@ -247,7 +247,7 @@ Test char never produces '\255' failed (0 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test regression test negative float range failed (1 shrink steps):
+Test regression test negative float range failed (0 shrink steps):
 
 -1.15084840857
 
