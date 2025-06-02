@@ -445,6 +445,7 @@ module Gen = struct
                    ~origin:(Option.value ~default:(pick_origin_within_range ~low ~high ~goal:0.) origin)
                    ~low
                    ~high in
+    let origin = origin -. low in
     (float_bound_inclusive ~origin (high -. low))
     >|= (fun x -> low +. x)
 

@@ -2,6 +2,7 @@
 
 ## NEXT RELEASE
 
+- Fix QCheck2 `float_range` operator which would fail on negative bounds
 - Fix `QCHECK_MSG_INTERVAL` not being applied to the first in-progress message
 
 ## 0.25

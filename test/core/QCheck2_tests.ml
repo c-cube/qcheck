@@ -340,6 +340,12 @@ module Generator = struct
       IntTree.gen_tree
       (fun tree -> IntTree.(rev_tree (rev_tree tree)) = tree)
 
+  let float_test =
+    Test.make ~name:"regression test negative float range" ~count:1000
+      ~print:Print.float
+      (Gen.float_range (-2.) (-1.))
+      (fun _ -> false)
+
   let tests = [
     char_dist_issue_23;
     char_test;
@@ -368,6 +374,7 @@ module Generator = struct
     int_option_test;
     int_string_result_test;
     passing_tree_rev;
+    float_test;
   ]
 end
 
@@ -687,6 +694,7 @@ module Shrink = struct
     Test.make ~name:"sum list = 0" ~print:Print.(list int)
       Gen.(no_shrink @@ list small_int)
       (fun xs -> List.fold_left (+) 0 xs = 0)
+
 
   let tests = [
     (*test_fac_issue59;*)

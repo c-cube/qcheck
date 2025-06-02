@@ -215,6 +215,12 @@ Test char never produces '\255' failed (0 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
+Test regression test negative float range failed (0 shrink steps):
+
+-1.15084840857
+
+--- Failure --------------------------------------------------------------------
+
 Test big bound issue59 failed (20 shrink steps):
 
 209609
@@ -1659,7 +1665,7 @@ stats dist:
     6.. 10:                                                                   0
 ================================================================================
 1 warning(s)
-failure (75 tests failed, 3 tests errored, ran 175 tests)
+failure (76 tests failed, 3 tests errored, ran 176 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
