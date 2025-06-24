@@ -776,6 +776,13 @@ end
 
     Shrinking is defined as a type {!Shrink.t} that takes an argument to shrink
     and produces an iterator of type {!Iter.t} of shrinking candidates.
+
+    ⚠️ In order to function well, a shrinker must:
+    - never return its argument as a shrinking candidate, and
+    - return shrinking candidates which are smaller by some termination measure
+      ([list] length, tree depth, number of bits, ...)
+
+    Failure to do so, may result in an infinite shrinker loop.
 *)
 
 (** {2 Iterators} *)
@@ -872,8 +879,11 @@ module Shrink : sig
   (** The [Shrink] module contains combinators to build up composite shrinkers
       for user-defined types
 
-      Warning: A hand-written shrinker returning its own argument, will cause
-      QCheck's shrinking phase to loop infinitely. *)
+      ⚠️ Warning: [QCheck]'s shrinking phase may loop infinitely if
+      - the shrinker returns its own argument as a shrinking candidate, or
+      - fails to return a strictly smaller shrinking candidate by some termination measure
+        (e.g., a [list] permutation may lead to an infinite shrinking cycle).
+  *)
 
   type 'a t = 'a -> 'a Iter.t
   (** Given a counter-example, return an iterator on smaller versions
