@@ -3,6 +3,12 @@ name: "ppx_deriving_qcheck"
 version: "0.7"
 license: "BSD-2-Clause"
 synopsis: "PPX Deriver for QCheck"
+description: """
+QCheck is a QuickCheck inspired property-based testing library for OCaml.
+
+The `ppx_deriving_qcheck` package can automatically derive generators from type
+definitions. It can derive generators for both the `QCheck` and `QCheck2`
+modules."""
 
 maintainer: "valentin.chb@gmail.com"
 author: [ "the qcheck contributors" ]
