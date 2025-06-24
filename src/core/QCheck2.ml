@@ -2014,10 +2014,10 @@ module Test = struct
   let pp_print_test_fail name out l =
     let rec pp_list out = function
       | [] -> ()
-      | [x] -> Format.fprintf out "%s@," x
+      | [x] -> Format.pp_print_string out x
       | x :: y -> Format.fprintf out "%s@,%a" x pp_list y
     in
-    Format.fprintf out "@[test `%s`@ failed on ≥ %d cases:@ @[<v>%a@]@]"
+    Format.fprintf out "@[test `%s`@ failed on ≥ %d cases:@ @[<v>%a@]@]@,"
       name (List.length l) pp_list l
 
   let asprintf fmt =

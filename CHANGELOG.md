@@ -2,6 +2,7 @@
 
 ## NEXT RELEASE
 
+- Fix a qcheck-ounit test suite failure on OCaml 5.4, removing a needless extra newline
 - Fix QCheck2 `float_range` operator which would fail on negative bounds
 - Fix `QCHECK_MSG_INTERVAL` not being applied to the first in-progress message
 
