@@ -2,6 +2,7 @@
 
 ## NEXT RELEASE
 
+- Elaborate on `QCheck`/`QCheck2` situation in README
 - Add a missing `description` field to the *.opam files
 - Document `Shrink` invariants in the `QCheck` module
 - Fix a qcheck-ounit test suite failure on OCaml 5.4, removing a needless extra newline

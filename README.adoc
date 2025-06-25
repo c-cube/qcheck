@@ -344,6 +344,12 @@ let test_buggy =
 QCheck_base_runner.run_tests [test_buggy];;
 ----
 
+Being newer the `QCheck2` module is less battle tested than `QCheck`.
+`QCheck2` on the other hand removes the need for having to hand-write shrinkers.
+`QCheck` tests can be ported to `QCheck2` by following the
+https://c-cube.github.io/qcheck/dev/qcheck-core/QCheck2/index.html#migration_qcheck2[migration guide].
+Please file an issue if you encounter problems using either of the two modules.
+
 
 === Preconditions
 
