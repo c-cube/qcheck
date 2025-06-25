@@ -2,6 +2,7 @@
 
 ## NEXT RELEASE
 
+- Add a missing `description` field to the *.opam files
 - Document `Shrink` invariants in the `QCheck` module
 - Fix a qcheck-ounit test suite failure on OCaml 5.4, removing a needless extra newline
 - Fix QCheck2 `float_range` operator which would fail on negative bounds
