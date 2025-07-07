@@ -2052,8 +2052,13 @@ module Test = struct
 
   let print_collect c =
     let out = Buffer.create 64 in
+    let total,lab_len =
+      Hashtbl.fold
+        (fun case num (total,lab_len) -> (total+num, max lab_len (String.length case))) c (0,0) in
     Hashtbl.iter
-      (fun case num -> Printf.bprintf out "%s: %d cases\n" case num) c;
+      (fun case num ->
+         let percentage = 100. *. (float num) /. (float total) in
+         Printf.bprintf out " %-*s %6d cases (%.1f%%)\n" (1+lab_len) (case ^ ":") num percentage) c ;
     Buffer.contents out
 
   let stat_max_lines = 20 (* maximum number of lines for a histogram *)
