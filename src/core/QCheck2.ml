@@ -2057,7 +2057,8 @@ module Test = struct
         (fun case num (total,lab_len) -> (total+num, max lab_len (String.length case))) c (0,0) in
     Hashtbl.iter
       (fun case num ->
-         let percentage = 100. *. (float num) /. (float total) in
+         let percentage = 100. *. (float num) /. (float total) in (* Workaround for Windows/Unix difference: *)
+         let percentage = (Float.round (10. *. percentage)) /. 10. in (* 100. *. 7525. /. 10000. -> 75.2 or 75.3 *)
          Printf.bprintf out " %-*s %6d cases (%.1f%%)\n" (1+lab_len) (case ^ ":") num percentage) c ;
     Buffer.contents out
 
