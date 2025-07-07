@@ -200,11 +200,11 @@ exception QCheck2_tests.Overall.Error
 
 Collect results for test collect_results:
 
-4: 20 cases
-3: 25 cases
-2: 17 cases
-1: 18 cases
-0: 20 cases
+ 4:     20 cases (20.0%)
+ 3:     25 cases (25.0%)
+ 2:     17 cases (17.0%)
+ 1:     18 cases (18.0%)
+ 0:     20 cases (20.0%)
 
 +++ Stats for with_stats ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -768,8 +768,8 @@ Backtrace:
 
 Collect results for test bool dist:
 
-true: 250134 cases
-false: 249866 cases
+ true:  250134 cases (50.0%)
+ false: 249866 cases (50.0%)
 
 +++ Stats for char code dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1208,15 +1208,15 @@ stats ordered pair sum:
 
 Collect results for test option dist:
 
-None  : 1519 cases
-Some _: 8481 cases
+ None:     1519 cases (15.2%)
+ Some _:   8481 cases (84.8%)
 
 +++ Collect ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Collect results for test result dist:
 
-Error _: 2577 cases
-Ok _   : 7423 cases
+ Error _:   2577 cases (25.8%)
+ Ok _:      7423 cases (74.2%)
 
 +++ Stats for list len dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
