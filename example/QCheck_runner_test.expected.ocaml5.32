@@ -19,11 +19,11 @@ exception Dune__exe__QCheck_runner_test.Error
 
 Collect results for test collect_results:
 
-4: 24 cases
-3: 20 cases
-2: 18 cases
-1: 21 cases
-0: 17 cases
+ 4:     24 cases (24.0%)
+ 3:     20 cases (20.0%)
+ 2:     18 cases (18.0%)
+ 1:     21 cases (21.0%)
+ 0:     17 cases (17.0%)
 
 +++ Stats for with_stats ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
