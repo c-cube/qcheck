@@ -397,10 +397,16 @@ module Gen = struct
     then Tree.Tree (true, Seq.return false_gen)
     else false_gen
 
-  let float : float t = fun st ->
-    let x = exp (RS.float st 15. *. (if RS.bool st then 1. else -1.))
-            *. (if RS.bool st then 1. else -1.)
-    in
+  let float : float t = fun st -> (* switch to [bits64] once lower bound reaches 4.14 *)
+    (* Technically we could write [15] but this is clearer *)
+    let four_bits_mask = 0b1111 in
+    (* Top 4 bits *)
+    let left = Int64.(shift_left (of_int (RS.bits st land four_bits_mask)) 60) in
+    (* Middle 30 bits *)
+    let middle = Int64.(shift_left (of_int (RS.bits st)) 30) in
+    (* Bottom 30 bits *)
+    let right = Int64.of_int (RS.bits st) in
+    let x = Int64.(float_of_bits (logor left (logor middle right))) in
     let shrink a = fun () -> Shrink.float_towards 0. a () in
     Tree.make_primitive shrink x
 

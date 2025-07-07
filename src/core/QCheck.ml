@@ -165,9 +165,16 @@ module Gen = struct
 
   let bool st = RS.bool st
 
-  let float st =
-    exp (RS.float st 15. *. (if RS.float st 1. < 0.5 then 1. else -1.))
-    *. (if RS.float st 1. < 0.5 then 1. else -1.)
+  let float st = (* switch to [bits64] once lower bound reaches 4.14 *)
+    (* Technically we could write [15] but this is clearer *)
+    let four_bits_mask = 0b1111 in
+    (* Top 4 bits *)
+    let left = Int64.(shift_left (of_int (RS.bits st land four_bits_mask)) 60) in
+    (* Middle 30 bits *)
+    let middle = Int64.(shift_left (of_int (RS.bits st)) 30) in
+    (* Bottom 30 bits *)
+    let right = Int64.of_int (RS.bits st) in
+    Int64.(float_of_bits (logor left (logor middle right)))
 
   let pfloat st = abs_float (float st)
   let nfloat st = -.(pfloat st)
