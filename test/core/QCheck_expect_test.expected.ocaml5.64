@@ -1798,9 +1798,17 @@ stats significant:
    700018.. 800008: ##################################################              486
    800009.. 899999: ######################################################          523
    900000.. 999990: ###################################################             496
+
++++ Collect ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Collect results for test float classify:
+
+FP_normal: 4994 cases
+FP_nan: 3 cases
+FP_subnormal: 3 cases
 ================================================================================
 1 warning(s)
-failure (83 tests failed, 3 tests errored, ran 185 tests)
+failure (83 tests failed, 3 tests errored, ran 186 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
