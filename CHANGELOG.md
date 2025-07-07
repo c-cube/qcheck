@@ -2,6 +2,8 @@
 
 ## NEXT RELEASE
 
+- Fix `QCheck{,2}.Gen.float` generator which would only generate numbers with an
+  exponent between 2^{-21} and 2^22
 - Elaborate on `QCheck`/`QCheck2` situation in README
 - Add a missing `description` field to the *.opam files
 - Document `Shrink` invariants in the `QCheck` module
