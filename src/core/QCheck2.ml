@@ -60,6 +60,14 @@ let rec list_split l len acc = match len,l with
   | 0,_ -> List.rev acc, l
   | _,x::xs -> list_split xs (len-1) (x::acc)
 
+let cut_exp_zero s =
+  match String.split_on_char 'e' s with
+  | [signif;exponent] ->
+    (match exponent.[0] with (* int_of_string removes a leading '0' *)
+     | '+' -> Printf.sprintf "%se+%i" signif (int_of_string exponent) (* keep a leading '+' *)
+     | _   -> Printf.sprintf "%se%i" signif (int_of_string exponent)) (* keep a leading '-' *)
+  | _ -> s
+
 exception Failed_precondition
 (* raised if precondition is false *)
 
@@ -924,7 +932,10 @@ module Print = struct
 
   let bool = string_of_bool
 
-  let float = string_of_float
+  let float f = (* Windows workaround to avoid leading exponent zero such as "-1.00001604579e-010" *)
+    if Sys.win32
+    then string_of_float f |> cut_exp_zero
+    else string_of_float f
 
   let string s = Printf.sprintf "%S" s
 
@@ -2118,10 +2129,6 @@ module Test = struct
     (* print entries of the table, sorted by increasing index *)
     let out = Buffer.create 128 in
     (* Windows workaround to avoid annoying exponent zero such as "1.859e+018" *)
-    let cut_exp_zero s =
-      match String.split_on_char '+' s with
-      | [signif;exponent] -> Printf.sprintf "%s+%i" signif (int_of_string exponent)
-      | _ -> failwith "cut_exp_zero failed to parse scientific notation " ^ s in
     let fmt_float f =
       if f > 1e7 || f < -1e7 then cut_exp_zero (Printf.sprintf "%.3e" f) else Printf.sprintf "%.2f" f in
     Printf.bprintf out "stats %s:\n" name;
