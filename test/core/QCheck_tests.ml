@@ -1114,8 +1114,15 @@ module Stats = struct
   let float_tests =
     let float_expon_dist  = ("exponent",    fun f -> snd (Float.frexp f)) in
     let float_signif_dist = ("significant", fun f -> let s = fst (Float.frexp f) in int_of_float (s *. 1000000.)) in
+    let float_fpclass f = match Float.classify_float f with
+      | FP_normal    -> "FP_normal"
+      | FP_subnormal -> "FP_subnormal"
+      | FP_zero      -> "FP_zero"
+      | FP_infinite  -> "FP_infinite"
+      | FP_nan       -> "FP_nan" in
     [ Test.make ~name:"float exponent"    ~count:5000 (add_stat float_expon_dist float) (fun _ -> true);
       Test.make ~name:"float significant" ~count:5000 (add_stat float_signif_dist float) (fun _ -> true);
+      Test.make ~name:"float classify"    ~count:5000 (set_collect float_fpclass float) (fun _ -> true);
     ]
 
   let tree_depth_test =
