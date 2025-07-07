@@ -439,6 +439,34 @@ module Shrink = struct
     Test.make ~name:"nat < 5001" ~count:1000 ~print:Print.int
       Gen.nat (fun n -> n < 5001)
 
+  let float_leq_1e10 =
+    Test.make ~name:"float <= 1e10" ~count:1000 ~print:Print.float
+      Gen.float (fun f -> f <= 1e10)
+
+  let float_lt_pi =
+    Test.make ~name:"float < Float.pi" ~count:1000 ~print:Print.float
+      Gen.float (fun f -> f < Float.pi)
+
+  let float_leq_1 =
+    Test.make ~name:"float <= 1.0" ~count:1000 ~print:Print.float
+      Gen.float (fun f -> f <= 1.0)
+
+  let float_lt_1 =
+    Test.make ~name:"float < 1.0" ~count:1000 ~print:Print.float
+      Gen.float (fun f -> f < 1.0)
+
+  let float_leq_1em10 =
+    Test.make ~name:"float <= 1e-10" ~count:1000 ~print:Print.float
+      Gen.float (fun f -> f <= 1e-10)
+
+  let float_geq_m1em10 =
+    Test.make ~name:"float >= -1e-10" ~count:1000 ~print:Print.float
+      Gen.float (fun f -> f >= -1e-10)
+
+  let float_geq_m1e10 =
+    Test.make ~name:"float >= -1e10" ~count:1000 ~print:Print.float
+      Gen.float (fun f -> f >= -1e10)
+
   let char_is_never_abcdef =
     Test.make ~name:"char never produces 'abcdef'" ~count:1000 ~print:Print.char
       Gen.char (fun c -> not (List.mem c ['a';'b';'c';'d';'e';'f']))
@@ -708,6 +736,13 @@ module Shrink = struct
     int64s_are_0L;
     ints_smaller_209609;
     nats_smaller_5001;
+    float_leq_1e10;
+    float_lt_pi;
+    float_leq_1;
+    float_lt_1;
+    float_leq_1em10;
+    float_geq_m1em10;
+    float_geq_m1e10;
     char_is_never_abcdef;
     printable_is_never_sign;
     numeral_is_never_less_5;
@@ -1011,6 +1046,13 @@ module Stats = struct
       Test.make ~name:"exponential -10. dist" ~count:5_000 ~stats:[float_dist] (Gen.exponential (-10.)) (fun _ -> true);
     ]
 
+  let float_tests =
+    let float_expon_dist  = ("exponent",    fun f -> snd (Float.frexp f)) in
+    let float_signif_dist = ("significant", fun f -> let s = fst (Float.frexp f) in int_of_float (s *. 1000000.)) in
+    [ Test.make ~name:"float exponent"    ~count:5000 ~stats:[float_expon_dist] Gen.float (fun _ -> true);
+      Test.make ~name:"float significant" ~count:5000 ~stats:[float_signif_dist] Gen.float (fun _ -> true);
+    ]
+
   let tree_depth_test =
     let depth = ("depth", IntTree.depth) in
     Test.make ~name:"tree's depth" ~count:1000 ~stats:[depth] IntTree.gen_tree (fun _ -> true)
@@ -1036,4 +1078,5 @@ module Stats = struct
     @ int_dist_tests
     @ int_32_64_dist_tests
     @ exponential_tests
+    @ float_tests
 end
