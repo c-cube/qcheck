@@ -146,11 +146,11 @@ exception QCheck_tests.Overall.Error
 
 Collect results for test collect_results:
 
- 4:     20 cases (20.0%)
- 3:     25 cases (25.0%)
- 2:     17 cases (17.0%)
- 1:     18 cases (18.0%)
- 0:     20 cases (20.0%)
+ 3:     25 cases  (25.0%)
+ 4:     20 cases  (20.0%)
+ 0:     20 cases  (20.0%)
+ 1:     18 cases  (18.0%)
+ 2:     17 cases  (17.0%)
 
 +++ Stats for with_stats ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -714,8 +714,8 @@ Backtrace:
 
 Collect results for test bool dist:
 
- true:  250134 cases (50.0%)
- false: 249866 cases (50.0%)
+ true:  250134 cases  (50.0%)
+ false: 249866 cases  (50.0%)
 
 +++ Stats for char code dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1155,15 +1155,15 @@ stats ordered pair sum:
 
 Collect results for test option dist:
 
- None:     1500 cases (15.0%)
- Some _:   8500 cases (85.0%)
+ Some _:   8500 cases  (85.0%)
+ None:     1500 cases  (15.0%)
 
 +++ Collect ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Collect results for test result dist:
 
- Error _:   2554 cases (25.5%)
- Ok _:      7446 cases (74.5%)
+ Ok _:      7446 cases  (74.5%)
+ Error _:   2554 cases  (25.5%)
 
 +++ Stats for list len dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1792,9 +1792,9 @@ stats significant:
 
 Collect results for test float classify:
 
-FP_normal: 4994 cases
-FP_nan: 2 cases
-FP_subnormal: 4 cases
+ FP_normal:      4994 cases  (99.9%)
+ FP_subnormal:      4 cases   (0.1%)
+ FP_nan:            2 cases   (0.0%)
 ================================================================================
 1 warning(s)
 failure (83 tests failed, 3 tests errored, ran 186 tests)
