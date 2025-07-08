@@ -98,6 +98,14 @@ let string_fold_right f s acc =
     else loop (i-1) (f s.[i] acc) in
   loop (len-1) acc
 
+let cut_exp_zero s =
+  match String.split_on_char 'e' s with
+  | [signif;exponent] ->
+    (match exponent.[0] with (* int_of_string removes a leading '0' *)
+     | '+' -> Printf.sprintf "%se+%i" signif (int_of_string exponent) (* keep a leading '+' *)
+     | _   -> Printf.sprintf "%se%i" signif (int_of_string exponent)) (* keep a leading '-' *)
+  | _ -> s
+
 exception No_example_found of string
 (* raised if an example failed to be found *)
 
@@ -165,9 +173,16 @@ module Gen = struct
 
   let bool st = RS.bool st
 
-  let float st =
-    exp (RS.float st 15. *. (if RS.float st 1. < 0.5 then 1. else -1.))
-    *. (if RS.float st 1. < 0.5 then 1. else -1.)
+  let float st = (* switch to [bits64] once lower bound reaches 4.14 *)
+    (* Technically we could write [15] but this is clearer *)
+    let four_bits_mask = 0b1111 in
+    (* Top 4 bits *)
+    let left = Int64.(shift_left (of_int (RS.bits st land four_bits_mask)) 60) in
+    (* Middle 30 bits *)
+    let middle = Int64.(shift_left (of_int (RS.bits st)) 30) in
+    (* Bottom 30 bits *)
+    let right = Int64.of_int (RS.bits st) in
+    Int64.(float_of_bits (logor left (logor middle right)))
 
   let pfloat st = abs_float (float st)
   let nfloat st = -.(pfloat st)
@@ -495,7 +510,10 @@ module Print = struct
   let int32 i = Int32.to_string i ^ "l"
   let int64 i = Int64.to_string i ^ "L"
   let bool = string_of_bool
-  let float = string_of_float
+  let float f = (* Windows workaround to avoid leading exponent zero such as "-1.00001604579e-010" *)
+    if Sys.win32
+    then string_of_float f |> cut_exp_zero
+    else string_of_float f
   let string s = Printf.sprintf "%S" s
   let bytes b = string (Bytes.to_string b)
   let char c = Printf.sprintf "%C" c
