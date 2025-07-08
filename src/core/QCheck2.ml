@@ -2055,11 +2055,13 @@ module Test = struct
     let total,lab_len =
       Hashtbl.fold
         (fun case num (total,lab_len) -> (total+num, max lab_len (String.length case))) c (0,0) in
-    Hashtbl.iter
-      (fun case num ->
+    let sorted_cases = (* reverse compare yields decreasing order *)
+      Hashtbl.to_seq c |> List.of_seq |> List.sort (fun (_,n1) (_,n2) -> Int.compare n2 n1) in
+    List.iter
+      (fun (case,num) ->
          let percentage = 100. *. (float num) /. (float total) in (* Workaround for Windows/Unix difference: *)
          let percentage = (Float.round (10. *. percentage)) /. 10. in (* 100. *. 7525. /. 10000. -> 75.2 or 75.3 *)
-         Printf.bprintf out " %-*s %6d cases (%.1f%%)\n" (1+lab_len) (case ^ ":") num percentage) c ;
+         Printf.bprintf out " %-*s %6d cases (%.1f%%)\n" (1+lab_len) (case ^ ":") num percentage) sorted_cases;
     Buffer.contents out
 
   let stat_max_lines = 20 (* maximum number of lines for a histogram *)
