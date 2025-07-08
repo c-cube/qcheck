@@ -1112,7 +1112,7 @@ module Stats = struct
     ]
 
   let float_tests =
-    let float_expon_dist  = ("exponent",    fun f -> snd (Float.frexp f)) in
+    let float_expon_dist  = ("exponent",    fun f -> if Float.(is_nan f || is_infinite f) then 0 else snd (Float.frexp f)) in
     let float_signif_dist = ("significant", fun f -> let s = fst (Float.frexp f) in int_of_float (s *. 1000000.)) in
     let float_fpclass f = match Float.classify_float f with
       | FP_normal    -> "FP_normal"
