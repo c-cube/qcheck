@@ -2061,7 +2061,8 @@ module Test = struct
       (fun (case,num) ->
          let percentage = 100. *. (float num) /. (float total) in (* Workaround for Windows/Unix difference: *)
          let percentage = (Float.round (10. *. percentage)) /. 10. in (* 100. *. 7525. /. 10000. -> 75.2 or 75.3 *)
-         Printf.bprintf out " %-*s %6d cases (%.1f%%)\n" (1+lab_len) (case ^ ":") num percentage) sorted_cases;
+         let perc_str = Printf.sprintf "(%.1f%%)" percentage in
+         Printf.bprintf out " %-*s %6d cases %8s\n" (1+lab_len) (case ^ ":") num perc_str) sorted_cases;
     Buffer.contents out
 
   let stat_max_lines = 20 (* maximum number of lines for a histogram *)
