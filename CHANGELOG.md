@@ -1,6 +1,6 @@
 # Changes
 
-## NEXT RELEASE
+## 0.26
 
 - Align printed `collect` statistics and also add a percentage
 - Fix `QCheck{,2}.Gen.float` generator which would only generate numbers with an
