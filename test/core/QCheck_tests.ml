@@ -1053,11 +1053,11 @@ module Stats = struct
 
   let option_dist =
     Test.make ~name:"option dist" ~count:10_000
-      (set_collect (function None -> "None  " | Some _ -> "Some _") (option int)) (fun _ -> true)
+      (set_collect (function None -> "None" | Some _ -> "Some _") (option int)) (fun _ -> true)
 
   let result_dist =
     Test.make ~name:"result dist" ~count:10_000
-      (set_collect (function Ok _ -> "Ok _   " | Error _ -> "Error _") (result int string)) (fun _ -> true)
+      (set_collect (function Ok _ -> "Ok _" | Error _ -> "Error _") (result int string)) (fun _ -> true)
 
   let list_len_tests =
     let len = ("len",List.length) in

@@ -182,11 +182,11 @@ Called from file "src/QCheck.ml", line 839, characters 13-33
 
 Collect results for test collect_results:
 
-4: 207 cases
-3: 190 cases
-2: 219 cases
-1: 196 cases
-0: 188 cases
+ 4:     207 cases (20.7%)
+ 3:     190 cases (19.0%)
+ 2:     219 cases (21.9%)
+ 1:     196 cases (19.6%)
+ 0:     188 cases (18.8%)
 
 ================================================================================
 failure (1 tests failed, 1 tests errored, ran 4 tests)
