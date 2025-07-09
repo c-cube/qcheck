@@ -1,5 +1,9 @@
 # Changes
 
+## NEXT RELEASE
+
+- ...
+
 ## 0.26
 
 - Align printed `collect` statistics and also add a percentage
