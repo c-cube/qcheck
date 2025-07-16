@@ -31,6 +31,6 @@ build: [
 ]
 
 homepage: "https://github.com/c-cube/qcheck/"
-bug-reports: "https://github.com/c-cube/qcheck/-/issues"
+bug-reports: "https://github.com/c-cube/qcheck/issues"
 dev-repo: "git+https://github.com/c-cube/qcheck.git"
 x-maintenance-intent: ["(latest)"]
