@@ -33,7 +33,7 @@ jobs:
             ocaml-compiler: "4.12"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
@@ -62,7 +62,7 @@ jobs:
           git -C /home/opam/opam-repository pull origin master && HOME=/home/opam opam update -y
       - name: Checkout repository
         # See https://github.com/actions/checkout/issues/334
-        uses: actions/checkout@v1
+        uses: actions/checkout@v5
       - name: Setup repo and install dependencies
         run: |
           sudo chown -R opam:opam .
