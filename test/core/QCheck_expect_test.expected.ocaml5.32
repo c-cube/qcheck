@@ -291,45 +291,45 @@ Test nat < 5001 failed (4 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test float <= 1e10 failed (0 shrink steps):
+Test float <= 1e10 failed (7 shrink steps):
 
-2.22623953048e+133
-
---- Failure --------------------------------------------------------------------
-
-Test float < Float.pi failed (0 shrink steps):
-
-2.22623953048e+133
+11000000000.
 
 --- Failure --------------------------------------------------------------------
 
-Test float <= 1.0 failed (0 shrink steps):
+Test float < Float.pi failed (15 shrink steps):
 
-2.22623953048e+133
-
---- Failure --------------------------------------------------------------------
-
-Test float < 1.0 failed (0 shrink steps):
-
-2.22623953048e+133
+4.
 
 --- Failure --------------------------------------------------------------------
 
-Test float <= 1e-10 failed (0 shrink steps):
+Test float <= 1.0 failed (13 shrink steps):
 
-2.22623953048e+133
-
---- Failure --------------------------------------------------------------------
-
-Test float >= -1e-10 failed (0 shrink steps):
-
--8.13289346688e+187
+2.
 
 --- Failure --------------------------------------------------------------------
 
-Test float >= -1e10 failed (0 shrink steps):
+Test float < 1.0 failed (14 shrink steps):
 
--8.13289346688e+187
+1.
+
+--- Failure --------------------------------------------------------------------
+
+Test float <= 1e-10 failed (14 shrink steps):
+
+1.
+
+--- Failure --------------------------------------------------------------------
+
+Test float >= -1e-10 failed (20 shrink steps):
+
+-1.
+
+--- Failure --------------------------------------------------------------------
+
+Test float >= -1e10 failed (19 shrink steps):
+
+-10000200000.
 
 --- Failure --------------------------------------------------------------------
 
