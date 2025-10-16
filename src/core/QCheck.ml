@@ -1320,7 +1320,7 @@ let small_list a = mk_list a (Gen.small_list a.gen)
 let array_sum_ f a = Array.fold_left (fun acc x -> f x+acc) 0 a
 
 let array a =
-  let small = _opt_map_or ~d:Array.length ~f:array_sum_ a.small in
+  let small x = _opt_map_or ~d:Array.length ~f:array_sum_ a.small x in
   make
     ~small
     ~shrink:(Shrink.array ?shrink:a.shrink)
@@ -1328,7 +1328,7 @@ let array a =
     (Gen.array a.gen)
 
 let array_of_size size a =
-  let small = _opt_map_or ~d:Array.length ~f:array_sum_ a.small in
+  let small x = _opt_map_or ~d:Array.length ~f:array_sum_ a.small x in
   make
     ~small
     ~shrink:(Shrink.array ?shrink:a.shrink)
