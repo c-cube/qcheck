@@ -2,7 +2,8 @@
 
 ## NEXT RELEASE
 
-- ...
+- Add `QCheck.Shrink.float` and enable shrinking for `QCheck.float`
+
 
 ## 0.26
 
