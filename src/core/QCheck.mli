@@ -923,6 +923,11 @@ module Shrink : sig
   (** int64 shrinker. Shrinks towards [0L].
       @since 0.14 *)
 
+  val float : float t
+  (** float shrinker. Shrinks floating point numbers towards [1.0] or [-1.0]
+      and prefers a shorter printed rendering.
+      @since NEXT_RELEASE *)
+
   val option : 'a t -> 'a option t
   (** option shrinker. Shrinks towards [None].
       [option shk] reduces [Some v] values using [shk] to reduce [v]. *)

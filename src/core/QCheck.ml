@@ -754,6 +754,61 @@ module Shrink = struct
     if x>0 then for i=x-1 downto 0 do yield i done;
     if x<0 then for i=x+1 to 0 do yield i done
 
+  let float_suff_different cand x =
+    let threshold = 1e-4 in (* candidate has to be at least 0.0001% different *)
+    Float.(abs cand < abs x) && Float.abs ((cand -. x) /. x) > threshold
+
+  (* [float_shrink_exponent 2.234 213] shrinks an exponent 213 from 2.234e213
+     and glues it back together with significand 2.234 *)
+  let float_shrink_exponent signif exponent yield =
+    int (int_of_string exponent)
+      (fun exponent -> Printf.sprintf "%se%i" signif exponent |> float_of_string |> yield)
+
+  (* [float_shrink_significand 2.234e213 "2.234" "213"] shrinks the significand 2.234 of
+     a floating point number in scientific notation 2.234e213 *)
+  let float_shrink_significand orig_x signif exponent yield =
+    let signif = float_of_string signif in
+    let exponent = float_of_string ("1e" ^ exponent) in
+    let recompose_float signif = signif *. exponent in
+    let recompose_and_yield signif =
+      let cand = recompose_float signif in
+      if String.length (Print.float cand) <= String.length (Print.float orig_x)
+      then yield cand in
+    (* [shrink_decimals 2.2345 1000] multiplies a significand 2.2345 with a
+       precision 1000 to get [2234], shrink it, and thus round off decimals *)
+    let shrink_decimals signif prec yield =
+      let tmp = signif *. float prec in (* use tmp to avoid i386 ocamlopt 4 weirdness https://github.com/ocaml/ocaml/issues/8018 *)
+      let multiple = int_of_float tmp in (* returns an unshrinkable 0 on overflow *)
+      if prec = 10 || multiple mod 100 <> 0 then (* first iteration or decimals to round *)
+        int multiple (fun i ->
+            let signif' = float i /. float prec in
+            if float_suff_different signif' signif
+            then yield signif') in
+    (* first try simple reductions of the significand's leading digit, in [1;9] *)
+    if signif > 2. then yield (recompose_float (signif -. 1.));  (* shrink  2.234e213 to  1.234e213 *)
+    if signif < -2. then yield (recompose_float (signif +. 1.)); (* shrink -2.234e213 to -1.234e213 *)
+    (* second try reducing the other decimal digits with different precision *)
+    if signif > 1.0 || signif < -1.0 (* don't attempt to shrink 1.0 or -1.0 *)
+    then
+      shrink_decimals signif 10     recompose_and_yield;
+      shrink_decimals signif 1000   recompose_and_yield;
+      shrink_decimals signif 100000 recompose_and_yield
+
+  let float x yield =
+    if not (Float.is_infinite x || Float.is_nan x) then
+    (* first try quick roundings and negation *)
+    (if x > 1. then let floor_x = floor x in
+       if float_suff_different floor_x x then yield floor_x);
+    (if x < -1. then let ceil_x = ceil x in
+       if float_suff_different ceil_x x then yield ceil_x);
+    if x < 0. then yield (-. x);
+    (* second proceed with simplification based on decimal, scientific notation 2.234e213 *)
+    match String.split_on_char 'e' (Printf.sprintf "%e" x) with
+    | [signif;exponent] ->
+      float_shrink_exponent signif exponent yield;
+      float_shrink_significand x signif exponent yield
+    | _ -> ()
+
   let filter f shrink x = Iter.filter f (shrink x)
 
   let char_generic target c =
@@ -1154,7 +1209,9 @@ let unit : unit arbitrary =
   make ~small:small1 ~shrink:Shrink.nil ~print:Print.unit Gen.unit
 let bool =
   make ~small:small1 ~shrink:Shrink.bool ~print:Print.bool Gen.bool
-let float = make_scalar ~print:Print.float Gen.float
+let float =
+  make ~small:small1 ~shrink:Shrink.float ~print:Print.float Gen.float
+
 let pos_float = make_scalar ~print:Print.float Gen.pfloat
 let neg_float = make_scalar ~print:Print.float Gen.nfloat
 
