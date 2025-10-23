@@ -754,7 +754,7 @@ module Shrink = struct
     if x>0 then for i=x-1 downto 0 do yield i done;
     if x<0 then for i=x+1 to 0 do yield i done
 
-  let sufficiently_different cand x =
+  let float_suff_different cand x =
     Float.(abs cand < abs x) && Float.abs ((cand -. x) /. x) > 1e-4 (* candidate has to be at least 0.0001% different *)
 
   (* [float_shrink_exponent 2.234 213] shrinks an exponent 213 from 2.234e213
@@ -781,7 +781,7 @@ module Shrink = struct
       if prec = 10 || multiple mod 100 <> 0 then (* first iteration or decimals to round *)
         int multiple (fun i ->
             let signif' = float i /. float prec in
-            if sufficiently_different signif' signif
+            if float_suff_different signif' signif
             then yield signif') in
     (* first try simple reductions of the significand's leading digit, in [1;9] *)
     if signif > 2. then yield (recompose_float (signif -. 1.));  (* shrink  2.234e213 to  1.234e213 *)
@@ -797,9 +797,9 @@ module Shrink = struct
     if not (Float.is_infinite x || Float.is_nan x) then
     (* first try quick roundings and negation *)
     (if x > 1. then let floor_x = floor x in
-       if sufficiently_different floor_x x then yield floor_x);
+       if float_suff_different floor_x x then yield floor_x);
     (if x < -1. then let ceil_x = ceil x in
-       if sufficiently_different ceil_x x then yield ceil_x);
+       if float_suff_different ceil_x x then yield ceil_x);
     if x < 0. then yield (-. x);
     (* second proceed with simplification based on decimal, scientific notation 2.234e213 *)
     match String.split_on_char 'e' (Printf.sprintf "%e" x) with
