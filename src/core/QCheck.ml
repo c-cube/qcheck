@@ -755,7 +755,8 @@ module Shrink = struct
     if x<0 then for i=x+1 to 0 do yield i done
 
   let float_suff_different cand x =
-    Float.(abs cand < abs x) && Float.abs ((cand -. x) /. x) > 1e-4 (* candidate has to be at least 0.0001% different *)
+    let threshold = 1e-4 in (* candidate has to be at least 0.0001% different *)
+    Float.(abs cand < abs x) && Float.abs ((cand -. x) /. x) > threshold
 
   (* [float_shrink_exponent 2.234 213] shrinks an exponent 213 from 2.234e213
      and glues it back together with significand 2.234 *)
