@@ -3,7 +3,8 @@
 ## NEXT RELEASE
 
 - Add `QCheck.Shrink.float` and enable shrinking for `QCheck.float`
-
+- Add `QCheck.Shrink.float_bound` and enable shrinking for
+  `QCheck.float_bound_inclusive` and `QCheck.float_bound_exclusive`
 
 ## 0.26
 
