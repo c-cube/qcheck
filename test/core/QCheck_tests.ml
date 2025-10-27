@@ -549,6 +549,54 @@ module Shrink = struct
     Test.make ~name:"float >= -1e10" ~count:1000
       float (fun f -> f >= -1e10)
 
+  let float_bound_inclusive_1e6_leq_10 =
+    Test.make ~name:"float_bound_inclusive 1e6 <= 10." ~count:1000
+      (float_bound_inclusive 1e6) (fun f -> f <= 10.)
+
+  let float_bound_inclusive_1e6_leq_pi =
+    Test.make ~name:"float_bound_inclusive 1e6 <= pi" ~count:1000
+      (float_bound_inclusive 1e6) (fun f -> f <= Float.pi)
+
+  let float_bound_inclusive_1_leq_5em1 =
+    Test.make ~name:"float_bound_inclusive 1. <= 0.5" ~count:1000
+      (float_bound_inclusive 1.) (fun f -> f <= 0.5)
+
+  let float_bound_inclusive_1_leq_min_float =
+    Test.make ~name:"float_bound_inclusive 1. <= min_float" ~count:1000
+      (float_bound_inclusive 1.) (fun f -> f <= min_float)
+
+  let float_bound_inclusive_m1_geq_m5em1 =
+    Test.make ~name:"float_bound_inclusive -1. >= -0.5" ~count:1000
+      (float_bound_inclusive (-1.)) (fun f -> f >= -0.5)
+
+  let float_bound_inclusive_m1e6_geq_mpi =
+    Test.make ~name:"float_bound_inclusive -1e6 >= -.pi" ~count:1000
+      (float_bound_inclusive (-1e6)) (fun f -> f >= -.Float.pi)
+
+  let float_bound_exclusive_1e6_leq_10 =
+    Test.make ~name:"float_bound_exclusive 1e6 <= 10." ~count:1000
+      (float_bound_exclusive 1e6) (fun f -> f <= 10.)
+
+  let float_bound_exclusive_1e6_leq_pi =
+    Test.make ~name:"float_bound_exclusive 1e6 <= pi" ~count:1000
+      (float_bound_exclusive 1e6) (fun f -> f <= Float.pi)
+
+  let float_bound_exclusive_1_leq_5em1 =
+    Test.make ~name:"float_bound_exclusive 1. <= 0.5" ~count:1000
+      (float_bound_exclusive 1.) (fun f -> f <= 0.5)
+
+  let float_bound_exclusive_1_leq_min_float =
+    Test.make ~name:"float_bound_exclusive 1. <= min_float" ~count:1000
+      (float_bound_exclusive 1.) (fun f -> f <= min_float)
+
+  let float_bound_exclusive_m1_geq_m5em1 =
+    Test.make ~name:"float_bound_exclusive -1. >= -0.5" ~count:1000
+      (float_bound_exclusive (-1.)) (fun f -> f >= -0.5)
+
+  let float_bound_exclusive_m1e6_geq_mpi =
+    Test.make ~name:"float_bound_exclusive -1e6 >= -.pi" ~count:1000
+      (float_bound_exclusive (-1e6)) (fun f -> f >= -.Float.pi)
+
   let char_is_never_abcdef =
     Test.make ~name:"char never produces 'abcdef'" ~count:1000
       char (fun c -> not (List.mem c ['a';'b';'c';'d';'e';'f']))
@@ -814,6 +862,18 @@ module Shrink = struct
     float_leq_1em10;
     float_geq_m1em10;
     float_geq_m1e10;
+    float_bound_inclusive_1e6_leq_10;
+    float_bound_inclusive_1e6_leq_pi;
+    float_bound_inclusive_1_leq_5em1;
+    float_bound_inclusive_1_leq_min_float;
+    float_bound_inclusive_m1_geq_m5em1;
+    float_bound_inclusive_m1e6_geq_mpi;
+    float_bound_exclusive_1e6_leq_10;
+    float_bound_exclusive_1e6_leq_pi;
+    float_bound_exclusive_1_leq_5em1;
+    float_bound_exclusive_1_leq_min_float;
+    float_bound_exclusive_m1_geq_m5em1;
+    float_bound_exclusive_m1e6_geq_mpi;
     char_is_never_abcdef;
     printable_is_never_sign;
     numeral_is_never_less_5;
