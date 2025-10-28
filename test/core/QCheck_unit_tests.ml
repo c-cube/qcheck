@@ -287,6 +287,85 @@ module Shrink = struct
                                                                            -16.9; -16.; -0.7; 0.]);
       ]
 
+  let test_float_range () =
+    List.iter
+      (fun (name,low,high,arg,res) -> alco_check alcotest_float (trace_false (Shrink.float_range low high)) "on repeated failure" (name,arg,res))
+      [ (* positive ranges *)
+        ("float_range 0. max_float max_float",     0.,          max_float,   max_float,   [1.79769e+154; 1.79769e+231; 1.79769e+270; 1.79769e+289;
+                                                                                           1.79769e+299; 1.79769e+304; 1.79769e+306; 1.79769e+307;
+                                                                                           9e+307; 1.3e+308; 1.5e+308; 1.6e+308; 8.99e+307; 1.348e+308;
+                                                                                           1.573e+308; 1.685e+308; 1.741e+308; 1.769e+308; 1.783e+308;
+                                                                                           1.79e+308; 1.794e+308; 1.796e+308; 8.9885e+307; 1.34827e+308;
+                                                                                           1.57298e+308; 1.68534e+308; 1.74152e+308; 1.76961e+308;
+                                                                                           1.78365e+308; 1.79067e+308; 1.79418e+308; 1.79594e+308;
+                                                                                           1.79682e+308; 1.79726e+308; 1.79748e+308]);
+        ("float_range 0. max_float 1e6",           0.,          max_float,   1e6,         [999.001; 99999.1; 499999.; 799999.; 899999.]);
+        ("float_range 0. max_float 10.",           0.,          max_float,   10.,         [0.1; 5.; 8.; 9.]);
+        ("float_range 0. max_float 9.000001",      0.,          max_float,   9.000001,    [0.]);
+        ("float_range 0. max_float 1.",            0.,          max_float,   1.,          [0.]);
+        ("float_range 0. max_float min_float",     0.,          max_float,   min_float,   []);
+        ("float_range 0. max_float 0.",            0.,          max_float,   0.,          []);
+        ("float_range 10. 100. 100.",              10.,         100.,        100.,        [18.1; 90.; 55.; 78.; 89.; 95.; 98.; 99.]);
+        ("float_range 10. 100. 50.",               10.,         100.,        50.,         [13.1; 40.; 30.; 40.; 45.; 48.; 49.]);
+        ("float_range 10. 100. 11.000001",         10.,         100.,        11.000001,   [10.; 10.; 10.5; 10.8; 10.9]);
+        ("float_range 10. 100. 10.",               10.,         100.,        10.,         []);
+        (* ranges crossing 0. *)
+        ("float_range -10. 10. 10.",               -10.,        10.,         10.,         [0.1; 5.; 8.; 9.]);
+        ("float_range -10. 10. 1.",                -10.,        10.,         1.,          [0.]);
+        ("float_range -10. 10. 0.",                -10.,        10.,         0.,          []);
+        ("float_range -10. 10. -10.",              -10.,        10.,         -10.,        [8.; -9.]);
+        ("float_range -10. 10. -1.",               -10.,        10.,         -1.,         []); (*triggers [float 0.] above*)
+        (* negative ranges *)
+        ("float_range -100. -10. -10.",            -100.,       -10.,        -10.,        []);
+        ("float_range -100. -10. -50.",            -100.,       -10.,        -50.,        [-13.1; -40.; -30.; -40.; -45.; -48.; -49.]);
+        ("float_range -100. -10. -100.",           -100.,       -10.,        -100.,       [-18.1; -90.; -55.; -78.; -89.; -95.; -98.; -99.]);
+        ("float_range -.max_float 0. -1.",         -.max_float, 0.,          -1.,         [0.]);
+        ("float_range -.max_float 0. -10.",        -.max_float, 0.,          -10.,        [-0.1; -5.; -8.; -9.]);
+        ("float_range -.max_float 0. -1e6",        -.max_float, 0.,          -1e6,        [-999.001; -99999.1; -499999.; -799999.; -899999.]);
+        ("float_range -.max_float 0. -.max_float", -.max_float, 0.,          -.max_float, [-1.79769e+154; -1.79769e+231; -1.79769e+270; -1.79769e+289;
+                                                                                           -1.79769e+299; -1.79769e+304; -1.79769e+306; -1.79769e+307;
+                                                                                           -9e+307; -1.3e+308; -1.5e+308; -1.6e+308; -8.99e+307;
+                                                                                           -1.348e+308; -1.573e+308; -1.685e+308; -1.741e+308;
+                                                                                           -1.769e+308; -1.783e+308; -1.79e+308; -1.794e+308;
+                                                                                           -1.796e+308; -8.9885e+307; -1.34827e+308; -1.57298e+308;
+                                                                                           -1.68534e+308; -1.74152e+308; -1.76961e+308; -1.78365e+308;
+                                                                                           -1.79067e+308; -1.79418e+308; -1.79594e+308; -1.79682e+308;
+                                                                                           -1.79726e+308; -1.79748e+308]);
+      ];
+    List.iter
+      (fun (name,low,high,arg,res) -> alco_check alcotest_float (trace_true (Shrink.float_range low high)) "on repeated success" (name,arg,res))
+      [ (* positive ranges *)
+        ("float_range 0. max_float max_float",     0.,          max_float,   max_float,   [1.79769e+154; 1.79769e+77; 1.79769e+39; 1.79769e+20;
+                                                                                           1.79769e+10; 179768.; 1796.69; 1796.; 178.7; 178.; 16.9;
+                                                                                           16.; 0.7; 0.]);
+        ("float_range 0. max_float 1e6",           0.,          max_float,   1e6,         [999.001; 99.0001; 9.00001; 1e-06]);
+        ("float_range 0. max_float 10.",           0.,          max_float,   10.,         [0.1; 0.]);
+        ("float_range 0. max_float 9.000001",      0.,          max_float,   9.000001,    [0.]);
+        ("float_range 0. max_float 1.",            0.,          max_float,   1.,          [0.]);
+        ("float_range 0. max_float min_float",     0.,          max_float,   min_float,   []);
+        ("float_range 0. max_float 0.",            0.,          max_float,   0.,          []);
+        ("float_range 10. 100. 100.",              10.,         100.,        100.,        [18.1; 18.; 17.; 16.; 15.; 14.; 13.; 12.; 11.; 10.]);
+        ("float_range 10. 100. 50.",               10.,         100.,        50.,         [13.1; 13.; 12.; 11.; 10.]);
+        ("float_range 10. 100. 11.000001",         10.,         100.,        11.000001,   [10.]);
+        ("float_range 10. 100. 10.",               10.,         100.,        10.,         []);
+        (* ranges crossing 0. *)
+        ("float_range -10. 10. 10.",               -10.,        10.,         10.,         [0.1; 0.]);
+        ("float_range -10. 10. 1.",                -10.,        10.,         1.,          [0.]);
+        ("float_range -10. 10. 0.",                -10.,        10.,         0.,          []);
+        ("float_range -10. 10. -10.",              -10.,        10.,         -10.,        [8.; 7.; 6.; 5.; 4.; 3.; 2.; 1.; 0.]);
+        ("float_range -10. 10. -1.",               -10.,        10.,         -1.,         []); (*triggers [float 0.] above*)
+        (* negative ranges *)
+        ("float_range -100. -10. -10.",            -100.,       -10.,        -10.,        []);
+        ("float_range -100. -10. -50.",            -100.,       -10.,        -50.,        [-13.1; -13.; -12.; -11.; -10.]);
+        ("float_range -100. -10. -100.",           -100.,       -10.,        -100.,       [-18.1; -18.; -17.; -16.; -15.; -14.; -13.; -12.; -11.; -10.]);
+        ("float_range -.max_float 0. -1.",         -.max_float, 0.,          -1.,         [0.]);
+        ("float_range -.max_float 0. -10.",        -.max_float, 0.,          -10.,        [-0.1; 0.]);
+        ("float_range -.max_float 0. -1e6",        -.max_float, 0.,          -1e6,        [-999.001; -99.0001; -9.00001; -1e-06]);
+        ("float_range -.max_float 0. -.max_float", -.max_float, 0.,          -.max_float, [-1.79769e+154; -1.79769e+77; -1.79769e+39; -1.79769e+20;
+                                                                                           -1.79769e+10; -179768.; -1796.69; -1796.; -178.7; -178.;
+                                                                                           -16.9; -16.; -0.7; 0.]);
+      ]
+
   let test_char () =
     List.iter (alco_check Alcotest.char (trace_false Shrink.char) "on repeated failure")
       [ ("char 'a'",   'a',  []);
@@ -419,6 +498,7 @@ module Shrink = struct
       test_case "int64" `Quick test_int64;
       test_case "float" `Quick test_float;
       test_case "float_bound" `Quick test_float_bound;
+      test_case "float_range" `Quick test_float_range;
       test_case "char"  `Quick test_char;
       test_case "char_numeral"   `Quick test_char_numeral;
       test_case "char_printable" `Quick test_char_printable;
