@@ -597,6 +597,18 @@ module Shrink = struct
     Test.make ~name:"float_bound_exclusive -1e6 >= -.pi" ~count:1000
       (float_bound_exclusive (-1e6)) (fun f -> f >= -.Float.pi)
 
+  let float_range_1_10_leq_pi =
+    Test.make ~name:"float_range 1. 10. <= pi" ~count:1000
+      (float_range 1. 10.) (fun f -> f <= Float.pi)
+
+  let float_range_m10_10_square_leq_2 =
+    Test.make ~name:"(float_range -10. 10.)^2 <= 2." ~count:1000
+      (float_range (-10.) 10.) (fun f -> f *. f <= 2.)
+
+  let float_range_m10_m1_geq_mpi =
+    Test.make ~name:"float_range -10. -1. >= -.pi" ~count:1000
+      (float_range (-10.) (-1.)) (fun f -> f >= -.Float.pi)
+
   let char_is_never_abcdef =
     Test.make ~name:"char never produces 'abcdef'" ~count:1000
       char (fun c -> not (List.mem c ['a';'b';'c';'d';'e';'f']))
@@ -874,6 +886,9 @@ module Shrink = struct
     float_bound_exclusive_1_leq_min_float;
     float_bound_exclusive_m1_geq_m5em1;
     float_bound_exclusive_m1e6_geq_mpi;
+    float_range_1_10_leq_pi;
+    float_range_m10_10_square_leq_2;
+    float_range_m10_m1_geq_mpi;
     char_is_never_abcdef;
     printable_is_never_sign;
     numeral_is_never_less_5;
