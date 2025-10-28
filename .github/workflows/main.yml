@@ -24,6 +24,7 @@ jobs:
           - "5.1"
           - "5.2"
           - "5.3"
+          - "5.4"
         exclude:
           - os: macos-latest
             ocaml-compiler: "4.08"
@@ -48,7 +49,7 @@ jobs:
       matrix:
         container-image:
           - ocaml/opam:debian-12-ocaml-4.14
-          - ocaml/opam:debian-12-ocaml-5.3
+          - ocaml/opam:debian-12-ocaml-5.4
     runs-on: ubuntu-latest
     container:
       image: ${{ matrix.container-image }}
