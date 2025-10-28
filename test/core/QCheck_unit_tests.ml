@@ -55,17 +55,16 @@ module Shrink = struct
         ("int 1000",  1000L, [500L; 250L; 125L; 63L; 32L; 16L; 8L; 4L; 2L; 1L; 0L]);
         ("int (-26)", -26L,  [-13L; -7L; -4L; -2L; -1L; 0L]) ]
 
-  let alcotest_float =
-    let equal x y =
-      (Float.is_nan x && Float.is_nan y)
-      || x = y
-      || abs_float (x -. y) < Float.epsilon
-      ||
-      (let rel_error =
-         if abs_float x > abs_float y then abs_float ((x -. y) /. x) else abs_float ((x -. y) /. y) in
-       rel_error <= 1e-5) (* allow 0.00001% error *)
-    in
-    Alcotest.testable Fmt.float (*(fun ppf -> Fmt.pf ppf "%h")*) equal
+  let float_equal x y =
+    (Float.is_nan x && Float.is_nan y)
+    || x = y
+    || abs_float (x -. y) < Float.epsilon
+    ||
+    (let rel_error =
+       if abs_float x > abs_float y then abs_float ((x -. y) /. x) else abs_float ((x -. y) /. y) in
+     rel_error <= 1e-5) (* allow 0.00001% error *)
+
+  let alcotest_float = Alcotest.testable Fmt.float float_equal
 
   let test_float () =
     List.iter (alco_check (alcotest_float ) (trace_false Shrink.float) "on repeated failure")
@@ -185,6 +184,107 @@ module Shrink = struct
         ("float infinity",     infinity,     []);
         ("float neg_infinity", neg_infinity, [infinity]);
         ("float nan",          nan,          []);
+      ]
+
+  let test_float_bound () =
+    List.iter (fun (name,bound,arg,res) -> alco_check alcotest_float (trace_false (Shrink.float_bound bound)) "on repeated failure" (name,arg,res))
+      [ ("float_bound max_float max_float",     max_float,   max_float,   [1.79769e+154; 1.79769e+231; 1.79769e+270; 1.79769e+289;
+                                                                           1.79769e+299; 1.79769e+304; 1.79769e+306; 1.79769e+307;
+                                                                           9e+307; 1.3e+308; 1.5e+308; 1.6e+308; 8.99e+307; 1.348e+308;
+                                                                           1.573e+308; 1.685e+308; 1.741e+308; 1.769e+308; 1.783e+308;
+                                                                           1.79e+308; 1.794e+308; 1.796e+308; 8.9885e+307; 1.34827e+308;
+                                                                           1.57298e+308; 1.68534e+308; 1.74152e+308; 1.76961e+308;
+                                                                           1.78365e+308; 1.79067e+308; 1.79418e+308; 1.79594e+308;
+                                                                           1.79682e+308; 1.79726e+308; 1.79748e+308]);
+        ("float_bound max_float pi",            max_float,   Float.pi,    [3.; 2.14159; 1.1; 2.1; 2.6; 2.9; 3.; 1.071; 2.106; 2.624;
+                                                                           2.883; 3.012; 3.077; 3.109; 3.125; 3.133; 3.137; 3.139;
+                                                                           3.14; 1.0708; 2.1062; 2.6239; 2.88275; 3.01217; 3.07688;
+                                                                           3.10924; 3.12542; 3.13351; 3.13755; 3.13957; 3.14058;
+                                                                           3.14109]);
+        ("float_bound max_float 1.",            max_float,   1.,          [0.]);
+        ("float_bound max_float 0.",            max_float,   0.,          []);
+        ("float_bound 1e6 1e6",                 1e6,         1e6,         [999.001; 99999.1; 499999.; 799999.; 899999.]);
+        ("float_bound 1e6 10.00001",            1e6,         10.00001,    [0.100001; 5.; 8.; 9.]);
+        ("float_bound 1e6 9.00001",             1e6,         9.00001,     [1e-06; 4.; 7.; 8.]);
+        ("float_bound 1e6 3.00003",             1e6,         3.00003,     [2.00003; 1.; 2.; 2.5; 2.8; 2.9; 1.00002; 2.00003; 2.50003;
+                                                                           2.75003; 2.87503; 2.93753; 2.96878; 2.98441; 2.99222;
+                                                                           2.99613; 2.99808; 2.99906; 2.99955]);
+        ("float_bound 1e6 1.00001",             1e6,         1.00001,     [1e-05; 0.; 0.5; 0.8; 0.9; 1e-05; 0.50001; 0.75001; 0.87501;
+                                                                           0.93751; 0.96876; 0.98439; 0.9922; 0.99611; 0.99806; 0.99904;
+                                                                           0.99953; 0.99977]);
+        ("float_bound 10. 10.",                 10.,         10.,         [0.1; 5.; 8.; 9.]);
+        ("float_bound 1. 1.",                   1.,          1.,          [0.]);
+        ("float_bound 1. 0.5",                  1.,          0.5,         [0.; 0.2; 0.4]);
+        ("float_bound 1. 1e-3",                 1.,          1e-3,        [0.]);
+        ("float_bound 1. 1e-6",                 1.,          1e-6,        []);
+        ("float_bound 1. min_float",            1.,          min_float,   []);
+        ("float_bound 0. 0.",                   0.,          0.,          []);
+        ("float_bound 1. -.min_float",          1.,          -.min_float, []);
+        ("float_bound -1. -1e-6",               -1.,         -1e-6,       []);
+        ("float_bound -1. -1e-3",               -1.,         -1e-3,       [0.]);
+        ("float_bound -1. -0.5",                -1.,         -0.5,        [0.; -0.2; -0.4]);
+        ("float_bound -1. -1.",                 -1.,         -1.,         [0.]);
+        ("float_bound -10. -10.",               -10.,        -10.,        [-0.1; -5.; -8.; -9.]);
+        ("float_bound -1e6 -1.00001",           -1e6,        -1.00001,    [-1e-05; 0.; -0.5; -0.8; -0.9; -1e-05; -0.50001; -0.75001;
+                                                                           -0.87501; -0.93751; -0.96876; -0.98439; -0.9922; -0.99611;
+                                                                           -0.99806; -0.99904; -0.99953; -0.99977]);
+        ("float_bound -1e6 -3.00003",           -1e6,        -3.00003,    [-2.00003; -1.; -2.; -2.5; -2.8; -2.9; -1.00002; -2.00003;
+                                                                           -2.50003; -2.75003; -2.87503; -2.93753; -2.96878; -2.98441;
+                                                                           -2.99222; -2.99613; -2.99808; -2.99906; -2.99955]);
+        ("float_bound -1e6 -9.00001",           -1e6,        -9.00001,    [-1e-06; -4.; -7.; -8.]);
+        ("float_bound -1e6 -10.00001",          -1e6,        -10.00001,   [-0.100001; -5.; -8.; -9.]);
+        ("float_bound -1e6 -1e6",               -1e6,        -1e6,        [-999.001; -99999.1; -499999.; -799999.; -899999.]);
+        ("float_bound -.max_float -1.",         -.max_float, -1.,         [0.]);
+        ("float_bound -.max_float -.pi",        -.max_float, -.Float.pi,  [-3.; -2.14159; -1.1; -2.1; -2.6; -2.9; -3.; -1.071; -2.106;
+                                                                           -2.624; -2.883; -3.012; -3.077; -3.109; -3.125; -3.133;
+                                                                           -3.137; -3.139; -3.14; -1.0708; -2.1062; -2.6239; -2.88275;
+                                                                           -3.01217; -3.07688; -3.10924; -3.12542; -3.13351; -3.13755;
+                                                                           -3.13957; -3.14058; -3.14109]);
+        ("float_bound -.max_float -.max_float", -.max_float, -.max_float, [-1.79769e+154; -1.79769e+231; -1.79769e+270; -1.79769e+289;
+                                                                           -1.79769e+299; -1.79769e+304; -1.79769e+306; -1.79769e+307;
+                                                                           -9e+307; -1.3e+308; -1.5e+308; -1.6e+308; -8.99e+307;
+                                                                           -1.348e+308; -1.573e+308; -1.685e+308; -1.741e+308;
+                                                                           -1.769e+308; -1.783e+308; -1.79e+308; -1.794e+308;
+                                                                           -1.796e+308; -8.9885e+307; -1.34827e+308; -1.57298e+308;
+                                                                           -1.68534e+308; -1.74152e+308; -1.76961e+308; -1.78365e+308;
+                                                                           -1.79067e+308; -1.79418e+308; -1.79594e+308; -1.79682e+308;
+                                                                           -1.79726e+308; -1.79748e+308]);
+      ];
+    List.iter (fun (name,bound,arg,res) -> alco_check alcotest_float (trace_true (Shrink.float_bound bound)) "on repeated success" (name,arg,res))
+      [ ("float_bound max_float max_float",     max_float,   max_float,   [1.79769e+154; 1.79769e+77; 1.79769e+39; 1.79769e+20;
+                                                                           1.79769e+10; 179768.; 1796.69; 1796.; 178.7; 178.; 16.9;
+                                                                           16.; 0.7; 0.]);
+        ("float_bound max_float pi",            max_float,   Float.pi,    [3.; 2.; 1.; 0.]);
+        ("float_bound max_float 1.",            max_float,   1. ,         [0.]);
+        ("float_bound max_float 0.",            max_float,   0.,          []);
+        ("float_bound 1e6 1e6",                 1e6,         1e6,         [999.001; 99.0001; 9.00001; 1e-06]);
+        ("float_bound 1e6 10.00001",            1e6,         10.00001,    [0.100001; 0.]);
+        ("float_bound 1e6 9.00001",             1e6,         9.00001,     [1e-06]);
+        ("float_bound 1e6 3.00003",             1e6,         3.00003,     [2.00003; 1.00003; 3e-05]);
+        ("float_bound 1e6 1.00001",             1e6,         1.00001,     [1e-05]);
+        ("float_bound 10. 10.",                 10.,         10.,         [0.1; 0.]);
+        ("float_bound 1. 1.",                   1.,          1.,          [0.]);
+        ("float_bound 1. 0.5",                  1.,          0.5,         [0.]);
+        ("float_bound 1. 1e-3",                 1.,          1e-3,        [0.]);
+        ("float_bound 1. 1e-6",                 1.,          1e-6,        []);
+        ("float_bound 1. min_float",            1.,          min_float,   []);
+        ("float_bound 0. 0.",                   0.,          0.,          []);
+        ("float_bound 1. -.min_float",          1.,          -.min_float, []);
+        ("float_bound -1. -1e-6",               -1.,         -1e-6,       []);
+        ("float_bound -1. -1e-3",               -1.,         -1e-3,       [0.]);
+        ("float_bound -1. -0.5",                -1.,         -0.5,        [0.]);
+        ("float_bound -1. -1.",                 -1.,         -1.,         [0.]);
+        ("float_bound -10. -10.",               -10.,        -10.,        [-0.1; 0.]);
+        ("float_bound -1e6 -1.00001",           -1e6,        -1.00001,    [-1e-05]);
+        ("float_bound -1e6 -3.00003",           -1e6,        -3.00003,    [-2.00003; -1.00003; -3e-05]);
+        ("float_bound -1e6 -9.00001",           -1e6,        -9.00001,    [-1e-06]);
+        ("float_bound -1e6 -10.00001",          -1e6,        -10.00001,   [-0.100001; 0.]);
+        ("float_bound -1e6 -1e6",               -1e6,        -1e6,        [-999.001; -99.0001; -9.00001; -1e-06]);
+        ("float_bound -.max_float -1.",         -.max_float, -1.,         [0.]);
+        ("float_bound -.max_float -.pi",        -.max_float, -.Float.pi,  [-3.; -2.; -1.; 0.]);
+        ("float_bound -.max_float -.max_float", -.max_float, -.max_float, [-1.79769e+154; -1.79769e+77; -1.79769e+39; -1.79769e+20;
+                                                                           -1.79769e+10; -179768.; -1796.69; -1796.; -178.7; -178.;
+                                                                           -16.9; -16.; -0.7; 0.]);
       ]
 
   let test_char () =
@@ -318,6 +418,7 @@ module Shrink = struct
       test_case "int32" `Quick test_int32;
       test_case "int64" `Quick test_int64;
       test_case "float" `Quick test_float;
+      test_case "float_bound" `Quick test_float_bound;
       test_case "char"  `Quick test_char;
       test_case "char_numeral"   `Quick test_char_numeral;
       test_case "char_printable" `Quick test_char_printable;

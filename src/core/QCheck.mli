@@ -928,6 +928,12 @@ module Shrink : sig
       and prefers a shorter printed rendering.
       @since NEXT_RELEASE *)
 
+  val float_bound : float -> float t
+  (** float shrinker for bounded floating point numbers.
+      [float_bound b] shrinks floating point numbers towards [0.] for both
+      positive and negative bounds [b], preferring a shorter printed rendering.
+      @since NEXT_RELEASE *)
+
   val option : 'a t -> 'a option t
   (** option shrinker. Shrinks towards [None].
       [option shk] reduces [Some v] values using [shk] to reduce [v]. *)

@@ -365,6 +365,78 @@ Test float >= -1e10 failed (19 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
+Test float_bound_inclusive 1e6 <= 10. failed (13 shrink steps):
+
+11.
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_inclusive 1e6 <= pi failed (10 shrink steps):
+
+4.
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_inclusive 1. <= 0.5 failed (1 shrink steps):
+
+0.6
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_inclusive 1. <= min_float failed (2 shrink steps):
+
+0.1
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_inclusive -1. >= -0.5 failed (1 shrink steps):
+
+-0.6
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_inclusive -1e6 >= -.pi failed (10 shrink steps):
+
+-4.
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_exclusive 1e6 <= 10. failed (13 shrink steps):
+
+11.
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_exclusive 1e6 <= pi failed (10 shrink steps):
+
+4.
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_exclusive 1. <= 0.5 failed (1 shrink steps):
+
+0.6
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_exclusive 1. <= min_float failed (2 shrink steps):
+
+0.1
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_exclusive -1. >= -0.5 failed (1 shrink steps):
+
+-0.6
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_exclusive -1e6 >= -.pi failed (10 shrink steps):
+
+-4.
+
+--- Failure --------------------------------------------------------------------
+
 Test char never produces 'abcdef' failed (2 shrink steps):
 
 'a'
@@ -1808,7 +1880,7 @@ Collect results for test float classify:
  FP_subnormal:      3 cases   (0.1%)
 ================================================================================
 1 warning(s)
-failure (83 tests failed, 3 tests errored, ran 186 tests)
+failure (95 tests failed, 3 tests errored, ran 198 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++

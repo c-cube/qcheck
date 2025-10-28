@@ -809,6 +809,17 @@ module Shrink = struct
       float_shrink_significand x signif exponent yield
     | _ -> ()
 
+  let float_bound bound =
+    if bound > 0.
+    then
+      fun i ->
+        Iter.map (fun i -> i -. 1.) (float (i +. 1.)) (* towards 1. and subtract 1. afterwards *)
+        |> Iter.filter (fun i -> 0. <= i && i < bound)
+    else
+      fun i ->
+        Iter.map (fun i -> i +. 1.) (float (i -. 1.)) (* towards -1. and add 1. afterwards *)
+        |> Iter.filter (fun i -> bound < i && i <= 0.)
+
   let filter f shrink x = Iter.filter f (shrink x)
 
   let char_generic target c =
@@ -1216,10 +1227,10 @@ let pos_float = make_scalar ~print:Print.float Gen.pfloat
 let neg_float = make_scalar ~print:Print.float Gen.nfloat
 
 let float_bound_inclusive bound =
-  make_scalar ~print:Print.float (Gen.float_bound_inclusive bound)
+  make ~small:small1 ~shrink:(Shrink.float_bound bound) ~print:Print.float (Gen.float_bound_inclusive bound)
 
 let float_bound_exclusive bound =
-  make_scalar ~print:Print.float (Gen.float_bound_exclusive bound)
+  make ~small:small1 ~shrink:(Shrink.float_bound bound) ~print:Print.float (Gen.float_bound_exclusive bound)
 
 let float_range low high = make_scalar ~print:Print.float (Gen.float_range low high)
 
