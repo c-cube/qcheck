@@ -323,7 +323,7 @@ Test float >= -1e10 failed (10 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test float_bound_inclusive 1e6 <= 10. failed (10 shrink steps):
+Test float_bound_inclusive 1e6 <= 10. failed (9 shrink steps):
 
 11.
 
@@ -359,7 +359,7 @@ Test float_bound_inclusive -1e6 >= -.pi failed (9 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test float_bound_exclusive 1e6 <= 10. failed (10 shrink steps):
+Test float_bound_exclusive 1e6 <= 10. failed (9 shrink steps):
 
 11.
 

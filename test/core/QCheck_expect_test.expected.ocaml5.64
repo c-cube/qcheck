@@ -323,7 +323,7 @@ Test nat < 5001 failed (4 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test float <= 1e10 failed (7 shrink steps):
+Test float <= 1e10 failed (6 shrink steps):
 
 11000000000.
 
@@ -359,9 +359,9 @@ Test float >= -1e-10 failed (16 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test float >= -1e10 failed (15 shrink steps):
+Test float >= -1e10 failed (9 shrink steps):
 
--10000200000.
+-11000000000.
 
 --- Failure --------------------------------------------------------------------
 
