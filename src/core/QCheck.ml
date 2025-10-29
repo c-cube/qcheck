@@ -821,7 +821,7 @@ module Shrink = struct
         |> Iter.filter (fun i -> bound < i && i <= 0.)
 
   let float_range low high =
-    if high < low || high -. low > max_float then invalid_arg "Shrink.float_range: range too big";
+    if high < low then invalid_arg "Shrink.float_range: invalid range";
     let filter_range = Iter.filter (fun i -> low <= i && i <= high) in
     if low >= 0. then
       fun i -> (* move [low;high] to [1;high-low+1], shrink towards 1., and move back *)

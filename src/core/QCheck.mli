@@ -938,7 +938,7 @@ module Shrink : sig
   (** [float_range low high] shrinks floating point numbers in the range [low; high] (inclusive).
       Shrinks towards [low] if [low >= 0.], towards [high] if [high <= 0.], and
       towards [0.] if [low < 0.] and [0. <. high]. It prefers a shorter printed rendering.
-      @raise Invalid_argument if [low > high] or if the range is larger than [max_float].
+      @raise Invalid_argument if [low > high].
       @since NEXT_RELEASE *)
 
   val option : 'a t -> 'a option t
