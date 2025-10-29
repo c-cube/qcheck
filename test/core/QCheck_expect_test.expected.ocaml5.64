@@ -257,9 +257,9 @@ Test char never produces '\255' failed (0 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test regression test negative float range failed (0 shrink steps):
+Test regression test negative float range failed (1 shrink steps):
 
--1.13811703367
+-1.
 
 --- Failure --------------------------------------------------------------------
 
@@ -432,6 +432,24 @@ Test float_bound_exclusive -1. >= -0.5 failed (1 shrink steps):
 --- Failure --------------------------------------------------------------------
 
 Test float_bound_exclusive -1e6 >= -.pi failed (10 shrink steps):
+
+-4.
+
+--- Failure --------------------------------------------------------------------
+
+Test float_range 1. 10. <= pi failed (5 shrink steps):
+
+4.
+
+--- Failure --------------------------------------------------------------------
+
+Test (float_range -10. 10.)^2 <= 2. failed (6 shrink steps):
+
+2.
+
+--- Failure --------------------------------------------------------------------
+
+Test float_range -10. -1. >= -.pi failed (5 shrink steps):
 
 -4.
 
@@ -1880,7 +1898,7 @@ Collect results for test float classify:
  FP_subnormal:      3 cases   (0.1%)
 ================================================================================
 1 warning(s)
-failure (95 tests failed, 3 tests errored, ran 198 tests)
+failure (98 tests failed, 3 tests errored, ran 201 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++

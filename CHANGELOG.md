@@ -5,6 +5,7 @@
 - Add `QCheck.Shrink.float` and enable shrinking for `QCheck.float`
 - Add `QCheck.Shrink.float_bound` and enable shrinking for
   `QCheck.float_bound_inclusive` and `QCheck.float_bound_exclusive`
+- Add `QCheck.Shrink.float_range` and enable shrinking for `QCheck.float_range`
 
 ## 0.26
 

@@ -934,6 +934,13 @@ module Shrink : sig
       positive and negative bounds [b], preferring a shorter printed rendering.
       @since NEXT_RELEASE *)
 
+  val float_range : float -> float -> float t
+  (** [float_range low high] shrinks floating point numbers in the range [low; high] (inclusive).
+      Shrinks towards [low] if [low >= 0.], towards [high] if [high <= 0.], and
+      towards [0.] if [low < 0.] and [0. <. high]. It prefers a shorter printed rendering.
+      @raise Invalid_argument if [low > high].
+      @since NEXT_RELEASE *)
+
   val option : 'a t -> 'a option t
   (** option shrinker. Shrinks towards [None].
       [option shk] reduces [Some v] values using [shk] to reduce [v]. *)

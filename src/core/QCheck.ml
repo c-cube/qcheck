@@ -820,6 +820,19 @@ module Shrink = struct
         Iter.map (fun i -> i +. 1.) (float (i -. 1.)) (* towards -1. and add 1. afterwards *)
         |> Iter.filter (fun i -> bound < i && i <= 0.)
 
+  let float_range low high =
+    if high < low then invalid_arg "Shrink.float_range: invalid range";
+    let filter_range = Iter.filter (fun i -> low <= i && i <= high) in
+    if low >= 0. then
+      fun i -> (* move [low;high] to [1;high-low+1], shrink towards 1., and move back *)
+        Iter.map (fun i -> i +. low -. 1.) (float (i -. low +. 1.)) |> filter_range
+    else if high <= 0. then
+      fun i -> (* move [low;high] to [low-high-1;-1], shrink towards -1., and move back *)
+        Iter.map (fun i -> i +. high +. 1.) (float (i -. high -. 1.)) |> filter_range
+    else (* low < 0 && 0 < high, i.e., crosses 0. *)
+      fun i -> (* shrink towards 1. and subtract 1. afterwards *)
+        Iter.map (fun i -> i -. 1.) (float (i +. 1.)) |> filter_range
+
   let filter f shrink x = Iter.filter f (shrink x)
 
   let char_generic target c =
@@ -1232,7 +1245,8 @@ let float_bound_inclusive bound =
 let float_bound_exclusive bound =
   make ~small:small1 ~shrink:(Shrink.float_bound bound) ~print:Print.float (Gen.float_bound_exclusive bound)
 
-let float_range low high = make_scalar ~print:Print.float (Gen.float_range low high)
+let float_range low high =
+  make ~small:small1 ~shrink:(Shrink.float_range low high) ~print:Print.float (Gen.float_range low high)
 
 let exponential mean = make_scalar ~print:Print.float (Gen.exponential mean)
 
