@@ -786,15 +786,13 @@ module Shrink = struct
             then yield signif') in
     (* first try simple reductions of the significand's leading digit, in [1;9] *)
     if signif > 2. then
-      begin (* shrink  2.234e213 to  1.234e213 by int shrinking their distance *)
-        let dist = int_of_float (signif -. 1.) in
-        int dist (fun d -> if d != 0 then yield (recompose_float (signif -. float d)))
-      end;
+      (* shrink  2.234e213 to  1.234e213 by int shrinking the leading 2 *)
+      int (int_of_float signif)
+        (fun s -> if s != 0 then yield (recompose_float (signif -. floor signif +. float s)));
     if signif < -2. then
-      begin (* shrink -2.234e213 to -1.234e213 by int shrinking their distance *)
-        let dist = int_of_float (signif +. 1.) in
-        int dist (fun d -> if d != 0 then yield (recompose_float (signif -. float d)))
-      end;
+      (* shrink -2.234e213 to -1.234e213 by int shrinking the leading -2 *)
+      int (int_of_float signif)
+        (fun s -> if s != 0 then yield (recompose_float (signif -. ceil signif +. float s)));
     (* second try reducing the other decimal digits with different precision *)
     if signif > 1.0 || signif < -1.0 (* don't attempt to shrink 1.0 or -1.0 *)
     then
