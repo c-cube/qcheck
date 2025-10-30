@@ -1122,14 +1122,13 @@ val bool : bool arbitrary
 (** Uniform boolean generator. *)
 
 val float : float arbitrary
-(** Generates regular floats (no nan and no infinities). *)
-(* FIXME: does not generate nan nor infinity I think. *)
+(** Generates regular floats (no infinities). *)
 
 val pos_float : float arbitrary
-(** Positive float generator (no nan and no infinities). *)
+(** Positive float generator (no infinities). *)
 
 val neg_float : float arbitrary
-(** Negative float generator (no nan and no infinities). *)
+(** Negative float generator (no infinities). *)
 
 val float_bound_inclusive : float -> float arbitrary
 (** [float_bound_inclusive n] is uniform between [0] and [n] included. If [bound] is
