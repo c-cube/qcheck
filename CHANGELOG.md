@@ -6,6 +6,7 @@
 - Add `QCheck.Shrink.float_bound` and enable shrinking for
   `QCheck.float_bound_inclusive` and `QCheck.float_bound_exclusive`
 - Add `QCheck.Shrink.float_range` and enable shrinking for `QCheck.float_range`
+- Enable shrinking for `QCheck.{pos_float,neg_float,exponential}`
 
 ## 0.26
 

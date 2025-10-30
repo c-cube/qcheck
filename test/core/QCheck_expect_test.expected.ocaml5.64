@@ -455,6 +455,24 @@ Test float_range -10. -1. >= -.pi failed (2 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
+Test pos_float < Float.pi failed (14 shrink steps):
+
+4.
+
+--- Failure --------------------------------------------------------------------
+
+Test neg_float > Float.pi failed (14 shrink steps):
+
+-4.
+
+--- Failure --------------------------------------------------------------------
+
+Test exponential 10. < Float.pi failed (3 shrink steps):
+
+4.
+
+--- Failure --------------------------------------------------------------------
+
 Test char never produces 'abcdef' failed (2 shrink steps):
 
 'a'
@@ -1898,7 +1916,7 @@ Collect results for test float classify:
  FP_subnormal:      3 cases   (0.1%)
 ================================================================================
 1 warning(s)
-failure (98 tests failed, 3 tests errored, ran 201 tests)
+failure (101 tests failed, 3 tests errored, ran 204 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
