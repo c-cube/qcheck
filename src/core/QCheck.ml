@@ -1220,8 +1220,8 @@ let get_print o = o.print
 
 let small1 _ = 1
 
-let make_scalar ?print ?collect gen =
-  make ~shrink:Shrink.nil ~small:small1 ?print ?collect gen
+let make_scalar ?collect gen =
+  make ~shrink:Shrink.float ~small:small1 ~print:Print.float ?collect gen
 let make_int ?collect gen =
   make ~shrink:Shrink.int ~small:small1 ~print:Print.int ?collect gen
 
@@ -1241,11 +1241,10 @@ let unit : unit arbitrary =
   make ~small:small1 ~shrink:Shrink.nil ~print:Print.unit Gen.unit
 let bool =
   make ~small:small1 ~shrink:Shrink.bool ~print:Print.bool Gen.bool
-let float =
-  make ~small:small1 ~shrink:Shrink.float ~print:Print.float Gen.float
 
-let pos_float = make_scalar ~print:Print.float Gen.pfloat
-let neg_float = make_scalar ~print:Print.float Gen.nfloat
+let float = make_scalar Gen.float
+let pos_float = make_scalar Gen.pfloat
+let neg_float = make_scalar Gen.nfloat
 
 let float_bound_inclusive bound =
   make ~small:small1 ~shrink:(Shrink.float_bound bound) ~print:Print.float (Gen.float_bound_inclusive bound)
@@ -1256,7 +1255,7 @@ let float_bound_exclusive bound =
 let float_range low high =
   make ~small:small1 ~shrink:(Shrink.float_range low high) ~print:Print.float (Gen.float_range low high)
 
-let exponential mean = make_scalar ~print:Print.float (Gen.exponential mean)
+let exponential mean = make_scalar (Gen.exponential mean)
 
 let int = make_int Gen.int
 let int_bound n = make_int (Gen.int_bound n)
