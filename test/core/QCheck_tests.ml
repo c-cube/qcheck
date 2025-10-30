@@ -549,6 +549,14 @@ module Shrink = struct
     Test.make ~name:"float >= -1e10" ~count:1000
       float (fun f -> f >= -1e10)
 
+  let float_not_nan =
+    Test.make ~name:"float is not nan" ~count:10_000
+      float (fun f -> not (Float.is_nan f))
+
+  let float_not_infinite =
+    Test.make ~name:"float is not infinity" ~count:10_000
+      float (fun f -> not (Float.is_infinite f))
+
   let float_bound_inclusive_1e6_leq_10 =
     Test.make ~name:"float_bound_inclusive 1e6 <= 10." ~count:1000
       (float_bound_inclusive 1e6) (fun f -> f <= 10.)
@@ -613,9 +621,25 @@ module Shrink = struct
     Test.make ~name:"pos_float < Float.pi" ~count:1000
       pos_float (fun f -> f < Float.pi)
 
+  let pos_float_not_nan =
+    Test.make ~name:"pos_float is not nan" ~count:10_000
+      pos_float (fun f -> not (Float.is_nan f))
+
+  let pos_float_not_infinite =
+    Test.make ~name:"pos_float is not infinity" ~count:10_000
+      pos_float (fun f -> not (Float.is_infinite f))
+
   let neg_float_gt_mpi =
     Test.make ~name:"neg_float > Float.pi" ~count:1000
       neg_float (fun f -> f > -.Float.pi)
+
+  let neg_float_not_nan =
+    Test.make ~name:"neg_float is not nan" ~count:10_000
+      neg_float (fun f -> not (Float.is_nan f))
+
+  let neg_float_not_infinite =
+    Test.make ~name:"neg_float is not infinity" ~count:10_000
+      neg_float (fun f -> not (Float.is_infinite f))
 
   let exponential_10_lt_pi =
     Test.make ~name:"exponential 10. < Float.pi" ~count:1000
@@ -886,6 +910,8 @@ module Shrink = struct
     float_leq_1em10;
     float_geq_m1em10;
     float_geq_m1e10;
+    float_not_nan;
+    float_not_infinite;
     float_bound_inclusive_1e6_leq_10;
     float_bound_inclusive_1e6_leq_pi;
     float_bound_inclusive_1_leq_5em1;
@@ -902,7 +928,11 @@ module Shrink = struct
     float_range_m10_10_square_leq_2;
     float_range_m10_m1_geq_mpi;
     pos_float_lt_pi;
+    pos_float_not_nan;
+    pos_float_not_infinite;
     neg_float_gt_mpi;
+    neg_float_not_nan;
+    neg_float_not_infinite;
     exponential_10_lt_pi;
     char_is_never_abcdef;
     printable_is_never_sign;
