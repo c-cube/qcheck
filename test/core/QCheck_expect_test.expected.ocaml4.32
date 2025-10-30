@@ -281,31 +281,31 @@ Test nat < 5001 failed (6 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test float <= 1e10 failed (13 shrink steps):
+Test float <= 1e10 failed (10 shrink steps):
 
 11000000000.
 
 --- Failure --------------------------------------------------------------------
 
-Test float < Float.pi failed (15 shrink steps):
+Test float < Float.pi failed (13 shrink steps):
 
 4.
 
 --- Failure --------------------------------------------------------------------
 
-Test float <= 1.0 failed (17 shrink steps):
+Test float <= 1.0 failed (14 shrink steps):
 
 2.
 
 --- Failure --------------------------------------------------------------------
 
-Test float < 1.0 failed (18 shrink steps):
+Test float < 1.0 failed (15 shrink steps):
 
 1.
 
 --- Failure --------------------------------------------------------------------
 
-Test float <= 1e-10 failed (18 shrink steps):
+Test float <= 1e-10 failed (15 shrink steps):
 
 1.
 
@@ -323,13 +323,13 @@ Test float >= -1e10 failed (10 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test float_bound_inclusive 1e6 <= 10. failed (14 shrink steps):
+Test float_bound_inclusive 1e6 <= 10. failed (9 shrink steps):
 
 11.
 
 --- Failure --------------------------------------------------------------------
 
-Test float_bound_inclusive 1e6 <= pi failed (10 shrink steps):
+Test float_bound_inclusive 1e6 <= pi failed (9 shrink steps):
 
 4.
 
@@ -353,19 +353,19 @@ Test float_bound_inclusive -1. >= -0.5 failed (1 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test float_bound_inclusive -1e6 >= -.pi failed (10 shrink steps):
+Test float_bound_inclusive -1e6 >= -.pi failed (9 shrink steps):
 
 -4.
 
 --- Failure --------------------------------------------------------------------
 
-Test float_bound_exclusive 1e6 <= 10. failed (14 shrink steps):
+Test float_bound_exclusive 1e6 <= 10. failed (9 shrink steps):
 
 11.
 
 --- Failure --------------------------------------------------------------------
 
-Test float_bound_exclusive 1e6 <= pi failed (10 shrink steps):
+Test float_bound_exclusive 1e6 <= pi failed (9 shrink steps):
 
 4.
 
@@ -389,19 +389,19 @@ Test float_bound_exclusive -1. >= -0.5 failed (1 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test float_bound_exclusive -1e6 >= -.pi failed (10 shrink steps):
+Test float_bound_exclusive -1e6 >= -.pi failed (9 shrink steps):
 
 -4.
 
 --- Failure --------------------------------------------------------------------
 
-Test float_range 1. 10. <= pi failed (5 shrink steps):
+Test float_range 1. 10. <= pi failed (2 shrink steps):
 
 4.
 
 --- Failure --------------------------------------------------------------------
 
-Test (float_range -10. 10.)^2 <= 2. failed (5 shrink steps):
+Test (float_range -10. 10.)^2 <= 2. failed (3 shrink steps):
 
 2.
 

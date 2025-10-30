@@ -784,15 +784,23 @@ module Shrink = struct
             let signif' = float i /. float prec in
             if float_suff_different signif' signif
             then yield signif') in
-    (* first try simple reductions of the significand's leading digit, in [1;9] *)
-    if signif > 2. then yield (recompose_float (signif -. 1.));  (* shrink  2.234e213 to  1.234e213 *)
-    if signif < -2. then yield (recompose_float (signif +. 1.)); (* shrink -2.234e213 to -1.234e213 *)
-    (* second try reducing the other decimal digits with different precision *)
+    (* first try reducing the decimal digits with different precision *)
     if signif > 1.0 || signif < -1.0 (* don't attempt to shrink 1.0 or -1.0 *)
     then
-      shrink_decimals signif 10     recompose_and_yield;
-      shrink_decimals signif 1000   recompose_and_yield;
-      shrink_decimals signif 100000 recompose_and_yield
+      begin
+        shrink_decimals signif 10     recompose_and_yield;
+        shrink_decimals signif 1000   recompose_and_yield;
+        shrink_decimals signif 100000 recompose_and_yield
+      end;
+    (* second try simple reductions of the significand's leading digit, in [1;9] *)
+    if signif > 2. then
+      (* shrink  2.234e213 to  1.234e213 by int shrinking the leading 2 *)
+      int (int_of_float signif)
+        (fun s -> if s != 0 then yield (recompose_float (signif -. floor signif +. float s)));
+    if signif < -2. then
+      (* shrink -2.234e213 to -1.234e213 by int shrinking the leading -2 *)
+      int (int_of_float signif)
+        (fun s -> if s != 0 then yield (recompose_float (signif -. ceil signif +. float s)))
 
   let float x yield =
     if not (Float.is_infinite x || Float.is_nan x) then
