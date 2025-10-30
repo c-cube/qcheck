@@ -510,8 +510,10 @@ module Print = struct
   let int32 i = Int32.to_string i ^ "l"
   let int64 i = Int64.to_string i ^ "L"
   let bool = string_of_bool
-  let float f = (* Windows workaround to avoid leading exponent zero such as "-1.00001604579e-010" *)
-    if Sys.win32
+  let float f = (* Workaround for Windows and macOS to print negative nans consistently as "-nan" *)
+    if Float.is_nan f && Float.sign_bit f
+    then "-nan"
+    else if Sys.win32 (* Windows workaround to avoid leading exponent zero such as "-1.00001604579e-010" *)
     then string_of_float f |> cut_exp_zero
     else string_of_float f
   let string s = Printf.sprintf "%S" s

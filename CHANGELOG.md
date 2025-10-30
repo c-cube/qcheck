@@ -7,6 +7,10 @@
   `QCheck.float_bound_inclusive` and `QCheck.float_bound_exclusive`
 - Add `QCheck.Shrink.float_range` and enable shrinking for `QCheck.float_range`
 - Enable shrinking for `QCheck.{pos_float,neg_float,exponential}`
+- Patch `QCheck.Print.float` and `QCheck2.Print.float` to print negative nans
+  consistently as "-nan" also on Windows and macOS, and correct documentation
+  for `QCheck.{float,pos_float,neg_float}` in that they may produce `nan`s since
+  #350 from 0.26
 
 ## 0.26
 
