@@ -323,6 +323,12 @@ Test float >= -1e10 failed (10 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
+Test float is not nan failed (0 shrink steps):
+
+-nan
+
+--- Failure --------------------------------------------------------------------
+
 Test float_bound_inclusive 1e6 <= 10. failed (9 shrink steps):
 
 11.
@@ -419,9 +425,21 @@ Test pos_float < Float.pi failed (13 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
+Test pos_float is not nan failed (0 shrink steps):
+
+nan
+
+--- Failure --------------------------------------------------------------------
+
 Test neg_float > Float.pi failed (13 shrink steps):
 
 -4.
+
+--- Failure --------------------------------------------------------------------
+
+Test neg_float is not nan failed (0 shrink steps):
+
+-nan
 
 --- Failure --------------------------------------------------------------------
 
@@ -1873,7 +1891,7 @@ Collect results for test float classify:
  FP_nan:            2 cases   (0.0%)
 ================================================================================
 1 warning(s)
-failure (101 tests failed, 3 tests errored, ran 204 tests)
+failure (104 tests failed, 3 tests errored, ran 210 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
