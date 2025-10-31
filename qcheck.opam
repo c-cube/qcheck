@@ -12,7 +12,7 @@ For fewer dependencies and new developments `qcheck-core` is recommended."""
 homepage: "https://github.com/c-cube/qcheck/"
 license: "BSD-2-Clause"
 doc: ["http://c-cube.github.io/qcheck/"]
-version: "0.26"
+version: "0.27"
 tags: [
   "test"
   "property"

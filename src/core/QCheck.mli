@@ -926,20 +926,20 @@ module Shrink : sig
   val float : float t
   (** float shrinker. Shrinks floating point numbers towards [1.0] or [-1.0]
       and prefers a shorter printed rendering.
-      @since NEXT_RELEASE *)
+      @since 0.27 *)
 
   val float_bound : float -> float t
   (** float shrinker for bounded floating point numbers.
       [float_bound b] shrinks floating point numbers towards [0.] for both
       positive and negative bounds [b], preferring a shorter printed rendering.
-      @since NEXT_RELEASE *)
+      @since 0.27 *)
 
   val float_range : float -> float -> float t
   (** [float_range low high] shrinks floating point numbers in the range [low; high] (inclusive).
       Shrinks towards [low] if [low >= 0.], towards [high] if [high <= 0.], and
       towards [0.] if [low < 0.] and [0. <. high]. It prefers a shorter printed rendering.
       @raise Invalid_argument if [low > high].
-      @since NEXT_RELEASE *)
+      @since 0.27 *)
 
   val option : 'a t -> 'a option t
   (** option shrinker. Shrinks towards [None].

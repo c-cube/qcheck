@@ -11,7 +11,7 @@ The `qcheck-alcotest` library provides an integration layer for `QCheck` onto
 https://github.com/mirage/alcotest[`alcotest`], allowing to run property-based
 tests in `alcotest`."""
 doc: ["http://c-cube.github.io/qcheck/"]
-version: "0.26"
+version: "0.27"
 tags: [
   "test"
   "quickcheck"
