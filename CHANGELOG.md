@@ -1,5 +1,9 @@
 # Changes
 
+## NEXT RELEASE (202?-??-??)
+
+- ...
+
 ## 0.27 (2025-10-31)
 
 - Add `QCheck.Shrink.float` and enable shrinking for `QCheck.float`
