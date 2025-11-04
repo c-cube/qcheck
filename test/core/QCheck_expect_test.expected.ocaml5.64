@@ -461,25 +461,25 @@ Test float_range -10. -1. >= -.pi failed (2 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test pos_float < Float.pi failed (14 shrink steps):
+Test float_pos < Float.pi failed (14 shrink steps):
 
 4.
 
 --- Failure --------------------------------------------------------------------
 
-Test pos_float is not nan failed (0 shrink steps):
+Test float_pos is not nan failed (0 shrink steps):
 
 nan
 
 --- Failure --------------------------------------------------------------------
 
-Test neg_float > Float.pi failed (14 shrink steps):
+Test float_neg > Float.pi failed (14 shrink steps):
 
 -4.
 
 --- Failure --------------------------------------------------------------------
 
-Test neg_float is not nan failed (0 shrink steps):
+Test float_neg is not nan failed (0 shrink steps):
 
 -nan
 
