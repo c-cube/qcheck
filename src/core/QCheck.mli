@@ -270,11 +270,15 @@ module Gen : sig
 
   val float_pos : float t (** Generates positive floating point numbers (0. included). *)
 
-  val float_neg : float t (** Generates negative floating point numbers. (-0. included) *)
+  val float_neg : float t (** Generates negative floating point numbers (-0. included). *)
 
-  val pfloat : float t (** Generates positive floating point numbers (0. included). *)
+  val pfloat : float t
+  (** Generates positive floating point numbers (0. included).
+      @deprecated use {!float_pos} instead. *)
 
-  val nfloat : float t (** Generates negative floating point numbers. (-0. included) *)
+  val nfloat : float t
+  (** Generates negative floating point numbers (-0. included).
+      @deprecated use {!float_neg} instead. *)
 
   val float_bound_inclusive : float -> float t
   (** [float_bound_inclusive bound] returns a random floating-point number between 0 and
