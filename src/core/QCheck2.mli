@@ -280,6 +280,18 @@ module Gen : sig
       Shrinks towards [0.].
   *)
 
+  val float_pos : float t
+  (** Generates positive floating point numbers ([0.] included).
+
+      Shrinks towards [0.].
+  *)
+
+  val float_neg : float t
+  (** Generates negative floating point numbers. ([-0.] included).
+
+      Shrinks towards [-0.].
+  *)
+
   val pfloat : float t
   (** Generates positive floating point numbers ([0.] included).
 
