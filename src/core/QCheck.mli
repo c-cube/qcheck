@@ -1139,10 +1139,12 @@ val float_neg : float arbitrary
 (** Negative float generator (no infinities). *)
 
 val pos_float : float arbitrary
-(** Positive float generator (no infinities). *)
+(** Positive float generator (no infinities).
+    @deprecated use {!float_pos} instead. *)
 
 val neg_float : float arbitrary
-(** Negative float generator (no infinities). *)
+(** Negative float generator (no infinities).
+    @deprecated use {!float_neg} instead. *)
 
 val float_bound_inclusive : float -> float arbitrary
 (** [float_bound_inclusive n] is uniform between [0] and [n] included. If [bound] is
