@@ -184,8 +184,11 @@ module Gen = struct
     let right = Int64.of_int (RS.bits st) in
     Int64.(float_of_bits (logor left (logor middle right)))
 
-  let pfloat st = abs_float (float st)
-  let nfloat st = -.(pfloat st)
+  let float_pos st = abs_float (float st)
+  let float_neg st = -.(float_pos st)
+
+  let pfloat = float_pos
+  let nfloat = float_neg
 
   let float_bound_inclusive bound st = RS.float st bound
 
