@@ -1503,33 +1503,6 @@ let map ?rev f a =
     ?collect:(_opt_map_2 rev a.collect ~f:(fun r f x -> f (r x)))
     (fun st -> f (a.gen st))
 
-
-let fun1_unsafe : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary =
-  fun a1 a2 ->
-    let magic_object = Obj.magic (object end) in
-    let gen : ('a -> 'b) Gen.t = fun st ->
-      let h = Hashtbl.create 10 in
-      fun x ->
-        if x == magic_object then
-          Obj.magic h
-        else
-          try Hashtbl.find h x
-          with Not_found ->
-            let b = a2.gen st in
-            Hashtbl.add h x b;
-            b in
-    let pp : (('a -> 'b) -> string) option = _opt_map_2 a1.print a2.print ~f:(fun p1 p2 f ->
-      let h : ('a, 'b) Hashtbl.t = Obj.magic (f magic_object) in
-      let b = Buffer.create 20 in
-      Hashtbl.iter (fun key value -> Printf.bprintf b "%s -> %s; " (p1 key) (p2 value)) h;
-      "{" ^ Buffer.contents b ^ "}"
-    ) in
-    make
-      ?print:pp
-      gen
-
-let fun2_unsafe gp1 gp2 gp3 = fun1_unsafe gp1 (fun1_unsafe gp2 gp3)
-
 module Poly_tbl : sig
   type ('a, 'b) t
 

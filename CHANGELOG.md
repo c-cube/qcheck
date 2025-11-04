@@ -2,7 +2,7 @@
 
 ## NEXT RELEASE (202?-??-??)
 
-- ...
+- Remove deprecated function generators `QCheck.{fun1_unsafe,fun2_unsafe}`
 
 ## 0.27 (2025-10-31)
 
