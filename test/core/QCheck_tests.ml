@@ -617,29 +617,29 @@ module Shrink = struct
     Test.make ~name:"float_range -10. -1. >= -.pi" ~count:1000
       (float_range (-10.) (-1.)) (fun f -> f >= -.Float.pi)
 
-  let pos_float_lt_pi =
-    Test.make ~name:"pos_float < Float.pi" ~count:1000
-      pos_float (fun f -> f < Float.pi)
+  let float_pos_lt_pi =
+    Test.make ~name:"float_pos < Float.pi" ~count:1000
+      float_pos (fun f -> f < Float.pi)
 
-  let pos_float_not_nan =
-    Test.make ~name:"pos_float is not nan" ~count:10_000
-      pos_float (fun f -> not (Float.is_nan f))
+  let float_pos_not_nan =
+    Test.make ~name:"float_pos is not nan" ~count:10_000
+      float_pos (fun f -> not (Float.is_nan f))
 
-  let pos_float_not_infinite =
-    Test.make ~name:"pos_float is not infinity" ~count:10_000
-      pos_float (fun f -> not (Float.is_infinite f))
+  let float_pos_not_infinite =
+    Test.make ~name:"float_pos is not infinity" ~count:10_000
+      float_pos (fun f -> not (Float.is_infinite f))
 
-  let neg_float_gt_mpi =
-    Test.make ~name:"neg_float > Float.pi" ~count:1000
-      neg_float (fun f -> f > -.Float.pi)
+  let float_neg_gt_mpi =
+    Test.make ~name:"float_neg > Float.pi" ~count:1000
+      float_neg (fun f -> f > -.Float.pi)
 
-  let neg_float_not_nan =
-    Test.make ~name:"neg_float is not nan" ~count:10_000
-      neg_float (fun f -> not (Float.is_nan f))
+  let float_neg_not_nan =
+    Test.make ~name:"float_neg is not nan" ~count:10_000
+      float_neg (fun f -> not (Float.is_nan f))
 
-  let neg_float_not_infinite =
-    Test.make ~name:"neg_float is not infinity" ~count:10_000
-      neg_float (fun f -> not (Float.is_infinite f))
+  let float_neg_not_infinite =
+    Test.make ~name:"float_neg is not infinity" ~count:10_000
+      float_neg (fun f -> not (Float.is_infinite f))
 
   let exponential_10_lt_pi =
     Test.make ~name:"exponential 10. < Float.pi" ~count:1000
@@ -927,12 +927,12 @@ module Shrink = struct
     float_range_1_10_leq_pi;
     float_range_m10_10_square_leq_2;
     float_range_m10_m1_geq_mpi;
-    pos_float_lt_pi;
-    pos_float_not_nan;
-    pos_float_not_infinite;
-    neg_float_gt_mpi;
-    neg_float_not_nan;
-    neg_float_not_infinite;
+    float_pos_lt_pi;
+    float_pos_not_nan;
+    float_pos_not_infinite;
+    float_neg_gt_mpi;
+    float_neg_not_nan;
+    float_neg_not_infinite;
     exponential_10_lt_pi;
     char_is_never_abcdef;
     printable_is_never_sign;
