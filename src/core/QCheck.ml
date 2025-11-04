@@ -1262,6 +1262,8 @@ let float_bound_exclusive bound =
 let float_range low high =
   make ~small:small1 ~shrink:(Shrink.float_range low high) ~print:Print.float (Gen.float_range low high)
 
+let (--.) = float_range
+
 let exponential mean = make_scalar (Gen.exponential mean)
 
 let int = make_int Gen.int

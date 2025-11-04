@@ -1162,6 +1162,10 @@ val float_range : float -> float -> float arbitrary
     @raise Invalid_argument if [low > high] or if the range is larger than [max_float].
     @since 0.11 *)
 
+val (--.) : float -> float -> float arbitrary
+(** Synonym for [float_range]
+    @since NEXT_RELEASE *)
+
 val exponential : float -> float arbitrary
 (** [exponential m] generates floating-point numbers following an exponential
     distribution with a mean of [m].
