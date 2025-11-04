@@ -1826,28 +1826,7 @@ module Observable : sig
   val quad : 'a t -> 'b t -> 'c t -> 'd t -> ('a * 'b * 'c * 'd) t
 end
 
-(** {2 Deprecated function generator combinators } *)
-
-val fun1_unsafe : 'a arbitrary -> 'b arbitrary -> ('a -> 'b) arbitrary
-(** Generator of functions of arity 1.
-    The functions are always pure and total functions:
-    - when given the same argument (as decided by Stdlib.(=)), it returns the same value
-    - it never does side effects, like printing or never raise exceptions etc.
-      The functions generated are really printable.
-
-    renamed from {!fun1} since 0.6
-
-    @deprecated use {!fun_} instead.
-
-    @since 0.6
-*)
-
-val fun2_unsafe : 'a arbitrary -> 'b arbitrary -> 'c arbitrary -> ('a -> 'b -> 'c) arbitrary
-(** Generator of functions of arity 2. The remark about [fun1] also apply
-    here.
-    renamed from {!fun2} since 0.6
-    @deprecated use {!fun_} instead since 0.6
-*)
+(** {2 Internal function generator representation } *)
 
 type _ fun_repr
 (** Internal data for functions. A ['f fun_] is a function
