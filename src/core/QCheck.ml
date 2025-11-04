@@ -1248,8 +1248,10 @@ let bool =
   make ~small:small1 ~shrink:Shrink.bool ~print:Print.bool Gen.bool
 
 let float = make_scalar Gen.float
-let pos_float = make_scalar Gen.pfloat
-let neg_float = make_scalar Gen.nfloat
+let float_pos = make_scalar Gen.float_pos
+let float_neg = make_scalar Gen.float_neg
+let pos_float = float_pos
+let neg_float = float_neg
 
 let float_bound_inclusive bound =
   make ~small:small1 ~shrink:(Shrink.float_bound bound) ~print:Print.float (Gen.float_bound_inclusive bound)

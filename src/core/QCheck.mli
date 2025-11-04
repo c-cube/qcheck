@@ -1132,6 +1132,12 @@ val bool : bool arbitrary
 val float : float arbitrary
 (** Generates regular floats (no infinities). *)
 
+val float_pos : float arbitrary
+(** Positive float generator (no infinities). *)
+
+val float_neg : float arbitrary
+(** Negative float generator (no infinities). *)
+
 val pos_float : float arbitrary
 (** Positive float generator (no infinities). *)
 
