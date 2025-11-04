@@ -296,12 +296,16 @@ module Gen : sig
   (** Generates positive floating point numbers ([0.] included).
 
       Shrinks towards [0.].
+
+      @deprecated use {!float_pos} instead.
   *)
 
   val nfloat : float t
   (** Generates negative floating point numbers. ([-0.] included).
 
       Shrinks towards [-0.].
+
+      @deprecated use {!float_neg} instead.
   *)
 
   val char : char t
