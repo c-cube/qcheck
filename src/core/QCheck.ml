@@ -204,11 +204,13 @@ module Gen = struct
 
   let (--.) = float_range
 
-  let exponential mean =
-    if Float.is_nan mean then invalid_arg "Gen.exponential";
+  let float_exp mean =
+    if Float.is_nan mean then invalid_arg "Gen.float_exp";
     let unit_gen = float_bound_inclusive 1.0 in
     map (fun p -> -. mean *. (log p)) unit_gen
     (* See https://en.wikipedia.org/wiki/Relationships_among_probability_distributions *)
+
+  let exponential = float_exp
 
   let neg_int st = -(nat st)
 
@@ -1264,7 +1266,9 @@ let float_range low high =
 
 let (--.) = float_range
 
-let exponential mean = make_scalar (Gen.exponential mean)
+let float_exp mean = make_scalar (Gen.float_exp mean)
+let exponential = float_exp
+
 
 let int = make_int Gen.int
 let int_bound n = make_int (Gen.int_bound n)

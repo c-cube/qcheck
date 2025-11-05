@@ -301,10 +301,14 @@ module Gen : sig
   (** Synonym for [float_range]
       @since 0.11 *)
 
-  val exponential : float -> float t
-  (** [exponential m] generates floating-point numbers following an exponential
+  val float_exp : float -> float t
+  (** [float_exp m] generates floating-point numbers following an exponential
       distribution with a mean of [m].
       @raise Invalid_argument if [m] is NaN.
+      @since NEXT_RELEASE *)
+
+  val exponential : float -> float t
+  (** Synonym for {!float_exp}.
       @since 0.23 *)
 
   val nat : int t (** Generates small natural numbers. *)
@@ -1166,10 +1170,14 @@ val (--.) : float -> float -> float arbitrary
 (** Synonym for [float_range]
     @since NEXT_RELEASE *)
 
-val exponential : float -> float arbitrary
-(** [exponential m] generates floating-point numbers following an exponential
+val float_exp : float -> float arbitrary
+(** [float_exp m] generates floating-point numbers following an exponential
     distribution with a mean of [m].
     @raise Invalid_argument if [m] is NaN.
+    @since NEXT_RELEASE *)
+
+val exponential : float -> float arbitrary
+(** Synonym for {!float_exp}.
     @since 0.23 *)
 
 val int : int arbitrary
