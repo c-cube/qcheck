@@ -641,9 +641,9 @@ module Shrink = struct
     Test.make ~name:"float_neg is not infinity" ~count:10_000
       float_neg (fun f -> not (Float.is_infinite f))
 
-  let exponential_10_lt_pi =
-    Test.make ~name:"exponential 10. < Float.pi" ~count:1000
-      (exponential 10.) (fun f -> f < Float.pi)
+  let float_exp_10_lt_pi =
+    Test.make ~name:"float_exp 10. < Float.pi" ~count:1000
+      (float_exp 10.) (fun f -> f < Float.pi)
 
   let char_is_never_abcdef =
     Test.make ~name:"char never produces 'abcdef'" ~count:1000
@@ -933,7 +933,7 @@ module Shrink = struct
     float_neg_gt_mpi;
     float_neg_not_nan;
     float_neg_not_infinite;
-    exponential_10_lt_pi;
+    float_exp_10_lt_pi;
     char_is_never_abcdef;
     printable_is_never_sign;
     numeral_is_never_less_5;
@@ -1225,10 +1225,10 @@ module Stats = struct
       Test.make ~name:"int64 upper dist"     ~count:10000 (add_stat64 (fun i -> Int64.shift_right_logical i 48) int64) (fun _ -> true);
     ]
 
-  let exponential_tests =
+  let float_exp_tests =
     let float_dist = ("dist",int_of_float) in
-    [ Test.make ~name:"exponential 10. dist" ~count:5_000 (add_stat float_dist (exponential 10.)) (fun _ -> true);
-      Test.make ~name:"exponential -10. dist" ~count:5_000 (add_stat float_dist (exponential (-10.))) (fun _ -> true);
+    [ Test.make ~name:"float_exp 10. dist" ~count:5_000 (add_stat float_dist (float_exp 10.)) (fun _ -> true);
+      Test.make ~name:"float_exp -10. dist" ~count:5_000 (add_stat float_dist (float_exp (-10.))) (fun _ -> true);
     ]
 
   let float_tests = (* Float.frexp nan (and infinity) is undefined and may return a 32766 exponent on Alpine *)
@@ -1276,6 +1276,6 @@ module Stats = struct
     @ array_len_tests
     @ int_dist_tests
     @ int_32_64_dist_tests
-    @ exponential_tests
+    @ float_exp_tests
     @ float_tests
 end
