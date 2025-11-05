@@ -199,13 +199,13 @@ module Generator = struct
     Test.make ~name:"char_range 'a' 'z' has right range" ~count:1000
       (char_range 'a' 'z') (fun c -> 'a' <= c && c <= 'z')
 
-  let printable_test =
-    Test.make ~name:"printable has right range" ~count:1000
-      printable_char (fun c -> c = '\n' || 32 <= Char.code c && Char.code c <= 126)
+  let char_printable_test =
+    Test.make ~name:"char_printable has right range" ~count:1000
+      char_printable (fun c -> c = '\n' || 32 <= Char.code c && Char.code c <= 126)
 
-  let numeral_test =
-    Test.make ~name:"numeral has right range" ~count:1000
-      numeral_char (fun c -> '0' <= c && c <= '9')
+  let char_numeral_test =
+    Test.make ~name:"char_numeral has right range" ~count:1000
+      char_numeral (fun c -> '0' <= c && c <= '9')
 
   let nat_test =
     Test.make ~name:"nat has right range" ~count:1000
@@ -429,8 +429,8 @@ module Generator = struct
     char_dist_issue_23;
     char_test;
     char_range_test;
-    printable_test;
-    numeral_test;
+    char_printable_test;
+    char_numeral_test;
     nat_test;
     int_test;
     int32_test;
@@ -658,13 +658,14 @@ module Shrink = struct
     Test.make ~name:"char never 'abc'" ~count:1000
       (char_range 'a' 'z') (fun c -> not (c < 'c'))
 
-  let printable_is_never_sign = (* should shrink towards 'a', hence produce '&' with highest ascii code 38 *)
-    Test.make ~name:"printable never produces '!\"#$%&'" ~count:1000
-      printable_char (fun c -> not (List.mem c ['!';'"';'#';'$';'%';'&']))
+  let char_printable_is_never_sign = (* should shrink towards 'a', hence produce '&' with highest ascii code 38 *)
+    Test.make ~name:"char_printable never produces '!\"#$%&'" ~count:1000
+      char_printable (fun c -> not (List.mem c ['!';'"';'#';'$';'%';'&']))
 
-  let numeral_is_never_less_5 =
-    Test.make ~name:"printable never produces less than '5" ~count:1000
-      numeral_char (fun c -> c >= '5')
+  let char_numeral_is_never_less_5 =
+    Test.make ~name:"char_numeral never produces less than '5'" ~count:1000
+      char_numeral (fun c -> c >= '5')
+
   let bytes_are_empty =
     Test.make ~name:"bytes are empty" ~count:1000
       bytes (fun b -> b = Bytes.empty)
@@ -945,8 +946,8 @@ module Shrink = struct
     float_exp_10_lt_pi;
     char_is_never_abcdef;
     char_range_is_never_abc;
-    printable_is_never_sign;
-    numeral_is_never_less_5;
+    char_printable_is_never_sign;
+    char_numeral_is_never_less_5;
     bytes_are_empty;
     bytes_never_has_000_char;
     bytes_never_has_255_char;
@@ -1138,8 +1139,8 @@ module Stats = struct
   let char_dist_tests =
     [
       Test.make ~name:"char code dist"           ~count:500_000 (add_stat ("char code", Char.code) char)           (fun _ -> true);
-      Test.make ~name:"printable char code dist" ~count:500_000 (add_stat ("char code", Char.code) printable_char) (fun _ -> true);
-      Test.make ~name:"numeral char code dist"   ~count:500_000 (add_stat ("char code", Char.code) numeral_char)   (fun _ -> true);
+      Test.make ~name:"char_printable code dist" ~count:500_000 (add_stat ("char code", Char.code) char_printable) (fun _ -> true);
+      Test.make ~name:"char_numeral code dist"   ~count:500_000 (add_stat ("char code", Char.code) char_numeral)   (fun _ -> true);
     ]
 
   let bytes_len_tests =
