@@ -418,9 +418,13 @@ module Gen = struct
     let shrink a = fun () -> Shrink.float_towards 0. a () in
     Tree.make_primitive shrink x
 
-  let pfloat : float t = float >|= abs_float
+  let float_pos : float t = float >|= abs_float
 
-  let nfloat : float t = pfloat >|= Float.neg
+  let float_neg : float t = float_pos >|= Float.neg
+
+  let pfloat = float_pos
+
+  let nfloat = float_neg
 
   let float_bound_inclusive ?(origin : float = 0.) (bound : float) : float t = fun st ->
     let (low, high) = Float.min_max_num 0. bound in
@@ -465,11 +469,13 @@ module Gen = struct
 
   let (--.) low high = float_range ?origin:None low high
 
-  let exponential (mean : float) =
-    if Float.is_nan mean then invalid_arg "Gen.exponential";
+  let float_exp (mean : float) =
+    if Float.is_nan mean then invalid_arg "Gen.float_exp";
     let unit_gen = float_bound_inclusive 1.0 in
     map (fun p -> -. mean *. (log p)) unit_gen
     (* See https://en.wikipedia.org/wiki/Relationships_among_probability_distributions *)
+
+  let exponential = float_exp
 
   let neg_int : int t = nat >|= Int.neg
 

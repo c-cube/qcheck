@@ -184,8 +184,11 @@ module Gen = struct
     let right = Int64.of_int (RS.bits st) in
     Int64.(float_of_bits (logor left (logor middle right)))
 
-  let pfloat st = abs_float (float st)
-  let nfloat st = -.(pfloat st)
+  let float_pos st = abs_float (float st)
+  let float_neg st = -.(float_pos st)
+
+  let pfloat = float_pos
+  let nfloat = float_neg
 
   let float_bound_inclusive bound st = RS.float st bound
 
@@ -201,11 +204,13 @@ module Gen = struct
 
   let (--.) = float_range
 
-  let exponential mean =
-    if Float.is_nan mean then invalid_arg "Gen.exponential";
+  let float_exp mean =
+    if Float.is_nan mean then invalid_arg "Gen.float_exp";
     let unit_gen = float_bound_inclusive 1.0 in
     map (fun p -> -. mean *. (log p)) unit_gen
     (* See https://en.wikipedia.org/wiki/Relationships_among_probability_distributions *)
+
+  let exponential = float_exp
 
   let neg_int st = -(nat st)
 
@@ -1245,8 +1250,10 @@ let bool =
   make ~small:small1 ~shrink:Shrink.bool ~print:Print.bool Gen.bool
 
 let float = make_scalar Gen.float
-let pos_float = make_scalar Gen.pfloat
-let neg_float = make_scalar Gen.nfloat
+let float_pos = make_scalar Gen.float_pos
+let float_neg = make_scalar Gen.float_neg
+let pos_float = float_pos
+let neg_float = float_neg
 
 let float_bound_inclusive bound =
   make ~small:small1 ~shrink:(Shrink.float_bound bound) ~print:Print.float (Gen.float_bound_inclusive bound)
@@ -1257,7 +1264,11 @@ let float_bound_exclusive bound =
 let float_range low high =
   make ~small:small1 ~shrink:(Shrink.float_range low high) ~print:Print.float (Gen.float_range low high)
 
-let exponential mean = make_scalar (Gen.exponential mean)
+let (--.) = float_range
+
+let float_exp mean = make_scalar (Gen.float_exp mean)
+let exponential = float_exp
+
 
 let int = make_int Gen.int
 let int_bound n = make_int (Gen.int_bound n)

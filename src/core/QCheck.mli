@@ -268,9 +268,17 @@ module Gen : sig
 
   val float : float t   (** Generates floating point numbers. *)
 
-  val pfloat : float t (** Generates positive floating point numbers (0. included). *)
+  val float_pos : float t (** Generates positive floating point numbers (0. included). *)
 
-  val nfloat : float t (** Generates negative floating point numbers. (-0. included) *)
+  val float_neg : float t (** Generates negative floating point numbers (-0. included). *)
+
+  val pfloat : float t
+  (** Generates positive floating point numbers (0. included).
+      @deprecated use {!float_pos} instead. *)
+
+  val nfloat : float t
+  (** Generates negative floating point numbers (-0. included).
+      @deprecated use {!float_neg} instead. *)
 
   val float_bound_inclusive : float -> float t
   (** [float_bound_inclusive bound] returns a random floating-point number between 0 and
@@ -293,10 +301,14 @@ module Gen : sig
   (** Synonym for [float_range]
       @since 0.11 *)
 
-  val exponential : float -> float t
-  (** [exponential m] generates floating-point numbers following an exponential
+  val float_exp : float -> float t
+  (** [float_exp m] generates floating-point numbers following an exponential
       distribution with a mean of [m].
       @raise Invalid_argument if [m] is NaN.
+      @since NEXT_RELEASE *)
+
+  val exponential : float -> float t
+  (** Synonym for {!float_exp}.
       @since 0.23 *)
 
   val nat : int t (** Generates small natural numbers. *)
@@ -1124,11 +1136,19 @@ val bool : bool arbitrary
 val float : float arbitrary
 (** Generates regular floats (no infinities). *)
 
-val pos_float : float arbitrary
+val float_pos : float arbitrary
 (** Positive float generator (no infinities). *)
 
-val neg_float : float arbitrary
+val float_neg : float arbitrary
 (** Negative float generator (no infinities). *)
+
+val pos_float : float arbitrary
+(** Positive float generator (no infinities).
+    @deprecated use {!float_pos} instead. *)
+
+val neg_float : float arbitrary
+(** Negative float generator (no infinities).
+    @deprecated use {!float_neg} instead. *)
 
 val float_bound_inclusive : float -> float arbitrary
 (** [float_bound_inclusive n] is uniform between [0] and [n] included. If [bound] is
@@ -1146,10 +1166,18 @@ val float_range : float -> float -> float arbitrary
     @raise Invalid_argument if [low > high] or if the range is larger than [max_float].
     @since 0.11 *)
 
-val exponential : float -> float arbitrary
-(** [exponential m] generates floating-point numbers following an exponential
+val (--.) : float -> float -> float arbitrary
+(** Synonym for [float_range]
+    @since NEXT_RELEASE *)
+
+val float_exp : float -> float arbitrary
+(** [float_exp m] generates floating-point numbers following an exponential
     distribution with a mean of [m].
     @raise Invalid_argument if [m] is NaN.
+    @since NEXT_RELEASE *)
+
+val exponential : float -> float arbitrary
+(** Synonym for {!float_exp}.
     @since 0.23 *)
 
 val int : int arbitrary
