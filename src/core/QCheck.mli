@@ -1240,6 +1240,11 @@ val char : char arbitrary
 (** Uniformly distributed on all the chars (not just ascii or
     valid latin-1). *)
 
+val char_range : char -> char -> char arbitrary
+(** Generates chars between the two bounds, inclusive.
+    Example: [char_range 'a' 'z'] for all lower case ascii letters.
+    @since NEXT_RELEASE *)
+
 val printable_char : char arbitrary
 (** Uniformly distributed over a subset of printable ascii chars.
     Ascii character codes 32 to 126, inclusive - or ['\n'] with code 10.

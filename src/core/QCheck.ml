@@ -1290,6 +1290,8 @@ let small_char target c = abs ((Char.code c) - (Char.code target))
 
 let char =
   make ~print:Print.char ~small:(small_char 'a') ~shrink:Shrink.char Gen.char
+let char_range low high =
+  make ~print:Print.char ~small:(small_char 'a') ~shrink:(Shrink.char_generic low) (Gen.char_range low high)
 let printable_char =
   make ~print:Print.char ~small:(small_char 'a') ~shrink:Shrink.char_printable Gen.printable
 let numeral_char =
