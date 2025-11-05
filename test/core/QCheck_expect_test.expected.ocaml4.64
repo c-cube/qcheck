@@ -475,7 +475,7 @@ Test float_neg is not nan failed (0 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test exponential 10. < Float.pi failed (2 shrink steps):
+Test float_exp 10. < Float.pi failed (2 shrink steps):
 
 4.
 
@@ -1814,7 +1814,7 @@ stats dist:
   58988..62264: ####################################################            519
   62265..65541: ##################################################              491
 
-+++ Stats for exponential 10. dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++ Stats for float_exp 10. dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 stats dist:
   num: 5000, avg: 9.56, stddev: 9.91, median 7, min 0, max 89
@@ -1839,7 +1839,7 @@ stats dist:
    90.. 94:                                                                   0
    95.. 99:                                                                   0
 
-+++ Stats for exponential -10. dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++ Stats for float_exp -10. dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 stats dist:
   num: 5000, avg: -9.56, stddev: 9.91, median -7, min -89, max 0
