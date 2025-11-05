@@ -794,9 +794,10 @@ module Gen = struct
     (* Put alphabet first for shrinking *)
     List.flatten [lower_alphabet; before_lower_alphabet; after_lower_alphabet; newline]
 
-  let printable : char t =
+  let char_printable : char t =
     int_range ~origin:0 0 (List.length printable_chars - 1)
     >|= List.nth printable_chars
+  let printable = char_printable
 
   let numeral : char t =
     let zero = 48 in
@@ -842,7 +843,7 @@ module Gen = struct
 
   let bytes_of gen = list gen >|= bytes_of_char_list
 
-  let bytes_printable = list printable >|= bytes_of_char_list
+  let bytes_printable = list char_printable >|= bytes_of_char_list
 
   let bytes_small = list_ignore_size_tree small_nat char >|= bytes_of_char_list
 
@@ -859,7 +860,7 @@ module Gen = struct
 
   let string_of gen = list gen >|= string_of_char_list
 
-  let string_printable = list printable >|= string_of_char_list
+  let string_printable = list char_printable >|= string_of_char_list
 
   let string_small = list_ignore_size_tree small_nat char >|= string_of_char_list
 

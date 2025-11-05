@@ -314,7 +314,7 @@ module Gen : sig
       Shrinks towards ['a'].
   *)
 
-  val printable : char t
+  val char_printable : char t
   (** Generates printable characters.
 
     The exhaustive list of character codes is:
@@ -322,7 +322,12 @@ module Gen : sig
     - ['\n']
 
     Shrinks towards ['a'] or lower character codes.
+
+    @since NEXT_RELEASE
   *)
+
+  val printable : char t
+  (** Synonym for {!char_printable}. *)
 
   val numeral : char t
   (** Generates numeral characters ['0'..'9'].
