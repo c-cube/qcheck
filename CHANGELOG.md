@@ -8,6 +8,8 @@
   - Add `QCheck.{float_pos, float_neg}` and deprecate `QCheck.{pos_float, neg_float}`
   - Add `QCheck2.{float_pos, float_neg}` and deprecate `QCheck2.{pfloat, nfloat}`
   - Add `QCheck.(--.)` as a synonym for `QCheck.float_range` for consistency
+  - Add `float_exp` to `QCheck.Gen`, `QCheck`, and `QCheck2.Gen` and make
+    the existing `exponential` binding a synonym for it
 
 ## 0.27 (2025-10-31)
 
