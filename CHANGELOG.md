@@ -10,6 +10,14 @@
   - Add `QCheck.(--.)` as a synonym for `QCheck.float_range` for consistency
   - Add `float_exp` to `QCheck.Gen`, `QCheck`, and `QCheck2.Gen` and make
     the existing `exponential` binding a synonym for it
+- Renamed `char` generator combinators:
+  - Add `QCheck.char_range` for consistency
+  - Add `QCheck.{char_printable,printable}` and deprecate `QCheck.printable_char`
+  - Add `QCheck.{char_numeral,numeral}` and deprecate `QCheck.numeral_char`
+  - Add `QCheck.Gen.char_printable` and make `QCheck.Gen.printable` an alias for it
+  - Add `QCheck.Gen.char_numeral` and make `QCheck.Gen.numeral` an alias for it
+  - Add `QCheck2.char_printable` and make `QCheck2.printable` an alias for it
+  - Add `QCheck2.char_numeral` and make `QCheck2.numeral` an alias for it
 
 ## 0.27 (2025-10-31)
 
