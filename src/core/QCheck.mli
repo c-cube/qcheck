@@ -428,7 +428,12 @@ module Gen : sig
   val char : char t
   (** Generates characters upto character code 255. *)
 
-  val printable : char t (** Generates printable ascii characters - either '\n' or in the range 32 to 126, inclusive *)
+  val char_printable : char t
+  (** Generates printable ascii characters - either '\n' or in the range 32 to 126, inclusive.
+      @since NEXT_RELEASE *)
+
+  val printable : char t
+  (** Synonym for {!char_printable}. *)
 
   val numeral : char t (** Generates numeral characters. *)
 

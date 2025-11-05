@@ -402,7 +402,8 @@ module Gen = struct
     Bytes.set s (l-1) '\n';
     Bytes.unsafe_to_string s
 
-  let printable st = printable_chars.[RS.int st (String.length printable_chars)]
+  let char_printable st = printable_chars.[RS.int st (String.length printable_chars)]
+  let printable = char_printable
   let numeral st = char_of_int (48 + RS.int st 10)
 
   let bytes_size ?(gen = char) size st =
@@ -420,8 +421,8 @@ module Gen = struct
   let string ?gen st = string_size ?gen nat st
   let bytes_of gen = bytes_size ~gen nat
   let string_of gen = string_size ~gen nat
-  let bytes_printable = bytes_size ~gen:printable nat
-  let string_printable = string_size ~gen:printable nat
+  let bytes_printable = bytes_size ~gen:char_printable nat
+  let string_printable = string_size ~gen:char_printable nat
   let string_readable = string_printable
   let bytes_small st = bytes_size small_nat st
   let bytes_small_of gen st = bytes_size ~gen small_nat st
@@ -1293,7 +1294,7 @@ let char =
 let char_range low high =
   make ~print:Print.char ~small:(small_char 'a') ~shrink:(Shrink.char_generic low) (Gen.char_range low high)
 let char_printable =
-  make ~print:Print.char ~small:(small_char 'a') ~shrink:Shrink.char_printable Gen.printable
+  make ~print:Print.char ~small:(small_char 'a') ~shrink:Shrink.char_printable Gen.char_printable
 let printable = char_printable
 let printable_char = char_printable
 let char_numeral =
@@ -1314,7 +1315,7 @@ let bytes_small = bytes_gen_of_size Gen.small_nat Gen.char
 let bytes_small_of gen = bytes_gen_of_size Gen.small_nat gen
 let bytes_printable =
   make ~shrink:(Shrink.bytes ~shrink:Shrink.char_printable) ~small:Bytes.length
-    ~print:Print.bytes (Gen.bytes ~gen:Gen.printable)
+    ~print:Print.bytes (Gen.bytes ~gen:Gen.char_printable)
 
 let string_gen_of_size size gen =
   make ~shrink:Shrink.string ~small:String.length
@@ -1332,15 +1333,15 @@ let string_gen = string_of
 
 let printable_string =
   make ~shrink:(Shrink.string ~shrink:Shrink.char_printable) ~small:String.length
-    ~print:Print.string (Gen.string ~gen:Gen.printable)
+    ~print:Print.string (Gen.string ~gen:Gen.char_printable)
 
 let printable_string_of_size size =
   make ~shrink:(Shrink.string ~shrink:Shrink.char_printable) ~small:String.length
-    ~print:Print.string (Gen.string_size ~gen:Gen.printable size)
+    ~print:Print.string (Gen.string_size ~gen:Gen.char_printable size)
 
 let small_printable_string =
   make ~shrink:(Shrink.string ~shrink:Shrink.char_printable) ~small:String.length
-    ~print:Print.string (Gen.string_size ~gen:Gen.printable Gen.small_nat)
+    ~print:Print.string (Gen.string_size ~gen:Gen.char_printable Gen.small_nat)
 
 let numeral_string =
   make ~shrink:(Shrink.string ~shrink:Shrink.char_numeral) ~small:String.length
