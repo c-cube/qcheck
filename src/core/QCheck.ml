@@ -1296,8 +1296,10 @@ let char_printable =
   make ~print:Print.char ~small:(small_char 'a') ~shrink:Shrink.char_printable Gen.printable
 let printable = char_printable
 let printable_char = char_printable
-let numeral_char =
+let char_numeral =
   make ~print:Print.char ~small:(small_char '0') ~shrink:Shrink.char_numeral Gen.numeral
+let numeral = char_numeral
+let numeral_char = char_numeral
 
 let bytes_gen_of_size size gen =
   make ~shrink:Shrink.bytes ~small:Bytes.length

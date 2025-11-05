@@ -1258,8 +1258,17 @@ val printable_char : char arbitrary
 (** Synonym for {!char_printable}.
     @deprecated use {!char_printable} instead. *)
 
+val char_numeral : char arbitrary
+(** Uniformly distributed over ['0'..'9'].
+    @since NEXT_RELEASE *)
+
+val numeral : char arbitrary
+(** Synonym for {!char_numeral}.
+    @since NEXT_RELEASE *)
+
 val numeral_char : char arbitrary
-(** Uniformly distributed over ['0'..'9']. *)
+(** Synonym for {!char_numeral}.
+    @deprecated use {!char_numeral} instead. *)
 
 val bytes_gen_of_size : int Gen.t -> char Gen.t -> bytes arbitrary
 (** Builds a bytes generator from a (non-negative) size generator and a character generator.
