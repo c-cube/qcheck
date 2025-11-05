@@ -404,7 +404,8 @@ module Gen = struct
 
   let char_printable st = printable_chars.[RS.int st (String.length printable_chars)]
   let printable = char_printable
-  let numeral st = char_of_int (48 + RS.int st 10)
+  let char_numeral st = char_of_int (48 + RS.int st 10)
+  let numeral = char_numeral
 
   let bytes_size ?(gen = char) size st =
     let s = Bytes.create (size st) in
@@ -1298,7 +1299,7 @@ let char_printable =
 let printable = char_printable
 let printable_char = char_printable
 let char_numeral =
-  make ~print:Print.char ~small:(small_char '0') ~shrink:Shrink.char_numeral Gen.numeral
+  make ~print:Print.char ~small:(small_char '0') ~shrink:Shrink.char_numeral Gen.char_numeral
 let numeral = char_numeral
 let numeral_char = char_numeral
 
@@ -1345,11 +1346,11 @@ let small_printable_string =
 
 let numeral_string =
   make ~shrink:(Shrink.string ~shrink:Shrink.char_numeral) ~small:String.length
-    ~print:Print.string (Gen.string ~gen:Gen.numeral)
+    ~print:Print.string (Gen.string ~gen:Gen.char_numeral)
 
 let numeral_string_of_size size =
   make ~shrink:(Shrink.string ~shrink:Shrink.char_numeral) ~small:String.length
-    ~print:Print.string (Gen.string_size ~gen:Gen.numeral size)
+    ~print:Print.string (Gen.string_size ~gen:Gen.char_numeral size)
 
 let string_printable = printable_string
 let string_printable_of_size = printable_string_of_size

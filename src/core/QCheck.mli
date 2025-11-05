@@ -435,7 +435,12 @@ module Gen : sig
   val printable : char t
   (** Synonym for {!char_printable}. *)
 
-  val numeral : char t (** Generates numeral characters. *)
+  val char_numeral : char t
+  (** Generates numeral characters uniformly distributed over ['0'..'9'].
+      @since NEXT_RELEASE *)
+
+  val numeral : char t
+  (** Synonym for {!char_numeral}. *)
 
   val char_range : char -> char -> char t
   (** Generates chars between the two bounds, inclusive.
