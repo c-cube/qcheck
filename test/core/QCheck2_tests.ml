@@ -186,13 +186,13 @@ module Generator = struct
     Test.make ~name:"char has right range'" ~count:1000 ~print:Print.char
       Gen.char (fun c -> '\000' <= c && c <= '\255')
 
-  let printable_test =
-    Test.make ~name:"printable has right range" ~count:1000 ~print:Print.char
-      Gen.printable (fun c -> c = '\n' || 32 <= Char.code c && Char.code c <= 126)
+  let char_printable_test =
+    Test.make ~name:"char_printable has right range" ~count:1000 ~print:Print.char
+      Gen.char_printable (fun c -> c = '\n' || 32 <= Char.code c && Char.code c <= 126)
 
-  let numeral_test =
-    Test.make ~name:"numeral has right range" ~count:1000 ~print:Print.char
-      Gen.numeral (fun c -> '0' <= c && c <= '9')
+  let char_numeral_test =
+    Test.make ~name:"char_numeral has right range" ~count:1000 ~print:Print.char
+      Gen.char_numeral (fun c -> '0' <= c && c <= '9')
 
   let nat_test =
     Test.make ~name:"nat has right range" ~count:1000 ~print:Print.int
@@ -349,6 +349,8 @@ module Generator = struct
   let tests = [
     char_dist_issue_23;
     char_test;
+    char_printable_test;
+    char_numeral_test;
     nat_test;
     int_test;
     int32_test;
@@ -471,13 +473,13 @@ module Shrink = struct
     Test.make ~name:"char never produces 'abcdef'" ~count:1000 ~print:Print.char
       Gen.char (fun c -> not (List.mem c ['a';'b';'c';'d';'e';'f']))
 
-  let printable_is_never_sign = (* should shrink towards '!' with lowest ascii code 33 *)
-    Test.make ~name:"printable never produces '!\"#$%&'" ~count:1000 ~print:Print.char
-      Gen.printable (fun c -> not (List.mem c ['!';'"';'#';'$';'%';'&']))
+  let char_printable_is_never_sign = (* should shrink towards '!' with lowest ascii code 33 *)
+    Test.make ~name:"char_printable never produces '!\"#$%&'" ~count:1000 ~print:Print.char
+      Gen.char_printable (fun c -> not (List.mem c ['!';'"';'#';'$';'%';'&']))
 
-  let numeral_is_never_less_5 =
-    Test.make ~name:"printable never produces less than '5" ~count:1000 ~print:Print.char
-      Gen.numeral (fun c -> c >= '5')
+  let char_numeral_is_never_less_5 =
+    Test.make ~name:"char_numeral never produces less than '5'" ~count:1000 ~print:Print.char
+      Gen.char_numeral (fun c -> c >= '5')
 
   let bytes_are_empty =
     Test.make ~name:"bytes are empty" ~count:1000 ~print:Print.bytes
@@ -744,8 +746,8 @@ module Shrink = struct
     float_geq_m1em10;
     float_geq_m1e10;
     char_is_never_abcdef;
-    printable_is_never_sign;
-    numeral_is_never_less_5;
+    char_printable_is_never_sign;
+    char_numeral_is_never_less_5;
     bytes_are_empty;
     bytes_never_has_000_char;
     bytes_never_has_255_char;
@@ -943,9 +945,9 @@ module Stats = struct
 
   let char_dist_tests =
     [
-    Test.make ~name:"char code dist"           ~count:500_000 ~stats:[("char code", Char.code)] Gen.char      (fun _ -> true);
-    Test.make ~name:"printable char code dist" ~count:500_000 ~stats:[("char code", Char.code)] Gen.printable (fun _ -> true);
-    Test.make ~name:"numeral char code dist"   ~count:500_000 ~stats:[("char code", Char.code)] Gen.numeral   (fun _ -> true);
+    Test.make ~name:"char code dist"           ~count:500_000 ~stats:[("char code", Char.code)] Gen.char           (fun _ -> true);
+    Test.make ~name:"char_printable code dist" ~count:500_000 ~stats:[("char code", Char.code)] Gen.char_printable (fun _ -> true);
+    Test.make ~name:"char_numeral code dist"   ~count:500_000 ~stats:[("char code", Char.code)] Gen.char_numeral   (fun _ -> true);
   ]
 
   let bytes_len_tests =
