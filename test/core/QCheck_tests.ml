@@ -195,6 +195,10 @@ module Generator = struct
     Test.make ~name:"char has right range" ~count:1000
       char (fun c -> '\000' <= c && c <= '\255')
 
+  let char_range_test =
+    Test.make ~name:"char_range 'a' 'z' has right range" ~count:1000
+      (char_range 'a' 'z') (fun c -> 'a' <= c && c <= 'z')
+
   let printable_test =
     Test.make ~name:"printable has right range" ~count:1000
       printable_char (fun c -> c = '\n' || 32 <= Char.code c && Char.code c <= 126)
@@ -424,6 +428,7 @@ module Generator = struct
   let tests = [
     char_dist_issue_23;
     char_test;
+    char_range_test;
     printable_test;
     numeral_test;
     nat_test;
@@ -648,6 +653,10 @@ module Shrink = struct
   let char_is_never_abcdef =
     Test.make ~name:"char never produces 'abcdef'" ~count:1000
       char (fun c -> not (List.mem c ['a';'b';'c';'d';'e';'f']))
+
+  let char_range_is_never_abc =
+    Test.make ~name:"char never 'abc'" ~count:1000
+      (char_range 'a' 'z') (fun c -> not (c < 'c'))
 
   let printable_is_never_sign = (* should shrink towards 'a', hence produce '&' with highest ascii code 38 *)
     Test.make ~name:"printable never produces '!\"#$%&'" ~count:1000
@@ -935,6 +944,7 @@ module Shrink = struct
     float_neg_not_infinite;
     float_exp_10_lt_pi;
     char_is_never_abcdef;
+    char_range_is_never_abc;
     printable_is_never_sign;
     numeral_is_never_less_5;
     bytes_are_empty;
