@@ -1292,8 +1292,10 @@ let char =
   make ~print:Print.char ~small:(small_char 'a') ~shrink:Shrink.char Gen.char
 let char_range low high =
   make ~print:Print.char ~small:(small_char 'a') ~shrink:(Shrink.char_generic low) (Gen.char_range low high)
-let printable_char =
+let char_printable =
   make ~print:Print.char ~small:(small_char 'a') ~shrink:Shrink.char_printable Gen.printable
+let printable = char_printable
+let printable_char = char_printable
 let numeral_char =
   make ~print:Print.char ~small:(small_char '0') ~shrink:Shrink.char_numeral Gen.numeral
 

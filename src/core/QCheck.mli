@@ -1245,10 +1245,18 @@ val char_range : char -> char -> char arbitrary
     Example: [char_range 'a' 'z'] for all lower case ascii letters.
     @since NEXT_RELEASE *)
 
-val printable_char : char arbitrary
+val char_printable : char arbitrary
 (** Uniformly distributed over a subset of printable ascii chars.
     Ascii character codes 32 to 126, inclusive - or ['\n'] with code 10.
-  *)
+    @since NEXT_RELEASE *)
+
+val printable : char arbitrary
+(** Synonym for {!char_printable}.
+    @since NEXT_RELEASE *)
+
+val printable_char : char arbitrary
+(** Synonym for {!char_printable}.
+    @deprecated use {!char_printable} instead. *)
 
 val numeral_char : char arbitrary
 (** Uniformly distributed over ['0'..'9']. *)
