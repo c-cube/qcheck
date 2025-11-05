@@ -329,11 +329,16 @@ module Gen : sig
   val printable : char t
   (** Synonym for {!char_printable}. *)
 
-  val numeral : char t
+  val char_numeral : char t
   (** Generates numeral characters ['0'..'9'].
 
       Shrinks towards ['0'].
+
+      @since NEXT_RELEASE
   *)
+
+  val numeral : char t
+  (** Synonym for {!char_numeral}. *)
 
   val bytes_size : ?gen:char t -> int t -> bytes t
   (** Builds a bytes generator from a (non-negative) size generator.

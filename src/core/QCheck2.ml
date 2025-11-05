@@ -799,10 +799,11 @@ module Gen = struct
     >|= List.nth printable_chars
   let printable = char_printable
 
-  let numeral : char t =
+  let char_numeral : char t =
     let zero = 48 in
     let nine = 57 in
     int_range ~origin:zero zero nine >|= char_of_int
+  let numeral = char_numeral
 
   let bytes_size ?(gen = char) (size : int t) : bytes t = fun st ->
     let open Tree in
