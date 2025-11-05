@@ -398,13 +398,13 @@ Test char never produces 'abcdef' failed (1 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test printable never produces '!"#$%&' failed (1 shrink steps):
+Test char_printable never produces '!"#$%&' failed (1 shrink steps):
 
 '!'
 
 --- Failure --------------------------------------------------------------------
 
-Test printable never produces less than '5 failed (0 shrink steps):
+Test char_numeral never produces less than '5' failed (0 shrink steps):
 
 '0'
 
@@ -779,7 +779,7 @@ stats char code:
   234..246: #####################################################         25229
   247..259: #####################################                         17722
 
-+++ Stats for printable char code dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++ Stats for char_printable code dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 stats char code:
   num: 500000, avg: 78.23, stddev: 28.13, median 78, min 10, max 126
@@ -804,7 +804,7 @@ stats char code:
   118..123: #####################################################         30911
   124..129: ###########################                                   15736
 
-+++ Stats for numeral char code dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++ Stats for char_numeral code dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 stats char code:
   num: 500000, avg: 52.50, stddev: 2.87, median 53, min 48, max 57
@@ -1834,7 +1834,7 @@ Collect results for test float classify:
  FP_subnormal:      3 cases   (0.1%)
 ================================================================================
 1 warning(s)
-failure (83 tests failed, 3 tests errored, ran 178 tests)
+failure (83 tests failed, 3 tests errored, ran 180 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
