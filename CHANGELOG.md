@@ -18,6 +18,7 @@
   - Add `QCheck.Gen.char_numeral` and make `QCheck.Gen.numeral` an alias for it
   - Add `QCheck2.char_printable` and make `QCheck2.printable` an alias for it
   - Add `QCheck2.char_numeral` and make `QCheck2.numeral` an alias for it
+- Added `QCheck.opt` as an alias for `QCheck.option` for consistency
 
 ## 0.27 (2025-10-31)
 
