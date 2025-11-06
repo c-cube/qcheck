@@ -487,13 +487,19 @@ Test char never produces 'abcdef' failed (3 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test printable never produces '!"#$%&' failed (2 shrink steps):
+Test char never 'abc' failed (0 shrink steps):
+
+'a'
+
+--- Failure --------------------------------------------------------------------
+
+Test char_printable never produces '!"#$%&' failed (2 shrink steps):
 
 '&'
 
 --- Failure --------------------------------------------------------------------
 
-Test printable never produces less than '5 failed (3 shrink steps):
+Test char_numeral never produces less than '5' failed (3 shrink steps):
 
 '0'
 
@@ -868,7 +874,7 @@ stats char code:
   234..246: ######################################################        25567
   247..259: #####################################                         17709
 
-+++ Stats for printable char code dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++ Stats for char_printable code dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 stats char code:
   num: 500000, avg: 77.76, stddev: 27.92, median 78, min 10, max 125
@@ -893,7 +899,7 @@ stats char code:
   118..123: ######################################################        31682
   124..129: ##################                                            10568
 
-+++ Stats for numeral char code dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++ Stats for char_numeral code dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 stats char code:
   num: 500000, avg: 52.50, stddev: 2.87, median 52, min 48, max 57
@@ -1923,7 +1929,7 @@ Collect results for test float classify:
  FP_nan:            2 cases   (0.0%)
 ================================================================================
 1 warning(s)
-failure (104 tests failed, 3 tests errored, ran 210 tests)
+failure (105 tests failed, 3 tests errored, ran 212 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++

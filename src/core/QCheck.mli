@@ -428,9 +428,19 @@ module Gen : sig
   val char : char t
   (** Generates characters upto character code 255. *)
 
-  val printable : char t (** Generates printable ascii characters - either '\n' or in the range 32 to 126, inclusive *)
+  val char_printable : char t
+  (** Generates printable ascii characters - either '\n' or in the range 32 to 126, inclusive.
+      @since NEXT_RELEASE *)
 
-  val numeral : char t (** Generates numeral characters. *)
+  val printable : char t
+  (** Synonym for {!char_printable}. *)
+
+  val char_numeral : char t
+  (** Generates numeral characters uniformly distributed over ['0'..'9'].
+      @since NEXT_RELEASE *)
+
+  val numeral : char t
+  (** Synonym for {!char_numeral}. *)
 
   val char_range : char -> char -> char t
   (** Generates chars between the two bounds, inclusive.
@@ -1240,13 +1250,35 @@ val char : char arbitrary
 (** Uniformly distributed on all the chars (not just ascii or
     valid latin-1). *)
 
-val printable_char : char arbitrary
+val char_range : char -> char -> char arbitrary
+(** Generates chars between the two bounds, inclusive.
+    Example: [char_range 'a' 'z'] for all lower case ascii letters.
+    @since NEXT_RELEASE *)
+
+val char_printable : char arbitrary
 (** Uniformly distributed over a subset of printable ascii chars.
     Ascii character codes 32 to 126, inclusive - or ['\n'] with code 10.
-  *)
+    @since NEXT_RELEASE *)
+
+val printable : char arbitrary
+(** Synonym for {!char_printable}.
+    @since NEXT_RELEASE *)
+
+val printable_char : char arbitrary
+(** Synonym for {!char_printable}.
+    @deprecated use {!char_printable} instead. *)
+
+val char_numeral : char arbitrary
+(** Uniformly distributed over ['0'..'9'].
+    @since NEXT_RELEASE *)
+
+val numeral : char arbitrary
+(** Synonym for {!char_numeral}.
+    @since NEXT_RELEASE *)
 
 val numeral_char : char arbitrary
-(** Uniformly distributed over ['0'..'9']. *)
+(** Synonym for {!char_numeral}.
+    @deprecated use {!char_numeral} instead. *)
 
 val bytes_gen_of_size : int Gen.t -> char Gen.t -> bytes arbitrary
 (** Builds a bytes generator from a (non-negative) size generator and a character generator.
