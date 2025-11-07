@@ -418,6 +418,7 @@ module Gen = struct
   let string_size ?(gen = char) size st =
     let s = bytes_size ~gen size st in
     Bytes.unsafe_to_string s
+  let string_size_of size gen = string_size ~gen size
 
   let bytes st = bytes_size nat st
   let string st = string_size nat st
