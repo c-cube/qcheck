@@ -420,7 +420,7 @@ module Gen = struct
     Bytes.unsafe_to_string s
 
   let bytes st = bytes_size nat st
-  let string ?gen st = string_size ?gen nat st
+  let string st = string_size nat st
   let bytes_of gen = bytes_size ~gen nat
   let string_of gen = string_size ~gen nat
   let bytes_printable = bytes_size ~gen:char_printable nat
@@ -1326,7 +1326,7 @@ let string_gen_of_size size gen =
     ~print:Print.string (Gen.string_size ~gen size)
 let string_of gen =
   make ~shrink:Shrink.string ~small:String.length
-    ~print:Print.string (Gen.string ~gen)
+    ~print:Print.string (Gen.string_of gen)
 
 let string = string_of Gen.char
 let string_size ?(gen=Gen.char) size = string_gen_of_size size gen
@@ -1338,7 +1338,7 @@ let string_gen = string_of
 
 let printable_string =
   make ~shrink:(Shrink.string ~shrink:Shrink.char_printable) ~small:String.length
-    ~print:Print.string (Gen.string ~gen:Gen.char_printable)
+    ~print:Print.string (Gen.string_of Gen.char_printable)
 
 let printable_string_of_size size =
   make ~shrink:(Shrink.string ~shrink:Shrink.char_printable) ~small:String.length
@@ -1350,7 +1350,7 @@ let small_printable_string =
 
 let numeral_string =
   make ~shrink:(Shrink.string ~shrink:Shrink.char_numeral) ~small:String.length
-    ~print:Print.string (Gen.string ~gen:Gen.char_numeral)
+    ~print:Print.string (Gen.string_of Gen.char_numeral)
 
 let numeral_string_of_size size =
   make ~shrink:(Shrink.string ~shrink:Shrink.char_numeral) ~small:String.length
