@@ -1407,7 +1407,8 @@ val small_printable_string : string arbitrary
 
 val string_small_printable : string arbitrary
 (** Synonym for [small_printable_string] added for convenience.
-    @since 0.20 *)
+    @since 0.20
+    @deprecated use {!string_size_of} instead. *)
 
 val numeral_string : string arbitrary
 (** Generates strings with a distribution of length of {!Gen.nat}
