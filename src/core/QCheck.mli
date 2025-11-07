@@ -1342,6 +1342,11 @@ val string : string arbitrary
 (** Generates strings with a distribution of length of {!Gen.nat}
     and distribution of characters of [char]. *)
 
+val string_size : ?gen:char Gen.t -> int Gen.t -> string arbitrary
+(** Builds a string generator from a (non-negative) size generator.
+    Accepts an optional character generator (the default is {!Gen.char}).
+    @since NEXT_VERSION *)
+
 val small_string : string arbitrary
 (** Same as {!string} but with a small length (ie {!Gen.small_nat} ). *)
 
