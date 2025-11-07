@@ -1338,7 +1338,7 @@ let small_string = string_small
 let string_gen = string_of
 let string_gen_of_size = string_size_of
 
-let printable_string =
+let string_printable =
   make ~shrink:(Shrink.string ~shrink:Shrink.char_printable) ~small:String.length
     ~print:Print.string (Gen.string_of Gen.char_printable)
 
@@ -1358,7 +1358,7 @@ let numeral_string_of_size size =
   make ~shrink:(Shrink.string ~shrink:Shrink.char_numeral) ~small:String.length
     ~print:Print.string (Gen.string_size ~gen:Gen.char_numeral size)
 
-let string_printable = printable_string
+let printable_string = string_printable
 let string_printable_of_size = printable_string_of_size
 let string_small_printable = small_printable_string
 let string_numeral = numeral_string
