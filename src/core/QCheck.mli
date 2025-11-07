@@ -513,7 +513,8 @@ module Gen : sig
 
   val small_string : ?gen:char t -> string t
   (** Builds a string generator, length is {!small_nat}
-      Accepts an optional character generator (the default is {!char}). *)
+      Accepts an optional character generator (the default is {!char}).
+      @deprecated use {!string_small} *)
 
   val string_small : string t
   (** Builds a string generator using the {!char} character generator, length is {!small_nat}
