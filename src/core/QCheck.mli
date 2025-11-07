@@ -1402,7 +1402,8 @@ val string_printable_of_size : int Gen.t -> string arbitrary
 
 val small_printable_string : string arbitrary
 (** Generates strings with a length of [small_nat]
-    and distribution of characters of [printable_char]. *)
+    and distribution of characters of [char_printable].
+    @deprecated use {!string_size_of} instead. *)
 
 val string_small_printable : string arbitrary
 (** Synonym for [small_printable_string] added for convenience.
