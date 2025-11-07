@@ -886,7 +886,7 @@ module Function = struct
     Test.make ~name:"fold_left test, fun first" ~print:Print.(quad Fn.print string (list int) (list int))
       Gen.(quad  (* string -> int -> string *)
              (fun2 ~print:Print.string Observable.string Observable.int (small_string ~gen:char))
-             (small_string ~gen:char)
+             string_small
              (list small_int)
              (list small_int))
       (fun (f,acc,is,js) ->
@@ -957,7 +957,7 @@ module Stats = struct
       Test.make ~name:"bytes len dist"           ~count:5_000 ~stats:[len] Gen.bytes                         (fun _ -> true);
       Test.make ~name:"bytes_of len dist"        ~count:5_000 ~stats:[len] Gen.(bytes_of (return 'a'))       (fun _ -> true);
       Test.make ~name:"bytes_printable len dist" ~count:5_000 ~stats:[len] Gen.bytes_printable               (fun _ -> true);
-      Test.make ~name:"bytes_small len dist"     ~count:5_000 ~stats:[len] Gen.(bytes_small_of char)         (fun _ -> true);
+      Test.make ~name:"bytes_small len dist"     ~count:5_000 ~stats:[len] Gen.bytes_small                   (fun _ -> true);
     ]
 
   let string_len_tests =
@@ -967,7 +967,7 @@ module Stats = struct
       Test.make ~name:"string len dist"           ~count:5_000 ~stats:[len] Gen.string                         (fun _ -> true);
       Test.make ~name:"string_of len dist"        ~count:5_000 ~stats:[len] Gen.(string_of (return 'a'))       (fun _ -> true);
       Test.make ~name:"string_printable len dist" ~count:5_000 ~stats:[len] Gen.string_printable               (fun _ -> true);
-      Test.make ~name:"small_string len dist"     ~count:5_000 ~stats:[len] Gen.(small_string ~gen:char)(*ugh*)(fun _ -> true);
+      Test.make ~name:"string_small len dist"     ~count:5_000 ~stats:[len] Gen.string_small                   (fun _ -> true);
     ]
 
   let pair_dist =
