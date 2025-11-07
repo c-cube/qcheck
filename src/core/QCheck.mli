@@ -1378,7 +1378,8 @@ val small_list : 'a arbitrary -> 'a list arbitrary
     @since 0.5.3 *)
 
 val string_of_size : int Gen.t -> string arbitrary
-(** Generates strings with distribution of characters of [char]. *)
+(** Generates strings with distribution of characters of [char].
+    @deprecated use {!string_size} instead. *)
 
 val printable_string : string arbitrary
 (** Generates strings with a distribution of length of {!Gen.nat}
