@@ -1360,10 +1360,11 @@ val string_size_of : int Gen.t -> char Gen.t -> string arbitrary
     @since NEXT_RELEASE *)
 
 val small_string : string arbitrary
-(** Same as {!string} but with a small length (ie {!Gen.small_nat} ). *)
+(** Same as {!string} but with a small length (ie {!Gen.small_nat} ).
+    @deprecated use {!string_small} *)
 
 val string_small : string arbitrary
-(** Synonym for [small_string] added for convenience.
+(** Same as {!string} but with a small length (ie {!Gen.small_nat} ).
     @since 0.20 *)
 
 val string_small_of : char Gen.t -> string arbitrary
