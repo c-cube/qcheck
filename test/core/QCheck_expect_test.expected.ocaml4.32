@@ -1075,7 +1075,7 @@ stats len:
    9000.. 9499:                                                                  13
    9500.. 9999:                                                                  13
 
-+++ Stats for printable_string len dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++ Stats for string_printable len dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 stats len:
   num: 5000, avg: 384.53, stddev: 1330.61, median 9, min 0, max 9969
@@ -1100,7 +1100,7 @@ stats len:
   8982..9480:                                                                  16
   9481..9979:                                                                  12
 
-+++ Stats for small_string len dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++ Stats for string_small len dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 stats len:
   num: 5000, avg: 15.57, stddev: 24.36, median 6, min 0, max 99
