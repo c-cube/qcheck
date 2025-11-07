@@ -413,6 +413,7 @@ module Gen = struct
       Bytes.set s i (gen st)
     done;
     s
+  let bytes_size_of size gen = bytes_size ~gen size
 
   let string_size ?(gen = char) size st =
     let s = bytes_size ~gen size st in
