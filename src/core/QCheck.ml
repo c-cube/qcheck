@@ -418,7 +418,7 @@ module Gen = struct
     let s = bytes_size ~gen size st in
     Bytes.unsafe_to_string s
 
-  let bytes ?gen st = bytes_size ?gen nat st
+  let bytes st = bytes_size nat st
   let string ?gen st = string_size ?gen nat st
   let bytes_of gen = bytes_size ~gen nat
   let string_of gen = string_size ~gen nat
@@ -1309,7 +1309,7 @@ let bytes_size ?(gen = Gen.char) size =
 let bytes_gen_of_size size gen = bytes_size ~gen size
 let bytes_of gen =
   make ~shrink:Shrink.bytes ~small:Bytes.length
-    ~print:Print.bytes (Gen.bytes ~gen)
+    ~print:Print.bytes (Gen.bytes_of gen)
 
 let bytes = bytes_of Gen.char
 let bytes_of_size size = bytes_size ~gen:Gen.char size
@@ -1317,7 +1317,7 @@ let bytes_small = bytes_size ~gen:Gen.char Gen.small_nat
 let bytes_small_of gen = bytes_size ~gen Gen.small_nat
 let bytes_printable =
   make ~shrink:(Shrink.bytes ~shrink:Shrink.char_printable) ~small:Bytes.length
-    ~print:Print.bytes (Gen.bytes ~gen:Gen.char_printable)
+    ~print:Print.bytes (Gen.bytes_of Gen.char_printable)
 
 let string_gen_of_size size gen =
   make ~shrink:Shrink.string ~small:String.length
