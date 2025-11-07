@@ -1336,7 +1336,8 @@ val bytes_printable : bytes arbitrary
     @since 0.20 *)
 
 val string_gen_of_size : int Gen.t -> char Gen.t -> string arbitrary
-(** Builds a string generator from a (non-negative) size generator and a character generator. *)
+(** Builds a string generator from a (non-negative) size generator and a character generator.
+    @deprecated use {!string_size_of} instead. *)
 
 val string_gen : char Gen.t -> string arbitrary
 (** Generates strings with a distribution of length of {!Gen.nat}. *)

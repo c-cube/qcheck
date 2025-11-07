@@ -1322,7 +1322,7 @@ let bytes_printable =
   make ~shrink:(Shrink.bytes ~shrink:Shrink.char_printable) ~small:Bytes.length
     ~print:Print.bytes (Gen.bytes_of Gen.char_printable)
 
-let string_gen_of_size size gen =
+let string_size_of size gen =
   make ~shrink:Shrink.string ~small:String.length
     ~print:Print.string (Gen.string_size ~gen size)
 let string_of gen =
@@ -1330,13 +1330,13 @@ let string_of gen =
     ~print:Print.string (Gen.string_of gen)
 
 let string = string_of Gen.char
-let string_size ?(gen=Gen.char) size = string_gen_of_size size gen
-let string_size_of size gen = string_gen_of_size size gen
-let string_of_size size = string_gen_of_size size Gen.char
-let string_small = string_gen_of_size Gen.small_nat Gen.char
-let string_small_of gen = string_gen_of_size Gen.small_nat gen
+let string_size ?(gen=Gen.char) size = string_size_of size gen
+let string_of_size size = string_size_of size Gen.char
+let string_small = string_size_of Gen.small_nat Gen.char
+let string_small_of gen = string_size_of Gen.small_nat gen
 let small_string = string_small
 let string_gen = string_of
+let string_gen_of_size = string_size_of
 
 let printable_string =
   make ~shrink:(Shrink.string ~shrink:Shrink.char_printable) ~small:String.length
