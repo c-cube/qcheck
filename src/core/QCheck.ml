@@ -1499,6 +1499,8 @@ let option ?ratio a =
     ?print:(_opt_map ~f:Print.option a.print)
     g
 
+let opt = option
+
 let result ?ratio ok err =
   let g = Gen.result ?ratio ok.gen err.gen
   and shrink = _opt_map_2 ok.shrink err.shrink ~f:Shrink.result
