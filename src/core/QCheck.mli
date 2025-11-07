@@ -1397,7 +1397,8 @@ val printable_string_of_size : int Gen.t -> string arbitrary
 
 val string_printable_of_size : int Gen.t -> string arbitrary
 (** Synonym for [printable_string_of_size] added for convenience.
-    @since 0.20 *)
+    @since 0.20
+    @deprecated use {!string_size_of} instead. *)
 
 val small_printable_string : string arbitrary
 (** Generates strings with a length of [small_nat]
