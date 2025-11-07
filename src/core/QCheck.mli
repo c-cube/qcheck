@@ -1412,7 +1412,8 @@ val string_small_printable : string arbitrary
 
 val numeral_string : string arbitrary
 (** Generates strings with a distribution of length of {!Gen.nat}
-    and distribution of characters of [numeral_char]. *)
+    and distribution of characters of [char_numeral].
+    @deprecated use {!string_of} instead. *)
 
 val string_numeral : string arbitrary
 (** Synonym for [numeral_string] added for convenience.
