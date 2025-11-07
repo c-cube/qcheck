@@ -835,6 +835,8 @@ module Gen = struct
   let string_size ?(gen = char) (size : int t) : string t =
     bytes_size ~gen size >|= Bytes.unsafe_to_string
 
+  let string_size_of size gen : string t = string_size ~gen size
+
   let bytes_of_char_list cs =
     let b = Buffer.create (List.length cs) in
     List.iter (fun c -> Buffer.add_char b c) cs;
