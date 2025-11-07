@@ -830,6 +830,8 @@ module Gen = struct
     in
     Tree (bytes, shrink)
 
+  let bytes_size_of size gen : bytes t = bytes_size ~gen size
+
   let string_size ?(gen = char) (size : int t) : string t =
     bytes_size ~gen size >|= Bytes.unsafe_to_string
 

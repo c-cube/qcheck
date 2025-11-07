@@ -413,12 +413,13 @@ module Gen = struct
       Bytes.set s i (gen st)
     done;
     s
+  let bytes_size_of size gen = bytes_size ~gen size
 
   let string_size ?(gen = char) size st =
     let s = bytes_size ~gen size st in
     Bytes.unsafe_to_string s
 
-  let bytes ?gen st = bytes_size ?gen nat st
+  let bytes st = bytes_size nat st
   let string ?gen st = string_size ?gen nat st
   let bytes_of gen = bytes_size ~gen nat
   let string_of gen = string_size ~gen nat
@@ -1303,20 +1304,22 @@ let char_numeral =
 let numeral = char_numeral
 let numeral_char = char_numeral
 
-let bytes_gen_of_size size gen =
+let bytes_size ?(gen = Gen.char) size =
   make ~shrink:Shrink.bytes ~small:Bytes.length
     ~print:Print.bytes (Gen.bytes_size ~gen size)
+let bytes_size_of size gen = bytes_size ~gen size
+let bytes_gen_of_size size gen = bytes_size ~gen size
 let bytes_of gen =
   make ~shrink:Shrink.bytes ~small:Bytes.length
-    ~print:Print.bytes (Gen.bytes ~gen)
+    ~print:Print.bytes (Gen.bytes_of gen)
 
 let bytes = bytes_of Gen.char
-let bytes_of_size size = bytes_gen_of_size size Gen.char
-let bytes_small = bytes_gen_of_size Gen.small_nat Gen.char
-let bytes_small_of gen = bytes_gen_of_size Gen.small_nat gen
+let bytes_of_size size = bytes_size ~gen:Gen.char size
+let bytes_small = bytes_size ~gen:Gen.char Gen.small_nat
+let bytes_small_of gen = bytes_size ~gen Gen.small_nat
 let bytes_printable =
   make ~shrink:(Shrink.bytes ~shrink:Shrink.char_printable) ~small:Bytes.length
-    ~print:Print.bytes (Gen.bytes ~gen:Gen.char_printable)
+    ~print:Print.bytes (Gen.bytes_of Gen.char_printable)
 
 let string_gen_of_size size gen =
   make ~shrink:Shrink.string ~small:String.length
