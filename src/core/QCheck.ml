@@ -1303,17 +1303,18 @@ let char_numeral =
 let numeral = char_numeral
 let numeral_char = char_numeral
 
-let bytes_gen_of_size size gen =
+let bytes_size ?(gen = Gen.char) size =
   make ~shrink:Shrink.bytes ~small:Bytes.length
     ~print:Print.bytes (Gen.bytes_size ~gen size)
+let bytes_gen_of_size size gen = bytes_size ~gen size
 let bytes_of gen =
   make ~shrink:Shrink.bytes ~small:Bytes.length
     ~print:Print.bytes (Gen.bytes ~gen)
 
 let bytes = bytes_of Gen.char
-let bytes_of_size size = bytes_gen_of_size size Gen.char
-let bytes_small = bytes_gen_of_size Gen.small_nat Gen.char
-let bytes_small_of gen = bytes_gen_of_size Gen.small_nat gen
+let bytes_of_size size = bytes_size ~gen:Gen.char size
+let bytes_small = bytes_size ~gen:Gen.char Gen.small_nat
+let bytes_small_of gen = bytes_size ~gen Gen.small_nat
 let bytes_printable =
   make ~shrink:(Shrink.bytes ~shrink:Shrink.char_printable) ~small:Bytes.length
     ~print:Print.bytes (Gen.bytes ~gen:Gen.char_printable)

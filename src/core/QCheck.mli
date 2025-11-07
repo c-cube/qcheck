@@ -1280,9 +1280,15 @@ val numeral_char : char arbitrary
 (** Synonym for {!char_numeral}.
     @deprecated use {!char_numeral} instead. *)
 
+val bytes_size : ?gen:char Gen.t -> int Gen.t -> bytes arbitrary
+(** Builds a bytes generator from a (non-negative) size generator.
+    Accepts an optional character generator (the default is {!Gen.char}).
+    @since NEXT_RELEASE *)
+
 val bytes_gen_of_size : int Gen.t -> char Gen.t -> bytes arbitrary
 (** Builds a bytes generator from a (non-negative) size generator and a character generator.
-    @since 0.20 *)
+    @since 0.20
+    @deprecated use {!bytes_size} instead. *)
 
 val bytes_of : char Gen.t -> bytes arbitrary
 (** Generates bytes with a distribution of length of {!Gen.nat}.
@@ -1303,7 +1309,8 @@ val bytes_small_of : char Gen.t -> bytes arbitrary
 
 val bytes_of_size : int Gen.t -> bytes arbitrary
 (** Generates bytes with distribution of characters of [char].
-    @since 0.20 *)
+    @since 0.20
+    @deprecated use {!bytes_size} instead. *)
 
 val bytes_printable : bytes arbitrary
 (** Generates bytes with a distribution of length of {!Gen.nat}
