@@ -1421,7 +1421,8 @@ val string_numeral : string arbitrary
     @deprecated use {!string_of} instead. *)
 
 val numeral_string_of_size : int Gen.t -> string arbitrary
-(** Generates strings with a distribution of characters of [numeral_char]. *)
+(** Generates strings with a distribution of characters of [char_numeral].
+    @deprecated use {!string_size_of} instead. *)
 
 val string_numeral_of_size : int Gen.t -> string arbitrary
 (** Synonym for [numeral_string_of_size] added for convenience.
