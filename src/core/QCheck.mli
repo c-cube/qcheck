@@ -1353,6 +1353,11 @@ val string_size : ?gen:char Gen.t -> int Gen.t -> string arbitrary
     Accepts an optional character generator (the default is {!Gen.char}).
     @since NEXT_VERSION *)
 
+val string_size_of : int Gen.t -> char Gen.t -> string arbitrary
+(** Builds a string generator from a (non-negative) size generator
+    and a character generator.
+    @since NEXT_RELEASE *)
+
 val small_string : string arbitrary
 (** Same as {!string} but with a small length (ie {!Gen.small_nat} ). *)
 

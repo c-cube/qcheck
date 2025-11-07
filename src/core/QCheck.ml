@@ -1331,6 +1331,7 @@ let string_of gen =
 
 let string = string_of Gen.char
 let string_size ?(gen=Gen.char) size = string_gen_of_size size gen
+let string_size_of size gen = string_gen_of_size size gen
 let string_of_size size = string_gen_of_size size Gen.char
 let string_small = string_gen_of_size Gen.small_nat Gen.char
 let string_small_of gen = string_gen_of_size Gen.small_nat gen
