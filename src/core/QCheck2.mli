@@ -455,6 +455,7 @@ module Gen : sig
       This function is kept for backward compatibility:
       The optional argument is in fact a mandatory [option], see c-cube/qcheck#162.
       Use {!string_small} instead.
+      @deprecated use {!string_small} instead.
   *)
 
   val pure : 'a -> 'a t
