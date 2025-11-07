@@ -1392,7 +1392,8 @@ val string_printable : string arbitrary
     @since 0.20 *)
 
 val printable_string_of_size : int Gen.t -> string arbitrary
-(** Generates strings with distribution of characters of [printable_char]. *)
+(** Generates strings with distribution of characters of [char_printable].
+    @deprecated use {!string_size_of} instead. *)
 
 val string_printable_of_size : int Gen.t -> string arbitrary
 (** Synonym for [printable_string_of_size] added for convenience.
