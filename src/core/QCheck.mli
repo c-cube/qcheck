@@ -1340,7 +1340,8 @@ val string_gen_of_size : int Gen.t -> char Gen.t -> string arbitrary
     @deprecated use {!string_size_of} instead. *)
 
 val string_gen : char Gen.t -> string arbitrary
-(** Generates strings with a distribution of length of {!Gen.nat}. *)
+(** Generates strings with a distribution of length of {!Gen.nat}.
+    @deprecated use {!string_of} instead. *)
 
 val string_of : char Gen.t -> string arbitrary
 (** Synonym for {!string_gen} added for convenience.
