@@ -1307,6 +1307,7 @@ let numeral_char = char_numeral
 let bytes_size ?(gen = Gen.char) size =
   make ~shrink:Shrink.bytes ~small:Bytes.length
     ~print:Print.bytes (Gen.bytes_size ~gen size)
+let bytes_size_of size gen = bytes_size ~gen size
 let bytes_gen_of_size size gen = bytes_size ~gen size
 let bytes_of gen =
   make ~shrink:Shrink.bytes ~small:Bytes.length

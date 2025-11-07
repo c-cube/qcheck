@@ -1291,6 +1291,11 @@ val bytes_size : ?gen:char Gen.t -> int Gen.t -> bytes arbitrary
     Accepts an optional character generator (the default is {!Gen.char}).
     @since NEXT_RELEASE *)
 
+val bytes_size_of : int Gen.t -> char Gen.t -> bytes arbitrary
+(** Builds a bytes generator from a (non-negative) size generator
+    and a character generator.
+    @since NEXT_RELEASE *)
+
 val bytes_gen_of_size : int Gen.t -> char Gen.t -> bytes arbitrary
 (** Builds a bytes generator from a (non-negative) size generator and a character generator.
     @since 0.20
