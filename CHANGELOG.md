@@ -20,12 +20,32 @@
   - Add `QCheck2.char_numeral` and make `QCheck2.numeral` an alias for it
 - Added `QCheck.opt` as an alias for `QCheck.option` for consistency
 - Renamed `bytes` generator combinators:
-  - Add `Check.bytes_size` for consistency
+  - Add `QCheck.bytes_size` for consistency
   - Deprecate `QCheck.bytes_gen_of_size` and `QCheck.bytes_of_size`
   - Removed optional `gen` parameter from `QCheck.Gen.bytes` for consistency (API breaking):
     To fix it, replace `Gen.bytes ~gen:char_gen` with `Gen.bytes_of char_gen`
   - Added `QCheck.Gen.bytes_size_of`, `QCheck.bytes_size_of`, and
     `QCheck2.Gen.bytes_size_of` for consistency
+- Renamed `string` generator combinators:
+  - Add `QCheck.string_size` for consistency
+  - Removed optional `gen` parameter from `QCheck.Gen.string` for consistency (API breaking):
+    To fix it, replace `Gen.string ~gen:char_gen` with `Gen.string_of char_gen`
+  - Add `QCheck.Gen.string_size_of`, `QCheck.string_size_of`, and
+    `QCheck2.Gen.string_size_of` for consistency
+  - Deprecate `QCheck.Gen.small_string`, `QCheck.small_string`, and `QCheck2.small_string`
+  - Deprecate `QCheck.string_gen_of_size`
+  - Deprecate `QCheck.string_gen`
+  - Deprecate `QCheck.string_of_size`
+  - Deprecate `QCheck.printable_string`
+  - Deprecate `QCheck.printable_string_of_size`
+  - Deprecate `QCheck.string_printable_of_size`
+  - Deprecate `QCheck.small_printable_string`
+  - Deprecate `QCheck.string_small_printable`
+  - Deprecate `QCheck.numeral_string`
+  - Deprecate `QCheck.string_numeral`
+  - Deprecate `QCheck.numeral_string_of_size`
+  - Deprecate `QCheck.string_numeral_of_size`
+
 
 ## 0.27 (2025-10-31)
 

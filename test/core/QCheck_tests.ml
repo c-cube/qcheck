@@ -1080,7 +1080,7 @@ module Function = struct
     Test.make ~name:"fold_left test, fun first"
       (quad  (* string -> int -> string *)
          (fun2 Observable.string Observable.int small_string)
-         small_string
+         string_small
          (list small_int)
          (list small_int))
       (fun (f,acc,is,js) ->
@@ -1155,11 +1155,11 @@ module Stats = struct
   let string_len_tests =
     let len = ("len",String.length) in
     [
-      Test.make ~name:"string_size len dist"      ~count:5_000 (add_stat len (string_of_size (Gen.int_range 5 10))) (fun _ -> true);
-      Test.make ~name:"string len dist"           ~count:5_000 (add_stat len string)                                (fun _ -> true);
-      Test.make ~name:"string_of len dist"        ~count:5_000 (add_stat len (string_of (Gen.return 'a')))          (fun _ -> true);
-      Test.make ~name:"printable_string len dist" ~count:5_000 (add_stat len printable_string)                      (fun _ -> true);
-      Test.make ~name:"small_string len dist"     ~count:5_000 (add_stat len small_string)                          (fun _ -> true);
+      Test.make ~name:"string_size len dist"      ~count:5_000 (add_stat len (string_size (Gen.int_range 5 10))) (fun _ -> true);
+      Test.make ~name:"string len dist"           ~count:5_000 (add_stat len string)                             (fun _ -> true);
+      Test.make ~name:"string_of len dist"        ~count:5_000 (add_stat len (string_of (Gen.return 'a')))       (fun _ -> true);
+      Test.make ~name:"string_printable len dist" ~count:5_000 (add_stat len string_printable)                   (fun _ -> true);
+      Test.make ~name:"string_small len dist"     ~count:5_000 (add_stat len string_small)                       (fun _ -> true);
     ]
 
   let pair_dist =
