@@ -51,6 +51,13 @@
   - Add `QCheck.array_small` for consistency
   - Add `QCheck.array_size` and deprecate `QCheck.array_of_size`
   - Deprecate badly named `QCheck.Gen.array_repeat` and `QCheck2.Gen.array_repeat`
+- Renamed `list` generator combinators:
+  - Add `QCheck.list_size` and deprecate  `QCheck.list_of_size`
+  - Add `QCheck.Gen.list_small` and deprecate `QCheck.Gen.small_list`
+  - Add `QCheck.list_small` and deprecate `QCheck.small_list`
+  - Add `QCheck2.Gen.list_small` and deprecate `QCheck2.Gen.small_list`
+  - Deprecate badly named `QCheck.Gen.list_repeat` and `QCheck2.Gen.list_repeat`
+
 
 ## 0.27 (2025-10-31)
 
