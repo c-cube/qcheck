@@ -49,7 +49,7 @@ module Overall = struct
 
   let failing =
     Test.make ~name:"should_fail_sort_id" ~count:10 ~print:Print.(list int)
-      Gen.(small_list small_int) (fun l -> l = List.sort compare l)
+      Gen.(list_small small_int) (fun l -> l = List.sort compare l)
 
   let max_fail =
     Test.make ~name:"max_fail" ~count:1000 ~max_fail:3 ~print:Print.(list int)
@@ -806,7 +806,7 @@ module Function = struct
     Test.make ~name:"fail_pred_map_commute_int" ~count:100 ~long_factor:100
       ~print:Print.(triple (list int) Fn.print Fn.print)
       Gen.(triple
-             (small_list small_int)
+             (list_small small_int)
              (fun1 ~print:Print.int Observable.int int)
              (fun1 ~print:Print.bool Observable.int bool))
       (fun (l,Fun (_,f),Fun (_,p)) ->
@@ -816,7 +816,7 @@ module Function = struct
     Test.make ~name:"fail_pred_map_commute_int32" ~count:100 ~long_factor:100
       ~print:Print.(triple (list int32) Fn.print Fn.print)
       Gen.(triple
-             (small_list int32)
+             (list_small int32)
              (fun1 ~print:Print.int32 Observable.int32 int32)
              (fun1 ~print:Print.bool Observable.int32 bool))
       (fun (l,Fun (_,f),Fun (_,p)) ->
@@ -826,7 +826,7 @@ module Function = struct
     Test.make ~name:"fail_pred_map_commute_int64" ~count:100 ~long_factor:100
       ~print:Print.(triple (list int64) Fn.print Fn.print)
       Gen.(triple
-             (small_list int64)
+             (list_small int64)
              (fun1 ~print:Print.int64 Observable.int64 int64)
              (fun1 ~print:Print.bool Observable.int64 bool))
       (fun (l,Fun (_,f),Fun (_,p)) ->
@@ -999,7 +999,7 @@ module Stats = struct
     let len = ("len",List.length) in
     [ (* test from issue #30 *)
       Test.make ~name:"list len dist"        ~count:5_000 ~stats:[len] Gen.(list int)                       (fun _ -> true);
-      Test.make ~name:"small_list len dist"  ~count:5_000 ~stats:[len] Gen.(small_list int)                 (fun _ -> true);
+      Test.make ~name:"list_small len dist"  ~count:5_000 ~stats:[len] Gen.(list_small int)                 (fun _ -> true);
       Test.make ~name:"list_size len dist"   ~count:5_000 ~stats:[len] Gen.(list_size (int_range 5 10) int) (fun _ -> true);
       Test.make ~name:"list_repeat len dist" ~count:5_000 ~stats:[len] Gen.(list_repeat 42 int)             (fun _ -> true);
     ]
