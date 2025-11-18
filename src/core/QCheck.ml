@@ -1374,7 +1374,8 @@ let mk_list a gen =
   make ~small ~shrink:(Shrink.list ?shrink:a.shrink) ?print gen
 
 let list a = mk_list a (Gen.list a.gen)
-let list_of_size size a = mk_list a (Gen.list_size size a.gen)
+let list_size size a = mk_list a (Gen.list_size size a.gen)
+let list_of_size = list_size
 let small_list a = mk_list a (Gen.small_list a.gen)
 
 let array_sum_ f a = Array.fold_left (fun acc x -> f x+acc) 0 a
