@@ -58,7 +58,7 @@ module Overall = struct
 
   let failing =
     Test.make ~name:"should_fail_sort_id" ~count:10
-      (small_list small_int) (fun l -> l = List.sort compare l)
+      (list_small small_int) (fun l -> l = List.sort compare l)
 
   let max_fail =
     Test.make ~name:"max_fail" ~count:1000 ~max_fail:3
@@ -488,7 +488,7 @@ module Shrink = struct
       (small_int_corners()) (fun i -> i < 209609)
 
   let long_shrink =
-    let listgen = list_of_size (Gen.int_range 1000 10000) int in
+    let listgen = list_size (Gen.int_range 1000 10000) int in
     Test.make ~name:"long_shrink" (pair listgen listgen)
       (fun (xs,ys) -> List.rev (xs@ys) = (List.rev xs)@(List.rev ys))
 
@@ -855,17 +855,17 @@ module Shrink = struct
 
   let list_shorter_432 =
     Test.make ~name:"lists shorter than 432"
-      (set_print length_printer (list_of_size size_gen small_int))
+      (set_print length_printer (list_size size_gen small_int))
       (fun xs -> List.length xs < 432)
 
   let list_shorter_4332 =
     Test.make ~name:"lists shorter than 4332"
-      (set_shrink Shrink.list_spine (set_print length_printer (list_of_size size_gen small_int)))
+      (set_shrink Shrink.list_spine (set_print length_printer (list_size size_gen small_int)))
       (fun xs -> List.length xs < 4332)
 
   let list_equal_dupl =
     Test.make ~name:"lists equal to duplication"
-      (list_of_size size_gen small_int)
+      (list_size size_gen small_int)
       (fun xs -> try xs = xs @ xs
                  with Stack_overflow -> false)
 
@@ -1005,7 +1005,7 @@ module Function = struct
   let fail_pred_map_commute_int =
     Test.make ~name:"fail_pred_map_commute_int" ~count:100 ~long_factor:100
       (triple
-         (small_list small_int)
+         (list_small small_int)
          (fun1 Observable.int int)
          (fun1 Observable.int bool))
       (fun (l,Fun (_,f),Fun (_,p)) ->
@@ -1014,7 +1014,7 @@ module Function = struct
   let fail_pred_map_commute_int32 =
     Test.make ~name:"fail_pred_map_commute_int32" ~count:100 ~long_factor:100
       (triple
-         (small_list int32)
+         (list_small int32)
          (fun1 Observable.int32 int32)
          (fun1 Observable.int32 bool))
       (fun (l,Fun (_,f),Fun (_,p)) ->
@@ -1023,7 +1023,7 @@ module Function = struct
   let fail_pred_map_commute_int64 =
     Test.make ~name:"fail_pred_map_commute_int64" ~count:100 ~long_factor:100
       (triple
-         (small_list int64)
+         (list_small int64)
          (fun1 Observable.int64 int64)
          (fun1 Observable.int64 bool))
       (fun (l,Fun (_,f),Fun (_,p)) ->
@@ -1193,10 +1193,10 @@ module Stats = struct
   let list_len_tests =
     let len = ("len",List.length) in
     [ (* test from issue #30 *)
-      Test.make ~name:"list len dist"         ~count:5_000 (add_stat len (list int))                              (fun _ -> true);
-      Test.make ~name:"small_list len dist"   ~count:5_000 (add_stat len (small_list int))                        (fun _ -> true);
-      Test.make ~name:"list_of_size len dist" ~count:5_000 (add_stat len (list_of_size (Gen.int_range 5 10) int)) (fun _ -> true);
-      Test.make ~name:"list_repeat len dist"  ~count:5_000 (add_stat len (make Gen.(list_repeat 42 int)))         (fun _ -> true);
+      Test.make ~name:"list len dist"        ~count:5_000 (add_stat len (list int))                           (fun _ -> true);
+      Test.make ~name:"list_small len dist"  ~count:5_000 (add_stat len (list_small int))                     (fun _ -> true);
+      Test.make ~name:"list_size len dist"   ~count:5_000 (add_stat len (list_size (Gen.int_range 5 10) int)) (fun _ -> true);
+      Test.make ~name:"list_repeat len dist" ~count:5_000 (add_stat len (make Gen.(list_repeat 42 int)))      (fun _ -> true);
     ]
 
   let array_len_tests =
