@@ -1384,9 +1384,14 @@ val string_small_of : char Gen.t -> string arbitrary
 (** Same as {!string_of} but with a small length (ie {!Gen.small_nat} ).
     @since 0.20 *)
 
+val list_small : 'a arbitrary -> 'a list arbitrary
+(** Generates lists of small size (see {!Gen.small_nat}).
+    @since NEXT_RELEASE *)
+
 val small_list : 'a arbitrary -> 'a list arbitrary
 (** Generates lists of small size (see {!Gen.small_nat}).
-    @since 0.5.3 *)
+    @since 0.5.3
+    @deprecated use {!list_small} instead. *)
 
 val string_of_size : int Gen.t -> string arbitrary
 (** Generates strings with distribution of characters of [char].
