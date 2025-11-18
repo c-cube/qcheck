@@ -1447,8 +1447,13 @@ val array_small : 'a arbitrary -> 'a array arbitrary
 (** Generates arrays of small size (see {!Gen.array_small}).
     @since NEXT_RELEASE *)
 
+val array_size : int Gen.t -> 'a arbitrary -> 'a array arbitrary
+(** Generates arrays with length from the given distribution.
+    @since NEXT_RELEASE *)
+
 val array_of_size : int Gen.t -> 'a arbitrary -> 'a array arbitrary
-(** Generates arrays with length from the given distribution. *)
+(** Generates arrays with length from the given distribution.
+    @deprecated use {!array_size} instead. *)
 
 val option : ?ratio:float -> 'a arbitrary -> 'a option arbitrary
 (** Choose between returning Some random value with optional ratio, or None. *)
