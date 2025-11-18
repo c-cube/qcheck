@@ -1290,7 +1290,7 @@ stats len:
   8982..9480:                                                                  11
   9481..9979:                                                                  10
 
-+++ Stats for small_list len dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++ Stats for list_small len dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 stats len:
   num: 5000, avg: 15.79, stddev: 24.64, median 6, min 0, max 99
@@ -1315,7 +1315,7 @@ stats len:
    90.. 94: ##                                                               73
    95.. 99: #                                                                70
 
-+++ Stats for list_of_size len dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++ Stats for list_size len dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 stats len:
   num: 5000, avg: 7.51, stddev: 1.71, median 8, min 5, max 10
