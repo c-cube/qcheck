@@ -8,7 +8,7 @@ let passing =
 let failing =
   QCheck.Test.make ~count:10
     ~name:"should_fail_sort_id"
-    QCheck.(small_list small_int)
+    QCheck.(list_small small_int)
     (fun l -> l = List.sort compare l);;
 
 exception Error
@@ -50,7 +50,7 @@ let fun1 =
   QCheck.Test.make ~count:100 ~long_factor:100
     ~name:"FAIL_pred_map_commute"
     QCheck.(triple
-        (small_list small_int)
+        (list_small small_int)
         (fun1 Observable.int int)
         (fun1 Observable.int bool))
     (fun (l,QCheck.Fun (_,f), QCheck.Fun (_,p)) ->
@@ -113,7 +113,7 @@ let prop_foldleft_foldright_uncurry =
 
 let long_shrink =
   let open QCheck in
-  let listgen = list_of_size (Gen.int_range 1000 10000) int in
+  let listgen = list_size (Gen.int_range 1000 10000) int in
   Test.make ~name:"long_shrink" (pair listgen listgen)
     (fun (xs,ys) -> List.rev (xs@ys) = (List.rev xs)@(List.rev ys))
 
