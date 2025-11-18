@@ -1181,7 +1181,7 @@ stats len:
   8928..9423:                                                                  13
   9424..9919:                                                                  11
 
-+++ Stats for small_list len dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++ Stats for list_small len dist ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 stats len:
   num: 5000, avg: 15.47, stddev: 24.03, median 6, min 0, max 99
