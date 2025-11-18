@@ -525,9 +525,14 @@ module Gen : sig
   (** Builds a string generator using the given character generator, length is {!small_nat}.
       @since 0.20 *)
 
+  val list_small : 'a t -> 'a list t
+  (** Generates lists of small size (see {!small_nat}).
+      @since NEXT_RELEASE *)
+
   val small_list : 'a t -> 'a list t
   (** Generates lists of small size (see {!small_nat}).
-      @since 0.5.3 *)
+      @since 0.5.3
+      @deprecated use {!list_small} instead. *)
 
   val flatten_l : 'a t list -> 'a list t
   (** Generate a list of elements from individual generators
