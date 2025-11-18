@@ -1387,6 +1387,14 @@ let array a =
     ?print:(_opt_map ~f:Print.array a.print)
     (Gen.array a.gen)
 
+let array_small a =
+  let small x = _opt_map_or ~d:Array.length ~f:array_sum_ a.small x in
+  make
+    ~small
+    ~shrink:(Shrink.array ?shrink:a.shrink)
+    ?print:(_opt_map ~f:Print.array a.print)
+    (Gen.array_small a.gen)
+
 let array_of_size size a =
   let small x = _opt_map_or ~d:Array.length ~f:array_sum_ a.small x in
   make
