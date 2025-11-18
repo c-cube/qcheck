@@ -544,9 +544,14 @@ module Gen : sig
   (** Generate a result from [Ok g], an error from [Error e]
       @since 0.13 *)
 
+  val array_small : 'a t -> 'a array t
+  (** Generates arrays of small size (see {!small_nat}).
+      @since NEXT_RELEASE *)
+
   val small_array : 'a t -> 'a array t
   (** Generates arrays of small size (see {!small_nat}).
-      @since 0.10 *)
+      @since 0.10
+      @deprecated use {!array_small} instead. *)
 
   (** {3 Tuple generators}
 

@@ -431,7 +431,8 @@ module Gen = struct
   let bytes_small_of gen st = bytes_size ~gen small_nat st
   let small_string ?gen st = string_size ?gen small_nat st
   let small_list gen = list_size small_nat gen
-  let small_array gen = array_size small_nat gen
+  let array_small gen = array_size small_nat gen
+  let small_array = array_small
   let string_small st = string_size small_nat st
   let string_small_of gen st = string_size ~gen small_nat st
 
