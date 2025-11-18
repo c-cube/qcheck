@@ -431,7 +431,8 @@ module Gen = struct
   let bytes_small_of gen st = bytes_size ~gen small_nat st
   let small_string ?gen st = string_size ?gen small_nat st
   let small_list gen = list_size small_nat gen
-  let small_array gen = array_size small_nat gen
+  let array_small gen = array_size small_nat gen
+  let small_array = array_small
   let string_small st = string_size small_nat st
   let string_small_of gen st = string_size ~gen small_nat st
 
@@ -1386,13 +1387,23 @@ let array a =
     ?print:(_opt_map ~f:Print.array a.print)
     (Gen.array a.gen)
 
-let array_of_size size a =
+let array_small a =
+  let small x = _opt_map_or ~d:Array.length ~f:array_sum_ a.small x in
+  make
+    ~small
+    ~shrink:(Shrink.array ?shrink:a.shrink)
+    ?print:(_opt_map ~f:Print.array a.print)
+    (Gen.array_small a.gen)
+
+let array_size size a =
   let small x = _opt_map_or ~d:Array.length ~f:array_sum_ a.small x in
   make
     ~small
     ~shrink:(Shrink.array ?shrink:a.shrink)
     ?print:(_opt_map ~f:Print.array a.print)
     (Gen.array_size size a.gen)
+
+let array_of_size = array_size
 
 let pair a b =
   make

@@ -875,7 +875,9 @@ module Gen = struct
 
   let small_list gen = list_ignore_size_tree small_nat gen
 
-  let small_array gen = list_ignore_size_tree small_nat gen >|= Array.of_list
+  let array_small gen = list_ignore_size_tree small_nat gen >|= Array.of_list
+
+  let small_array = array_small
 
   let join (gen : 'a t t) : 'a t = gen >>= Fun.id
 

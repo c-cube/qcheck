@@ -45,7 +45,12 @@
   - Deprecate `QCheck.string_numeral`
   - Deprecate `QCheck.numeral_string_of_size`
   - Deprecate `QCheck.string_numeral_of_size`
-
+- Renamed `array` generator combinators:
+  - Add `QCheck.Gen.array_small` and deprecate `QCheck.Gen.small_array`
+  - Add `QCheck2.Gen.array_small` and deprecate `QCheck2.Gen.small_array`
+  - Add `QCheck.array_small` for consistency
+  - Add `QCheck.array_size` and deprecate `QCheck.array_of_size`
+  - Deprecate badly named `QCheck.Gen.array_repeat` and `QCheck2.Gen.array_repeat`
 
 ## 0.27 (2025-10-31)
 
