@@ -1008,7 +1008,7 @@ module Stats = struct
     let len = ("len",Array.length) in
     [
       Test.make ~name:"array len dist"        ~count:5_000 ~stats:[len] Gen.(array int)                       (fun _ -> true);
-      Test.make ~name:"small_array len dist"  ~count:5_000 ~stats:[len] Gen.(small_array int)                 (fun _ -> true);
+      Test.make ~name:"array_small len dist"  ~count:5_000 ~stats:[len] Gen.(array_small int)                 (fun _ -> true);
       Test.make ~name:"array_size len dist"   ~count:5_000 ~stats:[len] Gen.(array_size (int_range 5 10) int) (fun _ -> true);
       Test.make ~name:"array_repeat len dist" ~count:5_000 ~stats:[len] Gen.(array_repeat 42 int)             (fun _ -> true);
     ]
