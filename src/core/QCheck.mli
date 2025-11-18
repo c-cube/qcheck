@@ -1984,7 +1984,7 @@ type _ fun_repr
     For example:
     {[
       QCheck.Test.make
-        QCheck.(pair (fun1 Observable.int bool) (small_list int))
+        QCheck.(pair (fun1 Observable.int bool) (list_small int))
         (fun (Fun (_,f), l) -> l=(List.rev_map f l |> List.rev l))
     ]}
 *)
