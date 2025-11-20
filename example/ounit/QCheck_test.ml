@@ -13,7 +13,7 @@ let passing =
 let failing =
   Q.Test.make ~count:10
     ~name:"should_fail_sort_id"
-    Q.(small_list small_int)
+    Q.(list_small small_int)
     (fun l -> l = List.sort compare l);;
 
 exception Error

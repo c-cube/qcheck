@@ -430,7 +430,8 @@ module Gen = struct
   let bytes_small st = bytes_size small_nat st
   let bytes_small_of gen st = bytes_size ~gen small_nat st
   let small_string ?gen st = string_size ?gen small_nat st
-  let small_list gen = list_size small_nat gen
+  let list_small gen = list_size small_nat gen
+  let small_list = list_small
   let array_small gen = array_size small_nat gen
   let small_array = array_small
   let string_small st = string_size small_nat st
@@ -1374,8 +1375,10 @@ let mk_list a gen =
   make ~small ~shrink:(Shrink.list ?shrink:a.shrink) ?print gen
 
 let list a = mk_list a (Gen.list a.gen)
-let list_of_size size a = mk_list a (Gen.list_size size a.gen)
-let small_list a = mk_list a (Gen.small_list a.gen)
+let list_size size a = mk_list a (Gen.list_size size a.gen)
+let list_of_size = list_size
+let list_small a = mk_list a (Gen.small_list a.gen)
+let small_list = list_small
 
 let array_sum_ f a = Array.fold_left (fun acc x -> f x+acc) 0 a
 

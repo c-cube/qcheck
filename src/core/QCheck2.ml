@@ -873,7 +873,9 @@ module Gen = struct
 
   let small_string ?(gen=char) = string_small_of gen
 
-  let small_list gen = list_ignore_size_tree small_nat gen
+  let list_small gen = list_ignore_size_tree small_nat gen
+
+  let small_list = list_small
 
   let array_small gen = list_ignore_size_tree small_nat gen >|= Array.of_list
 
