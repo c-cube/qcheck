@@ -63,7 +63,7 @@ jobs:
           git -C /home/opam/opam-repository pull origin master && HOME=/home/opam opam update -y
       - name: Checkout repository
         # See https://github.com/actions/checkout/issues/334
-        uses: actions/checkout@v6
+        uses: actions/checkout@v1
       - name: Setup repo and install dependencies
         run: |
           sudo chown -R opam:opam .
