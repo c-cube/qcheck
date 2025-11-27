@@ -381,6 +381,15 @@ module Gen : sig
   (** All corner cases for int.
       @since 0.6 *)
 
+  val int_small_corners : unit -> int t
+  (** As [int_small], but each newly created generator starts with
+      a list of corner cases before falling back on random generation.
+
+      Note that [int_small_corners ()] is stateful, meaning that once the list of
+      corner cases has been emitted, subsequent calls will not reproduce them.
+
+      @since NEXT_RELEASE *)
+
   val (--) : int -> int -> int t (** Synonym for {!int_range}. *)
 
   val int32 : int32 t
