@@ -315,7 +315,8 @@ module Gen : sig
 
   val big_nat : int t
   (** Generates natural numbers, possibly large.
-      @since 0.10 *)
+      @since 0.10
+      @deprecated use [map abs int] instead. *)
 
   val int_neg : int t
   (** Generates strictly negative integers uniformly (0 excluded).
