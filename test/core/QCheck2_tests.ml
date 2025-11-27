@@ -45,15 +45,15 @@ module Overall = struct
   let passing =
     Test.make ~name:"list_rev_is_involutive" ~count:100 ~long_factor:100
       ~print:Print.(list int)
-      Gen.(list small_int) (fun l -> List.rev (List.rev l) = l)
+      Gen.(list int_small) (fun l -> List.rev (List.rev l) = l)
 
   let failing =
     Test.make ~name:"should_fail_sort_id" ~count:10 ~print:Print.(list int)
-      Gen.(list_small small_int) (fun l -> l = List.sort compare l)
+      Gen.(list_small nat_small) (fun l -> l = List.sort compare l)
 
   let max_fail =
     Test.make ~name:"max_fail" ~count:1000 ~max_fail:3 ~print:Print.(list int)
-      Gen.(list small_nat) (fun l -> l = List.rev l)
+      Gen.(list nat_small) (fun l -> l = List.rev l)
 
   exception Error
 
@@ -76,7 +76,7 @@ module Overall = struct
 
   let retries =
     Test.make ~name:"with shrinking retries" ~retries:10 ~print:Print.int
-      Gen.small_nat (fun i -> Printf.printf "%i %!" i; i mod 3 <> 1)
+      Gen.nat_small (fun i -> Printf.printf "%i %!" i; i mod 3 <> 1)
 
   let bad_assume_warn =
     Test.make ~name:"WARN_unlikely_precond" ~count:2_000 ~print:Print.int
@@ -106,20 +106,20 @@ module Overall = struct
       (fun _i -> false)
 
   let neg_test_fail_as_expected =
-    Test.make_neg ~name:"all ints are even" ~print:Print.int Gen.small_int (fun i -> i mod 2 = 0)
+    Test.make_neg ~name:"all ints are even" ~print:Print.int Gen.int_small (fun i -> i mod 2 = 0)
 
   let neg_test_unexpected_success =
-    Test.make_neg ~name:"int double" ~print:Print.int Gen.small_int (fun i -> i + i = i * 2)
+    Test.make_neg ~name:"int double" ~print:Print.int Gen.int_small (fun i -> i + i = i * 2)
 
   let neg_test_fail_with_shrinking =
     Test.make_neg ~name:"list rev concat" ~print:Print.(pair (list int) (list int))
-      Gen.(pair (list small_int) (list small_int)) (fun (is,js) -> (List.rev is)@(List.rev js) = List.rev (is@js))
+      Gen.(pair (list int_small) (list int_small)) (fun (is,js) -> (List.rev is)@(List.rev js) = List.rev (is@js))
 
   let pos_test_fails_with_error =
-    Test.make ~name:"pos fail with error" ~print:Print.int Gen.small_int (fun _i -> raise Error)
+    Test.make ~name:"pos fail with error" ~print:Print.int Gen.nat_small (fun _i -> raise Error)
 
   let neg_test_fail_with_error =
-    Test.make_neg ~name:"neg fail with error" ~print:Print.int Gen.small_int (fun _i -> raise Error)
+    Test.make_neg ~name:"neg fail with error" ~print:Print.int Gen.nat_small (fun _i -> raise Error)
 
   (* [apply_n f x n] computes f(f(...f(x))) with n applications of f *)
   let rec apply_n f x n =
@@ -132,7 +132,7 @@ module Overall = struct
     let sleep_time = 0.175 in
     let count = ref 0 in
     Test.make ~count:10 ~name:"bad function reproducability"
-      Gen.(triple small_int (fun1 Observable.int small_int) small_int)
+      Gen.(triple nat_small (fun1 Observable.int nat_small) nat_small)
       (fun (i,f,j) ->
          incr count;
          Printf.printf "(%i,fun,%i)%s%!" i j (if !count mod 10 = 0 then "\n" else " ");
@@ -230,17 +230,17 @@ module Generator = struct
 
   let pair_test =
     Test.make ~name:"int pairs - commute over +" ~count:1000 ~print:Print.(pair int int)
-      Gen.(pair small_nat small_nat) (fun (i,j) -> i+j = j+i)
+      Gen.(pair nat_small nat_small) (fun (i,j) -> i+j = j+i)
 
   let triple_test =
     Test.make ~name:"int triples - associative over +" ~count:1000
       ~print:Print.(triple int int int)
-      Gen.(triple small_nat small_nat small_nat) (fun (i,j,k) -> i+(j+k) = (i+j)+k)
+      Gen.(triple nat_small nat_small nat_small) (fun (i,j,k) -> i+(j+k) = (i+j)+k)
 
   let quad_test =
     Test.make ~name:"int quadruples - product of sums" ~count:1000
       ~print:Print.(quad int int int int)
-      Gen.(quad small_nat small_nat small_nat small_nat)
+      Gen.(quad nat_small nat_small nat_small nat_small)
       (fun (h,i,j,k) -> (h+i)*(j+k) = h*j + h*k + i*j + i*k)
 
   let test_tup2 =
@@ -299,7 +299,7 @@ module Generator = struct
 
   let bind_test =
     Test.make ~name:"bind test for ordered pairs" ~count:1000 ~print:Print.(pair int int)
-      Gen.(small_nat >>= fun j -> int_bound j >>= fun i -> return (i,j))
+      Gen.(nat_small >>= fun j -> int_bound j >>= fun i -> return (i,j))
       (fun (i,j) -> i<=j)
 
   let bind_pair_list_length =
@@ -316,13 +316,13 @@ module Generator = struct
   let list_repeat_test =
     Test.make ~name:"list_repeat has constant length" ~count:1000
       ~print:Print.(pair int (list unit))
-      Gen.(small_nat >>= fun i -> list_repeat i unit >>= fun l -> return (i,l))
+      Gen.(nat_small >>= fun i -> list_repeat i unit >>= fun l -> return (i,l))
       (fun (i,l) -> List.length l = i)
 
   let array_repeat_test =
     Test.make ~name:"array_repeat has constant length" ~count:1000
       ~print:Print.(pair int (array unit))
-      Gen.(small_nat >>= fun i -> array_repeat i unit >>= fun l -> return (i,l))
+      Gen.(nat_small >>= fun i -> array_repeat i unit >>= fun l -> return (i,l))
       (fun (i,l) -> Array.length l = i)
 
   let int_option_test =
@@ -391,7 +391,7 @@ module Shrink = struct
   (* example from issue #59 *)
   let test_fac_issue59 =
     Test.make ~name:"test fac issue59"
-      (Gen.make_primitive ~gen:(fun st -> Gen.generate1 ~rand:st (Gen.small_int_corners ())) ~shrink:(fun _ -> Seq.empty))
+      (Gen.make_primitive ~gen:(fun st -> Gen.generate1 ~rand:st (Gen.int_small_corners ())) ~shrink:(fun _ -> Seq.empty))
       (fun n -> try (fac n) mod n = 0
                 with
                 (*| Stack_overflow   -> false*)
@@ -399,7 +399,7 @@ module Shrink = struct
 
   let big_bound_issue59 =
     Test.make ~name:"big bound issue59" ~print:Print.int
-      (Gen.small_int_corners()) (fun i -> i < 209609)
+      (Gen.int_small_corners()) (fun i -> i < 209609)
 
   let long_shrink =
     let listgen = Gen.(list_size (int_range 1000 10000) int) in
@@ -435,7 +435,7 @@ module Shrink = struct
   (* test from issue #59 *)
   let ints_smaller_209609 =
     Test.make ~name:"ints < 209609" ~print:Print.int
-      (Gen.small_int_corners()) (fun i -> i < 209609)
+      (Gen.int_small_corners()) (fun i -> i < 209609)
 
   let nats_smaller_5001 =
     Test.make ~name:"nat < 5001" ~count:1000 ~print:Print.int
@@ -526,7 +526,7 @@ module Shrink = struct
   (* test from issue #167 *)
   let pair_diff_issue_64 =
     Test.make ~name:"pairs have different components" ~print:Print.(pair int int)
-      Gen.(pair small_int small_int) (fun (i,j) -> i<>j)
+      Gen.(pair nat_small nat_small) (fun (i,j) -> i<>j)
 
   let pair_same =
     Test.make ~name:"pairs have same components" ~print:Print.(pair int int)
@@ -542,29 +542,29 @@ module Shrink = struct
 
   let pair_ordered =
     Test.make ~name:"pairs are ordered" ~print:Print.(pair int int)
-      Gen.(pair (pint ~origin:0) (pint ~origin:0)) (fun (i,j) -> i<=j)
+      Gen.(pair int_pos int_pos) (fun (i,j) -> i<=j)
 
   let pair_ordered_rev =
     Test.make ~name:"pairs are ordered reversely" ~print:Print.(pair int int)
-      Gen.(pair (pint ~origin:0) (pint ~origin:0)) (fun (i,j) -> i>=j)
+      Gen.(pair int_pos int_pos) (fun (i,j) -> i>=j)
 
   let pair_sum_lt_128 =
     Test.make ~name:"pairs sum to less than 128" ~print:Print.(pair int int)
-      Gen.(pair (pint ~origin:0) (pint ~origin:0)) (fun (i,j) -> i+j<128)
+      Gen.(pair int_pos int_pos) (fun (i,j) -> i+j<128)
 
   let pair_lists_rev_concat =
     Test.make ~name:"pairs lists rev concat" ~print:Print.(pair (list int) (list int))
-      Gen.(pair (list (pint ~origin:0)) (list (pint ~origin:0)))
+      Gen.(pair (list int_pos) (list int_pos))
       (fun (xs,ys) -> List.rev (xs@ys) = (List.rev xs)@(List.rev ys))
 
   let pair_lists_no_overlap =
     Test.make ~name:"pairs lists no overlap" ~print:Print.(pair (list int) (list int))
-      Gen.(pair (list small_nat) (list small_nat))
+      Gen.(pair (list nat_small) (list nat_small))
       (fun (xs,ys) -> List.for_all (fun x -> not (List.mem x ys)) xs)
 
   let triple_diff =
     Test.make ~name:"triples have pair-wise different components" ~print:Print.(triple int int int)
-      Gen.(triple small_int small_int small_int) (fun (i,j,k) -> i<>j && j<>k)
+      Gen.(triple nat_small nat_small nat_small) (fun (i,j,k) -> i<>j && j<>k)
 
   let triple_same =
     Test.make ~name:"triples have same components" ~print:Print.(triple int int int)
@@ -580,7 +580,7 @@ module Shrink = struct
 
   let quad_diff =
     Test.make ~name:"quadruples have pair-wise different components" ~print:Print.(quad int int int int)
-      Gen.(quad small_int small_int small_int small_int) (fun (h,i,j,k) -> h<>i && i<>j && j<>k)
+      Gen.(quad nat_small nat_small nat_small nat_small) (fun (h,i,j,k) -> h<>i && i<>j && j<>k)
 
   let quad_same =
     Test.make ~name:"quadruples have same components" ~print:Print.(quad int int int int)
@@ -598,61 +598,61 @@ module Shrink = struct
     Test.make
       ~print:Print.(tup2 int int)
       ~name:"forall (a, b) in nat: a < b"
-      Gen.(tup2 small_int small_int)
+      Gen.(tup2 nat_small nat_small)
       (fun (a, b) -> a < b)
 
   let test_tup3 =
     Test.make
       ~print:Print.(tup3 int int int)
       ~name:"forall (a, b, c) in nat: a < b < c"
-      Gen.(tup3 small_int small_int small_int)
+      Gen.(tup3 nat_small nat_small nat_small)
       (fun (a, b, c) -> a < b && b < c)
 
   let test_tup4 =
     Test.make
       ~print:Print.(tup4 int int int int)
       ~name:"forall (a, b, c, d) in nat: a < b < c < d"
-      Gen.(tup4 small_int small_int small_int small_int)
+      Gen.(tup4 nat_small nat_small nat_small nat_small)
       (fun (a, b, c, d) -> a < b && b < c && c < d)
 
   let test_tup5 =
     Test.make
       ~print:Print.(tup5 int int int int int)
       ~name:"forall (a, b, c, d, e) in nat: a < b < c < d < e"
-      Gen.(tup5 small_int small_int small_int small_int small_int)
+      Gen.(tup5 nat_small nat_small nat_small nat_small nat_small)
       (fun (a, b, c, d, e) -> a < b && b < c && c < d && d < e)
 
   let test_tup6 =
     Test.make
       ~print:Print.(tup6 int int int int int int)
       ~name:"forall (a, b, c, d, e, f) in nat: a < b < c < d < e < f"
-      Gen.(tup6 small_int small_int small_int small_int small_int small_int)
+      Gen.(tup6 nat_small nat_small nat_small nat_small nat_small nat_small)
       (fun (a, b, c, d, e, f) -> a < b && b < c && c < d && d < e && e < f)
 
   let test_tup7 =
     Test.make
       ~print:Print.(tup7 int int int int int int int)
       ~name:"forall (a, b, c, d, e, f, g) in nat: a < b < c < d < e < f < g"
-      Gen.(tup7 small_int small_int small_int small_int small_int small_int small_int)
+      Gen.(tup7 nat_small nat_small nat_small nat_small nat_small nat_small nat_small)
       (fun (a, b, c, d, e, f, g) -> a < b && b < c && c < d && d < e && e < f && f < g)
 
   let test_tup8 =
     Test.make
       ~print:Print.(tup8 int int int int int int int int)
       ~name:"forall (a, b, c, d, e, f, g, h) in nat: a < b < c < d < e < f < g < h"
-      Gen.(tup8 small_int small_int small_int small_int small_int small_int small_int small_int)
+      Gen.(tup8 nat_small nat_small nat_small nat_small nat_small nat_small nat_small nat_small)
       (fun (a, b, c, d, e, f, g, h) -> a < b && b < c && c < d && d < e && e < f && f < g && g < h)
 
   let test_tup9 =
     Test.make
       ~print:Print.(tup9 int int int int int int int int int)
       ~name:"forall (a, b, c, d, e, f, g, h, i) in nat: a < b < c < d < e < f < g < h < i"
-      Gen.(tup9 small_int small_int small_int small_int small_int small_int small_int small_int small_int)
+      Gen.(tup9 nat_small nat_small nat_small nat_small nat_small nat_small nat_small nat_small nat_small)
       (fun (a, b, c, d, e, f, g, h, i) -> a < b && b < c && c < d && d < e && e < f && f < g && g < h && h < i)
 
   let bind_pair_ordered =
     Test.make ~name:"bind ordered pairs" ~print:Print.(pair int int)
-      Gen.(pint ~origin:0 >>= fun j -> int_bound j >>= fun i -> return (i,j))
+      Gen.(int_pos >>= fun j -> int_bound j >>= fun i -> return (i,j))
       (fun (_i,_j) -> false)
 
   let bind_pair_list_size =
@@ -666,36 +666,36 @@ module Shrink = struct
 
   let lists_are_empty_issue_64 =
     Test.make ~name:"lists are empty" ~print:Print.(list int)
-      Gen.(list small_int) (fun xs -> print_list xs; xs = [])
+      Gen.(list nat_small) (fun xs -> print_list xs; xs = [])
 
   let list_shorter_10 =
     Test.make ~name:"lists shorter than 10" ~print:Print.(list int)
-      Gen.(list small_int) (fun xs -> List.length xs < 10)
+      Gen.(list nat_small) (fun xs -> List.length xs < 10)
 
   let length_printer xs =
     Printf.sprintf "[...] list length: %i" (List.length xs)
 
-  let size_gen = Gen.(oneof [small_nat; int_bound 750_000])
+  let size_gen = Gen.(oneof [nat_small; int_bound 750_000])
 
   let list_shorter_432 =
     Test.make ~name:"lists shorter than 432" ~print:length_printer
-      Gen.(list_size size_gen small_int)
+      Gen.(list_size size_gen nat_small)
       (fun xs -> List.length xs < 432)
 
   let list_shorter_4332 =
     Test.make ~name:"lists shorter than 4332" ~print:length_printer
-      Gen.(list_size size_gen small_int)
+      Gen.(list_size size_gen nat_small)
       (fun xs -> List.length xs < 4332)
 
   let list_equal_dupl =
     Test.make ~name:"lists equal to duplication" ~print:Print.(list int)
-      Gen.(list_size size_gen small_int)
+      Gen.(list_size size_gen int_small)
       (fun xs -> try xs = xs @ xs
                  with Stack_overflow -> false)
 
   let list_unique_elems =
     Test.make ~name:"lists have unique elems" ~print:Print.(list int)
-      Gen.(list small_int)
+      Gen.(list nat_small)
       (fun xs -> let ys = List.sort_uniq Int.compare xs in
                  print_list xs; List.length xs = List.length ys)
 
@@ -722,7 +722,7 @@ module Shrink = struct
 
   let test_gen_no_shrink =
     Test.make ~name:"sum list = 0" ~print:Print.(list int)
-      Gen.(no_shrink @@ list small_int)
+      Gen.(no_shrink @@ list nat_small)
       (fun xs -> List.fold_left (+) 0 xs = 0)
 
 
@@ -806,7 +806,7 @@ module Function = struct
     Test.make ~name:"fail_pred_map_commute_int" ~count:100 ~long_factor:100
       ~print:Print.(triple (list int) Fn.print Fn.print)
       Gen.(triple
-             (list_small small_int)
+             (list_small nat_small)
              (fun1 ~print:Print.int Observable.int int)
              (fun1 ~print:Print.bool Observable.int bool))
       (fun (l,Fun (_,f),Fun (_,p)) ->
@@ -837,7 +837,7 @@ module Function = struct
       (fun1 Observable.string ~print:Print.bool Gen.bool)
       (fun (Fun (_,p)) -> not (p "some random string") || p "some other string")
 
-  let int_gen = Gen.small_nat (* int *)
+  let int_gen = Gen.nat_small (* int *)
 
   (* Another example (false) property *)
   let prop_foldleft_foldright =
@@ -885,10 +885,10 @@ module Function = struct
   let fold_left_test =
     Test.make ~name:"fold_left test, fun first" ~print:Print.(quad Fn.print string (list int) (list int))
       Gen.(quad  (* string -> int -> string *)
-             (fun2 ~print:Print.string Observable.string Observable.int (small_string ~gen:char))
+             (fun2 ~print:Print.string Observable.string Observable.int string_small)
              string_small
-             (list small_int)
-             (list small_int))
+             (list nat_small)
+             (list nat_small))
       (fun (f,acc,is,js) ->
          let f = Fn.apply f in
          List.fold_left f acc (is @ js)
@@ -1073,7 +1073,7 @@ module Stats = struct
 
   let int_dist_empty_bucket =
     Test.make ~name:"int_dist_empty_bucket" ~count:1_000 ~stats:[("dist",fun x -> x)]
-      Gen.(oneof [small_int_corners ();int]) (fun _ -> true)
+      Gen.(oneof [int_small_corners ();int]) (fun _ -> true)
 
   let tests =
     [ bool_dist; ]
