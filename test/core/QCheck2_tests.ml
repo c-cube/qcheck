@@ -1019,15 +1019,19 @@ module Stats = struct
       (* test from issue #40 *)
       Test.make ~name:"int_stats_neg"                  ~count:5000   ~stats:[dist] Gen.small_signed_int                 (fun _ -> true);
       (* distribution tests from PR #45 *)
-      Test.make ~name:"small_signed_int dist"          ~count:1000   ~stats:[dist] Gen.small_signed_int                 (fun _ -> true);
-      Test.make ~name:"small_nat dist"                 ~count:1000   ~stats:[dist] Gen.small_nat                        (fun _ -> true);
-      Test.make ~name:"nat dist"                       ~count:1000   ~stats:[dist] Gen.nat                              (fun _ -> true);
+      Test.make ~name:"int dist"                       ~count:100000 ~stats:[dist] Gen.int                              (fun _ -> true);
+      Test.make ~name:"int_bound 1000 dist"            ~count:10000  ~stats:[dist] (Gen.int_bound 1000)                 (fun _ -> true);
       Test.make ~name:"int_range (-43643) 435434 dist" ~count:1000   ~stats:[dist] (Gen.int_range (-43643) 435434)      (fun _ -> true);
       Test.make ~name:"int_range (-40000) 40000 dist"  ~count:1000   ~stats:[dist] (Gen.int_range (-40000) 40000)       (fun _ -> true);
       Test.make ~name:"int_range (-4) 4 dist"          ~count:1000   ~stats:[dist] (Gen.int_range (-4) 4)               (fun _ -> true);
       Test.make ~name:"int_range (-4) 17 dist"         ~count:1000   ~stats:[dist] (Gen.int_range (-4) 17)              (fun _ -> true);
-      Test.make ~name:"int dist"                       ~count:100000 ~stats:[dist] Gen.int                              (fun _ -> true);
+      Test.make ~name:"int_small dist"                 ~count:1000   ~stats:[dist] Gen.int_small                        (fun _ -> true);
+      Test.make ~name:"int_small_corners dist"         ~count:1000   ~stats:[dist] (Gen.int_small_corners ())           (fun _ -> true);
+      Test.make ~name:"int_neg dist"                   ~count:10000  ~stats:[dist] Gen.int_neg                          (fun _ -> true);
+      Test.make ~name:"int_pos dist"                   ~count:10000  ~stats:[dist] Gen.int_pos                          (fun _ -> true);
       Test.make ~name:"oneof int dist"                 ~count:1000   ~stats:[dist] (Gen.oneofl[min_int;-1;0;1;max_int]) (fun _ -> true);
+      Test.make ~name:"nat dist"                       ~count:1000   ~stats:[dist] Gen.nat                              (fun _ -> true);
+      Test.make ~name:"nat_small dist"                 ~count:1000   ~stats:[dist] Gen.nat_small                        (fun _ -> true);
     ]
 
   let int_32_64_dist_tests =
