@@ -106,7 +106,7 @@ any list `l`:
 ----
 let test =
   QCheck.Test.make ~count:1000 ~name:"list_rev_is_involutive"
-   QCheck.(list small_nat)
+   QCheck.(list nat_small)
    (fun l -> List.rev (List.rev l) = l);;
 
 (* we can check right now the property... *)
@@ -115,7 +115,7 @@ QCheck.Test.check_exn test;;
 
 
 In the above example, we applied the combinator `list` to
-the random generator `small_nat` (ints between 0 and 100), to create a
+the random generator `nat_small` (ints between 0 and 100), to create a
 new generator of lists of random integers. These builtin generators
 come with printers and shrinkers which are handy for outputting and
 minimizing a counterexample when a test fails.
@@ -126,7 +126,7 @@ Consider the buggy property `List.rev l = l`:
 ----
 let test =
   QCheck.Test.make ~count:1000 ~name:"my_buggy_test"
-   QCheck.(list small_nat)
+   QCheck.(list nat_small)
    (fun l -> List.rev l = l);;
 ----
 
@@ -409,13 +409,13 @@ test-suite.
 let passing =
   QCheck.Test.make ~count:1000
     ~name:"list_rev_is_involutive"
-    QCheck.(list small_nat)
+    QCheck.(list nat_small)
     (fun l -> List.rev (List.rev l) = l);;
 
 let failing =
   QCheck.Test.make ~count:10
     ~name:"fail_sort_id"
-    QCheck.(list small_nat)
+    QCheck.(list nat_small)
     (fun l -> l = List.sort compare l);;
 
 let _ =
@@ -438,13 +438,13 @@ easily integrate into an alcotest test suite:
 let passing =
   QCheck.Test.make ~count:1000
     ~name:"list_rev_is_involutive"
-    QCheck.(list small_int)
+    QCheck.(list int_small)
     (fun l -> List.rev (List.rev l) = l);;
 
 let failing =
   QCheck.Test.make ~count:10
     ~name:"fail_sort_id"
-    QCheck.(list small_int)
+    QCheck.(list int_small)
     (fun l -> l = List.sort compare l);;
 
 let () =
@@ -477,7 +477,7 @@ describe("qcheck-rely", ({test}) => {
       QCheck.Test.make(
         ~count=1000,
         ~name="list_rev_is_involutive",
-        QCheck.(list(small_int)),
+        QCheck.(list(int_small)),
         l =>
         List.rev(List.rev(l)) == l
       );
@@ -487,7 +487,7 @@ describe("qcheck-rely", ({test}) => {
   test("failing test", ({expect}) => {
     let failing =
       QCheck.Test.make(
-        ~count=10, ~name="fail_sort_id", QCheck.(list(small_int)), l =>
+        ~count=10, ~name="fail_sort_id", QCheck.(list(int_small)), l =>
         l == List.sort(compare, l)
       );
 
@@ -523,7 +523,7 @@ We can use the buggy test from above using the `qcheck-core` opam package:
 (* test.ml *)
 let test =
   QCheck.Test.make ~count:1000 ~name:"my_buggy_test"
-   QCheck.(list small_nat)
+   QCheck.(list nat_small)
    (fun l -> List.rev l = l)
 
 let _ = QCheck_base_runner.run_tests_main [test]
@@ -553,7 +553,7 @@ To instead use the `qcheck` opam package and its included `QCheck_runner`:
 (* test.ml *)
 let test =
   QCheck.Test.make ~count:1000 ~name:"my_buggy_test"
-   QCheck.(list small_nat)
+   QCheck.(list nat_small)
    (fun l -> List.rev l = l)
 
 let _ = QCheck_runner.run_tests_main [test]
