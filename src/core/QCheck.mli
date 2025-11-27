@@ -1255,6 +1255,11 @@ val int_small : int arbitrary
 (** Generates small signed integers.
     @since NEXT_RELEASE *)
 
+val nat : int arbitrary
+(** Generates natural numbers (< [10_000]).
+    Non-uniform: smaller numbers are more likely than bigger numbers.
+    @since NEXT_RELEASE *)
+
 val small_nat : int arbitrary
 (** Small unsigned integers.
     @since 0.5.1 *)

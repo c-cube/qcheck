@@ -1290,6 +1290,7 @@ let (--) = int_range
 let int_pos = make_int Gen.int_pos
 let pos_int = int_pos
 let small_int = make_int Gen.small_int
+let nat = make_int Gen.nat
 let small_nat = make_int Gen.small_nat
 let int_small = make_int Gen.small_signed_int
 let small_signed_int = int_small
