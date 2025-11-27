@@ -223,7 +223,9 @@ module Gen : sig
 
       Shrinks towards [0].
 
-      @since 0.10 *)
+      @since 0.10
+
+      @deprecated use [map abs int] instead. *)
 
   val int_neg : int t
   (** Generates strictly negative integers uniformly ([0] excluded).
