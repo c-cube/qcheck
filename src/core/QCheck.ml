@@ -1285,7 +1285,8 @@ let (--) = int_range
 let pos_int = make_int Gen.pint
 let small_int = make_int Gen.small_int
 let small_nat = make_int Gen.small_nat
-let small_signed_int = make_int Gen.small_signed_int
+let int_small = make_int Gen.small_signed_int
+let small_signed_int = int_small
 let small_int_corners () = make_int (Gen.nng_corners ())
 let neg_int = make_int Gen.neg_int
 

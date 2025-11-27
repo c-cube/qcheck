@@ -1230,6 +1230,10 @@ val int_range : int -> int -> int arbitrary
 (** [int_range a b] is uniform between [a] and [b] included. [b] must be
     larger than [a]. *)
 
+val int_small : int arbitrary
+(** Generates small signed integers.
+    @since NEXT_RELEASE *)
+
 val small_nat : int arbitrary
 (** Small unsigned integers.
     @since 0.5.1 *)
@@ -1240,7 +1244,8 @@ val small_int : int arbitrary
 
 val small_signed_int : int arbitrary
 (** Small signed integers.
-    @since 0.5.2 *)
+    @since 0.5.2
+    @deprecated use {!int_small}. *)
 
 val (--) : int -> int -> int arbitrary
 (** Synonym for {!int_range}. *)
