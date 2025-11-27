@@ -234,6 +234,13 @@ module Gen : sig
       Shrinks towards [0].
   *)
 
+  val int_pos_mid : int t
+  (** Generates natural numbers (< [10_000]).
+
+      Synonym for {!nat}.
+
+      @since NEXT_RELEASE *)
+
   val big_nat : int t
   (** Generates natural numbers, possibly large (< [1_000_000]).
 

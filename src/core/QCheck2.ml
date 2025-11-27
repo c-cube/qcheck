@@ -392,6 +392,8 @@ module Gen = struct
     let shrink a = fun () -> Shrink.int_towards 0 a () in
     Tree.make_primitive shrink x
 
+  let int_pos_mid = nat
+
   let big_nat : int t = fun st ->
     let p = RS.float st 1. in
     if p < 0.75
