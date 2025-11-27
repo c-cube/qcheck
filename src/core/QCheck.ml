@@ -1294,6 +1294,7 @@ let small_nat = make_int Gen.small_nat
 let int_small = make_int Gen.small_signed_int
 let small_signed_int = int_small
 let small_int_corners () = make_int (Gen.nng_corners ())
+let int_small_corners () = make_int (Gen.int_small_corners ())
 let int_neg = make_int Gen.int_neg
 let neg_int = make_int Gen.neg_int
 

@@ -1290,6 +1290,21 @@ val int_neg : int arbitrary
     See {!Gen.int_neg}
     @since NEXT_RELEASE *)
 
+val int_small_corners : unit -> int arbitrary
+(** As [int_small], but each newly created generator starts with
+    a list of corner cases before falling back on random generation.
+
+    Note that [int_small_corners ()] is stateful, meaning that once the list of
+    corner cases has been emitted, subsequent calls will not reproduce them.
+    As a consequence, in the following example, the first test fails with a
+    counter example, whereas the second rerun does not:
+    {[
+      let gen = QCheck.int_small_corners ()
+      let t = QCheck.Test.make ~name:"never max_int" gen (fun i -> i <> max_int)
+      let _ = QCheck_base_runner.run_tests ~verbose:true [t;t]
+    ]}
+*)
+
 val small_int_corners : unit -> int arbitrary
 (** As [small_int], but each newly created generator starts with
     a list of corner cases before falling back on random generation.
@@ -1303,7 +1318,7 @@ val small_int_corners : unit -> int arbitrary
       let t = QCheck.Test.make ~name:"never max_int" gen (fun i -> i <> max_int)
       let _ = QCheck_base_runner.run_tests ~verbose:true [t;t]
     ]}
- *)
+    @deprecated consider using uniform {!int_small_corners} instead. *)
 
 val neg_int : int arbitrary
 (** Negative int generator (0 included, see {!Gen.neg_int}).
