@@ -371,11 +371,14 @@ module Gen = struct
     else if origin > high then invalid_arg Format.(asprintf "%s: origin value %a is greater than high value %a" loc pp origin pp high)
     else origin
 
-  let small_nat : int t = fun st ->
+  let int_pos_small : int t = fun st ->
     let p = RS.float st 1. in
     let x = if p < 0.75 then RS.int st 10 else RS.int st 100 in
     let shrink a = fun () -> Shrink.int_towards 0 a () in
     Tree.make_primitive shrink x
+
+  let nat_small = int_pos_small
+  let small_nat = nat_small
 
   (** Natural number generator *)
   let nat : int t = fun st ->
@@ -616,8 +619,8 @@ module Gen = struct
 
   let int_small : int t = fun st ->
     if RS.bool st
-    then small_nat st
-    else (small_nat >|= Int.neg) st
+    then nat_small st
+    else (nat_small >|= Int.neg) st
 
   let small_signed_int = int_small
 
@@ -856,9 +859,9 @@ module Gen = struct
 
   let bytes_printable = list char_printable >|= bytes_of_char_list
 
-  let bytes_small = list_ignore_size_tree small_nat char >|= bytes_of_char_list
+  let bytes_small = list_ignore_size_tree nat_small char >|= bytes_of_char_list
 
-  let bytes_small_of gen = list_ignore_size_tree small_nat gen >|= bytes_of_char_list
+  let bytes_small_of gen = list_ignore_size_tree nat_small gen >|= bytes_of_char_list
 
   let string_of_char_list cs =
     let b = Buffer.create (List.length cs) in
@@ -873,17 +876,17 @@ module Gen = struct
 
   let string_printable = list char_printable >|= string_of_char_list
 
-  let string_small = list_ignore_size_tree small_nat char >|= string_of_char_list
+  let string_small = list_ignore_size_tree nat_small char >|= string_of_char_list
 
-  let string_small_of gen = list_ignore_size_tree small_nat gen >|= string_of_char_list
+  let string_small_of gen = list_ignore_size_tree nat_small gen >|= string_of_char_list
 
   let small_string ?(gen=char) = string_small_of gen
 
-  let list_small gen = list_ignore_size_tree small_nat gen
+  let list_small gen = list_ignore_size_tree nat_small gen
 
   let small_list = list_small
 
-  let array_small gen = list_ignore_size_tree small_nat gen >|= Array.of_list
+  let array_small gen = list_ignore_size_tree nat_small gen >|= Array.of_list
 
   let small_array = array_small
 

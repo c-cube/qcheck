@@ -59,7 +59,7 @@ content will appear. *)
             ~name:"All lists are sorted"
             ~count:10_000
             ~print:Print.(list int)
-            Gen.(list small_nat)
+            Gen.(list nat_small)
             (fun l -> l = List.sort compare l));;
 
       QCheck2.Test.check_exn test;;
@@ -199,6 +199,22 @@ module Gen : sig
 
       @deprecated use {!int_pos} instead *)
 
+  val int_pos_small : int t
+  (** Small positive integers (< [100], [0] included).
+
+      Non-uniform: smaller numbers are more likely than bigger numbers.
+
+      Shrinks towards [0].
+
+      @since NEXT_RELEASE *)
+
+  val nat_small : int t
+  (** Small positive integers (< [100], [0] included).
+
+      Synonym for {!int_pos_small}.
+
+      @since NEXT_RELEASE *)
+
   val small_nat : int t
   (** Small positive integers (< [100], [0] included).
 
@@ -206,7 +222,9 @@ module Gen : sig
 
       Shrinks towards [0].
 
-      @since 0.5.1 *)
+      @since 0.5.1
+
+      @deprecated use {!nat_small} instead *)
 
   val nat : int t
   (** Generates natural numbers (< [10_000]).
@@ -248,7 +266,7 @@ module Gen : sig
 
       Shrinks towards [0].
 
-      @deprecated use {!small_nat}. *)
+      @deprecated use {!nat_small}. *)
 
   val small_signed_int : int t
   (** Small SIGNED integers, based on {!small_nat}.
@@ -427,14 +445,14 @@ module Gen : sig
       @since 0.20 *)
 
   val bytes_small : bytes t
-  (** Builds a bytes generator using the {!char} character generator, length is {!small_nat}.
+  (** Builds a bytes generator using the {!char} character generator, length is {!nat_small}.
 
       Shrinks on the number of characters first, then on the characters.
 
       @since 0.20 *)
 
   val bytes_small_of : char t -> bytes t
-  (** Builds a bytes generator using the given character generator, length is {!small_nat}.
+  (** Builds a bytes generator using the given character generator, length is {!nat_small}.
 
       Shrinks on the number of characters first, then on the characters.
 
@@ -480,7 +498,7 @@ module Gen : sig
       @since 0.11 *)
 
   val string_small : string t
-  (** Builds a string generator using the {!char} characher generator, length is {!small_nat}.
+  (** Builds a string generator using the {!char} characher generator, length is {!nat_small}.
 
       Shrinks on the number of characters first, then on the characters.
 
@@ -488,7 +506,7 @@ module Gen : sig
   *)
 
   val string_small_of : char t -> string t
-  (** Builds a string generator using the given characher generator, length is {!small_nat}.
+  (** Builds a string generator using the given characher generator, length is {!nat_small}.
 
       Shrinks on the number of characters first, then on the characters.
 
@@ -496,7 +514,7 @@ module Gen : sig
   *)
 
   val small_string : ?gen:char t -> string t
-  (** Builds a string generator, length is {!small_nat}.
+  (** Builds a string generator, length is {!nat_small}.
       Accepts an optional character generator (the default is {!char}).
       Shrinks on the number of characters first, then on the characters.
       This function is kept for backward compatibility:
@@ -756,14 +774,14 @@ module Gen : sig
   *)
 
   val list_small : 'a t -> 'a list t
-  (** Generates lists of small size (see {!small_nat}).
+  (** Generates lists of small size (see {!nat_small}).
 
       Shrinks on the number of elements first, then on elements.
 
       @since NEXT_RELEASE *)
 
   val small_list : 'a t -> 'a list t
-  (** Generates lists of small size (see {!small_nat}).
+  (** Generates lists of small size (see {!nat_small}).
 
       Shrinks on the number of elements first, then on elements.
 
@@ -797,14 +815,14 @@ module Gen : sig
   *)
 
   val array_small : 'a t -> 'a array t
-  (** Generates arrays of small size (see {!small_nat}).
+  (** Generates arrays of small size (see {!nat_small}).
 
       Shrinks on the number of elements first, then on elements.
 
       @since NEXT_RELEASE *)
 
   val small_array : 'a t -> 'a array t
-  (** Generates arrays of small size (see {!small_nat}).
+  (** Generates arrays of small size (see {!nat_small}).
 
       Shrinks on the number of elements first, then on elements.
 
