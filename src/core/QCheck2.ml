@@ -542,6 +542,8 @@ module Gen = struct
 
   let int_pos = pint ~origin:0
 
+  let int_neg = int_pos >|= (fun n -> - n - 1)
+
   let number_towards = Shrink.number_towards
 
   let int_towards = Shrink.int_towards

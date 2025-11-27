@@ -225,13 +225,21 @@ module Gen : sig
 
       @since 0.10 *)
 
+  val int_neg : int t
+  (** Generates strictly negative integers uniformly ([0] excluded).
+
+      Shrinks towards [-1].
+
+      @since NEXT_RELEASE *)
+
   val neg_int : int t
   (** Generates non-strictly negative integers ([0] included).
 
       Non-uniform: smaller numbers (in absolute value) are more likely than bigger numbers.
 
       Shrinks towards [0].
-  *)
+
+      @deprecated use {!int_neg} or [map (fun i -> i) nat] instead. *)
 
   val small_int : int t
   (** Small UNSIGNED integers, for retrocompatibility.
