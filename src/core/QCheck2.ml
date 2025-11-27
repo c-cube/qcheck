@@ -540,6 +540,8 @@ module Gen = struct
     in
     Tree.make_primitive shrink x
 
+  let int_pos = pint ~origin:0
+
   let number_towards = Shrink.number_towards
 
   let int_towards = Shrink.int_towards
@@ -553,15 +555,15 @@ module Gen = struct
   let int : int t =
     bool >>= fun b ->
     if b
-    then pint ~origin:0 >|= (fun n -> - n - 1)
-    else pint ~origin:0
+    then int_pos >|= (fun n -> - n - 1)
+    else int_pos
 
   let int_bound (n : int) : int t =
     if n < 0 then invalid_arg "Gen.int_bound";
     fun st ->
       if n <= (1 lsl 30) - 2
       then Tree.make_primitive (fun a () -> Shrink.int_towards 0 a ()) (RS.int st (n + 1))
-      else Tree.map (fun r -> r mod (n + 1)) (pint st)
+      else Tree.map (fun r -> r mod (n + 1)) (int_pos st)
 
   (** To support ranges wider than [Int.max_int], the general idea is to find the center,
       and generate a random half-difference number as well as whether we add or

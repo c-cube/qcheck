@@ -185,10 +185,19 @@ module Gen : sig
 
       @since NEXT_RELEASE *)
 
+  val int_pos : int t
+  (** Generates non-strictly positive integers uniformly ([0] included).
+
+      Shrinks towards towards [0].
+
+      @since NEXT_RELEASE *)
+
   val pint : ?origin : int -> int t
   (** Generates non-strictly positive integers uniformly ([0] included).
 
-      Shrinks towards [origin] if specified, otherwise towards [0]. *)
+      Shrinks towards [origin] if specified, otherwise towards [0].
+
+      @deprecated use {!int_pos} instead *)
 
   val small_nat : int t
   (** Small positive integers (< [100], [0] included).
