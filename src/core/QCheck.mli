@@ -324,6 +324,10 @@ module Gen : sig
 
   val int : int t (** Generates integers uniformly. *)
 
+  val int_small : int t
+  (** Generated small signed integers.
+      @since NEXT_RELEASE *)
+
   val small_nat : int t
   (** Small integers (< 100)
       @since 0.5.1 *)
@@ -334,7 +338,8 @@ module Gen : sig
 
   val small_signed_int : int t
   (** Small SIGNED integers, based on {!small_nat}.
-      @since 0.5.2 *)
+      @since 0.5.2
+      @deprecated use {!int_small} instead. *)
 
   val int_bound : int -> int t
   (** Uniform integer generator producing integers between [0] and [bound]

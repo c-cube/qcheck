@@ -271,10 +271,12 @@ module Gen = struct
      for sizes of strings, arrays, etc. *)
   let small_int = small_nat
 
-  let small_signed_int st =
+  let int_small st =
     if bool st
     then small_nat st
     else - (small_nat st)
+
+  let small_signed_int = int_small
 
   let char_range a b = map Char.chr (Char.code a -- Char.code b)
 
