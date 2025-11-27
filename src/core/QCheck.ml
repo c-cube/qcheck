@@ -228,7 +228,7 @@ module Gen = struct
     else Ok (vg st)
 
   (* Uniform random int generator *)
-  let pint =
+  let int_pos =
     if Sys.word_size = 32 then
       fun st -> RS.bits st
     else (* word size = 64 *)
@@ -243,12 +243,14 @@ module Gen = struct
       let right = RS.bits st in
       left lor middle lor right
 
-  let int st = if RS.bool st then - (pint st) - 1 else pint st
+  let pint = int_pos
+
+  let int st = if RS.bool st then - (int_pos st) - 1 else int_pos st
   let int_bound n =
     if n < 0 then invalid_arg "Gen.int_bound";
     if n <= (1 lsl 30) - 2
     then fun st -> Random.State.int st (n + 1)
-    else fun st -> let r = pint st in r mod (n + 1)
+    else fun st -> let r = int_pos st in r mod (n + 1)
   let int_range a b =
     if b < a then invalid_arg "Gen.int_range";
     if a >= 0 || b < 0 then (
@@ -1282,7 +1284,7 @@ let int = make_int Gen.int
 let int_bound n = make_int (Gen.int_bound n)
 let int_range a b = make_int (Gen.int_range a b)
 let (--) = int_range
-let pos_int = make_int Gen.pint
+let pos_int = make_int Gen.int_pos
 let small_int = make_int Gen.small_int
 let small_nat = make_int Gen.small_nat
 let int_small = make_int Gen.small_signed_int

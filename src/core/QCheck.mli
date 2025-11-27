@@ -320,7 +320,13 @@ module Gen : sig
   val neg_int : int t
   (** Generates non-strictly negative integers (0 included). *)
 
-  val pint : int t (** Generates non-strictly positive integers uniformly (0 included). *)
+  val int_pos : int t
+  (** Generates non-strictly positive integers uniformly (0 included).
+      @since NEXT_RELEASE *)
+
+  val pint : int t
+  (** Generates non-strictly positive integers uniformly (0 included).
+      @deprecated use {!int_pos} instead. *)
 
   val int : int t (** Generates integers uniformly. *)
 
