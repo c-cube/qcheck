@@ -317,8 +317,13 @@ module Gen : sig
   (** Generates natural numbers, possibly large.
       @since 0.10 *)
 
+  val int_neg : int t
+  (** Generates strictly negative integers uniformly (0 excluded).
+      @since NEXT_RELEASE *)
+
   val neg_int : int t
-  (** Generates non-strictly negative integers (0 included). *)
+  (** Generates non-strictly negative integers (0 included).
+      @deprecated use {!int_neg} or [map (fun i -> -i) nat] instead. *)
 
   val int_pos : int t
   (** Generates non-strictly positive integers uniformly (0 included).
@@ -1288,8 +1293,8 @@ val small_int_corners : unit -> int arbitrary
 
 val neg_int : int arbitrary
 (** Negative int generator (0 included, see {!Gen.neg_int}).
-    The distribution is similar to that of
-    [small_int], not of [int_pos].
+    The distribution is non-uniform and similar to that of
+    [int_small], not of [int_pos].
 *)
 
 val char : char arbitrary

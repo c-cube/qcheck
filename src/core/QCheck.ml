@@ -245,6 +245,8 @@ module Gen = struct
 
   let pint = int_pos
 
+  let int_neg st = -(int_pos st)-1
+
   let int st = if RS.bool st then - (int_pos st) - 1 else int_pos st
   let int_bound n =
     if n < 0 then invalid_arg "Gen.int_bound";
