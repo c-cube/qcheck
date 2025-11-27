@@ -371,11 +371,14 @@ module Gen = struct
     else if origin > high then invalid_arg Format.(asprintf "%s: origin value %a is greater than high value %a" loc pp origin pp high)
     else origin
 
-  let small_nat : int t = fun st ->
+  let int_pos_small : int t = fun st ->
     let p = RS.float st 1. in
     let x = if p < 0.75 then RS.int st 10 else RS.int st 100 in
     let shrink a = fun () -> Shrink.int_towards 0 a () in
     Tree.make_primitive shrink x
+
+  let nat_small = int_pos_small
+  let small_nat = nat_small
 
   (** Natural number generator *)
   let nat : int t = fun st ->
@@ -388,6 +391,8 @@ module Gen = struct
     in
     let shrink a = fun () -> Shrink.int_towards 0 a () in
     Tree.make_primitive shrink x
+
+  let int_pos_mid = nat
 
   let big_nat : int t = fun st ->
     let p = RS.float st 1. in
@@ -540,6 +545,10 @@ module Gen = struct
     in
     Tree.make_primitive shrink x
 
+  let int_pos = pint ~origin:0
+
+  let int_neg = int_pos >|= (fun n -> - n - 1)
+
   let number_towards = Shrink.number_towards
 
   let int_towards = Shrink.int_towards
@@ -553,15 +562,15 @@ module Gen = struct
   let int : int t =
     bool >>= fun b ->
     if b
-    then pint ~origin:0 >|= (fun n -> - n - 1)
-    else pint ~origin:0
+    then int_pos >|= (fun n -> - n - 1)
+    else int_pos
 
   let int_bound (n : int) : int t =
     if n < 0 then invalid_arg "Gen.int_bound";
     fun st ->
       if n <= (1 lsl 30) - 2
       then Tree.make_primitive (fun a () -> Shrink.int_towards 0 a ()) (RS.int st (n + 1))
-      else Tree.map (fun r -> r mod (n + 1)) (pint st)
+      else Tree.map (fun r -> r mod (n + 1)) (int_pos st)
 
   (** To support ranges wider than [Int.max_int], the general idea is to find the center,
       and generate a random half-difference number as well as whether we add or
@@ -610,10 +619,12 @@ module Gen = struct
      for sizes of strings, arrays, etc. *)
   let small_int = small_nat
 
-  let small_signed_int : int t = fun st ->
+  let int_small : int t = fun st ->
     if RS.bool st
-    then small_nat st
-    else (small_nat >|= Int.neg) st
+    then nat_small st
+    else (nat_small >|= Int.neg) st
+
+  let small_signed_int = int_small
 
   (** Shrink towards the first element of the list *)
   let frequency (l : (int * 'a t) list) : 'a t =
@@ -850,9 +861,9 @@ module Gen = struct
 
   let bytes_printable = list char_printable >|= bytes_of_char_list
 
-  let bytes_small = list_ignore_size_tree small_nat char >|= bytes_of_char_list
+  let bytes_small = list_ignore_size_tree nat_small char >|= bytes_of_char_list
 
-  let bytes_small_of gen = list_ignore_size_tree small_nat gen >|= bytes_of_char_list
+  let bytes_small_of gen = list_ignore_size_tree nat_small gen >|= bytes_of_char_list
 
   let string_of_char_list cs =
     let b = Buffer.create (List.length cs) in
@@ -867,17 +878,17 @@ module Gen = struct
 
   let string_printable = list char_printable >|= string_of_char_list
 
-  let string_small = list_ignore_size_tree small_nat char >|= string_of_char_list
+  let string_small = list_ignore_size_tree nat_small char >|= string_of_char_list
 
-  let string_small_of gen = list_ignore_size_tree small_nat gen >|= string_of_char_list
+  let string_small_of gen = list_ignore_size_tree nat_small gen >|= string_of_char_list
 
   let small_string ?(gen=char) = string_small_of gen
 
-  let list_small gen = list_ignore_size_tree small_nat gen
+  let list_small gen = list_ignore_size_tree nat_small gen
 
   let small_list = list_small
 
-  let array_small gen = list_ignore_size_tree small_nat gen >|= Array.of_list
+  let array_small gen = list_ignore_size_tree nat_small gen >|= Array.of_list
 
   let small_array = array_small
 
@@ -892,8 +903,9 @@ module Gen = struct
 
   let int_pos_corners = [0; 1; 2; max_int]
 
-  let int_corners = int_pos_corners @ [min_int]
+  let int_corners = int_pos_corners @ [min_int; -2; -1]
 
+  let int_small_corners () : int t = graft_corners int_small int_corners ()
   let small_int_corners () : int t = graft_corners nat int_pos_corners ()
 
   (* sized, fix *)

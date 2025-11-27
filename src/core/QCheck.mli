@@ -51,7 +51,7 @@ all rights reserved.
       let test = QCheck.(
           Test.make
             ~count:10_000 ~max_fail:3
-            (list small_nat)
+            (list nat_small)
             (fun l -> l = List.sort compare l));;
       QCheck.Test.check_exn test;;
     ]}
@@ -311,30 +311,63 @@ module Gen : sig
   (** Synonym for {!float_exp}.
       @since 0.23 *)
 
-  val nat : int t (** Generates small natural numbers. *)
+  val nat : int t
+  (** Generates small natural numbers. *)
+
+  val int_pos_mid : int t
+  (** Generates small natural numbers.
+      Synonym for {!nat}.
+      @since NEXT_RELEASE *)
 
   val big_nat : int t
   (** Generates natural numbers, possibly large.
-      @since 0.10 *)
+      @since 0.10
+      @deprecated use [map abs int] instead. *)
+
+  val int_neg : int t
+  (** Generates strictly negative integers uniformly (0 excluded).
+      @since NEXT_RELEASE *)
 
   val neg_int : int t
-  (** Generates non-strictly negative integers (0 included). *)
+  (** Generates non-strictly negative integers (0 included).
+      @deprecated use {!int_neg} or [map (fun i -> -i) nat] instead. *)
 
-  val pint : int t (** Generates non-strictly positive integers uniformly (0 included). *)
+  val int_pos : int t
+  (** Generates non-strictly positive integers uniformly (0 included).
+      @since NEXT_RELEASE *)
+
+  val pint : int t
+  (** Generates non-strictly positive integers uniformly (0 included).
+      @deprecated use {!int_pos} instead. *)
 
   val int : int t (** Generates integers uniformly. *)
 
+  val int_small : int t
+  (** Generated small signed integers.
+      @since NEXT_RELEASE *)
+
+  val int_pos_small : int t
+  (** Small integers (< 100)
+      @since NEXT_RELEASE *)
+
+  val nat_small : int t
+  (** Small integers (< 100)
+      Synonym for {!int_pos_small}.
+      @since NEXT_RELEASE *)
+
   val small_nat : int t
   (** Small integers (< 100)
-      @since 0.5.1 *)
+      @since 0.5.1
+      @deprecated use {!nat_small} instead *)
 
   val small_int : int t
   (** Small UNSIGNED integers, for retrocompatibility.
-      @deprecated use {!small_nat}. *)
+      @deprecated use {!nat_small}. *)
 
   val small_signed_int : int t
   (** Small SIGNED integers, based on {!small_nat}.
-      @since 0.5.2 *)
+      @since 0.5.2
+      @deprecated use {!int_small} instead. *)
 
   val int_bound : int -> int t
   (** Uniform integer generator producing integers between [0] and [bound]
@@ -364,6 +397,15 @@ module Gen : sig
   val int_corners : int list
   (** All corner cases for int.
       @since 0.6 *)
+
+  val int_small_corners : unit -> int t
+  (** As [int_small], but each newly created generator starts with
+      a list of corner cases before falling back on random generation.
+
+      Note that [int_small_corners ()] is stateful, meaning that once the list of
+      corner cases has been emitted, subsequent calls will not reproduce them.
+
+      @since NEXT_RELEASE *)
 
   val (--) : int -> int -> int t (** Synonym for {!int_range}. *)
 
@@ -476,11 +518,11 @@ module Gen : sig
       @since 0.20 *)
 
   val bytes_small : bytes t
-  (** Builds a bytes generator using the {!char} character generator, length is {!small_nat}
+  (** Builds a bytes generator using the {!char} character generator, length is {!nat_small}
       @since 0.20 *)
 
   val bytes_small_of : char t -> bytes t
-  (** Builds a bytes generator using the given character generator, length is {!small_nat}.
+  (** Builds a bytes generator using the given character generator, length is {!nat_small}.
       @since 0.20 *)
 
   val string_size : ?gen:char t -> int t -> string t
@@ -514,24 +556,24 @@ module Gen : sig
       @since 0.18 *)
 
   val small_string : ?gen:char t -> string t
-  (** Builds a string generator, length is {!small_nat}
+  (** Builds a string generator, length is {!nat_small}
       Accepts an optional character generator (the default is {!char}).
       @deprecated use {!string_small} *)
 
   val string_small : string t
-  (** Builds a string generator using the {!char} character generator, length is {!small_nat}
+  (** Builds a string generator using the {!char} character generator, length is {!nat_small}
       @since 0.20 *)
 
   val string_small_of : char t -> string t
-  (** Builds a string generator using the given character generator, length is {!small_nat}.
+  (** Builds a string generator using the given character generator, length is {!nat_small}.
       @since 0.20 *)
 
   val list_small : 'a t -> 'a list t
-  (** Generates lists of small size (see {!small_nat}).
+  (** Generates lists of small size (see {!nat_small}).
       @since NEXT_RELEASE *)
 
   val small_list : 'a t -> 'a list t
-  (** Generates lists of small size (see {!small_nat}).
+  (** Generates lists of small size (see {!nat_small}).
       @since 0.5.3
       @deprecated use {!list_small} instead. *)
 
@@ -552,11 +594,11 @@ module Gen : sig
       @since 0.13 *)
 
   val array_small : 'a t -> 'a array t
-  (** Generates arrays of small size (see {!small_nat}).
+  (** Generates arrays of small size (see {!nat_small}).
       @since NEXT_RELEASE *)
 
   val small_array : 'a t -> 'a array t
-  (** Generates arrays of small size (see {!small_nat}).
+  (** Generates arrays of small size (see {!nat_small}).
       @since 0.10
       @deprecated use {!array_small} instead. *)
 
@@ -1225,9 +1267,33 @@ val int_range : int -> int -> int arbitrary
 (** [int_range a b] is uniform between [a] and [b] included. [b] must be
     larger than [a]. *)
 
+val int_small : int arbitrary
+(** Generates small signed integers.
+    @since NEXT_RELEASE *)
+
+val nat : int arbitrary
+(** Generates natural numbers (< [10_000]).
+    Non-uniform: smaller numbers are more likely than bigger numbers.
+    @since NEXT_RELEASE *)
+
+val int_pos_small : int arbitrary
+(** Small unsigned integers.
+    @since NEXT_RELEASE *)
+
+val int_pos_mid : int arbitrary
+(** Generates natural numbers (< [10_000]).
+    Synonym for {!nat}.
+    @since NEXT_RELEASE *)
+
+val nat_small : int arbitrary
+(** Small unsigned integers.
+    Synonym for {!int_pos_small}.
+    @since NEXT_RELEASE *)
+
 val small_nat : int arbitrary
 (** Small unsigned integers.
-    @since 0.5.1 *)
+    @since 0.5.1
+    @deprecated use {!nat_small} instead *)
 
 val small_int : int arbitrary
 (** Small unsigned integers. See {!Gen.small_int}.
@@ -1235,7 +1301,8 @@ val small_int : int arbitrary
 
 val small_signed_int : int arbitrary
 (** Small signed integers.
-    @since 0.5.2 *)
+    @since 0.5.2
+    @deprecated use {!int_small}. *)
 
 val (--) : int -> int -> int arbitrary
 (** Synonym for {!int_range}. *)
@@ -1246,9 +1313,34 @@ val int32 : int32 arbitrary
 val int64 : int64 arbitrary
 (** Int64 generator. Uniformly distributed. *)
 
+val int_pos : int arbitrary
+(** Positive int generator (0 included). Uniformly distributed.
+    See {!Gen.int_pos} *)
+
 val pos_int : int arbitrary
 (** Positive int generator (0 included). Uniformly distributed.
-    See {!Gen.pint} *)
+    See {!Gen.int_pos}
+    @deprecated use {!int_pos} instead. *)
+
+val int_neg : int arbitrary
+(** Negative int generator (0 excluded). Uniformly distributed.
+    See {!Gen.int_neg}
+    @since NEXT_RELEASE *)
+
+val int_small_corners : unit -> int arbitrary
+(** As [int_small], but each newly created generator starts with
+    a list of corner cases before falling back on random generation.
+
+    Note that [int_small_corners ()] is stateful, meaning that once the list of
+    corner cases has been emitted, subsequent calls will not reproduce them.
+    As a consequence, in the following example, the first test fails with a
+    counter example, whereas the second rerun does not:
+    {[
+      let gen = QCheck.int_small_corners ()
+      let t = QCheck.Test.make ~name:"never max_int" gen (fun i -> i <> max_int)
+      let _ = QCheck_base_runner.run_tests ~verbose:true [t;t]
+    ]}
+*)
 
 val small_int_corners : unit -> int arbitrary
 (** As [small_int], but each newly created generator starts with
@@ -1263,13 +1355,13 @@ val small_int_corners : unit -> int arbitrary
       let t = QCheck.Test.make ~name:"never max_int" gen (fun i -> i <> max_int)
       let _ = QCheck_base_runner.run_tests ~verbose:true [t;t]
     ]}
- *)
+    @deprecated consider using uniform {!int_small_corners} instead. *)
 
 val neg_int : int arbitrary
 (** Negative int generator (0 included, see {!Gen.neg_int}).
-    The distribution is similar to that of
-    [small_int], not of [pos_int].
-*)
+    The distribution is non-uniform and similar to that of
+    [int_small], not of [int_pos].
+    @deprecated consider using uniform {!int_neg} instead. *)
 
 val char : char arbitrary
 (** Uniformly distributed on all the chars (not just ascii or
@@ -1330,11 +1422,11 @@ val bytes : bytes arbitrary
     @since 0.20 *)
 
 val bytes_small : bytes arbitrary
-(** Same as {!bytes} but with a small length (ie {!Gen.small_nat} ).
+(** Same as {!bytes} but with a small length (ie {!Gen.nat_small} ).
     @since 0.20 *)
 
 val bytes_small_of : char Gen.t -> bytes arbitrary
-(** Same as {!bytes_of} but with a small length (ie {!Gen.small_nat} ).
+(** Same as {!bytes_of} but with a small length (ie {!Gen.nat_small} ).
     @since 0.20 *)
 
 val bytes_of_size : int Gen.t -> bytes arbitrary
@@ -1374,23 +1466,23 @@ val string_size_of : int Gen.t -> char Gen.t -> string arbitrary
     @since NEXT_RELEASE *)
 
 val small_string : string arbitrary
-(** Same as {!string} but with a small length (ie {!Gen.small_nat} ).
+(** Same as {!string} but with a small length (ie {!Gen.nat_small} ).
     @deprecated use {!string_small} *)
 
 val string_small : string arbitrary
-(** Same as {!string} but with a small length (ie {!Gen.small_nat} ).
+(** Same as {!string} but with a small length (ie {!Gen.nat_small} ).
     @since 0.20 *)
 
 val string_small_of : char Gen.t -> string arbitrary
-(** Same as {!string_of} but with a small length (ie {!Gen.small_nat} ).
+(** Same as {!string_of} but with a small length (ie {!Gen.nat_small} ).
     @since 0.20 *)
 
 val list_small : 'a arbitrary -> 'a list arbitrary
-(** Generates lists of small size (see {!Gen.small_nat}).
+(** Generates lists of small size (see {!Gen.nat_small}).
     @since NEXT_RELEASE *)
 
 val small_list : 'a arbitrary -> 'a list arbitrary
-(** Generates lists of small size (see {!Gen.small_nat}).
+(** Generates lists of small size (see {!Gen.nat_small}).
     @since 0.5.3
     @deprecated use {!list_small} instead. *)
 
@@ -1418,7 +1510,7 @@ val string_printable_of_size : int Gen.t -> string arbitrary
     @deprecated use {!string_size_of} instead. *)
 
 val small_printable_string : string arbitrary
-(** Generates strings with a length of [small_nat]
+(** Generates strings with a length of [Gen.nat_small]
     and distribution of characters of [char_printable].
     @deprecated use {!string_size_of} instead. *)
 

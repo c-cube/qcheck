@@ -152,9 +152,11 @@ module Gen = struct
 
   let frequency l st = frequencyl l st st
 
-  let small_nat st =
+  let int_pos_small st =
     let p = RS.float st 1. in
     if p < 0.75 then RS.int st 10 else RS.int st 100
+  let nat_small = int_pos_small
+  let small_nat = int_pos_small
 
   (* natural number generator *)
   let nat st =
@@ -163,6 +165,8 @@ module Gen = struct
     else if p < 0.75 then RS.int st 100
     else if p < 0.95 then RS.int st 1_000
     else RS.int st 10_000
+
+  let int_pos_mid = nat
 
   let big_nat st =
     let p = RS.float st 1. in
@@ -228,7 +232,7 @@ module Gen = struct
     else Ok (vg st)
 
   (* Uniform random int generator *)
-  let pint =
+  let int_pos =
     if Sys.word_size = 32 then
       fun st -> RS.bits st
     else (* word size = 64 *)
@@ -243,12 +247,16 @@ module Gen = struct
       let right = RS.bits st in
       left lor middle lor right
 
-  let int st = if RS.bool st then - (pint st) - 1 else pint st
+  let pint = int_pos
+
+  let int_neg st = -(int_pos st)-1
+
+  let int st = if RS.bool st then - (int_pos st) - 1 else int_pos st
   let int_bound n =
     if n < 0 then invalid_arg "Gen.int_bound";
     if n <= (1 lsl 30) - 2
     then fun st -> Random.State.int st (n + 1)
-    else fun st -> let r = pint st in r mod (n + 1)
+    else fun st -> let r = int_pos st in r mod (n + 1)
   let int_range a b =
     if b < a then invalid_arg "Gen.int_range";
     if a >= 0 || b < 0 then (
@@ -271,10 +279,12 @@ module Gen = struct
      for sizes of strings, arrays, etc. *)
   let small_int = small_nat
 
-  let small_signed_int st =
+  let int_small st =
     if bool st
-    then small_nat st
-    else - (small_nat st)
+    then nat_small st
+    else - (nat_small st)
+
+  let small_signed_int = int_small
 
   let char_range a b = map Char.chr (Char.code a -- Char.code b)
 
@@ -427,15 +437,15 @@ module Gen = struct
   let bytes_printable = bytes_size ~gen:char_printable nat
   let string_printable = string_size ~gen:char_printable nat
   let string_readable = string_printable
-  let bytes_small st = bytes_size small_nat st
-  let bytes_small_of gen st = bytes_size ~gen small_nat st
-  let small_string ?gen st = string_size ?gen small_nat st
-  let list_small gen = list_size small_nat gen
+  let bytes_small st = bytes_size nat_small st
+  let bytes_small_of gen st = bytes_size ~gen nat_small st
+  let small_string ?gen st = string_size ?gen nat_small st
+  let list_small gen = list_size nat_small gen
   let small_list = list_small
-  let array_small gen = array_size small_nat gen
+  let array_small gen = array_size nat_small gen
   let small_array = array_small
-  let string_small st = string_size small_nat st
-  let string_small_of gen st = string_size ~gen small_nat st
+  let string_small st = string_size nat_small st
+  let string_small_of gen st = string_size ~gen nat_small st
 
   let join g st = (g st) st
 
@@ -447,8 +457,9 @@ module Gen = struct
       | e::l -> cors := l; e
 
   let int_pos_corners = [0;1;2;max_int]
-  let int_corners = int_pos_corners @ [min_int]
+  let int_corners = int_pos_corners @ [min_int;-2;-1]
 
+  let int_small_corners () = graft_corners int_small int_corners ()
   let nng_corners () = graft_corners nat int_pos_corners ()
 
   (* sized, fix *)
@@ -1280,11 +1291,19 @@ let int = make_int Gen.int
 let int_bound n = make_int (Gen.int_bound n)
 let int_range a b = make_int (Gen.int_range a b)
 let (--) = int_range
-let pos_int = make_int Gen.pint
+let int_pos = make_int Gen.int_pos
+let pos_int = int_pos
 let small_int = make_int Gen.small_int
-let small_nat = make_int Gen.small_nat
-let small_signed_int = make_int Gen.small_signed_int
+let nat = make_int Gen.nat
+let int_pos_small = make_int Gen.int_pos_small
+let int_pos_mid = nat
+let nat_small = int_pos_small
+let small_nat = nat_small
+let int_small = make_int Gen.small_signed_int
+let small_signed_int = int_small
 let small_int_corners () = make_int (Gen.nng_corners ())
+let int_small_corners () = make_int (Gen.int_small_corners ())
+let int_neg = make_int Gen.int_neg
 let neg_int = make_int Gen.neg_int
 
 let int32 =
@@ -1318,8 +1337,8 @@ let bytes_of gen =
 
 let bytes = bytes_of Gen.char
 let bytes_of_size size = bytes_size ~gen:Gen.char size
-let bytes_small = bytes_size ~gen:Gen.char Gen.small_nat
-let bytes_small_of gen = bytes_size ~gen Gen.small_nat
+let bytes_small = bytes_size ~gen:Gen.char Gen.nat_small
+let bytes_small_of gen = bytes_size ~gen Gen.nat_small
 let bytes_printable =
   make ~shrink:(Shrink.bytes ~shrink:Shrink.char_printable) ~small:Bytes.length
     ~print:Print.bytes (Gen.bytes_of Gen.char_printable)
@@ -1334,8 +1353,8 @@ let string_of gen =
 let string = string_of Gen.char
 let string_size ?(gen=Gen.char) size = string_size_of size gen
 let string_of_size size = string_size_of size Gen.char
-let string_small = string_size_of Gen.small_nat Gen.char
-let string_small_of gen = string_size_of Gen.small_nat gen
+let string_small = string_size_of Gen.nat_small Gen.char
+let string_small_of gen = string_size_of Gen.nat_small gen
 let small_string = string_small
 let string_gen = string_of
 let string_gen_of_size = string_size_of
@@ -1350,7 +1369,7 @@ let printable_string_of_size size =
 
 let small_printable_string =
   make ~shrink:(Shrink.string ~shrink:Shrink.char_printable) ~small:String.length
-    ~print:Print.string (Gen.string_size ~gen:Gen.char_printable Gen.small_nat)
+    ~print:Print.string (Gen.string_size ~gen:Gen.char_printable Gen.nat_small)
 
 let numeral_string =
   make ~shrink:(Shrink.string ~shrink:Shrink.char_numeral) ~small:String.length

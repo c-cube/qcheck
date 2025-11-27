@@ -57,6 +57,27 @@
   - Add `QCheck.list_small` and deprecate `QCheck.small_list`
   - Add `QCheck2.Gen.list_small` and deprecate `QCheck2.Gen.small_list`
   - Deprecate badly named `QCheck.Gen.list_repeat` and `QCheck2.Gen.list_repeat`
+- Renamed `int` generator combinators:
+  - Add `QCheck.Gen.int_small` and deprecate `QCheck.Gen.small_signed_int`
+  - Add `QCheck.int_small` and deprecate `QCheck.small_signed_int`
+  - Add `QCheck2.Gen.int_small` and deprecate `QCheck2.Gen.small_signed_int`
+  - Add `QCheck.Gen.int_pos` and deprecate `QCheck.Gen.pint`
+  - Add `QCheck2.Gen.int_pos` without optional `origin` and deprecate `QCheck2.Gen.pint`
+  - Add uniformly distributed `QCheck.Gen.int_neg` and deprecate non-uniform `QCheck.Gen.neg_int`
+  - Add uniformly distributed `QCheck.int_neg` and deprecate non-uniform `QCheck.neg_int`
+  - Add uniformly distributed `QCheck2.Gen.int_neg` and deprecate non-uniform `QCheck2.Gen.neg_int`
+  - Add `QCheck.Gen.int_small_corners`
+  - Add `QCheck.int_small_corners`, expand `QCheck.Gen.int_corners`, and deprecate unsigned `QCheck.small_int_corners`
+  - Add `QCheck2.Gen.int_small_corners`, expand `QCheck2.Gen.int_corners`, and deprecate (unsigned) `QCheck2.Gen.small_int_corners`
+  - Deprecate unused `QCheck.Gen.big_nat`
+  - Deprecate unused `QCheck2.Gen.big_nat`
+  - Add missing `QCheck.nat`
+  - Add `QCheck.Gen.int_pos_small` and alias `QCheck.Gen.nat_small` and deprecate `QCheck.Gen.small_nat`
+  - Add `QCheck.int_pos_small` and alias `QCheck.nat_small` and deprecate `QCheck2.Gen.small_nat`
+  - Add `QCheck2.Gen.int_pos_small` and alias `QCheck2.Gen.nat_small` and deprecate `QCheck2.Gen.small_nat`
+  - Add `QCheck.Gen.int_pos_mid` alias for `QCheck.Gen.nat`
+  - Add `QCheck.int_pos_mid` alias for `QCheck.nat`
+  - Add `QCheck2.Gen.int_pos_mid` and alias `QCheck2.Gen.nat_mid`
 
 
 ## 0.27 (2025-10-31)
