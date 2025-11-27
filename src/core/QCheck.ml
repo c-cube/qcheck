@@ -152,9 +152,11 @@ module Gen = struct
 
   let frequency l st = frequencyl l st st
 
-  let small_nat st =
+  let int_pos_small st =
     let p = RS.float st 1. in
     if p < 0.75 then RS.int st 10 else RS.int st 100
+  let nat_small = int_pos_small
+  let small_nat = int_pos_small
 
   (* natural number generator *)
   let nat st =

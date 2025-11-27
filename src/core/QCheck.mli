@@ -51,7 +51,7 @@ all rights reserved.
       let test = QCheck.(
           Test.make
             ~count:10_000 ~max_fail:3
-            (list small_nat)
+            (list nat_small)
             (fun l -> l = List.sort compare l));;
       QCheck.Test.check_exn test;;
     ]}
@@ -340,13 +340,23 @@ module Gen : sig
   (** Generated small signed integers.
       @since NEXT_RELEASE *)
 
+  val int_pos_small : int t
+  (** Small integers (< 100)
+      @since NEXT_RELEASE *)
+
+  val nat_small : int t
+  (** Small integers (< 100)
+      Synonym for {!int_pos_small}.
+      @since NEXT_RELEASE *)
+
   val small_nat : int t
   (** Small integers (< 100)
-      @since 0.5.1 *)
+      @since 0.5.1
+      @deprecated use {!nat_small} instead *)
 
   val small_int : int t
   (** Small UNSIGNED integers, for retrocompatibility.
-      @deprecated use {!small_nat}. *)
+      @deprecated use {!nat_small}. *)
 
   val small_signed_int : int t
   (** Small SIGNED integers, based on {!small_nat}.
@@ -502,11 +512,11 @@ module Gen : sig
       @since 0.20 *)
 
   val bytes_small : bytes t
-  (** Builds a bytes generator using the {!char} character generator, length is {!small_nat}
+  (** Builds a bytes generator using the {!char} character generator, length is {!nat_small}
       @since 0.20 *)
 
   val bytes_small_of : char t -> bytes t
-  (** Builds a bytes generator using the given character generator, length is {!small_nat}.
+  (** Builds a bytes generator using the given character generator, length is {!nat_small}.
       @since 0.20 *)
 
   val string_size : ?gen:char t -> int t -> string t
@@ -540,24 +550,24 @@ module Gen : sig
       @since 0.18 *)
 
   val small_string : ?gen:char t -> string t
-  (** Builds a string generator, length is {!small_nat}
+  (** Builds a string generator, length is {!nat_small}
       Accepts an optional character generator (the default is {!char}).
       @deprecated use {!string_small} *)
 
   val string_small : string t
-  (** Builds a string generator using the {!char} character generator, length is {!small_nat}
+  (** Builds a string generator using the {!char} character generator, length is {!nat_small}
       @since 0.20 *)
 
   val string_small_of : char t -> string t
-  (** Builds a string generator using the given character generator, length is {!small_nat}.
+  (** Builds a string generator using the given character generator, length is {!nat_small}.
       @since 0.20 *)
 
   val list_small : 'a t -> 'a list t
-  (** Generates lists of small size (see {!small_nat}).
+  (** Generates lists of small size (see {!nat_small}).
       @since NEXT_RELEASE *)
 
   val small_list : 'a t -> 'a list t
-  (** Generates lists of small size (see {!small_nat}).
+  (** Generates lists of small size (see {!nat_small}).
       @since 0.5.3
       @deprecated use {!list_small} instead. *)
 
@@ -578,11 +588,11 @@ module Gen : sig
       @since 0.13 *)
 
   val array_small : 'a t -> 'a array t
-  (** Generates arrays of small size (see {!small_nat}).
+  (** Generates arrays of small size (see {!nat_small}).
       @since NEXT_RELEASE *)
 
   val small_array : 'a t -> 'a array t
-  (** Generates arrays of small size (see {!small_nat}).
+  (** Generates arrays of small size (see {!nat_small}).
       @since 0.10
       @deprecated use {!array_small} instead. *)
 
@@ -1391,11 +1401,11 @@ val bytes : bytes arbitrary
     @since 0.20 *)
 
 val bytes_small : bytes arbitrary
-(** Same as {!bytes} but with a small length (ie {!Gen.small_nat} ).
+(** Same as {!bytes} but with a small length (ie {!Gen.nat_small} ).
     @since 0.20 *)
 
 val bytes_small_of : char Gen.t -> bytes arbitrary
-(** Same as {!bytes_of} but with a small length (ie {!Gen.small_nat} ).
+(** Same as {!bytes_of} but with a small length (ie {!Gen.nat_small} ).
     @since 0.20 *)
 
 val bytes_of_size : int Gen.t -> bytes arbitrary
@@ -1435,23 +1445,23 @@ val string_size_of : int Gen.t -> char Gen.t -> string arbitrary
     @since NEXT_RELEASE *)
 
 val small_string : string arbitrary
-(** Same as {!string} but with a small length (ie {!Gen.small_nat} ).
+(** Same as {!string} but with a small length (ie {!Gen.nat_small} ).
     @deprecated use {!string_small} *)
 
 val string_small : string arbitrary
-(** Same as {!string} but with a small length (ie {!Gen.small_nat} ).
+(** Same as {!string} but with a small length (ie {!Gen.nat_small} ).
     @since 0.20 *)
 
 val string_small_of : char Gen.t -> string arbitrary
-(** Same as {!string_of} but with a small length (ie {!Gen.small_nat} ).
+(** Same as {!string_of} but with a small length (ie {!Gen.nat_small} ).
     @since 0.20 *)
 
 val list_small : 'a arbitrary -> 'a list arbitrary
-(** Generates lists of small size (see {!Gen.small_nat}).
+(** Generates lists of small size (see {!Gen.nat_small}).
     @since NEXT_RELEASE *)
 
 val small_list : 'a arbitrary -> 'a list arbitrary
-(** Generates lists of small size (see {!Gen.small_nat}).
+(** Generates lists of small size (see {!Gen.nat_small}).
     @since 0.5.3
     @deprecated use {!list_small} instead. *)
 
@@ -1479,7 +1489,7 @@ val string_printable_of_size : int Gen.t -> string arbitrary
     @deprecated use {!string_size_of} instead. *)
 
 val small_printable_string : string arbitrary
-(** Generates strings with a length of [small_nat]
+(** Generates strings with a length of [Gen.nat_small]
     and distribution of characters of [char_printable].
     @deprecated use {!string_size_of} instead. *)
 
