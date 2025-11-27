@@ -166,6 +166,8 @@ module Gen = struct
     else if p < 0.95 then RS.int st 1_000
     else RS.int st 10_000
 
+  let int_pos_mid = nat
+
   let big_nat st =
     let p = RS.float st 1. in
     if p < 0.75 then nat st

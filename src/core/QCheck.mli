@@ -311,7 +311,13 @@ module Gen : sig
   (** Synonym for {!float_exp}.
       @since 0.23 *)
 
-  val nat : int t (** Generates small natural numbers. *)
+  val nat : int t
+  (** Generates small natural numbers. *)
+
+  val int_pos_mid : int t
+  (** Generates small natural numbers.
+      Synonym for {!nat}.
+      @since NEXT_RELEASE *)
 
   val big_nat : int t
   (** Generates natural numbers, possibly large.
