@@ -176,6 +176,15 @@ module Gen : sig
       Shrinks towards [0].
   *)
 
+  val int_small : int t
+  (** Generates small signed integers.
+
+      Non-uniform: smaller numbers (in absolute value) are more likely than bigger numbers.
+
+      Shrinks towards [0].
+
+      @since NEXT_RELEASE *)
+
   val pint : ?origin : int -> int t
   (** Generates non-strictly positive integers uniformly ([0] included).
 
@@ -229,7 +238,9 @@ module Gen : sig
 
       Shrinks towards [0].
 
-      @since 0.5.2 *)
+      @since 0.5.2
+
+      @deprecated use {!int_small} instead. *)
 
   val small_int_corners : unit -> int t
   (** As {!small_int}, but each newly created generator starts with

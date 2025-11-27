@@ -610,10 +610,12 @@ module Gen = struct
      for sizes of strings, arrays, etc. *)
   let small_int = small_nat
 
-  let small_signed_int : int t = fun st ->
+  let int_small : int t = fun st ->
     if RS.bool st
     then small_nat st
     else (small_nat >|= Int.neg) st
+
+  let small_signed_int = int_small
 
   (** Shrink towards the first element of the list *)
   let frequency (l : (int * 'a t) list) : 'a t =
