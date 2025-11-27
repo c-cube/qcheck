@@ -1270,9 +1270,19 @@ val nat : int arbitrary
     Non-uniform: smaller numbers are more likely than bigger numbers.
     @since NEXT_RELEASE *)
 
+val int_pos_small : int arbitrary
+(** Small unsigned integers.
+    @since NEXT_RELEASE *)
+
+val nat_small : int arbitrary
+(** Small unsigned integers.
+    Synonym for {!int_pos_small}.
+    @since NEXT_RELEASE *)
+
 val small_nat : int arbitrary
 (** Small unsigned integers.
-    @since 0.5.1 *)
+    @since 0.5.1
+    @deprecated use {!nat_small} instead *)
 
 val small_int : int arbitrary
 (** Small unsigned integers. See {!Gen.small_int}.
