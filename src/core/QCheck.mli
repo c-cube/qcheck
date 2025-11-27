@@ -1262,9 +1262,14 @@ val int32 : int32 arbitrary
 val int64 : int64 arbitrary
 (** Int64 generator. Uniformly distributed. *)
 
+val int_pos : int arbitrary
+(** Positive int generator (0 included). Uniformly distributed.
+    See {!Gen.int_pos} *)
+
 val pos_int : int arbitrary
 (** Positive int generator (0 included). Uniformly distributed.
-    See {!Gen.pint} *)
+    See {!Gen.int_pos}
+    @deprecated use {!int_pos} instead. *)
 
 val small_int_corners : unit -> int arbitrary
 (** As [small_int], but each newly created generator starts with
@@ -1284,7 +1289,7 @@ val small_int_corners : unit -> int arbitrary
 val neg_int : int arbitrary
 (** Negative int generator (0 included, see {!Gen.neg_int}).
     The distribution is similar to that of
-    [small_int], not of [pos_int].
+    [small_int], not of [int_pos].
 *)
 
 val char : char arbitrary
