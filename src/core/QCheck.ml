@@ -1296,6 +1296,7 @@ let pos_int = int_pos
 let small_int = make_int Gen.small_int
 let nat = make_int Gen.nat
 let int_pos_small = make_int Gen.int_pos_small
+let int_pos_mid = nat
 let nat_small = int_pos_small
 let small_nat = nat_small
 let int_small = make_int Gen.small_signed_int

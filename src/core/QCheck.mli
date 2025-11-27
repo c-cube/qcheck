@@ -1280,6 +1280,11 @@ val int_pos_small : int arbitrary
 (** Small unsigned integers.
     @since NEXT_RELEASE *)
 
+val int_pos_mid : int arbitrary
+(** Generates natural numbers (< [10_000]).
+    Synonym for {!nat}.
+    @since NEXT_RELEASE *)
+
 val nat_small : int arbitrary
 (** Small unsigned integers.
     Synonym for {!int_pos_small}.
