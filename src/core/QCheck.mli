@@ -1276,6 +1276,11 @@ val pos_int : int arbitrary
     See {!Gen.int_pos}
     @deprecated use {!int_pos} instead. *)
 
+val int_neg : int arbitrary
+(** Negative int generator (0 excluded). Uniformly distributed.
+    See {!Gen.int_neg}
+    @since NEXT_RELEASE *)
+
 val small_int_corners : unit -> int arbitrary
 (** As [small_int], but each newly created generator starts with
     a list of corner cases before falling back on random generation.
@@ -1295,7 +1300,7 @@ val neg_int : int arbitrary
 (** Negative int generator (0 included, see {!Gen.neg_int}).
     The distribution is non-uniform and similar to that of
     [int_small], not of [int_pos].
-*)
+    @deprecated consider using uniform {!int_neg} instead. *)
 
 val char : char arbitrary
 (** Uniformly distributed on all the chars (not just ascii or
