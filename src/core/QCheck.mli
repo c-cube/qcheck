@@ -659,7 +659,7 @@ module Gen : sig
       to the size-bounded generator.
       @since 0.5 *)
 
-  val fix : (('a -> 'b t) -> ('a -> 'b t)) -> 'a -> 'b t
+  val fix : (('a -> 'b t) -> 'a -> 'b t) -> 'a -> 'b t
   (** Parametrized fixpoint combinator for generating recursive values.
 
       The fixpoint is parametrized over an arbitrary state ('a), and the
