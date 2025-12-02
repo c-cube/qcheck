@@ -3,13 +3,13 @@
 let passing =
   QCheck.Test.make ~count:1000
     ~name:"list_rev_is_involutive"
-    QCheck.(list small_int)
+    QCheck.(list int_small)
     (fun l -> List.rev (List.rev l) = l);;
 
 let failing =
   QCheck.Test.make ~count:10
     ~name:"fail_sort_id"
-    QCheck.(list small_int)
+    QCheck.(list nat_small)
     (fun l -> l = List.sort compare l);;
 
 exception Error
@@ -23,17 +23,17 @@ let error =
 let simple_qcheck =
   QCheck.Test.make ~name:"fail_check_err_message"
     ~count: 100
-    QCheck.small_int
+    QCheck.nat_small
     (fun _ -> QCheck.Test.fail_reportf "@[<v>this@ will@ always@ fail@]")
 
 let neg_test_failing_as_expected =
-  QCheck.Test.make_neg ~name:"neg test pass (failing as expected)" QCheck.small_int (fun i -> i mod 2 = 0)
+  QCheck.Test.make_neg ~name:"neg test pass (failing as expected)" QCheck.int_small (fun i -> i mod 2 = 0)
 
 let neg_test_unexpected_success =
-  QCheck.Test.make_neg ~name:"neg test unexpected success" QCheck.small_int (fun i -> i + i = i * 2)
+  QCheck.Test.make_neg ~name:"neg test unexpected success" QCheck.int_small (fun i -> i + i = i * 2)
 
 let neg_test_error =
-  QCheck.Test.make_neg ~name:"neg fail with error" QCheck.small_int (fun _i -> raise Error)
+  QCheck.Test.make_neg ~name:"neg fail with error" QCheck.nat_small (fun _i -> raise Error)
 
 
 type tree = Leaf of int | Node of tree * tree
