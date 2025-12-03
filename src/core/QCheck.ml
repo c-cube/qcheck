@@ -122,8 +122,8 @@ module Gen = struct
   let return x _st = x
   let pure = return
 
-  let (>>=) gen f st =
-    f (gen st) st
+  let bind gen f st = f (gen st) st
+  let (>>=) = bind
 
   let (<*>) f x st = f st (x st)
   let map f x st = f (x st)

@@ -150,9 +150,14 @@ module Gen : sig
   (** Synonym for {!return}
       @since 0.8 *)
 
-  val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
+  val bind : 'a t -> ('a -> 'b t) -> 'b t
   (** Monadic bind for writing dependent generators. First generates an ['a] and then
-      passes it to the given function, to generate a ['b]. *)
+      passes it to the given function, to generate a ['b].
+
+      @since NEXT_RELEASE *)
+
+  val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
+  (** Synonym for {!bind} since NEXT_RELEASE *)
 
   val (<*>) : ('a -> 'b) t -> 'a t -> 'b t
   (** Infix operator for composing a function generator and an argument generator
