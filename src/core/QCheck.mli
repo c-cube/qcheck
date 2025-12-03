@@ -159,9 +159,12 @@ module Gen : sig
   val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
   (** Synonym for {!bind} since NEXT_RELEASE *)
 
-  val (<*>) : ('a -> 'b) t -> 'a t -> 'b t
-  (** Infix operator for composing a function generator and an argument generator
+  val ap : ('a -> 'b) t -> 'a t -> 'b t
+  (** Applicative operator for composing a function generator and an argument generator
       into a result generator. *)
+
+  val (<*>) : ('a -> 'b) t -> 'a t -> 'b t
+  (** Synonym for {!ap} since NEXT_RELEASE *)
 
   val map : ('a -> 'b) -> 'a t -> 'b t
   (** [map f g] transforms a generator [g] by applying [f] to each generated element. *)

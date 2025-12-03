@@ -125,7 +125,8 @@ module Gen = struct
   let bind gen f st = f (gen st) st
   let (>>=) = bind
 
-  let (<*>) f x st = f st (x st)
+  let ap f x st = f st (x st)
+  let (<*>) = ap
   let map f x st = f (x st)
   let map2 f x y st = f (x st) (y st)
   let map3 f x y z st = f (x st) (y st) (z st)
