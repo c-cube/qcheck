@@ -78,6 +78,9 @@
   - Add `QCheck.Gen.int_pos_mid` alias for `QCheck.Gen.nat`
   - Add `QCheck.int_pos_mid` alias for `QCheck.nat`
   - Add `QCheck2.Gen.int_pos_mid` and alias `QCheck2.Gen.nat_mid`
+- Renamed monadic and applicative generator combinators:
+  - Add missing `QCheck.Gen.bind` for consistency
+  - Add missing `QCheck.Gen.ap` for consistency
 
 
 ## 0.27 (2025-10-31)

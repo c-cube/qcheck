@@ -150,13 +150,21 @@ module Gen : sig
   (** Synonym for {!return}
       @since 0.8 *)
 
-  val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
+  val bind : 'a t -> ('a -> 'b t) -> 'b t
   (** Monadic bind for writing dependent generators. First generates an ['a] and then
-      passes it to the given function, to generate a ['b]. *)
+      passes it to the given function, to generate a ['b].
+
+      @since NEXT_RELEASE *)
+
+  val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
+  (** Synonym for {!bind} since NEXT_RELEASE *)
+
+  val ap : ('a -> 'b) t -> 'a t -> 'b t
+  (** Applicative operator for composing a function generator and an argument generator
+      into a result generator. *)
 
   val (<*>) : ('a -> 'b) t -> 'a t -> 'b t
-  (** Infix operator for composing a function generator and an argument generator
-      into a result generator. *)
+  (** Synonym for {!ap} since NEXT_RELEASE *)
 
   val map : ('a -> 'b) -> 'a t -> 'b t
   (** [map f g] transforms a generator [g] by applying [f] to each generated element. *)
