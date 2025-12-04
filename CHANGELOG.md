@@ -81,6 +81,7 @@
 - Renamed monadic and applicative generator combinators:
   - Add missing `QCheck.Gen.bind` for consistency
   - Add missing `QCheck.Gen.ap` for consistency
+- Add missing `QCheck2.Gen.map_keep_input` for consistency
 
 
 ## 0.27 (2025-10-31)
