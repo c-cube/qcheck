@@ -352,6 +352,8 @@ module Gen = struct
 
   let map5 = liftA5
 
+  let map_keep_input f x = fun st -> Tree.map (fun a -> a, f a) (x st)
+
   let return = pure
 
   let bind (gen : 'a t) (f : 'a -> ('b t)) : 'b t = fun st ->
