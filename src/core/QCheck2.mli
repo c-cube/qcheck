@@ -1181,6 +1181,15 @@ module Gen : sig
       @since 0.25
   *)
 
+  val map_keep_input : ('a -> 'b) -> 'a t -> ('a * 'b) t
+  (** [map_keep_input f g] transforms a generator [g] by applying [f] to each generated element.
+      Returns both the generated element from [g] and the output from [f].
+
+      Shrinks towards the shrinks of [g] with [f] applied to them.
+
+      @since NEXT_RELEASE
+  *)
+
   val ap : ('a -> 'b) t -> 'a t -> 'b t
   (** [ap fgen gen] composes a function generator and an argument generator
       into a result generator.
