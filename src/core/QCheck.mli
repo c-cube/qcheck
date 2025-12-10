@@ -1186,6 +1186,11 @@ val set_shrink : 'a Shrink.t -> 'a arbitrary -> 'a arbitrary
 val set_collect : ('a -> string) -> 'a arbitrary -> 'a arbitrary
 val set_stats : 'a stat list -> 'a arbitrary -> 'a arbitrary (** @since 0.6 *)
 
+val no_shrink : 'a arbitrary -> 'a arbitrary
+(** [no_shrink gen] returns a generator using [gen] but with shrinking
+    disabled.
+    @since NEXT_RELEASE *)
+
 val add_shrink_invariant : ('a -> bool) -> 'a arbitrary -> 'a arbitrary
 (** Update shrinker by only keeping smaller values satisfying the
     given invariant.
