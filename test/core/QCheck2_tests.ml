@@ -469,6 +469,102 @@ module Shrink = struct
     Test.make ~name:"float >= -1e10" ~count:1000 ~print:Print.float
       Gen.float (fun f -> f >= -1e10)
 
+  let float_not_nan =
+    Test.make ~name:"float is not nan" ~count:10_000 ~print:Print.float
+      Gen.float (fun f -> not (Float.is_nan f))
+
+  let float_not_infinite =
+    Test.make ~name:"float is not infinity" ~count:10_000 ~print:Print.float
+      Gen.float (fun f -> not (Float.is_infinite f))
+
+  let float_bound_inclusive_1e6_leq_10 =
+    Test.make ~name:"float_bound_inclusive 1e6 <= 10." ~count:1000 ~print:Print.float
+      (Gen.float_bound_inclusive 1e6) (fun f -> f <= 10.)
+
+  let float_bound_inclusive_1e6_leq_pi =
+    Test.make ~name:"float_bound_inclusive 1e6 <= pi" ~count:1000 ~print:Print.float
+      (Gen.float_bound_inclusive 1e6) (fun f -> f <= Float.pi)
+
+  let float_bound_inclusive_1_leq_5em1 =
+    Test.make ~name:"float_bound_inclusive 1. <= 0.5" ~count:1000 ~print:Print.float
+      (Gen.float_bound_inclusive 1.) (fun f -> f <= 0.5)
+
+  let float_bound_inclusive_1_leq_min_float =
+    Test.make ~name:"float_bound_inclusive 1. <= min_float" ~count:1000 ~print:Print.float
+      (Gen.float_bound_inclusive 1.) (fun f -> f <= min_float)
+
+  let float_bound_inclusive_m1_geq_m5em1 =
+    Test.make ~name:"float_bound_inclusive -1. >= -0.5" ~count:1000 ~print:Print.float
+      (Gen.float_bound_inclusive (-1.)) (fun f -> f >= -0.5)
+
+  let float_bound_inclusive_m1e6_geq_mpi =
+    Test.make ~name:"float_bound_inclusive -1e6 >= -.pi" ~count:1000 ~print:Print.float
+      (Gen.float_bound_inclusive (-1e6)) (fun f -> f >= -.Float.pi)
+
+  let float_bound_exclusive_1e6_leq_10 =
+    Test.make ~name:"float_bound_exclusive 1e6 <= 10." ~count:1000 ~print:Print.float
+      (Gen.float_bound_exclusive 1e6) (fun f -> f <= 10.)
+
+  let float_bound_exclusive_1e6_leq_pi =
+    Test.make ~name:"float_bound_exclusive 1e6 <= pi" ~count:1000 ~print:Print.float
+      (Gen.float_bound_exclusive 1e6) (fun f -> f <= Float.pi)
+
+  let float_bound_exclusive_1_leq_5em1 =
+    Test.make ~name:"float_bound_exclusive 1. <= 0.5" ~count:1000 ~print:Print.float
+      (Gen.float_bound_exclusive 1.) (fun f -> f <= 0.5)
+
+  let float_bound_exclusive_1_leq_min_float =
+    Test.make ~name:"float_bound_exclusive 1. <= min_float" ~count:1000 ~print:Print.float
+      (Gen.float_bound_exclusive 1.) (fun f -> f <= min_float)
+
+  let float_bound_exclusive_m1_geq_m5em1 =
+    Test.make ~name:"float_bound_exclusive -1. >= -0.5" ~count:1000 ~print:Print.float
+      (Gen.float_bound_exclusive (-1.)) (fun f -> f >= -0.5)
+
+  let float_bound_exclusive_m1e6_geq_mpi =
+    Test.make ~name:"float_bound_exclusive -1e6 >= -.pi" ~count:1000 ~print:Print.float
+      (Gen.float_bound_exclusive (-1e6)) (fun f -> f >= -.Float.pi)
+
+  let float_range_1_10_leq_pi =
+    Test.make ~name:"float_range 1. 10. <= pi" ~count:1000 ~print:Print.float
+      (Gen.float_range 1. 10.) (fun f -> f <= Float.pi)
+
+  let float_range_m10_10_square_leq_2 =
+    Test.make ~name:"(float_range -10. 10.)^2 <= 2." ~count:1000 ~print:Print.float
+      (Gen.float_range (-10.) 10.) (fun f -> f *. f <= 2.)
+
+  let float_range_m10_m1_geq_mpi =
+    Test.make ~name:"float_range -10. -1. >= -.pi" ~count:1000 ~print:Print.float
+      (Gen.float_range (-10.) (-1.)) (fun f -> f >= -.Float.pi)
+
+  let float_pos_lt_pi =
+    Test.make ~name:"float_pos < Float.pi" ~count:1000 ~print:Print.float
+      Gen.float_pos (fun f -> f < Float.pi)
+
+  let float_pos_not_nan =
+    Test.make ~name:"float_pos is not nan" ~count:10_000 ~print:Print.float
+      Gen.float_pos (fun f -> not (Float.is_nan f))
+
+  let float_pos_not_infinite =
+    Test.make ~name:"float_pos is not infinity" ~count:10_000 ~print:Print.float
+      Gen.float_pos (fun f -> not (Float.is_infinite f))
+
+  let float_neg_gt_mpi =
+    Test.make ~name:"float_neg > Float.pi" ~count:1000 ~print:Print.float
+      Gen.float_neg (fun f -> f > -.Float.pi)
+
+  let float_neg_not_nan =
+    Test.make ~name:"float_neg is not nan" ~count:10_000 ~print:Print.float
+      Gen.float_neg (fun f -> not (Float.is_nan f))
+
+  let float_neg_not_infinite =
+    Test.make ~name:"float_neg is not infinity" ~count:10_000 ~print:Print.float
+      Gen.float_neg (fun f -> not (Float.is_infinite f))
+
+  let float_exp_10_lt_pi =
+    Test.make ~name:"float_exp 10. < Float.pi" ~count:1000 ~print:Print.float
+      (Gen.float_exp 10.) (fun f -> f < Float.pi)
+
   let char_is_never_abcdef =
     Test.make ~name:"char never produces 'abcdef'" ~count:1000 ~print:Print.char
       Gen.char (fun c -> not (List.mem c ['a';'b';'c';'d';'e';'f']))
@@ -745,6 +841,30 @@ module Shrink = struct
     float_leq_1em10;
     float_geq_m1em10;
     float_geq_m1e10;
+    float_not_nan;
+    float_not_infinite;
+    float_bound_inclusive_1e6_leq_10;
+    float_bound_inclusive_1e6_leq_pi;
+    float_bound_inclusive_1_leq_5em1;
+    float_bound_inclusive_1_leq_min_float;
+    float_bound_inclusive_m1_geq_m5em1;
+    float_bound_inclusive_m1e6_geq_mpi;
+    float_bound_exclusive_1e6_leq_10;
+    float_bound_exclusive_1e6_leq_pi;
+    float_bound_exclusive_1_leq_5em1;
+    float_bound_exclusive_1_leq_min_float;
+    float_bound_exclusive_m1_geq_m5em1;
+    float_bound_exclusive_m1e6_geq_mpi;
+    float_range_1_10_leq_pi;
+    float_range_m10_10_square_leq_2;
+    float_range_m10_m1_geq_mpi;
+    float_pos_lt_pi;
+    float_pos_not_nan;
+    float_pos_not_infinite;
+    float_neg_gt_mpi;
+    float_neg_not_nan;
+    float_neg_not_infinite;
+    float_exp_10_lt_pi;
     char_is_never_abcdef;
     char_printable_is_never_sign;
     char_numeral_is_never_less_5;
