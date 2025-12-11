@@ -485,6 +485,12 @@ Test char never produces 'abcdef' failed (1 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
+Test char never 'abc' failed (0 shrink steps):
+
+'a'
+
+--- Failure --------------------------------------------------------------------
+
 Test char_printable never produces '!"#$%&' failed (1 shrink steps):
 
 '!'
@@ -2021,7 +2027,7 @@ Collect results for test float classify:
  FP_nan:            2 cases   (0.0%)
 ================================================================================
 1 warning(s)
-failure (105 tests failed, 3 tests errored, ran 209 tests)
+failure (106 tests failed, 3 tests errored, ran 211 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
