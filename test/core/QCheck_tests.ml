@@ -456,12 +456,12 @@ module Generator = struct
     int_option_test;
     int_string_result_test;
     passing_tree_rev;
-    nat_split2_spec;
+    nat_split2_spec; (* Features (and tests) only available in QCheck for now, not QCheck2 *)
     pos_split2_spec;
     range_subset_spec;
     nat_split_n_way;
     nat_split_smaller;
-    pos_split;
+    pos_split;       (* ... up until this one *)
     float_test;
   ]
 end
@@ -1284,7 +1284,7 @@ module Stats = struct
     [ bool_dist; ]
     @ char_dist_tests
     @ [tree_depth_test;
-       range_subset_test;]
+       range_subset_test;] (* Feature (and tests) only available in QCheck for now, not QCheck2 *)
     @ bytes_len_tests
     @ string_len_tests
     @ [pair_dist;
