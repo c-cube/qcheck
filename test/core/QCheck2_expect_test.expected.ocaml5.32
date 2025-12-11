@@ -330,6 +330,132 @@ Test float >= -1e10 failed (595 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
+Test float is not nan failed (0 shrink steps):
+
+nan
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_inclusive 1e6 <= 10. failed (21 shrink steps):
+
+10.0002602984
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_inclusive 1e6 <= pi failed (22 shrink steps):
+
+3.14170206035
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_inclusive 1. <= 0.5 failed (11 shrink steps):
+
+0.500029908118
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_inclusive 1. <= min_float failed (1032 shrink steps):
+
+2.22520695405e-308
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_inclusive -1. >= -0.5 failed (11 shrink steps):
+
+-0.500029908118
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_inclusive -1e6 >= -.pi failed (22 shrink steps):
+
+-3.14170206035
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_exclusive 1e6 <= 10. failed (21 shrink steps):
+
+10.0002602984
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_exclusive 1e6 <= pi failed (22 shrink steps):
+
+3.14170206035
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_exclusive 1. <= 0.5 failed (11 shrink steps):
+
+0.500029908118
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_exclusive 1. <= min_float failed (1032 shrink steps):
+
+2.22520695405e-308
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_exclusive -1. >= -0.5 failed (11 shrink steps):
+
+-0.500029908118
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_exclusive -1e6 >= -.pi failed (22 shrink steps):
+
+-3.14170206035
+
+--- Failure --------------------------------------------------------------------
+
+Test float_range 1. 10. <= pi failed (8 shrink steps):
+
+3.14165836248
+
+--- Failure --------------------------------------------------------------------
+
+Test (float_range -10. 10.)^2 <= 2. failed (9 shrink steps):
+
+1.41422528279
+
+--- Failure --------------------------------------------------------------------
+
+Test float_range -10. -1. >= -.pi failed (12 shrink steps):
+
+-3.14171246001
+
+--- Failure --------------------------------------------------------------------
+
+Test float_pos < Float.pi failed (630 shrink steps):
+
+3.1417319555
+
+--- Failure --------------------------------------------------------------------
+
+Test float_pos is not nan failed (0 shrink steps):
+
+nan
+
+--- Failure --------------------------------------------------------------------
+
+Test float_neg > Float.pi failed (630 shrink steps):
+
+-3.1417319555
+
+--- Failure --------------------------------------------------------------------
+
+Test float_neg is not nan failed (0 shrink steps):
+
+-nan
+
+--- Failure --------------------------------------------------------------------
+
+Test float_exp 10. < Float.pi failed (1 shrink steps):
+
+inf
+
+--- Failure --------------------------------------------------------------------
+
 Test char never produces 'abcdef' failed (1 shrink steps):
 
 'a'
@@ -1873,7 +1999,7 @@ Collect results for test float classify:
  FP_subnormal:      3 cases   (0.1%)
 ================================================================================
 1 warning(s)
-failure (83 tests failed, 3 tests errored, ran 184 tests)
+failure (104 tests failed, 3 tests errored, ran 208 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
