@@ -518,6 +518,12 @@ Test float_exp 10. < Float.pi failed (8 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
+Test float_exp -10. > -. Float.pi failed (8 shrink steps):
+
+-3.14167640757
+
+--- Failure --------------------------------------------------------------------
+
 Test char never produces 'abcdef' failed (1 shrink steps):
 
 'a'
@@ -2061,7 +2067,7 @@ Collect results for test float classify:
  FP_subnormal:      3 cases   (0.1%)
 ================================================================================
 1 warning(s)
-failure (104 tests failed, 3 tests errored, ran 208 tests)
+failure (105 tests failed, 3 tests errored, ran 209 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
