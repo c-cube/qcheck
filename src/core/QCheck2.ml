@@ -490,8 +490,9 @@ module Gen = struct
 
   let float_exp (mean : float) =
     if Float.is_nan mean then invalid_arg "Gen.float_exp";
-    let unit_gen = float_bound_inclusive 1.0 in
-    map (fun p -> -. mean *. (log p)) unit_gen
+    let unit_gen = no_shrink (float_bound_inclusive 1.0) in
+    let exp_gen = map (fun p -> -. mean *. (log p)) unit_gen in
+    set_shrink (Shrink.float_towards 0.) exp_gen
     (* See https://en.wikipedia.org/wiki/Relationships_among_probability_distributions *)
 
   let exponential = float_exp
