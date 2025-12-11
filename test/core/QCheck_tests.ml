@@ -1143,9 +1143,10 @@ module Stats = struct
 
   let char_dist_tests =
     [
-      Test.make ~name:"char code dist"           ~count:500_000 (add_stat ("char code", Char.code) char)           (fun _ -> true);
-      Test.make ~name:"char_printable code dist" ~count:500_000 (add_stat ("char code", Char.code) char_printable) (fun _ -> true);
-      Test.make ~name:"char_numeral code dist"   ~count:500_000 (add_stat ("char code", Char.code) char_numeral)   (fun _ -> true);
+      Test.make ~name:"char code dist"           ~count:500_000 (add_stat ("char code", Char.code) char)                 (fun _ -> true);
+      Test.make ~name:"char_range code dist"     ~count:500_000 (add_stat ("char code", Char.code) (char_range 'A' 'Z')) (fun _ -> true);
+      Test.make ~name:"char_printable code dist" ~count:500_000 (add_stat ("char code", Char.code) char_printable)       (fun _ -> true);
+      Test.make ~name:"char_numeral code dist"   ~count:500_000 (add_stat ("char code", Char.code) char_numeral)         (fun _ -> true);
     ]
 
   let bytes_len_tests =

@@ -1080,9 +1080,10 @@ module Stats = struct
 
   let char_dist_tests =
     [
-    Test.make ~name:"char code dist"           ~count:500_000 ~stats:[("char code", Char.code)] Gen.char           (fun _ -> true);
-    Test.make ~name:"char_printable code dist" ~count:500_000 ~stats:[("char code", Char.code)] Gen.char_printable (fun _ -> true);
-    Test.make ~name:"char_numeral code dist"   ~count:500_000 ~stats:[("char code", Char.code)] Gen.char_numeral   (fun _ -> true);
+    Test.make ~name:"char code dist"           ~count:500_000 ~stats:[("char code", Char.code)] Gen.char                 (fun _ -> true);
+    Test.make ~name:"char_range code dist"     ~count:500_000 ~stats:[("char code", Char.code)] (Gen.char_range 'A' 'Z') (fun _ -> true);
+    Test.make ~name:"char_printable code dist" ~count:500_000 ~stats:[("char code", Char.code)] Gen.char_printable       (fun _ -> true);
+    Test.make ~name:"char_numeral code dist"   ~count:500_000 ~stats:[("char code", Char.code)] Gen.char_numeral         (fun _ -> true);
   ]
 
   let bytes_len_tests =
