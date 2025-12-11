@@ -186,6 +186,10 @@ module Generator = struct
     Test.make ~name:"char has right range'" ~count:1000 ~print:Print.char
       Gen.char (fun c -> '\000' <= c && c <= '\255')
 
+  let char_range_test =
+    Test.make ~name:"char_range 'a' 'z' has right range" ~count:1000 ~print:Print.char
+      (Gen.char_range 'a' 'z') (fun c -> 'a' <= c && c <= 'z')
+
   let char_printable_test =
     Test.make ~name:"char_printable has right range" ~count:1000 ~print:Print.char
       Gen.char_printable (fun c -> c = '\n' || 32 <= Char.code c && Char.code c <= 126)
@@ -349,6 +353,7 @@ module Generator = struct
   let tests = [
     char_dist_issue_23;
     char_test;
+    char_range_test;
     char_printable_test;
     char_numeral_test;
     nat_test;
@@ -572,6 +577,10 @@ module Shrink = struct
   let char_is_never_abcdef =
     Test.make ~name:"char never produces 'abcdef'" ~count:1000 ~print:Print.char
       Gen.char (fun c -> not (List.mem c ['a';'b';'c';'d';'e';'f']))
+
+  let char_range_is_never_abc =
+    Test.make ~name:"char never 'abc'" ~count:1000 ~print:Print.char
+      (Gen.char_range 'a' 'z') (fun c -> not (c < 'c'))
 
   let char_printable_is_never_sign = (* should shrink towards '!' with lowest ascii code 33 *)
     Test.make ~name:"char_printable never produces '!\"#$%&'" ~count:1000 ~print:Print.char
@@ -871,6 +880,7 @@ module Shrink = struct
     float_exp_10_lt_pi;
     float_exp_m10_gt_mpi;
     char_is_never_abcdef;
+    char_range_is_never_abc;
     char_printable_is_never_sign;
     char_numeral_is_never_less_5;
     bytes_are_empty;
@@ -1070,9 +1080,10 @@ module Stats = struct
 
   let char_dist_tests =
     [
-    Test.make ~name:"char code dist"           ~count:500_000 ~stats:[("char code", Char.code)] Gen.char           (fun _ -> true);
-    Test.make ~name:"char_printable code dist" ~count:500_000 ~stats:[("char code", Char.code)] Gen.char_printable (fun _ -> true);
-    Test.make ~name:"char_numeral code dist"   ~count:500_000 ~stats:[("char code", Char.code)] Gen.char_numeral   (fun _ -> true);
+    Test.make ~name:"char code dist"           ~count:500_000 ~stats:[("char code", Char.code)] Gen.char                 (fun _ -> true);
+    Test.make ~name:"char_range code dist"     ~count:500_000 ~stats:[("char code", Char.code)] (Gen.char_range 'A' 'Z') (fun _ -> true);
+    Test.make ~name:"char_printable code dist" ~count:500_000 ~stats:[("char code", Char.code)] Gen.char_printable       (fun _ -> true);
+    Test.make ~name:"char_numeral code dist"   ~count:500_000 ~stats:[("char code", Char.code)] Gen.char_numeral         (fun _ -> true);
   ]
 
   let bytes_len_tests =
@@ -1171,7 +1182,7 @@ module Stats = struct
       Test.make ~name:"int64 upper dist"     ~count:10000 ~stats:(stat64 (fun i -> Int64.shift_right_logical i 48)) Gen.int64 (fun _ -> true);
     ]
 
-  let exponential_tests =
+  let float_exp_tests =
     let float_dist = ("dist",int_of_float) in
     [ Test.make ~name:"exponential 10. dist" ~count:5_000 ~stats:[float_dist] (Gen.exponential 10.) (fun _ -> true);
       Test.make ~name:"exponential -10. dist" ~count:5_000 ~stats:[float_dist] (Gen.exponential (-10.)) (fun _ -> true);
@@ -1216,6 +1227,6 @@ module Stats = struct
     @ array_len_tests
     @ int_dist_tests
     @ int_32_64_dist_tests
-    @ exponential_tests
+    @ float_exp_tests
     @ float_tests
 end
