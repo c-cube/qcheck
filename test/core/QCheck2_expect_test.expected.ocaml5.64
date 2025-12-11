@@ -680,7 +680,7 @@ Leaf 0
 
 --- Failure --------------------------------------------------------------------
 
-Test sum list = 0 failed (0 shrink steps):
+Test sum list = 0 with no_shrink failed (0 shrink steps):
 
 [0; 1; 80; 0; 9; 2; 3]
 

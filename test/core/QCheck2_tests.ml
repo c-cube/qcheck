@@ -721,7 +721,7 @@ module Shrink = struct
       (fun tree -> IntTree.contains_only_n tree 42)
 
   let test_gen_no_shrink =
-    Test.make ~name:"sum list = 0" ~print:Print.(list int)
+    Test.make ~name:"sum list = 0 with no_shrink" ~print:Print.(list int)
       Gen.(no_shrink @@ list nat_small)
       (fun xs -> List.fold_left (+) 0 xs = 0)
 

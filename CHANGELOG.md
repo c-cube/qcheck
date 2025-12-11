@@ -82,6 +82,7 @@
   - Add missing `QCheck.Gen.bind` for consistency
   - Add missing `QCheck.Gen.ap` for consistency
 - Add missing `QCheck2.Gen.map_keep_input` for consistency
+- Add `QCheck.no_shrink` for consistency
 
 
 ## 0.27 (2025-10-31)

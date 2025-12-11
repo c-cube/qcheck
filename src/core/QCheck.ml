@@ -1235,6 +1235,8 @@ let set_stats s o = {o with stats=s}
 let add_stat s o = {o with stats=s :: o.stats}
 let set_gen g o = {o with gen=g}
 
+let no_shrink o = {o with shrink=None}
+
 let add_shrink_invariant f o = match o.shrink with
   | None -> o
   | Some shr -> {o with shrink=Some (Shrink.filter f shr)}
