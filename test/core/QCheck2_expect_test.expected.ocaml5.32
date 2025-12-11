@@ -450,9 +450,9 @@ Test float_neg is not nan failed (0 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
-Test float_exp 10. < Float.pi failed (1 shrink steps):
+Test float_exp 10. < Float.pi failed (8 shrink steps):
 
-inf
+3.14167640757
 
 --- Failure --------------------------------------------------------------------
 
