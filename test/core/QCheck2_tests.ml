@@ -1182,7 +1182,7 @@ module Stats = struct
       Test.make ~name:"int64 upper dist"     ~count:10000 ~stats:(stat64 (fun i -> Int64.shift_right_logical i 48)) Gen.int64 (fun _ -> true);
     ]
 
-  let exponential_tests =
+  let float_exp_tests =
     let float_dist = ("dist",int_of_float) in
     [ Test.make ~name:"exponential 10. dist" ~count:5_000 ~stats:[float_dist] (Gen.exponential 10.) (fun _ -> true);
       Test.make ~name:"exponential -10. dist" ~count:5_000 ~stats:[float_dist] (Gen.exponential (-10.)) (fun _ -> true);
@@ -1227,6 +1227,6 @@ module Stats = struct
     @ array_len_tests
     @ int_dist_tests
     @ int_32_64_dist_tests
-    @ exponential_tests
+    @ float_exp_tests
     @ float_tests
 end
