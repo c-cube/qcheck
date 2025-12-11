@@ -409,6 +409,132 @@ Test float >= -1e10 failed (722 shrink steps):
 
 --- Failure --------------------------------------------------------------------
 
+Test float is not nan failed (0 shrink steps):
+
+-nan
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_inclusive 1e6 <= 10. failed (25 shrink steps):
+
+10.0001936411
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_inclusive 1e6 <= pi failed (24 shrink steps):
+
+3.14176318497
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_inclusive 1. <= 0.5 failed (8 shrink steps):
+
+0.500002807691
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_inclusive 1. <= min_float failed (1029 shrink steps):
+
+2.22508635315e-308
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_inclusive -1. >= -0.5 failed (8 shrink steps):
+
+-0.500002807691
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_inclusive -1e6 >= -.pi failed (24 shrink steps):
+
+-3.14176318497
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_exclusive 1e6 <= 10. failed (25 shrink steps):
+
+10.0001936411
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_exclusive 1e6 <= pi failed (24 shrink steps):
+
+3.14176318497
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_exclusive 1. <= 0.5 failed (8 shrink steps):
+
+0.500002807691
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_exclusive 1. <= min_float failed (1029 shrink steps):
+
+2.22508635315e-308
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_exclusive -1. >= -0.5 failed (8 shrink steps):
+
+-0.500002807691
+
+--- Failure --------------------------------------------------------------------
+
+Test float_bound_exclusive -1e6 >= -.pi failed (24 shrink steps):
+
+-3.14176318497
+
+--- Failure --------------------------------------------------------------------
+
+Test float_range 1. 10. <= pi failed (8 shrink steps):
+
+3.14168329529
+
+--- Failure --------------------------------------------------------------------
+
+Test (float_range -10. 10.)^2 <= 2. failed (8 shrink steps):
+
+1.41429229241
+
+--- Failure --------------------------------------------------------------------
+
+Test float_range -10. -1. >= -.pi failed (7 shrink steps):
+
+-3.14165050694
+
+--- Failure --------------------------------------------------------------------
+
+Test float_pos < Float.pi failed (753 shrink steps):
+
+3.14167586353
+
+--- Failure --------------------------------------------------------------------
+
+Test float_pos is not nan failed (0 shrink steps):
+
+nan
+
+--- Failure --------------------------------------------------------------------
+
+Test float_neg > Float.pi failed (753 shrink steps):
+
+-3.14167586353
+
+--- Failure --------------------------------------------------------------------
+
+Test float_neg is not nan failed (0 shrink steps):
+
+-nan
+
+--- Failure --------------------------------------------------------------------
+
+Test float_exp 10. < Float.pi failed (6 shrink steps):
+
+3.1417780719
+
+--- Failure --------------------------------------------------------------------
+
 Test char never produces 'abcdef' failed (1 shrink steps):
 
 'a'
@@ -1953,7 +2079,7 @@ Collect results for test float classify:
  FP_nan:            2 cases   (0.0%)
 ================================================================================
 1 warning(s)
-failure (83 tests failed, 3 tests errored, ran 184 tests)
+failure (104 tests failed, 3 tests errored, ran 208 tests)
 random seed: 153870556
 
 +++ Stats for int_dist_empty_bucket ++++++++++++++++++++++++++++++++++++++++++++++++++++++++

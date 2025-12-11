@@ -368,6 +368,18 @@ module Gen = struct
   let make_primitive ~(gen : RS.t -> 'a) ~(shrink : 'a -> 'a Seq.t) : 'a t = fun st ->
     Tree.make_primitive shrink (gen st)
 
+  let delay (f : unit -> 'a t) : 'a t = fun st -> f () st
+
+  let add_shrink_invariant (p : 'a -> bool) (gen : 'a t) : 'a t =
+    fun st -> gen st |> Tree.add_shrink_invariant p
+
+  let set_shrink shrink gen =
+    make_primitive
+      ~gen:(fun st -> gen st |> Tree.root)
+      ~shrink
+
+  let no_shrink (gen: 'a t) : 'a t = set_shrink (fun _ -> Seq.empty) gen
+
   let parse_origin (loc : string) (pp : Format.formatter -> 'a -> unit) ~(origin : 'a) ~(low : 'a) ~(high : 'a) : 'a =
     if origin < low then invalid_arg Format.(asprintf "%s: origin value %a is lower than low value %a" loc pp origin pp low)
     else if origin > high then invalid_arg Format.(asprintf "%s: origin value %a is greater than high value %a" loc pp origin pp high)
@@ -478,8 +490,9 @@ module Gen = struct
 
   let float_exp (mean : float) =
     if Float.is_nan mean then invalid_arg "Gen.float_exp";
-    let unit_gen = float_bound_inclusive 1.0 in
-    map (fun p -> -. mean *. (log p)) unit_gen
+    let unit_gen = no_shrink (float_bound_inclusive 1.0) in
+    let exp_gen = map (fun p -> -. mean *. (log p)) unit_gen in
+    set_shrink (Shrink.float_towards 0.) exp_gen
     (* See https://en.wikipedia.org/wiki/Relationships_among_probability_distributions *)
 
   let exponential = float_exp
@@ -929,18 +942,6 @@ module Gen = struct
 
   let generate_tree ?(rand=RS.make_self_init()) (gen : 'a t) : 'a Tree.t =
     gen rand
-
-  let delay (f : unit -> 'a t) : 'a t = fun st -> f () st
-
-  let add_shrink_invariant (p : 'a -> bool) (gen : 'a t) : 'a t =
-    fun st -> gen st |> Tree.add_shrink_invariant p
-
-  let set_shrink shrink gen =
-    make_primitive
-      ~gen:(fun st -> gen st |> Tree.root)
-      ~shrink
-
-  let no_shrink (gen: 'a t) : 'a t = set_shrink (fun _ -> Seq.empty) gen
 
   let (let+) = (>|=)
 
