@@ -467,6 +467,7 @@ module Gen : sig
   (** [opt] is an alias of {!val:option} for backward compatibility.
 
       @since 0.18 ([?ratio] parameter)
+      @deprecated use {!val:option} instead.
   *)
 
   val result : ?ratio:float -> 'a t -> 'e t -> ('a, 'e) result t

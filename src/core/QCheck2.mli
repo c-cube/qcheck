@@ -856,7 +856,8 @@ module Gen : sig
   *)
 
   val opt : ?ratio:float -> 'a t -> 'a option t
-  (** [opt] is an alias of {!val:option} for backward compatibility. *)
+  (** [opt] is an alias of {!val:option} for backward compatibility.
+      @deprecated use {!val:option} instead. *)
 
   val result : ?ratio:float -> 'a t -> 'e t -> ('a, 'e) result t
   (** [result ~ratio okgen errgen] generates [Ok v] with [v] coming from [okgen]
