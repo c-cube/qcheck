@@ -922,12 +922,21 @@ module Gen : sig
 
   (** {3 Convert a structure of generator to a generator of structure} *)
 
+  val flatten_list : 'a t list -> 'a list t
+  (** Generate a list of elements from individual generators.
+
+      Shrinks on the elements of the list, in the list order.
+
+      @since NEXT_RELEASE *)
+
   val flatten_l : 'a t list -> 'a list t
   (** Generate a list of elements from individual generators.
 
       Shrinks on the elements of the list, in the list order.
 
-      @since 0.13 *)
+      @since 0.13
+
+      @deprecated use {!flatten_list} instead. *)
 
   val flatten_a : 'a t array -> 'a array t
   (** Generate an array of elements from individual generators.
