@@ -752,7 +752,7 @@ module Gen = struct
 
   let flatten_res = flatten_result
 
-  let shuffle_a (a : 'a array) : 'a array t = fun st ->
+  let shuffle_array (a : 'a array) : 'a array t = fun st ->
     let a = Array.copy a in
     for i = Array.length a - 1 downto 1 do
       let j = RS.int st (i + 1) in
@@ -762,8 +762,10 @@ module Gen = struct
     done;
     Tree.pure a
 
+  let shuffle_a = shuffle_array
+
   let shuffle_l (l : 'a list) : 'a list t =
-    Array.of_list l |> shuffle_a >|= Array.to_list
+    Array.of_list l |> shuffle_array >|= Array.to_list
 
   let shuffle_w_l (l : ((int * 'a) list)) : 'a list t = fun st ->
     let sample (w, v) =

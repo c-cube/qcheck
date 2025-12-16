@@ -726,8 +726,13 @@ module Gen : sig
 
   (** {3 Shuffling elements} *)
 
+  val shuffle_array : 'a array -> 'a array t
+  (** Returns a copy of the array with its elements shuffled.
+      @since NEXT_RELEASE *)
+
   val shuffle_a : 'a array -> 'a array t
-  (** Returns a copy of the array with its elements shuffled. *)
+  (** Returns a copy of the array with its elements shuffled.
+      @deprecated use {!shuffle_array} instead. *)
 
   val shuffle_l : 'a list -> 'a list t
   (** Creates a generator of shuffled lists. *)
