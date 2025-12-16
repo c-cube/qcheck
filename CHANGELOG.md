@@ -18,7 +18,7 @@
   - Add `QCheck.Gen.char_numeral` and make `QCheck.Gen.numeral` an alias for it
   - Add `QCheck2.char_printable` and make `QCheck2.printable` an alias for it
   - Add `QCheck2.char_numeral` and make `QCheck2.numeral` an alias for it
-- Added `QCheck.opt` as an alias for `QCheck.option` for consistency
+- Deprecate `QCheck.Gen.opt` and `QCheck2.Gen.opt` for consistency
 - Renamed `bytes` generator combinators:
   - Add `QCheck.bytes_size` for consistency
   - Deprecate `QCheck.bytes_gen_of_size` and `QCheck.bytes_of_size`
