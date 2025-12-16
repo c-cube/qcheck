@@ -343,10 +343,12 @@ module Gen = struct
     shuffle_a a' st;
     a'
 
-  let shuffle_l l st =
+  let shuffle_list l st =
     let a = Array.of_list l in
     shuffle_a a st;
     Array.to_list a
+
+  let shuffle_l = shuffle_list
 
   let shuffle_w_l l st =
     let sample (w, v) =

@@ -232,8 +232,13 @@ module Gen : sig
   (** Shuffles the array in place.
       @deprecated Use {!shuffle_array} instead. *)
 
+  val shuffle_list : 'a list -> 'a list t
+  (** Creates a generator of shuffled lists.
+      @since NEXT_RELEASE *)
+
   val shuffle_l : 'a list -> 'a list t
-  (** Creates a generator of shuffled lists. *)
+  (** Creates a generator of shuffled lists.
+      @deprecated Use {!shuffle_list} instead. *)
 
   val shuffle_w_l : (int * 'a) list -> 'a list t
   (** Creates a generator of weighted shuffled lists. A given list is shuffled on each
