@@ -315,16 +315,20 @@ module Gen = struct
   let array gen st = array_size nat gen st
   let array_repeat n g = array_size (return n) g
 
-  let flatten_l l st = List.map (fun f->f st) l
-  let flatten_a a st = Array.map (fun f->f st) a
-  let flatten_opt o st =
+  let flatten_list l st = List.map (fun f->f st) l
+  let flatten_l = flatten_list
+  let flatten_array a st = Array.map (fun f->f st) a
+  let flatten_a = flatten_array
+  let flatten_option o st =
     match o with
     | None -> None
     | Some f -> Some (f st)
-  let flatten_res r st =
+  let flatten_opt = flatten_option
+  let flatten_result r st =
     match r with
     | Ok f -> Ok (f st)
     | Error e -> Error e
+  let flatten_res = flatten_result
 
   let shuffle_a a st =
     for i = Array.length a-1 downto 1 do

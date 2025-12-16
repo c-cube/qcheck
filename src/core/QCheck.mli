@@ -586,21 +586,41 @@ module Gen : sig
       @since 0.5.3
       @deprecated use {!list_small} instead. *)
 
+  val flatten_list : 'a t list -> 'a list t
+  (** Generate a list of elements from individual generators
+      @since NEXT_RELEASE *)
+
   val flatten_l : 'a t list -> 'a list t
   (** Generate a list of elements from individual generators
-      @since 0.13 *)
+      @since 0.13
+      @deprecated use {!flatten_list} instead.  *)
+
+  val flatten_array : 'a t array -> 'a array t
+  (** Generate an array of elements from individual generators
+      @since NEXT_RELEASE *)
 
   val flatten_a : 'a t array -> 'a array t
   (** Generate an array of elements from individual generators
-      @since 0.13 *)
+      @since 0.13
+      @deprecated use {!flatten_array} instead.  *)
+
+  val flatten_option : 'a t option -> 'a option t
+  (** Generate an option from an optional generator
+      @since NEXT_RELEASE *)
 
   val flatten_opt : 'a t option -> 'a option t
   (** Generate an option from an optional generator
-      @since 0.13 *)
+      @since 0.13
+      @deprecated use {!flatten_option} instead.  *)
+
+  val flatten_result : ('a t, 'e) result -> ('a,'e) result t
+  (** Generate a result from [Ok g], an error from [Error e]
+      @since NEXT_RELEASE *)
 
   val flatten_res : ('a t, 'e) result -> ('a,'e) result t
   (** Generate a result from [Ok g], an error from [Error e]
-      @since 0.13 *)
+      @since 0.13
+      @deprecated use {!flatten_result} instead.  *)
 
   val array_small : 'a t -> 'a array t
   (** Generates arrays of small size (see {!nat_small}).

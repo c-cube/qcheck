@@ -922,26 +922,61 @@ module Gen : sig
 
   (** {3 Convert a structure of generator to a generator of structure} *)
 
+  val flatten_list : 'a t list -> 'a list t
+  (** Generate a list of elements from individual generators.
+
+      Shrinks on the elements of the list, in the list order.
+
+      @since NEXT_RELEASE *)
+
   val flatten_l : 'a t list -> 'a list t
   (** Generate a list of elements from individual generators.
 
       Shrinks on the elements of the list, in the list order.
 
-      @since 0.13 *)
+      @since 0.13
+
+      @deprecated use {!flatten_list} instead. *)
+
+  val flatten_array : 'a t array -> 'a array t
+  (** Generate an array of elements from individual generators.
+
+      Shrinks on the elements of the array, in the array order.
+
+      @since NEXT_RELEASE *)
 
   val flatten_a : 'a t array -> 'a array t
   (** Generate an array of elements from individual generators.
 
       Shrinks on the elements of the array, in the array order.
 
-      @since 0.13 *)
+      @since 0.13
+
+      @deprecated use {!flatten_array} instead. *)
+
+  val flatten_option : 'a t option -> 'a option t
+  (** Generate an option from an optional generator.
+
+      Shrinks towards [None] then shrinks on the value.
+
+      @since NEXT_RELEASE *)
 
   val flatten_opt : 'a t option -> 'a option t
   (** Generate an option from an optional generator.
 
       Shrinks towards [None] then shrinks on the value.
 
-      @since 0.13 *)
+      @since 0.13
+
+      @deprecated use {!flatten_option} instead. *)
+
+  val flatten_result : ('a t, 'e) result -> ('a,'e) result t
+  (** Generate a result from [Ok gen], an error from [Error e].
+
+      Shrinks on [gen] if [Ok gen].
+      Does not shrink if [Error e].
+
+      @since NEXT_RELEASE *)
 
   val flatten_res : ('a t, 'e) result -> ('a,'e) result t
   (** Generate a result from [Ok gen], an error from [Error e].
@@ -949,7 +984,9 @@ module Gen : sig
       Shrinks on [gen] if [Ok gen].
       Does not shrink if [Error e].
 
-      @since 0.13 *)
+      @since 0.13
+
+      @deprecated use {!flatten_result} instead. *)
 
   val join : 'a t t -> 'a t
   (** Collapses a generator of generators to a generator.

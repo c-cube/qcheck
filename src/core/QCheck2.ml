@@ -726,23 +726,31 @@ module Gen = struct
 
   let array_repeat (n : int) (gen : 'a t) : 'a array t = list_repeat n gen >|= Array.of_list
 
-  let rec flatten_l (l : 'a t list) : 'a list t =
+  let rec flatten_list (l : 'a t list) : 'a list t =
     match l with
     | [] -> pure []
-    | gen :: gens -> liftA2 List.cons gen (flatten_l gens)
+    | gen :: gens -> liftA2 List.cons gen (flatten_list gens)
 
-  let flatten_a (a : 'a t array) : 'a array t =
-    Array.to_list a |> flatten_l >|= Array.of_list
+  let flatten_l = flatten_list
 
-  let flatten_opt (o : 'a t option) : 'a option t =
+  let flatten_array (a : 'a t array) : 'a array t =
+    Array.to_list a |> flatten_list >|= Array.of_list
+
+  let flatten_a = flatten_array
+
+  let flatten_option (o : 'a t option) : 'a option t =
     match o with
     | None -> pure None
     | Some gen -> option gen
 
-  let flatten_res (res : ('a t, 'e) result) : ('a, 'e) result t =
+  let flatten_opt = flatten_option
+
+  let flatten_result (res : ('a t, 'e) result) : ('a, 'e) result t =
     match res with
     | Ok gen -> gen >|= Result.ok
     | Error e -> pure (Error e)
+
+  let flatten_res = flatten_result
 
   let shuffle_a (a : 'a array) : 'a array t = fun st ->
     let a = Array.copy a in

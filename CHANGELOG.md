@@ -81,6 +81,15 @@
 - Renamed monadic and applicative generator combinators:
   - Add missing `QCheck.Gen.bind` for consistency
   - Add missing `QCheck.Gen.ap` for consistency
+- Renamed `flatten` combinators:
+  - Add `QCheck.Gen.flatten_list` and deprecate `QCheck.Gen.flatten_l`
+  - Add `QCheck.Gen.flatten_array` and deprecate `QCheck.Gen.flatten_a`
+  - Add `QCheck.Gen.flatten_option` and deprecate `QCheck.Gen.flatten_opt`
+  - Add `QCheck.Gen.flatten_result` and deprecate `QCheck.Gen.flatten_res`
+  - Add `QCheck2.Gen.flatten_list` and deprecate `QCheck2.Gen.flatten_l`
+  - Add `QCheck2.Gen.flatten_array` and deprecate `QCheck2.Gen.flatten_a`
+  - Add `QCheck2.Gen.flatten_option` and deprecate `QCheck2.Gen.flatten_opt`
+  - Add `QCheck2.Gen.flatten_result` and deprecate `QCheck2.Gen.flatten_res`
 - Add missing `QCheck2.Gen.map_keep_input` for consistency
 - Add `QCheck.no_shrink` for consistency
 - Fix shrinking for `QCheck2.Gen.exponential` which could shrink to `infinity`
