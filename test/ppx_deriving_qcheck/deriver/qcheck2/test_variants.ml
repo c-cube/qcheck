@@ -19,7 +19,7 @@ let eq_colors = Alcotest.of_pp pp_colors
 let gen = Gen.(frequency [1,pure Red; 1,pure Green; 1,pure Blue])
 
 let test_variants () =
-  test_compare ~msg:"Gen.oneofl <=> deriving variants" ~eq:eq_colors gen gen_colors
+  test_compare ~msg:"Gen.frequency <=> deriving variants" ~eq:eq_colors gen gen_colors
 
 type poly_colors = [`Red | `Green | `Blue] [@@deriving qcheck2]
 
@@ -35,7 +35,7 @@ let eq_poly_colors = Alcotest.of_pp pp_poly_colors
 let gen_poly : poly_colors Gen.t = Gen.(frequency [1,pure `Red; 1,pure `Green; 1,pure `Blue])
 
 let test_poly_variants () =
-  test_compare ~msg:"Gen.oneofl <=> deriving variants"
+  test_compare ~msg:"Gen.frequency <=> deriving variants"
     ~eq:eq_poly_colors gen_poly gen_poly_colors
 
 (** {2. Tests weight} *)
