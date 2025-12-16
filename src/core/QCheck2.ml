@@ -745,10 +745,12 @@ module Gen = struct
 
   let flatten_opt = flatten_option
 
-  let flatten_res (res : ('a t, 'e) result) : ('a, 'e) result t =
+  let flatten_result (res : ('a t, 'e) result) : ('a, 'e) result t =
     match res with
     | Ok gen -> gen >|= Result.ok
     | Error e -> pure (Error e)
+
+  let flatten_res = flatten_result
 
   let shuffle_a (a : 'a array) : 'a array t = fun st ->
     let a = Array.copy a in

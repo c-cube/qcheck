@@ -970,13 +970,23 @@ module Gen : sig
 
       @deprecated use {!flatten_option} instead. *)
 
+  val flatten_result : ('a t, 'e) result -> ('a,'e) result t
+  (** Generate a result from [Ok gen], an error from [Error e].
+
+      Shrinks on [gen] if [Ok gen].
+      Does not shrink if [Error e].
+
+      @since NEXT_RELEASE *)
+
   val flatten_res : ('a t, 'e) result -> ('a,'e) result t
   (** Generate a result from [Ok gen], an error from [Error e].
 
       Shrinks on [gen] if [Ok gen].
       Does not shrink if [Error e].
 
-      @since 0.13 *)
+      @since 0.13
+
+      @deprecated use {!flatten_result} instead. *)
 
   val join : 'a t t -> 'a t
   (** Collapses a generator of generators to a generator.
