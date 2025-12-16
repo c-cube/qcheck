@@ -624,8 +624,10 @@ module Gen = struct
   let oneof (l : 'a t list) : 'a t =
     int_bound (List.length l - 1) >>= List.nth l
 
-  let oneofl (l : 'a list) : 'a t =
+  let oneof_list (l : 'a list) : 'a t =
     int_bound (List.length l - 1) >|= List.nth l
+
+  let oneofl = oneof_list
 
   let oneofa (a : 'a array) : 'a t =
     int_bound (Array.length a - 1) >|= Array.get a

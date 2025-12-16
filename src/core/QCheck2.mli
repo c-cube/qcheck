@@ -689,11 +689,20 @@ module Gen : sig
       @raise Invalid_argument or Failure if [l] is empty
   *)
 
+  val oneof_list : 'a list -> 'a t
+  (** [oneof_list l] constructs a generator that selects among the given list of values [l].
+
+      Shrinks towards the first element of the list.
+      @raise Invalid_argument or Failure if [l] is empty
+      @since NEXT_RELEASE
+  *)
+
   val oneofl : 'a list -> 'a t
   (** [oneofl l] constructs a generator that selects among the given list of values [l].
 
       Shrinks towards the first element of the list.
       @raise Invalid_argument or Failure if [l] is empty
+      @deprecated use {!oneof_list} instead.
   *)
 
   val oneofa : 'a array -> 'a t
@@ -1109,7 +1118,7 @@ module Gen : sig
 
         let string_prefixed_with_keyword_gen : string Gen.t =
           Gen.map2 (fun prefix s -> prefix ^ s)
-            (Gen.oneofl ["foo"; "bar"; "baz"])
+            (Gen.oneof_list ["foo"; "bar"; "baz"])
             Gen.string_printable
       ]}
 
