@@ -764,8 +764,10 @@ module Gen = struct
 
   let shuffle_a = shuffle_array
 
-  let shuffle_l (l : 'a list) : 'a list t =
+  let shuffle_list (l : 'a list) : 'a list t =
     Array.of_list l |> shuffle_array >|= Array.to_list
+
+  let shuffle_l = shuffle_list
 
   let shuffle_w_l (l : ((int * 'a) list)) : 'a list t = fun st ->
     let sample (w, v) =
