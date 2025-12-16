@@ -317,7 +317,8 @@ module Gen = struct
 
   let flatten_list l st = List.map (fun f->f st) l
   let flatten_l = flatten_list
-  let flatten_a a st = Array.map (fun f->f st) a
+  let flatten_array a st = Array.map (fun f->f st) a
+  let flatten_a = flatten_array
   let flatten_opt o st =
     match o with
     | None -> None
