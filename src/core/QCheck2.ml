@@ -738,10 +738,12 @@ module Gen = struct
 
   let flatten_a = flatten_array
 
-  let flatten_opt (o : 'a t option) : 'a option t =
+  let flatten_option (o : 'a t option) : 'a option t =
     match o with
     | None -> pure None
     | Some gen -> option gen
+
+  let flatten_opt = flatten_option
 
   let flatten_res (res : ('a t, 'e) result) : ('a, 'e) result t =
     match res with
