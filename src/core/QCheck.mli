@@ -613,9 +613,14 @@ module Gen : sig
       @since 0.13
       @deprecated use {!flatten_option} instead.  *)
 
+  val flatten_result : ('a t, 'e) result -> ('a,'e) result t
+  (** Generate a result from [Ok g], an error from [Error e]
+      @since NEXT_RELEASE *)
+
   val flatten_res : ('a t, 'e) result -> ('a,'e) result t
   (** Generate a result from [Ok g], an error from [Error e]
-      @since 0.13 *)
+      @since 0.13
+      @deprecated use {!flatten_result} instead.  *)
 
   val array_small : 'a t -> 'a array t
   (** Generates arrays of small size (see {!nat_small}).

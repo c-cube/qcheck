@@ -324,10 +324,11 @@ module Gen = struct
     | None -> None
     | Some f -> Some (f st)
   let flatten_opt = flatten_option
-  let flatten_res r st =
+  let flatten_result r st =
     match r with
     | Ok f -> Ok (f st)
     | Error e -> Error e
+  let flatten_res = flatten_result
 
   let shuffle_a a st =
     for i = Array.length a-1 downto 1 do
