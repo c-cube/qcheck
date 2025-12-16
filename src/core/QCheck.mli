@@ -204,9 +204,15 @@ module Gen : sig
   (** Constructs a generator that selects among a given list of generators.
       @raise Invalid_argument or Failure if list is empty *)
 
+  val oneof_list : 'a list -> 'a t
+  (** Constructs a generator that selects among a given list of values.
+      @raise Invalid_argument or Failure if list is empty
+      @since NEXT_RELEASE *)
+
   val oneofl : 'a list -> 'a t
   (** Constructs a generator that selects among a given list of values.
-      @raise Invalid_argument or Failure if list is empty *)
+      @raise Invalid_argument or Failure if list is empty
+      @deprecated use {!oneof_list} instead. *)
 
   val oneofa : 'a array -> 'a t
   (** Constructs a generator that selects among a given array of values.

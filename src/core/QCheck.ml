@@ -137,7 +137,8 @@ module Gen = struct
   let (<$>) f x st = f (x st)
 
   let oneof l st = List.nth l (Random.State.int st (List.length l)) st
-  let oneofl xs st = List.nth xs (Random.State.int st (List.length xs))
+  let oneof_list xs st = List.nth xs (Random.State.int st (List.length xs))
+  let oneofl = oneof_list
   let oneofa xs st = Array.get xs (Random.State.int st (Array.length xs))
 
   let frequencyl l st =
@@ -1856,7 +1857,7 @@ let fun4 o1 o2 o3 o4 ret =
 (* Generator combinators *)
 
 (** given a list, returns generator that picks at random from list *)
-let oneofl ?print ?collect xs = make ?print ?collect (Gen.oneofl xs)
+let oneofl ?print ?collect xs = make ?print ?collect (Gen.oneof_list xs)
 let oneofa ?print ?collect xs = make ?print ?collect (Gen.oneofa xs)
 
 (** Given a list of generators, returns generator that randomly uses one of the generators
