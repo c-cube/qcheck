@@ -1750,9 +1750,14 @@ val choose : 'a arbitrary list -> 'a arbitrary
 (** Choose among the given list of generators. The list must not
     be empty; if it is [Invalid_argument] is raised. *)
 
+val oneof_list : ?print:'a Print.t -> 'a list -> 'a arbitrary
+(** Pick an element randomly in the list.
+    @since NEXT_RELEASE *)
+
 val oneofl : ?print:'a Print.t -> ?collect:('a -> string) ->
   'a list -> 'a arbitrary
-(** Pick an element randomly in the list. *)
+(** Pick an element randomly in the list.
+    @deprecated use {!oneof_list} instead. *)
 
 val oneofa : ?print:'a Print.t -> ?collect:('a -> string) ->
   'a array -> 'a arbitrary
@@ -1775,7 +1780,7 @@ val frequency : ?print:'a Print.t -> ?small:('a -> int) ->
 
 val frequencyl : ?print:'a Print.t -> ?small:('a -> int) ->
   (int * 'a) list -> 'a arbitrary
-(** Same as {!oneofl}, but each element is paired with its frequency in
+(** Same as {!oneof_list}, but each element is paired with its frequency in
     the probability distribution (the higher, the more likely). *)
 
 val frequencya : ?print:'a Print.t -> ?small:('a -> int) ->
