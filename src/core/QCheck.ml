@@ -319,10 +319,11 @@ module Gen = struct
   let flatten_l = flatten_list
   let flatten_array a st = Array.map (fun f->f st) a
   let flatten_a = flatten_array
-  let flatten_opt o st =
+  let flatten_option o st =
     match o with
     | None -> None
     | Some f -> Some (f st)
+  let flatten_opt = flatten_option
   let flatten_res r st =
     match r with
     | Ok f -> Ok (f st)

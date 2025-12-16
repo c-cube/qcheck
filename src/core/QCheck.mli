@@ -604,9 +604,14 @@ module Gen : sig
       @since 0.13
       @deprecated use {!flatten_array} instead.  *)
 
+  val flatten_option : 'a t option -> 'a option t
+  (** Generate an option from an optional generator
+      @since NEXT_RELEASE *)
+
   val flatten_opt : 'a t option -> 'a option t
   (** Generate an option from an optional generator
-      @since 0.13 *)
+      @since 0.13
+      @deprecated use {!flatten_option} instead.  *)
 
   val flatten_res : ('a t, 'e) result -> ('a,'e) result t
   (** Generate a result from [Ok g], an error from [Error e]
