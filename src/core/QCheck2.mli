@@ -938,12 +938,21 @@ module Gen : sig
 
       @deprecated use {!flatten_list} instead. *)
 
+  val flatten_array : 'a t array -> 'a array t
+  (** Generate an array of elements from individual generators.
+
+      Shrinks on the elements of the array, in the array order.
+
+      @since NEXT_RELEASE *)
+
   val flatten_a : 'a t array -> 'a array t
   (** Generate an array of elements from individual generators.
 
       Shrinks on the elements of the array, in the array order.
 
-      @since 0.13 *)
+      @since 0.13
+
+      @deprecated use {!flatten_array} instead. *)
 
   val flatten_opt : 'a t option -> 'a option t
   (** Generate an option from an optional generator.

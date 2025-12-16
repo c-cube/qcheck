@@ -733,8 +733,10 @@ module Gen = struct
 
   let flatten_l = flatten_list
 
-  let flatten_a (a : 'a t array) : 'a array t =
+  let flatten_array (a : 'a t array) : 'a array t =
     Array.to_list a |> flatten_list >|= Array.of_list
+
+  let flatten_a = flatten_array
 
   let flatten_opt (o : 'a t option) : 'a option t =
     match o with
