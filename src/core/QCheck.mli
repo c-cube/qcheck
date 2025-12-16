@@ -586,9 +586,14 @@ module Gen : sig
       @since 0.5.3
       @deprecated use {!list_small} instead. *)
 
+  val flatten_list : 'a t list -> 'a list t
+  (** Generate a list of elements from individual generators
+      @since NEXT_RELEASE *)
+
   val flatten_l : 'a t list -> 'a list t
   (** Generate a list of elements from individual generators
-      @since 0.13 *)
+      @since 0.13
+      @deprecated use {!flatten_list} instead.  *)
 
   val flatten_a : 'a t array -> 'a array t
   (** Generate an array of elements from individual generators
