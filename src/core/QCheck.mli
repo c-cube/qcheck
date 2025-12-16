@@ -224,13 +224,23 @@ module Gen : sig
   (** Constructs a generator that selects among a given array of values.
       Each of the array entries are chosen based on a positive integer weight. *)
 
+  val shuffle_array : 'a array -> 'a array t
+  (** Creates a generator of shuffled arrays.
+      @since NEXT_RELEASE *)
+
   val shuffle_a : 'a array -> unit t
-  (** Shuffles the array in place. *)
+  (** Shuffles the array in place.
+      @deprecated Use {!shuffle_array} instead. *)
+
+  val shuffle_list : 'a list -> 'a list t
+  (** Creates a generator of shuffled lists.
+      @since NEXT_RELEASE *)
 
   val shuffle_l : 'a list -> 'a list t
-  (** Creates a generator of shuffled lists. *)
+  (** Creates a generator of shuffled lists.
+      @deprecated Use {!shuffle_list} instead. *)
 
-  val shuffle_w_l : (int * 'a) list -> 'a list t
+  val shuffle_weighted_list : (int * 'a) list -> 'a list t
   (** Creates a generator of weighted shuffled lists. A given list is shuffled on each
       generation according to the weights of its elements. An element with a larger weight
       is more likely to be at the front of the list than an element with a smaller weight.
@@ -241,8 +251,12 @@ module Gen : sig
       more likely to generate [["ten"; "five"; "one"]] or [["five"; "ten"; "one"]] than
       [["one"; "ten"; "five"]] because "ten" and "five" have larger weights than "one".
 
+      @since NEXT_RELEASE *)
+
+  val shuffle_w_l : (int * 'a) list -> 'a list t
+  (** An alias for {!shuffle_weighted_list} since NEXT_RELEASE.
       @since 0.11
-  *)
+      @deprecated use {!shuffle_weighted_list} instead. *)
 
   val range_subset : size:int -> int -> int -> int array t
   (** [range_subset ~size:k low high] generates an array of length [k]

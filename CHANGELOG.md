@@ -90,6 +90,13 @@
   - Add `QCheck2.Gen.flatten_array` and deprecate `QCheck2.Gen.flatten_a`
   - Add `QCheck2.Gen.flatten_option` and deprecate `QCheck2.Gen.flatten_opt`
   - Add `QCheck2.Gen.flatten_result` and deprecate `QCheck2.Gen.flatten_res`
+- Renamed `shuffle` combinators:
+  - Add `QCheck.Gen.shuffle_array` and deprecate in-place `QCheck.Gen_shuffle_a`
+  - Add `QCheck.Gen.shuffle_list` and deprecate `QCheck.Gen_shuffle_l`
+  - Add `QCheck.Gen.shuffle_weighted_list` and deprecate `QCheck.Gen_shuffle_w_l`
+  - Add `QCheck2.Gen.shuffle_array` and deprecate `QCheck2.Gen_shuffle_a`
+  - Add `QCheck2.Gen.shuffle_list` and deprecate `QCheck2.Gen_shuffle_l`
+  - Add `QCheck2.Gen.shuffle_weighted_list` and deprecate `QCheck2.Gen_shuffle_w_l`
 - Add missing `QCheck2.Gen.map_keep_input` for consistency
 - Add `QCheck.no_shrink` for consistency
 - Fix shrinking for `QCheck2.Gen.exponential` which could shrink to `infinity`

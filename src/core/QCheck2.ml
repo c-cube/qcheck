@@ -752,7 +752,7 @@ module Gen = struct
 
   let flatten_res = flatten_result
 
-  let shuffle_a (a : 'a array) : 'a array t = fun st ->
+  let shuffle_array (a : 'a array) : 'a array t = fun st ->
     let a = Array.copy a in
     for i = Array.length a - 1 downto 1 do
       let j = RS.int st (i + 1) in
@@ -762,10 +762,14 @@ module Gen = struct
     done;
     Tree.pure a
 
-  let shuffle_l (l : 'a list) : 'a list t =
-    Array.of_list l |> shuffle_a >|= Array.to_list
+  let shuffle_a = shuffle_array
 
-  let shuffle_w_l (l : ((int * 'a) list)) : 'a list t = fun st ->
+  let shuffle_list (l : 'a list) : 'a list t =
+    Array.of_list l |> shuffle_array >|= Array.to_list
+
+  let shuffle_l = shuffle_list
+
+  let shuffle_weighted_list (l : ((int * 'a) list)) : 'a list t = fun st ->
     let sample (w, v) =
       let Tree.Tree (p, _) = float_bound_inclusive 1. st in
       let fl_w = float_of_int w in
@@ -776,6 +780,8 @@ module Gen = struct
     |> List.sort (fun (w1, _) (w2, _) -> poly_compare w1 w2)
     |> List.rev_map snd
     |> Tree.pure
+
+  let shuffle_w_l = shuffle_weighted_list
 
   let pair (g1 : 'a t) (g2 : 'b t) : ('a * 'b) t = liftA2 (fun a b -> (a, b)) g1 g2
 
