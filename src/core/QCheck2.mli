@@ -705,11 +705,20 @@ module Gen : sig
       @deprecated use {!oneof_list} instead.
   *)
 
+  val oneof_array : 'a array -> 'a t
+  (** [oneof_array a] constructs a generator that selects among the given array of values [a].
+
+      Shrinks towards the first element of the array.
+      @raise Invalid_argument or Failure if [a] is empty
+      @since NEXT_RELEASE
+  *)
+
   val oneofa : 'a array -> 'a t
   (** [oneofa a] constructs a generator that selects among the given array of values [a].
 
       Shrinks towards the first element of the array.
-      @raise Invalid_argument or Failure if [l] is empty
+      @raise Invalid_argument or Failure if [a] is empty
+      @deprecated use {!oneof_array} instead.
   *)
 
   val frequency : (int * 'a t) list -> 'a t

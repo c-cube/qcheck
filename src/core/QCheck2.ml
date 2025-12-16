@@ -629,8 +629,10 @@ module Gen = struct
 
   let oneofl = oneof_list
 
-  let oneofa (a : 'a array) : 'a t =
+  let oneof_array (a : 'a array) : 'a t =
     int_bound (Array.length a - 1) >|= Array.get a
+
+  let oneofa = oneof_array
 
   (* NOTE: we keep this alias to not break code that uses [small_int]
      for sizes of strings, arrays, etc. *)
