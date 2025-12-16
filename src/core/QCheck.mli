@@ -1748,7 +1748,8 @@ val tup9 :
 
 val choose : 'a arbitrary list -> 'a arbitrary
 (** Choose among the given list of generators. The list must not
-    be empty; if it is [Invalid_argument] is raised. *)
+    be empty; if it is [Invalid_argument] is raised.
+    @deprecated use {!oneof} instead. *)
 
 val oneof_list : ?print:'a Print.t -> 'a list -> 'a arbitrary
 (** Pick an element randomly in the list.
@@ -1770,10 +1771,13 @@ val oneofa : ?print:'a Print.t -> ?collect:('a -> string) ->
 
 val oneof : 'a arbitrary list -> 'a arbitrary
 (** Pick a generator among the list, randomly.
-    @deprecated this function is badly specified and will not use shrinkers
-    appropriately. Consider using {!Gen.oneof} and then {!make} to build
-    a well behaved arbitrary instance.
-*)
+    The resulting generator uses the printer, shrinker, etc.
+    from the first element in the argument list, if available.
+
+    Consider using {!Gen.oneof} and then {!make} to build
+    an arbitrary instance with a different behaviour.
+
+    @raise Invalid_argument if the argument list is empty. *)
 
 val always : ?print:'a Print.t -> 'a -> 'a arbitrary
 (** Always return the same element. *)

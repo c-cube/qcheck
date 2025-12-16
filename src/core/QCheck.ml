@@ -1270,8 +1270,8 @@ let make_int ?collect gen =
 let adapt_ o gen =
   make ?print:o.print ?small:o.small ?shrink:o.shrink ?collect:o.collect gen
 
-let choose l = match l with
-  | [] -> raise (Invalid_argument "quickcheck.choose")
+let oneof l = match l with
+  | [] -> raise (Invalid_argument "QCheck.oneof")
   | l ->
       let a = Array.of_list l in
       adapt_ a.(0)
@@ -1865,14 +1865,7 @@ let oneofa ?print ?collect xs = make ?print ?collect (Gen.oneof_array xs)
 
 (** Given a list of generators, returns generator that randomly uses one of the generators
     from the list *)
-let oneof l =
-  let gens = List.map (fun a->a.gen) l in
-  let first = List.hd l in
-  let print = first.print
-  and small = first.small
-  and collect = first.collect
-  and shrink = first.shrink in
-  make ?print ?small ?collect ?shrink (Gen.oneof gens)
+let choose = oneof
 
 (** Generator that always returns given value *)
 let always ?print x =
