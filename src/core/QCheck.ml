@@ -338,6 +338,11 @@ module Gen = struct
       a.(j) <- tmp;
     done
 
+  let shuffle_array a st =
+    let a' = Array.copy a in
+    shuffle_a a' st;
+    a'
+
   let shuffle_l l st =
     let a = Array.of_list l in
     shuffle_a a st;
