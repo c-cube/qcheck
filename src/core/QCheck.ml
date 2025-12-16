@@ -350,13 +350,15 @@ module Gen = struct
 
   let shuffle_l = shuffle_list
 
-  let shuffle_w_l l st =
+  let shuffle_weighted_list l st =
     let sample (w, v) =
       let fl_w = float_of_int w in
       (float_bound_inclusive 1. st ** (1. /. fl_w), v)
     in
     let samples = List.rev_map sample l in
     List.sort (fun (w1, _) (w2, _) -> poly_compare w1 w2) samples |> List.rev_map snd
+
+  let shuffle_w_l = shuffle_weighted_list
 
   let range_subset ~size low high st =
     let range_size = high - low + 1 in
