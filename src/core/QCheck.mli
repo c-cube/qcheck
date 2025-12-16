@@ -1759,9 +1759,14 @@ val oneofl : ?print:'a Print.t -> ?collect:('a -> string) ->
 (** Pick an element randomly in the list.
     @deprecated use {!oneof_list} instead. *)
 
+val oneof_array : ?print:'a Print.t -> 'a array -> 'a arbitrary
+(** Pick an element randomly in the array.
+    @since NEXT_RELEASE *)
+
 val oneofa : ?print:'a Print.t -> ?collect:('a -> string) ->
   'a array -> 'a arbitrary
-(** Pick an element randomly in the array. *)
+(** Pick an element randomly in the array.
+    @deprecated use {!oneof_array} instead. *)
 
 val oneof : 'a arbitrary list -> 'a arbitrary
 (** Pick a generator among the list, randomly.
