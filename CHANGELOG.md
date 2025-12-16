@@ -97,6 +97,14 @@
   - Add `QCheck2.Gen.shuffle_array` and deprecate `QCheck2.Gen_shuffle_a`
   - Add `QCheck2.Gen.shuffle_list` and deprecate `QCheck2.Gen_shuffle_l`
   - Add `QCheck2.Gen.shuffle_weighted_list` and deprecate `QCheck2.Gen_shuffle_w_l`
+- Renamed `oneof` combinators:
+  - Add `QCheck.Gen.oneof_list` and deprecate `QCheck.Gen.oneofl`
+  - Add `QCheck.Gen.oneof_array` and deprecate `QCheck.Gen.oneofa`
+  - Add `QCheck.oneof_list` and deprecate `QCheck.oneofl`
+  - Add `QCheck.oneof_array` and deprecate `QCheck.oneofa`
+  - Un-deprecate `QCheck.oneof` with a better specification and deprecate `QCheck.choose` for consistency
+  - Add `QCheck2.Gen.oneof_list` and deprecate `QCheck2.Gen.oneofl`
+  - Add `QCheck2.Gen.oneof_array` and deprecate `QCheck2.Gen.oneofa`
 - Add missing `QCheck2.Gen.map_keep_input` for consistency
 - Add `QCheck.no_shrink` for consistency
 - Fix shrinking for `QCheck2.Gen.exponential` which could shrink to `infinity`
