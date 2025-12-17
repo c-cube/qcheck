@@ -82,7 +82,7 @@ content will appear. *)
                                     (fun self n -> match n with
                                        | 0 -> map leaf nat
                                        | n ->
-                                         frequency
+                                         oneof_weighted
                                            [1, map leaf nat;
                                             2, map2 node (self (n/2)) (self (n/2))]
                                     ));;
@@ -721,11 +721,20 @@ module Gen : sig
       @deprecated use {!oneof_array} instead.
   *)
 
+  val oneof_weighted : (int * 'a t) list -> 'a t
+  (** Constructs a generator that selects among a given list of generators.
+      Each of the given generators are chosen based on a positive integer weight.
+
+      Shrinks towards the first element of the list.
+      @since NEXT_RELEASE
+  *)
+
   val frequency : (int * 'a t) list -> 'a t
   (** Constructs a generator that selects among a given list of generators.
       Each of the given generators are chosen based on a positive integer weight.
 
       Shrinks towards the first element of the list.
+      @deprecated use {!oneof_weighted} instead.
   *)
 
   val frequencyl : (int * 'a) list -> 'a t
@@ -1068,7 +1077,7 @@ module Gen : sig
                               (fun self n -> match n with
                                  | 0 -> map leaf nat
                                  | n ->
-                                   frequency
+                                   oneof_weighted
                                      [1, map leaf nat;
                                       2, map2 node (self (n/2)) (self (n/2))]
                               ))
@@ -1185,7 +1194,7 @@ module Gen : sig
             then int >|= Result.ok
             else string_printable >|= Result.error)
 
-        (* Another allternative syntax with OCaml 4.08+ binding operators *)
+        (* Another alternative syntax with OCaml 4.08+ binding operators *)
         let int_string_result : (int, string) result Gen.t = Gen.(
             let* n = int_range 0 9 in
             if n < 9
@@ -1193,10 +1202,10 @@ module Gen : sig
             else string_printable >|= Result.error)
       ]}
 
-      Note that this particular use case can be simplified by using [frequency]:
+      Note that this particular use case can be simplified by using [oneof_weighted]:
       {[
         let int_string_result : (int, string) result Gen.t = Gen.(
-            frequency [
+            oneof_weighted [
               (9, int >|= Result.ok);
               (1, string_printable >|= Result.error)
             ])

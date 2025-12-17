@@ -646,10 +646,10 @@ module Gen = struct
   let small_signed_int = int_small
 
   (** Shrink towards the first element of the list *)
-  let frequency (l : (int * 'a t) list) : 'a t =
-    if l = [] then failwith "QCheck2.frequency called with an empty list";
+  let oneof_weighted (l : (int * 'a t) list) : 'a t =
+    if l = [] then failwith "QCheck2.Gen.oneof_weighted called with an empty list";
     let sums = sum_int (List.map fst l) in
-    if sums < 1 then failwith "QCheck2.frequency called with weight sum < 1";
+    if sums < 1 then failwith "QCheck2.Gen.oneof_weighted called with weight sum < 1";
     int_bound (sums - 1)
     >>= fun i ->
     let rec aux acc = function
@@ -658,9 +658,11 @@ module Gen = struct
     in
     aux 0 l
 
+  let frequency = oneof_weighted
+
   let frequencyl (l : (int * 'a) list) : 'a t =
     List.map (fun (weight, value) -> (weight, pure value)) l
-    |> frequency
+    |> oneof_weighted
 
   let frequencya a = frequencyl (Array.to_list a)
 
