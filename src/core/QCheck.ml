@@ -153,7 +153,9 @@ module Gen = struct
 
   let frequencyl = oneof_weighted_list
 
-  let frequencya a = oneof_weighted_list (Array.to_list a)
+  let oneof_weighted_array a = oneof_weighted_list (Array.to_list a)
+
+  let frequencya = oneof_weighted_array
 
   let oneof_weighted l st = oneof_weighted_list l st st
 
@@ -1889,7 +1891,7 @@ let frequency ?print ?small ?shrink ?collect l =
 (** Given list of [(frequency,value)] pairs, returns value with probability proportional
     to given frequency *)
 let frequencyl ?print ?small l = make ?print ?small (Gen.oneof_weighted_list l)
-let frequencya ?print ?small l = make ?print ?small (Gen.frequencya l)
+let frequencya ?print ?small a = make ?print ?small (Gen.oneof_weighted_array a)
 
 let map_same_type f a =
   adapt_ a (fun st -> f (a.gen st))
