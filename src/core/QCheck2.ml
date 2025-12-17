@@ -666,7 +666,9 @@ module Gen = struct
 
   let frequencyl = oneof_weighted_list
 
-  let frequencya a = oneof_weighted_list (Array.to_list a)
+  let oneof_weighted_array a = oneof_weighted_list (Array.to_list a)
+
+  let frequencya = oneof_weighted_array
 
   let char_range ?(origin : char option) (a : char) (b : char) : char t =
     (int_range ~origin:(Char.code (Option.value ~default:a origin)) (Char.code a) (Char.code b)) >|= Char.chr

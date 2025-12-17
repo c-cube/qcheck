@@ -753,11 +753,20 @@ module Gen : sig
       @deprecated use {!oneof_weighted_list} instead.
   *)
 
+  val oneof_weighted_array : (int * 'a) array -> 'a t
+  (** Constructs a generator that selects among a given array of values.
+      Each of the array entries are chosen based on a positive integer weight.
+
+      Shrinks towards the first element of the array.
+      @since NEXT_RELEASE
+  *)
+
   val frequencya : (int * 'a) array -> 'a t
   (** Constructs a generator that selects among a given array of values.
       Each of the array entries are chosen based on a positive integer weight.
 
       Shrinks towards the first element of the array.
+      @deprecated use {!oneof_weighted_array} instead.
   *)
 
   (** {3 Shuffling elements} *)
