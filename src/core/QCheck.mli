@@ -1823,9 +1823,15 @@ val frequencyl : ?print:'a Print.t -> ?small:('a -> int) ->
     the probability distribution (the higher, the more likely).
     @deprecated use {!oneof_weighted_list} instead. *)
 
+val oneof_weighted_array : ?print:'a Print.t -> ?small:('a -> int) ->
+  (int * 'a) array -> 'a arbitrary
+(** Same as {!oneof_frequency_list}, but with an array.
+    @since NEXT_RELEASE *)
+
 val frequencya : ?print:'a Print.t -> ?small:('a -> int) ->
   (int * 'a) array -> 'a arbitrary
-(** Same as {!oneof_frequency_list}, but with an array. *)
+(** Same as {!oneof_frequency_list}, but with an array.
+    @deprecated use {!oneof_weighted_array} instead. *)
 
 val map : ?rev:('b -> 'a) -> ('a -> 'b) -> 'a arbitrary -> 'b arbitrary
 (** [map f a] returns a new arbitrary instance that generates values using

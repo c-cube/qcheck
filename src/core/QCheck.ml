@@ -1897,7 +1897,8 @@ let frequency ?print ?small ?shrink ?collect l =
     to given frequency *)
 let oneof_weighted_list ?print ?small l = make ?print ?small (Gen.oneof_weighted_list l)
 let frequencyl = oneof_weighted_list
-let frequencya ?print ?small a = make ?print ?small (Gen.oneof_weighted_array a)
+let oneof_weighted_array ?print ?small a = make ?print ?small (Gen.oneof_weighted_array a)
+let frequencya = oneof_weighted_array
 
 let map_same_type f a =
   adapt_ a (fun st -> f (a.gen st))
