@@ -1137,7 +1137,7 @@ module Stats = struct
     let dist = ("dist",fun x -> x) in
     [
       (* test from issue #40 *)
-      Test.make ~name:"int_stats_neg"                  ~count:5000   ~stats:[dist] Gen.small_signed_int                 (fun _ -> true);
+      Test.make ~name:"int_stats_neg"                  ~count:5000   ~stats:[dist] Gen.int_small                        (fun _ -> true);
       (* distribution tests from PR #45 *)
       Test.make ~name:"int dist"                       ~count:100000 ~stats:[dist] Gen.int                              (fun _ -> true);
       Test.make ~name:"int_bound 1000 dist"            ~count:10000  ~stats:[dist] (Gen.int_bound 1000)                 (fun _ -> true);
