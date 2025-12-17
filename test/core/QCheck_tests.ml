@@ -817,7 +817,7 @@ module Shrink = struct
     Test.make ~name:"bind ordered pairs"
       (make ~print:Print.(pair int int)
          ~shrink:Shrink.(filter (fun (i,j) -> i<=j) (pair int int))
-         Gen.(pint >>= fun j -> int_bound j >>= fun i -> return (i,j)))
+         Gen.(int_pos >>= fun j -> int_bound j >>= fun i -> return (i,j)))
       (fun (_i,_j) -> false)
 
   let bind_pair_list_size =
@@ -1203,7 +1203,7 @@ module Stats = struct
   let int_dist_tests =
     let dist = ("dist",fun x -> x) in
     [ (* test from issue #40 *)
-      Test.make ~name:"int_stats_neg"                  ~count:5000   (add_stat dist small_signed_int)                 (fun _ -> true);
+      Test.make ~name:"int_stats_neg"                  ~count:5000   (add_stat dist int_small)                        (fun _ -> true);
       (* distribution tests from PR #45 *)
       Test.make ~name:"int dist"                       ~count:100000 (add_stat dist int)                              (fun _ -> true);
       Test.make ~name:"int_bound 1000 dist"            ~count:10000  (add_stat dist (int_bound 1000))                 (fun _ -> true);
