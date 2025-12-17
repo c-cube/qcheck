@@ -1811,14 +1811,21 @@ val frequency : ?print:'a Print.t -> ?small:('a -> int) ->
 (** Similar to {!oneof} but with frequencies.
     @deprecated use {!oneof_weighted} instead. *)
 
+val oneof_weighted_list : ?print:'a Print.t -> ?small:('a -> int) ->
+  (int * 'a) list -> 'a arbitrary
+(** Same as {!oneof_list}, but each element is paired with its frequency in
+    the probability distribution (the higher, the more likely).
+    @since NEXT_RELEASE *)
+
 val frequencyl : ?print:'a Print.t -> ?small:('a -> int) ->
   (int * 'a) list -> 'a arbitrary
 (** Same as {!oneof_list}, but each element is paired with its frequency in
-    the probability distribution (the higher, the more likely). *)
+    the probability distribution (the higher, the more likely).
+    @deprecated use {!oneof_weighted_list} instead. *)
 
 val frequencya : ?print:'a Print.t -> ?small:('a -> int) ->
   (int * 'a) array -> 'a arbitrary
-(** Same as {!frequencyl}, but with an array. *)
+(** Same as {!oneof_frequency_list}, but with an array. *)
 
 val map : ?rev:('b -> 'a) -> ('a -> 'b) -> 'a arbitrary -> 'b arbitrary
 (** [map f a] returns a new arbitrary instance that generates values using

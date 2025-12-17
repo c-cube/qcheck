@@ -1895,7 +1895,8 @@ let frequency ?print ?small ?shrink ?collect l =
 
 (** Given list of [(frequency,value)] pairs, returns value with probability proportional
     to given frequency *)
-let frequencyl ?print ?small l = make ?print ?small (Gen.oneof_weighted_list l)
+let oneof_weighted_list ?print ?small l = make ?print ?small (Gen.oneof_weighted_list l)
+let frequencyl = oneof_weighted_list
 let frequencya ?print ?small a = make ?print ?small (Gen.oneof_weighted_array a)
 
 let map_same_type f a =
