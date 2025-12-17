@@ -1952,9 +1952,9 @@ module TestResult = struct
   let get_count = QCheck2.TestResult.get_count
   let get_count_gen = QCheck2.TestResult.get_count_gen
   let get_state = QCheck2.TestResult.get_state
-  let stats = QCheck2.TestResult.stats
-  let collect = QCheck2.TestResult.collect
-  let warnings = QCheck2.TestResult.warnings
+  let stats = QCheck2.TestResult.get_stats
+  let collect = QCheck2.TestResult.get_collect
+  let warnings = QCheck2.TestResult.get_warnings
   let is_success = QCheck2.TestResult.is_success
 end
 
