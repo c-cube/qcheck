@@ -250,7 +250,7 @@ let test_equal () =
     [
       [%stri
         let gen =
-          QCheck.Gen.frequency
+          QCheck.Gen.oneof_weighted
             [
               (1, QCheck.Gen.pure A);
               (1, QCheck.Gen.pure B);
@@ -259,7 +259,7 @@ let test_equal () =
       [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen_t' =
-          QCheck.Gen.frequency
+          QCheck.Gen.oneof_weighted
             [
               (1, QCheck.Gen.pure A);
               (1, QCheck.Gen.pure B);
@@ -280,7 +280,7 @@ let test_dependencies () =
     [
       [%stri
         let gen =
-          QCheck.Gen.frequency
+          QCheck.Gen.oneof_weighted
             [
               (1, QCheck.Gen.map (fun gen0 -> Int gen0) SomeModule.gen);
               ( 1,
@@ -314,7 +314,7 @@ let test_konstr () =
       [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
-          QCheck.Gen.frequency
+          QCheck.Gen.oneof_weighted
             [
               (1, QCheck.Gen.map (fun gen0 -> B gen0) QCheck.Gen.int);
               (1, QCheck.Gen.map (fun gen0 -> C gen0) QCheck.Gen.int);
@@ -322,7 +322,7 @@ let test_konstr () =
       [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
-          QCheck.Gen.frequency
+          QCheck.Gen.oneof_weighted
             [
               (1, QCheck.Gen.map (fun gen0 -> X gen0) gen_t1);
               (1, QCheck.Gen.map (fun gen0 -> Y gen0) gen_t2);
@@ -331,12 +331,12 @@ let test_konstr () =
       [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
-          QCheck.Gen.frequency
+          QCheck.Gen.oneof_weighted
             [ (1, QCheck.Gen.pure Left); (1, QCheck.Gen.pure Right) ]];
       [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
-          QCheck.Gen.frequency
+          QCheck.Gen.oneof_weighted
             [
               (1, QCheck.Gen.map (fun gen0 -> Simple gen0) QCheck.Gen.int);
               ( 1,
@@ -388,7 +388,7 @@ let test_record () =
       [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen =
-          QCheck.Gen.frequency
+          QCheck.Gen.oneof_weighted
             [
               (1, QCheck.Gen.map (fun gen0 -> A gen0) gen_t');
               ( 1,
@@ -415,7 +415,7 @@ let test_variant () =
     [
       [%stri
         let gen =
-          (QCheck.Gen.frequency
+          (QCheck.Gen.oneof_weighted
              [
                (1, QCheck.Gen.pure `A);
                (1, QCheck.Gen.map (fun gen0 -> `B gen0) QCheck.Gen.int);
@@ -425,7 +425,7 @@ let test_variant () =
       [%stri let arb = QCheck.make @@ gen];
       [%stri
         let gen_t' =
-          (QCheck.Gen.frequency [ (1, QCheck.Gen.pure `B); (1, gen) ]
+          (QCheck.Gen.oneof_weighted [ (1, QCheck.Gen.pure `B); (1, gen) ]
            : t' QCheck.Gen.t)];
       [%stri let arb_t' = QCheck.make @@ gen_t'];
 
@@ -449,7 +449,7 @@ let test_tree () =
          match n with
          | 0 -> QCheck.Gen.pure Leaf
          | _ ->
-            QCheck.Gen.frequency
+            QCheck.Gen.oneof_weighted
               [
                 (1, QCheck.Gen.pure Leaf);
                 ( 1,
@@ -482,7 +482,7 @@ let test_expr () =
          match n with
          | 0 -> QCheck.Gen.map (fun gen0 -> Value gen0) QCheck.Gen.int
          | _ ->
-            QCheck.Gen.frequency
+            QCheck.Gen.oneof_weighted
               [
                 ( 1,
                   QCheck.Gen.map (fun gen0 -> Value gen0) QCheck.Gen.int
@@ -537,7 +537,7 @@ let test_forest () =
           match n with
           | 0 -> QCheck.Gen.pure Nil
           | _ ->
-             QCheck.Gen.frequency
+             QCheck.Gen.oneof_weighted
                [
                  (1, QCheck.Gen.pure Nil);
                  ( 1,
@@ -758,7 +758,7 @@ let test_weight_konstrs () =
     [
       [%stri
         let gen =
-          QCheck.Gen.frequency
+          QCheck.Gen.oneof_weighted
             [
               (5, QCheck.Gen.pure A);
               (6, QCheck.Gen.pure B);
@@ -781,7 +781,7 @@ let test_recursive_poly_variant () =
          (match n with
          | 0 -> QCheck.Gen.map (fun gen0 -> `Leaf gen0) gen_a
          | _ ->
-            QCheck.Gen.frequency
+            QCheck.Gen.oneof_weighted
               [
                 ( 1,
                   QCheck.Gen.map (fun gen0 -> `Leaf gen0) gen_a
@@ -826,7 +826,7 @@ let test_unused_variable () =
           match n with
           | 0 -> QCheck.Gen.pure A
           | _ ->
-            QCheck.Gen.frequency
+            QCheck.Gen.oneof_weighted
               [(1, (QCheck.Gen.pure A));
                (1, (QCheck.Gen.map (fun gen0 -> B gen0) (gen_myint_sized (n / 2))))]
         and gen_myint_sized _n = QCheck.Gen.nat
@@ -839,7 +839,7 @@ let test_unused_variable () =
       [%stri let arb_myint = QCheck.make @@ gen_myint];
       [%stri
         let rec gen_c_sized n =
-          QCheck.Gen.frequency
+          QCheck.Gen.oneof_weighted
             [(1, (QCheck.Gen.map (fun gen0 -> A gen0) (gen_myint_sized (n / 2))));
              (1, (QCheck.Gen.map (fun gen0 -> B gen0) (gen_myint_sized (n / 2))))]
         and gen_myint_sized _n = QCheck.Gen.nat
@@ -890,7 +890,7 @@ let test_faulty_is_rec_constr_decl () =
                match n with
                | 0 -> QCheck.Gen.pure Foo
                | _ ->
-                 QCheck.Gen.frequency
+                 QCheck.Gen.oneof_weighted
                    [(1, (QCheck.Gen.pure Foo));
                     (1,
                      (QCheck.Gen.map (fun gen0 -> Bar { baz = gen0 })
