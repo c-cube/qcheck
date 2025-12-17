@@ -202,7 +202,7 @@ let test_equal () =
     [
       [%stri
         let gen =
-          QCheck2.Gen.frequency
+          QCheck2.Gen.oneof_weighted
             [
               (1, QCheck2.Gen.pure A);
               (1, QCheck2.Gen.pure B);
@@ -210,7 +210,7 @@ let test_equal () =
             ]];
       [%stri
         let gen_t' =
-          QCheck2.Gen.frequency
+          QCheck2.Gen.oneof_weighted
             [
               (1, QCheck2.Gen.pure A);
               (1, QCheck2.Gen.pure B);
@@ -230,7 +230,7 @@ let test_dependencies () =
     [
       [%stri
         let gen =
-          QCheck2.Gen.frequency
+          QCheck2.Gen.oneof_weighted
             [
               (1, QCheck2.Gen.map (fun gen0 -> Int gen0) SomeModule.gen);
               ( 1,
@@ -261,14 +261,14 @@ let test_konstr () =
       [%stri let gen = QCheck2.Gen.map (fun gen0 -> A gen0) QCheck2.Gen.int];
       [%stri
         let gen =
-          QCheck2.Gen.frequency
+          QCheck2.Gen.oneof_weighted
             [
               (1, QCheck2.Gen.map (fun gen0 -> B gen0) QCheck2.Gen.int);
               (1, QCheck2.Gen.map (fun gen0 -> C gen0) QCheck2.Gen.int);
             ]];
       [%stri
         let gen =
-          QCheck2.Gen.frequency
+          QCheck2.Gen.oneof_weighted
             [
               (1, QCheck2.Gen.map (fun gen0 -> X gen0) gen_t1);
               (1, QCheck2.Gen.map (fun gen0 -> Y gen0) gen_t2);
@@ -276,11 +276,11 @@ let test_konstr () =
             ]];
       [%stri
         let gen =
-          QCheck2.Gen.frequency
+          QCheck2.Gen.oneof_weighted
             [ (1, QCheck2.Gen.pure Left); (1, QCheck2.Gen.pure Right) ]];
       [%stri
         let gen =
-          QCheck2.Gen.frequency
+          QCheck2.Gen.oneof_weighted
             [
               (1, QCheck2.Gen.map (fun gen0 -> Simple gen0) QCheck2.Gen.int);
               ( 1,
@@ -329,7 +329,7 @@ let test_record () =
             (QCheck2.Gen.pair QCheck2.Gen.int QCheck2.Gen.string)];
       [%stri
         let gen =
-          QCheck2.Gen.frequency
+          QCheck2.Gen.oneof_weighted
             [
               (1, QCheck2.Gen.map (fun gen0 -> A gen0) gen_t');
               ( 1,
@@ -355,7 +355,7 @@ let test_variant () =
     [
       [%stri
         let gen =
-          (QCheck2.Gen.frequency
+          (QCheck2.Gen.oneof_weighted
              [
                (1, QCheck2.Gen.pure `A);
                (1, QCheck2.Gen.map (fun gen0 -> `B gen0) QCheck2.Gen.int);
@@ -364,7 +364,7 @@ let test_variant () =
             : t QCheck2.Gen.t)];
       [%stri
         let gen_t' =
-          (QCheck2.Gen.frequency [ (1, QCheck2.Gen.pure `B); (1, gen) ]
+          (QCheck2.Gen.oneof_weighted [ (1, QCheck2.Gen.pure `B); (1, gen) ]
             : t' QCheck2.Gen.t)];
     ]
   in
@@ -386,7 +386,7 @@ let test_tree () =
          match n with
          | 0 -> QCheck2.Gen.pure Leaf
          | _ ->
-            QCheck2.Gen.frequency
+            QCheck2.Gen.oneof_weighted
               [
                 (1, QCheck2.Gen.pure Leaf);
                 ( 1,
@@ -417,7 +417,7 @@ let test_expr () =
          match n with
          | 0 -> QCheck2.Gen.map (fun gen0 -> Value gen0) QCheck2.Gen.int
          | _ ->
-            QCheck2.Gen.frequency
+            QCheck2.Gen.oneof_weighted
               [
                 ( 1,
                   QCheck2.Gen.map (fun gen0 -> Value gen0) QCheck2.Gen.int
@@ -470,7 +470,7 @@ let test_forest () =
           match n with
           | 0 -> QCheck2.Gen.pure Nil
           | _ ->
-             QCheck2.Gen.frequency
+             QCheck2.Gen.oneof_weighted
                [
                  (1, QCheck2.Gen.pure Nil);
                  ( 1,
@@ -673,7 +673,7 @@ let test_weight_konstrs () =
     [
       [%stri
         let gen =
-          QCheck2.Gen.frequency
+          QCheck2.Gen.oneof_weighted
             [
               (5, QCheck2.Gen.pure A);
               (6, QCheck2.Gen.pure B);
@@ -695,7 +695,7 @@ let test_recursive_poly_variant () =
          (match n with
          | 0 -> QCheck2.Gen.map (fun gen0 -> `Leaf gen0) gen_a
          | _ ->
-            QCheck2.Gen.frequency
+            QCheck2.Gen.oneof_weighted
               [
                 ( 1,
                   QCheck2.Gen.map (fun gen0 -> `Leaf gen0) gen_a

@@ -142,18 +142,24 @@ module Gen = struct
   let oneof_array xs st = Array.get xs (Random.State.int st (Array.length xs))
   let oneofa = oneof_array
 
-  let frequencyl l st =
+  let oneof_weighted_list l st =
     let sums = sum_int (List.map fst l) in
     let i = Random.State.int st sums in
     let rec aux acc = function
       | ((x,g)::xs) -> if i < acc+x then g else aux (acc+x) xs
-      | _ -> failwith "frequency"
+      | _ -> failwith "Gen.oneof_weighted_list"
     in
     aux 0 l
 
-  let frequencya a = frequencyl (Array.to_list a)
+  let frequencyl = oneof_weighted_list
 
-  let frequency l st = frequencyl l st st
+  let oneof_weighted_array a = oneof_weighted_list (Array.to_list a)
+
+  let frequencya = oneof_weighted_array
+
+  let oneof_weighted l st = oneof_weighted_list l st st
+
+  let frequency = oneof_weighted
 
   let int_pos_small st =
     let p = RS.float st 1. in
@@ -1873,19 +1879,26 @@ let always ?print x =
   make ?print gen
 
 (** like oneof, but with weights *)
-let frequency ?print ?small ?shrink ?collect l =
+let oneof_weighted ?print ?small ?shrink l =
   let first = snd (List.hd l) in
   let small = _opt_sum small first.small in
   let print = _opt_sum print first.print in
   let shrink = _opt_sum shrink first.shrink in
-  let collect = _opt_sum collect first.collect in
   let gens = List.map (fun (x,y) -> x, y.gen) l in
-  make ?print ?small ?shrink ?collect (Gen.frequency gens)
+  make ?print ?small ?shrink (Gen.oneof_weighted gens)
+
+let frequency ?print ?small ?shrink ?collect l =
+  let arb = oneof_weighted ?print ?small ?shrink l in
+  match collect with
+  | None -> arb
+  | Some c -> set_collect c arb
 
 (** Given list of [(frequency,value)] pairs, returns value with probability proportional
     to given frequency *)
-let frequencyl ?print ?small l = make ?print ?small (Gen.frequencyl l)
-let frequencya ?print ?small l = make ?print ?small (Gen.frequencya l)
+let oneof_weighted_list ?print ?small l = make ?print ?small (Gen.oneof_weighted_list l)
+let frequencyl = oneof_weighted_list
+let oneof_weighted_array ?print ?small a = make ?print ?small (Gen.oneof_weighted_array a)
+let frequencya = oneof_weighted_array
 
 let map_same_type f a =
   adapt_ a (fun st -> f (a.gen st))

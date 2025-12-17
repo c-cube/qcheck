@@ -183,7 +183,7 @@ let tree_gen = QCheck.Gen.(sized @@ fix
   (fun self n -> match n with
     | 0 -> map leaf nat
     | n ->
-      frequency
+      oneof_weighted
         [1, map leaf nat;
          2, map2 node (self (n/2)) (self (n/2))]
     ));;
@@ -221,7 +221,7 @@ generation of lists, arrays, and a choice function.
 Then, we define `arbitrary_tree`, a `tree QCheck.arbitrary` value, which
 contains everything needed for testing on trees:
 
-- a random generator (mandatory), weighted with `frequency` to
+- a random generator (mandatory), weighted with `oneof_weighted` to
   increase the chance of generating deep trees
 - a printer (optional), very useful for printing counterexamples
 - a *shrinker* (optional), very useful for trying to reduce big
@@ -313,7 +313,7 @@ let tree_gen = QCheck2.Gen.(sized @@ fix
   (fun self n -> match n with
     | 0 -> map leaf nat
     | n ->
-      frequency
+      oneof_weighted
         [1, map leaf nat;
          2, map2 node (self (n/2)) (self (n/2))]
     ));;

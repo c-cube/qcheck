@@ -69,7 +69,7 @@ all rights reserved.
                             (fun self n -> match n with
                                | 0 -> map leaf nat
                                | n ->
-                                 frequency
+                                 oneof_weighted
                                    [1, map leaf nat;
                                     2, map2 node (self (n/2)) (self (n/2))]
                             ))
@@ -224,17 +224,35 @@ module Gen : sig
       @raise Invalid_argument or Failure if list is empty
       @deprecated use {!oneof_array} instead. *)
 
+  val oneof_weighted : (int * 'a t) list -> 'a t
+  (** Constructs a generator that selects among a given list of generators.
+      Each of the given generators are chosen based on a positive integer weight.
+      @since NEXT_RELEASE *)
+
   val frequency : (int * 'a t) list -> 'a t
   (** Constructs a generator that selects among a given list of generators.
-      Each of the given generators are chosen based on a positive integer weight. *)
+      Each of the given generators are chosen based on a positive integer weight.
+      @deprecated use {!oneof_weighted} instead. *)
+
+  val oneof_weighted_list : (int * 'a) list -> 'a t
+  (** Constructs a generator that selects among a given list of values.
+      Each of the given values are chosen based on a positive integer weight.
+      @since NEXT_RELEASE *)
 
   val frequencyl : (int * 'a) list -> 'a t
   (** Constructs a generator that selects among a given list of values.
-      Each of the given values are chosen based on a positive integer weight. *)
+      Each of the given values are chosen based on a positive integer weight.
+      @deprecated use {!oneof_weighted_list} instead. *)
+
+  val oneof_weighted_array : (int * 'a) array -> 'a t
+  (** Constructs a generator that selects among a given array of values.
+      Each of the array entries are chosen based on a positive integer weight.
+      @since NEXT_RELEASE *)
 
   val frequencya : (int * 'a) array -> 'a t
   (** Constructs a generator that selects among a given array of values.
-      Each of the array entries are chosen based on a positive integer weight. *)
+      Each of the array entries are chosen based on a positive integer weight.
+      @deprecated use {!oneof_weighted_array} instead. *)
 
   val shuffle_array : 'a array -> 'a array t
   (** Creates a generator of shuffled arrays.
@@ -735,7 +753,7 @@ module Gen : sig
                               (fun self n -> match n with
                                  | 0 -> map leaf nat
                                  | n ->
-                                   frequency
+                                   oneof_weighted
                                      [1, map leaf nat;
                                       2, map2 node (self (n/2)) (self (n/2))]
                               ))
@@ -1782,19 +1800,38 @@ val oneof : 'a arbitrary list -> 'a arbitrary
 val always : ?print:'a Print.t -> 'a -> 'a arbitrary
 (** Always return the same element. *)
 
+val oneof_weighted : ?print:'a Print.t -> ?small:('a -> int) ->
+  ?shrink:'a Shrink.t -> (int * 'a arbitrary) list -> 'a arbitrary
+(** Similar to {!oneof} but with frequencies.
+    @since NEXT_RELEASE *)
+
 val frequency : ?print:'a Print.t -> ?small:('a -> int) ->
   ?shrink:'a Shrink.t -> ?collect:('a -> string) ->
   (int * 'a arbitrary) list -> 'a arbitrary
-(** Similar to {!oneof} but with frequencies. *)
+(** Similar to {!oneof} but with frequencies.
+    @deprecated use {!oneof_weighted} instead. *)
+
+val oneof_weighted_list : ?print:'a Print.t -> ?small:('a -> int) ->
+  (int * 'a) list -> 'a arbitrary
+(** Same as {!oneof_list}, but each element is paired with its frequency in
+    the probability distribution (the higher, the more likely).
+    @since NEXT_RELEASE *)
 
 val frequencyl : ?print:'a Print.t -> ?small:('a -> int) ->
   (int * 'a) list -> 'a arbitrary
 (** Same as {!oneof_list}, but each element is paired with its frequency in
-    the probability distribution (the higher, the more likely). *)
+    the probability distribution (the higher, the more likely).
+    @deprecated use {!oneof_weighted_list} instead. *)
+
+val oneof_weighted_array : ?print:'a Print.t -> ?small:('a -> int) ->
+  (int * 'a) array -> 'a arbitrary
+(** Same as {!oneof_frequency_list}, but with an array.
+    @since NEXT_RELEASE *)
 
 val frequencya : ?print:'a Print.t -> ?small:('a -> int) ->
   (int * 'a) array -> 'a arbitrary
-(** Same as {!frequencyl}, but with an array. *)
+(** Same as {!oneof_frequency_list}, but with an array.
+    @deprecated use {!oneof_weighted_array} instead. *)
 
 val map : ?rev:('b -> 'a) -> ('a -> 'b) -> 'a arbitrary -> 'b arbitrary
 (** [map f a] returns a new arbitrary instance that generates values using

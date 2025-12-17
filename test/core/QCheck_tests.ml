@@ -26,7 +26,7 @@ module IntTree = struct
                         (fun self n -> match n with
                            | 0 -> map leaf nat
                            | n ->
-                             frequency
+                             oneof_weighted
                                [1, map leaf nat;
                                 2, map2 node (self (n/2)) (self (n/2))]
                         ))

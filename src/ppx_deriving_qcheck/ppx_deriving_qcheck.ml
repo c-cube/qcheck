@@ -163,7 +163,7 @@ let is_rec_type_decl env typ =
 
     let rec gen_sized_foo n =
       let open QCheck.Gen in
-      frequency [
+      oneof_weighted [
         (map (fun x -> A x) gen_bar);
         (map (fun x -> B x) gen_bar);
         ]
@@ -226,7 +226,7 @@ let gen_longident ~loc ~env lg args =
     nodes in [xs].
 
     If no recursive node is found, the type is _not_ recursive, we build a
-    generator using frequency.
+    generator using [oneof_weighted].
 
     However, if recursive nodes are found, we build a tree like generator using
     {!gen_sized}.
@@ -252,14 +252,14 @@ let gen_sized ~loc ~env (is_rec : 'a -> bool) (to_gen : 'a -> expression) (xs : 
   let nodes = List.filter is_rec xs in
 
   if List.length nodes = 0 then
-    G.frequency ~loc (A.elist leaves)
+    G.oneof_weighted ~loc (A.elist leaves)
   else if List.length leaves = 0 then
     let nodes = List.map to_gen nodes in
-    G.frequency ~loc (A.elist nodes)
+    G.oneof_weighted ~loc (A.elist nodes)
   else
     let nodes = List.map to_gen nodes in
-    let leaves = A.elist leaves |> G.frequency ~loc
-    and nodes = A.elist (leaves @ nodes) |> G.frequency ~loc in
+    let leaves = A.elist leaves |> G.oneof_weighted ~loc
+    and nodes = A.elist (leaves @ nodes) |> G.oneof_weighted ~loc in
     [%expr
         match n with
         | 0 -> [%e leaves]
