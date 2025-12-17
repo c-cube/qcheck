@@ -1800,10 +1800,16 @@ val oneof : 'a arbitrary list -> 'a arbitrary
 val always : ?print:'a Print.t -> 'a -> 'a arbitrary
 (** Always return the same element. *)
 
+val oneof_weighted : ?print:'a Print.t -> ?small:('a -> int) ->
+  ?shrink:'a Shrink.t -> (int * 'a arbitrary) list -> 'a arbitrary
+(** Similar to {!oneof} but with frequencies.
+    @since NEXT_RELEASE *)
+
 val frequency : ?print:'a Print.t -> ?small:('a -> int) ->
   ?shrink:'a Shrink.t -> ?collect:('a -> string) ->
   (int * 'a arbitrary) list -> 'a arbitrary
-(** Similar to {!oneof} but with frequencies. *)
+(** Similar to {!oneof} but with frequencies.
+    @deprecated use {!oneof_weighted} instead. *)
 
 val frequencyl : ?print:'a Print.t -> ?small:('a -> int) ->
   (int * 'a) list -> 'a arbitrary

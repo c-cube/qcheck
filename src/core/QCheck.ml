@@ -1879,14 +1879,19 @@ let always ?print x =
   make ?print gen
 
 (** like oneof, but with weights *)
-let frequency ?print ?small ?shrink ?collect l =
+let oneof_weighted ?print ?small ?shrink l =
   let first = snd (List.hd l) in
   let small = _opt_sum small first.small in
   let print = _opt_sum print first.print in
   let shrink = _opt_sum shrink first.shrink in
-  let collect = _opt_sum collect first.collect in
   let gens = List.map (fun (x,y) -> x, y.gen) l in
-  make ?print ?small ?shrink ?collect (Gen.frequency gens)
+  make ?print ?small ?shrink (Gen.oneof_weighted gens)
+
+let frequency ?print ?small ?shrink ?collect l =
+  let arb = oneof_weighted ?print ?small ?shrink l in
+  match collect with
+  | None -> arb
+  | Some c -> set_collect c arb
 
 (** Given list of [(frequency,value)] pairs, returns value with probability proportional
     to given frequency *)
