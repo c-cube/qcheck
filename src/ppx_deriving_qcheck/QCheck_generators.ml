@@ -68,11 +68,11 @@ let pure ~loc ~version e =
   let gen = with_prefix_gen loc version "pure" in
   apply1 loc gen e
 
-let frequency ~loc ~version l =
+let oneof_weighted ~loc ~version l =
   match l with
   | [%expr [([%e? _], [%e? x])]] -> x
   | _ ->
-     let gen = with_prefix_gen loc version "frequency" in
+     let gen = with_prefix_gen loc version "oneof_weighted" in
      apply1 loc gen l
 
 let map ~loc ~version pat expr gen =
@@ -167,7 +167,7 @@ module Make (Version : sig val version : version end) = struct
   let list ~loc = list ~loc ~version
   let array ~loc = array ~loc ~version
   let pure ~loc x = pure ~loc ~version x
-  let frequency ~loc l = frequency ~loc ~version l
+  let oneof_weighted ~loc l = oneof_weighted ~loc ~version l
   let map ~loc pat expr gen = map ~loc ~version pat expr gen
   let pair ~loc a b = pair ~loc ~version a b
   let triple ~loc a b c = triple ~loc ~version a b c
