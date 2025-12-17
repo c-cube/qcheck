@@ -1865,9 +1865,9 @@ let fun4 o1 o2 o3 o4 ret =
 (* Generator combinators *)
 
 (** given a list, returns generator that picks at random from list *)
-let oneof_list ?print xs = make ?print (Gen.oneof_list xs)
+let oneof_list ?print ?small xs = make ?print ?small (Gen.oneof_list xs)
 let oneofl ?print ?collect xs = make ?print ?collect (Gen.oneof_list xs)
-let oneof_array ?print xs = make ?print (Gen.oneof_array xs)
+let oneof_array ?print ?small xs = make ?print ?small (Gen.oneof_array xs)
 let oneofa ?print ?collect xs = make ?print ?collect (Gen.oneof_array xs)
 
 (** Given a list of generators, returns generator that randomly uses one of the generators

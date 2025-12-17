@@ -1769,7 +1769,7 @@ val choose : 'a arbitrary list -> 'a arbitrary
     be empty; if it is [Invalid_argument] is raised.
     @deprecated use {!oneof} instead. *)
 
-val oneof_list : ?print:'a Print.t -> 'a list -> 'a arbitrary
+val oneof_list : ?print:'a Print.t -> ?small:('a -> int) -> 'a list -> 'a arbitrary
 (** Pick an element randomly in the list.
     @since NEXT_RELEASE *)
 
@@ -1778,7 +1778,7 @@ val oneofl : ?print:'a Print.t -> ?collect:('a -> string) ->
 (** Pick an element randomly in the list.
     @deprecated use {!oneof_list} instead. *)
 
-val oneof_array : ?print:'a Print.t -> 'a array -> 'a arbitrary
+val oneof_array : ?print:'a Print.t -> ?small:('a -> int) -> 'a array -> 'a arbitrary
 (** Pick an element randomly in the array.
     @since NEXT_RELEASE *)
 
