@@ -142,18 +142,20 @@ module Gen = struct
   let oneof_array xs st = Array.get xs (Random.State.int st (Array.length xs))
   let oneofa = oneof_array
 
-  let frequencyl l st =
+  let oneof_weighted_list l st =
     let sums = sum_int (List.map fst l) in
     let i = Random.State.int st sums in
     let rec aux acc = function
       | ((x,g)::xs) -> if i < acc+x then g else aux (acc+x) xs
-      | _ -> failwith "frequency"
+      | _ -> failwith "Gen.oneof_weighted_list"
     in
     aux 0 l
 
-  let frequencya a = frequencyl (Array.to_list a)
+  let frequencyl = oneof_weighted_list
 
-  let oneof_weighted l st = frequencyl l st st
+  let frequencya a = oneof_weighted_list (Array.to_list a)
+
+  let oneof_weighted l st = oneof_weighted_list l st st
 
   let frequency = oneof_weighted
 
@@ -1886,7 +1888,7 @@ let frequency ?print ?small ?shrink ?collect l =
 
 (** Given list of [(frequency,value)] pairs, returns value with probability proportional
     to given frequency *)
-let frequencyl ?print ?small l = make ?print ?small (Gen.frequencyl l)
+let frequencyl ?print ?small l = make ?print ?small (Gen.oneof_weighted_list l)
 let frequencya ?print ?small l = make ?print ?small (Gen.frequencya l)
 
 let map_same_type f a =

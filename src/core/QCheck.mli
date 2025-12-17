@@ -234,9 +234,15 @@ module Gen : sig
       Each of the given generators are chosen based on a positive integer weight.
       @deprecated use {!oneof_weighted} instead. *)
 
+  val oneof_weighted_list : (int * 'a) list -> 'a t
+  (** Constructs a generator that selects among a given list of values.
+      Each of the given values are chosen based on a positive integer weight.
+      @since NEXT_RELEASE *)
+
   val frequencyl : (int * 'a) list -> 'a t
   (** Constructs a generator that selects among a given list of values.
-      Each of the given values are chosen based on a positive integer weight. *)
+      Each of the given values are chosen based on a positive integer weight.
+      @deprecated use {!oneof_weighted_list} instead. *)
 
   val frequencya : (int * 'a) array -> 'a t
   (** Constructs a generator that selects among a given array of values.
