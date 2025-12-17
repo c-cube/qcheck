@@ -204,13 +204,25 @@ module Gen : sig
   (** Constructs a generator that selects among a given list of generators.
       @raise Invalid_argument or Failure if list is empty *)
 
+  val oneof_list : 'a list -> 'a t
+  (** Constructs a generator that selects among a given list of values.
+      @raise Invalid_argument or Failure if list is empty
+      @since NEXT_RELEASE *)
+
   val oneofl : 'a list -> 'a t
   (** Constructs a generator that selects among a given list of values.
-      @raise Invalid_argument or Failure if list is empty *)
+      @raise Invalid_argument or Failure if list is empty
+      @deprecated use {!oneof_list} instead. *)
+
+  val oneof_array : 'a array -> 'a t
+  (** Constructs a generator that selects among a given array of values.
+      @raise Invalid_argument or Failure if list is empty
+      @since NEXT_RELEASE *)
 
   val oneofa : 'a array -> 'a t
   (** Constructs a generator that selects among a given array of values.
-      @raise Invalid_argument or Failure if list is empty *)
+      @raise Invalid_argument or Failure if list is empty
+      @deprecated use {!oneof_array} instead. *)
 
   val frequency : (int * 'a t) list -> 'a t
   (** Constructs a generator that selects among a given list of generators.
@@ -1736,22 +1748,36 @@ val tup9 :
 
 val choose : 'a arbitrary list -> 'a arbitrary
 (** Choose among the given list of generators. The list must not
-    be empty; if it is [Invalid_argument] is raised. *)
+    be empty; if it is [Invalid_argument] is raised.
+    @deprecated use {!oneof} instead. *)
+
+val oneof_list : ?print:'a Print.t -> 'a list -> 'a arbitrary
+(** Pick an element randomly in the list.
+    @since NEXT_RELEASE *)
 
 val oneofl : ?print:'a Print.t -> ?collect:('a -> string) ->
   'a list -> 'a arbitrary
-(** Pick an element randomly in the list. *)
+(** Pick an element randomly in the list.
+    @deprecated use {!oneof_list} instead. *)
+
+val oneof_array : ?print:'a Print.t -> 'a array -> 'a arbitrary
+(** Pick an element randomly in the array.
+    @since NEXT_RELEASE *)
 
 val oneofa : ?print:'a Print.t -> ?collect:('a -> string) ->
   'a array -> 'a arbitrary
-(** Pick an element randomly in the array. *)
+(** Pick an element randomly in the array.
+    @deprecated use {!oneof_array} instead. *)
 
 val oneof : 'a arbitrary list -> 'a arbitrary
 (** Pick a generator among the list, randomly.
-    @deprecated this function is badly specified and will not use shrinkers
-    appropriately. Consider using {!Gen.oneof} and then {!make} to build
-    a well behaved arbitrary instance.
-*)
+    The resulting generator uses the printer, shrinker, etc.
+    from the first element in the argument list, if available.
+
+    Consider using {!Gen.oneof} and then {!make} to build
+    an arbitrary instance with a different behaviour.
+
+    @raise Invalid_argument if the argument list is empty. *)
 
 val always : ?print:'a Print.t -> 'a -> 'a arbitrary
 (** Always return the same element. *)
@@ -1763,7 +1789,7 @@ val frequency : ?print:'a Print.t -> ?small:('a -> int) ->
 
 val frequencyl : ?print:'a Print.t -> ?small:('a -> int) ->
   (int * 'a) list -> 'a arbitrary
-(** Same as {!oneofl}, but each element is paired with its frequency in
+(** Same as {!oneof_list}, but each element is paired with its frequency in
     the probability distribution (the higher, the more likely). *)
 
 val frequencya : ?print:'a Print.t -> ?small:('a -> int) ->

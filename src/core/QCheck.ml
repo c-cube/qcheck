@@ -137,8 +137,10 @@ module Gen = struct
   let (<$>) f x st = f (x st)
 
   let oneof l st = List.nth l (Random.State.int st (List.length l)) st
-  let oneofl xs st = List.nth xs (Random.State.int st (List.length xs))
-  let oneofa xs st = Array.get xs (Random.State.int st (Array.length xs))
+  let oneof_list xs st = List.nth xs (Random.State.int st (List.length xs))
+  let oneofl = oneof_list
+  let oneof_array xs st = Array.get xs (Random.State.int st (Array.length xs))
+  let oneofa = oneof_array
 
   let frequencyl l st =
     let sums = sum_int (List.map fst l) in
@@ -1268,8 +1270,8 @@ let make_int ?collect gen =
 let adapt_ o gen =
   make ?print:o.print ?small:o.small ?shrink:o.shrink ?collect:o.collect gen
 
-let choose l = match l with
-  | [] -> raise (Invalid_argument "quickcheck.choose")
+let oneof l = match l with
+  | [] -> raise (Invalid_argument "QCheck.oneof")
   | l ->
       let a = Array.of_list l in
       adapt_ a.(0)
@@ -1856,19 +1858,14 @@ let fun4 o1 o2 o3 o4 ret =
 (* Generator combinators *)
 
 (** given a list, returns generator that picks at random from list *)
-let oneofl ?print ?collect xs = make ?print ?collect (Gen.oneofl xs)
-let oneofa ?print ?collect xs = make ?print ?collect (Gen.oneofa xs)
+let oneof_list ?print xs = make ?print (Gen.oneof_list xs)
+let oneofl ?print ?collect xs = make ?print ?collect (Gen.oneof_list xs)
+let oneof_array ?print xs = make ?print (Gen.oneof_array xs)
+let oneofa ?print ?collect xs = make ?print ?collect (Gen.oneof_array xs)
 
 (** Given a list of generators, returns generator that randomly uses one of the generators
     from the list *)
-let oneof l =
-  let gens = List.map (fun a->a.gen) l in
-  let first = List.hd l in
-  let print = first.print
-  and small = first.small
-  and collect = first.collect
-  and shrink = first.shrink in
-  make ?print ?small ?collect ?shrink (Gen.oneof gens)
+let choose = oneof
 
 (** Generator that always returns given value *)
 let always ?print x =

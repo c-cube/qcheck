@@ -689,18 +689,36 @@ module Gen : sig
       @raise Invalid_argument or Failure if [l] is empty
   *)
 
+  val oneof_list : 'a list -> 'a t
+  (** [oneof_list l] constructs a generator that selects among the given list of values [l].
+
+      Shrinks towards the first element of the list.
+      @raise Invalid_argument or Failure if [l] is empty
+      @since NEXT_RELEASE
+  *)
+
   val oneofl : 'a list -> 'a t
   (** [oneofl l] constructs a generator that selects among the given list of values [l].
 
       Shrinks towards the first element of the list.
       @raise Invalid_argument or Failure if [l] is empty
+      @deprecated use {!oneof_list} instead.
+  *)
+
+  val oneof_array : 'a array -> 'a t
+  (** [oneof_array a] constructs a generator that selects among the given array of values [a].
+
+      Shrinks towards the first element of the array.
+      @raise Invalid_argument or Failure if [a] is empty
+      @since NEXT_RELEASE
   *)
 
   val oneofa : 'a array -> 'a t
   (** [oneofa a] constructs a generator that selects among the given array of values [a].
 
       Shrinks towards the first element of the array.
-      @raise Invalid_argument or Failure if [l] is empty
+      @raise Invalid_argument or Failure if [a] is empty
+      @deprecated use {!oneof_array} instead.
   *)
 
   val frequency : (int * 'a t) list -> 'a t
@@ -1109,7 +1127,7 @@ module Gen : sig
 
         let string_prefixed_with_keyword_gen : string Gen.t =
           Gen.map2 (fun prefix s -> prefix ^ s)
-            (Gen.oneofl ["foo"; "bar"; "baz"])
+            (Gen.oneof_list ["foo"; "bar"; "baz"])
             Gen.string_printable
       ]}
 

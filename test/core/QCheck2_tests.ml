@@ -1165,7 +1165,7 @@ module Stats = struct
       Test.make ~name:"int_small_corners dist"         ~count:1000   ~stats:[dist] (Gen.int_small_corners ())           (fun _ -> true);
       Test.make ~name:"int_neg dist"                   ~count:10000  ~stats:[dist] Gen.int_neg                          (fun _ -> true);
       Test.make ~name:"int_pos dist"                   ~count:10000  ~stats:[dist] Gen.int_pos                          (fun _ -> true);
-      Test.make ~name:"oneof int dist"                 ~count:1000   ~stats:[dist] (Gen.oneofl[min_int;-1;0;1;max_int]) (fun _ -> true);
+      Test.make ~name:"oneof_list int dist"            ~count:1000   ~stats:[dist] (Gen.oneof_list[min_int;-1;0;1;max_int]) (fun _ -> true);
       Test.make ~name:"nat dist"                       ~count:1000   ~stats:[dist] Gen.nat                              (fun _ -> true);
       Test.make ~name:"nat_small dist"                 ~count:1000   ~stats:[dist] Gen.nat_small                        (fun _ -> true);
     ]

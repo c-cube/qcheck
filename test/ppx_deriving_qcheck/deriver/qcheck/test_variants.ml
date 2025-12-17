@@ -16,10 +16,10 @@ let pp_colors fmt x =
 
 let eq_colors = Alcotest.of_pp pp_colors
 
-let arb = oneofl [Red; Green; Blue]
+let arb = oneof_list [Red; Green; Blue]
 
 let test_variants () =
-  test_compare ~msg:"Gen.oneofl <=> deriving variants" ~eq:eq_colors arb arb_colors
+  test_compare ~msg:"Gen.oneof_list <=> deriving variants" ~eq:eq_colors arb arb_colors
 
 type poly_colors = [`Red | `Green | `Blue] [@@deriving qcheck]
 
@@ -32,10 +32,10 @@ let pp_poly_colors fmt x =
 
 let eq_poly_colors = Alcotest.of_pp pp_poly_colors
 
-let arb_poly = oneofl [`Red; `Green; `Blue]
+let arb_poly = oneof_list [`Red; `Green; `Blue]
 
 let test_poly_variants () =
-  test_compare ~msg:"Gen.oneofl <=> deriving variants"
+  test_compare ~msg:"Gen.oneof_list <=> deriving variants"
     ~eq:eq_poly_colors arb_poly arb_poly_colors
 
 (** {2. Tests weight} *)
