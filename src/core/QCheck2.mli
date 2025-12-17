@@ -192,7 +192,7 @@ module Gen : sig
 
       @since NEXT_RELEASE *)
 
-  val pint : ?origin : int -> int t
+  val pint : ?origin : int -> int t [@@deprecated "Use [int_pos] instead"]
   (** Generates non-strictly positive integers uniformly ([0] included).
 
       Shrinks towards [origin] if specified, otherwise towards [0].
@@ -215,7 +215,7 @@ module Gen : sig
 
       @since NEXT_RELEASE *)
 
-  val small_nat : int t
+  val small_nat : int t [@@deprecated "Use [nat_small] instead"]
   (** Small positive integers (< [100], [0] included).
 
       Non-uniform: smaller numbers are more likely than bigger numbers.
@@ -241,7 +241,7 @@ module Gen : sig
 
       @since NEXT_RELEASE *)
 
-  val big_nat : int t
+  val big_nat : int t [@@deprecated "Use [map abs int] instead"]
   (** Generates natural numbers, possibly large (< [1_000_000]).
 
       Non-uniform: smaller numbers are more likely than bigger numbers.
@@ -259,23 +259,23 @@ module Gen : sig
 
       @since NEXT_RELEASE *)
 
-  val neg_int : int t
+  val neg_int : int t [@@deprecated "Use [int_neg] or [map (fun i -> -i) nat] instead"]
   (** Generates non-strictly negative integers ([0] included).
 
       Non-uniform: smaller numbers (in absolute value) are more likely than bigger numbers.
 
       Shrinks towards [0].
 
-      @deprecated use {!int_neg} or [map (fun i -> i) nat] instead. *)
+      @deprecated use {!int_neg} or [map (fun i -> -i) nat] instead. *)
 
-  val small_int : int t
+  val small_int : int t [@@deprecated "Use [nat_small] instead"]
   (** Small UNSIGNED integers, for retrocompatibility.
 
       Shrinks towards [0].
 
       @deprecated use {!nat_small}. *)
 
-  val small_signed_int : int t
+  val small_signed_int : int t [@@deprecated "Use [int_small] instead"]
   (** Small SIGNED integers, based on {!small_nat}.
 
       Non-uniform: smaller numbers (in absolute value) are more likely than bigger numbers.
@@ -302,7 +302,7 @@ module Gen : sig
 
     @since NEXT_RELEASE *)
 
-  val small_int_corners : unit -> int t
+  val small_int_corners : unit -> int t [@@deprecated "Use [int_small_corners] instead"]
   (** As {!small_int}, but each newly created generator starts with
     a list of corner cases before falling back on random generation.
 
@@ -324,7 +324,7 @@ module Gen : sig
       Shrinks towards [0l].
   *)
 
-  val ui32 : int32 t
+  val ui32 : int32 t [@@deprecated "Use [int32] instead"]
   (** Generates {!int32} values.
 
       Shrinks towards [0l].
@@ -338,7 +338,7 @@ module Gen : sig
       Shrinks towards [0L].
   *)
 
-  val ui64 : int64 t
+  val ui64 : int64 t [@@deprecated "Use [int64] instead"]
   (** Generates {!int64} values.
 
       Shrinks towards [0L].
@@ -364,7 +364,7 @@ module Gen : sig
       Shrinks towards [-0.].
   *)
 
-  val pfloat : float t
+  val pfloat : float t [@@deprecated "Use [float_pos] instead"]
   (** Generates positive floating point numbers ([0.] included).
 
       Shrinks towards [0.].
@@ -372,7 +372,7 @@ module Gen : sig
       @deprecated use {!float_pos} instead.
   *)
 
-  val nfloat : float t
+  val nfloat : float t [@@deprecated "Use [float_neg] instead"]
   (** Generates negative floating point numbers. ([-0.] included).
 
       Shrinks towards [-0.].
@@ -520,7 +520,7 @@ module Gen : sig
       @since 0.20
   *)
 
-  val small_string : ?gen:char t -> string t
+  val small_string : ?gen:char t -> string t [@@deprecated "Use [string_small] instead"]
   (** Builds a string generator, length is {!nat_small}.
       Accepts an optional character generator (the default is {!char}).
       Shrinks on the number of characters first, then on the characters.
@@ -697,7 +697,7 @@ module Gen : sig
       @since NEXT_RELEASE
   *)
 
-  val oneofl : 'a list -> 'a t
+  val oneofl : 'a list -> 'a t [@@deprecated "Use [oneof_list] instead"]
   (** [oneofl l] constructs a generator that selects among the given list of values [l].
 
       Shrinks towards the first element of the list.
@@ -713,7 +713,7 @@ module Gen : sig
       @since NEXT_RELEASE
   *)
 
-  val oneofa : 'a array -> 'a t
+  val oneofa : 'a array -> 'a t [@@deprecated "Use [oneof_array] instead"]
   (** [oneofa a] constructs a generator that selects among the given array of values [a].
 
       Shrinks towards the first element of the array.
@@ -729,7 +729,7 @@ module Gen : sig
       @since NEXT_RELEASE
   *)
 
-  val frequency : (int * 'a t) list -> 'a t
+  val frequency : (int * 'a t) list -> 'a t [@@deprecated "Use [oneof_weighted] instead"]
   (** Constructs a generator that selects among a given list of generators.
       Each of the given generators are chosen based on a positive integer weight.
 
@@ -745,7 +745,7 @@ module Gen : sig
       @since NEXT_RELEASE
   *)
 
-  val frequencyl : (int * 'a) list -> 'a t
+  val frequencyl : (int * 'a) list -> 'a t [@@deprecated "Use [oneof_weighted_list] instead"]
   (** Constructs a generator that selects among a given list of values.
       Each of the given values are chosen based on a positive integer weight.
 
@@ -761,7 +761,7 @@ module Gen : sig
       @since NEXT_RELEASE
   *)
 
-  val frequencya : (int * 'a) array -> 'a t
+  val frequencya : (int * 'a) array -> 'a t [@@deprecated "Use [oneof_weighted_array] instead"]
   (** Constructs a generator that selects among a given array of values.
       Each of the array entries are chosen based on a positive integer weight.
 
@@ -775,7 +775,7 @@ module Gen : sig
   (** Returns a copy of the array with its elements shuffled.
       @since NEXT_RELEASE *)
 
-  val shuffle_a : 'a array -> 'a array t
+  val shuffle_a : 'a array -> 'a array t [@@deprecated "Use [shuffle_array] instead"]
   (** Returns a copy of the array with its elements shuffled.
       @deprecated use {!shuffle_array} instead. *)
 
@@ -783,7 +783,7 @@ module Gen : sig
   (** Creates a generator of shuffled lists.
       @since NEXT_RELEASE *)
 
-  val shuffle_l : 'a list -> 'a list t
+  val shuffle_l : 'a list -> 'a list t [@@deprecated "Use [shuffle_list] instead"]
   (** Creates a generator of shuffled lists.
       @deprecated use {!shuffle_list} instead. *)
 
@@ -800,7 +800,7 @@ module Gen : sig
 
       @since NEXT_RELEASE *)
 
-  val shuffle_w_l : (int * 'a) list -> 'a list t
+  val shuffle_w_l : (int * 'a) list -> 'a list t [@@deprecated "Use [shuffle_weighted_list] instead"]
   (** A synonym for {!shuffle_weighted_list} since NEXT_RELEASE
       @since 0.11
       @deprecated use {!shuffle_weighted_list} instead. *)
@@ -846,7 +846,7 @@ module Gen : sig
 
       @since NEXT_RELEASE *)
 
-  val small_list : 'a t -> 'a list t
+  val small_list : 'a t -> 'a list t [@@deprecated "Use [list_small] instead"]
   (** Generates lists of small size (see {!nat_small}).
 
       Shrinks on the number of elements first, then on elements.
@@ -861,7 +861,7 @@ module Gen : sig
       Shrinks on the number of elements first, then on elements.
   *)
 
-  val list_repeat : int -> 'a t -> 'a list t
+  val list_repeat : int -> 'a t -> 'a list t [@@deprecated "Use [list_size (return i) g] instead"]
   (** [list_repeat i g] builds a list generator from exactly [i] elements generated by [g].
 
       Shrinks on elements only.
@@ -887,7 +887,7 @@ module Gen : sig
 
       @since NEXT_RELEASE *)
 
-  val small_array : 'a t -> 'a array t
+  val small_array : 'a t -> 'a array t [@@deprecated "Use [array_small] instead"]
   (** Generates arrays of small size (see {!nat_small}).
 
       Shrinks on the number of elements first, then on elements.
@@ -896,7 +896,7 @@ module Gen : sig
 
       @deprecated use {!array_small} instead. *)
 
-  val array_repeat : int -> 'a t -> 'a array t
+  val array_repeat : int -> 'a t -> 'a array t [@@deprecated "Use [array_size (return i) g] instead"]
   (** [array_repeat i g] builds an array generator from exactly [i] elements generated by [g].
 
       Shrinks on elements only.
@@ -914,7 +914,7 @@ module Gen : sig
       @since 0.19 (renamed from [opt])
   *)
 
-  val opt : ?ratio:float -> 'a t -> 'a option t
+  val opt : ?ratio:float -> 'a t -> 'a option t [@@deprecated "Use [option] instead"]
   (** [opt] is an alias of {!val:option} for backward compatibility.
       @deprecated use {!val:option} instead. *)
 
@@ -988,7 +988,7 @@ module Gen : sig
 
       @since NEXT_RELEASE *)
 
-  val flatten_l : 'a t list -> 'a list t
+  val flatten_l : 'a t list -> 'a list t [@@deprecated "Use [flatten_list] instead"]
   (** Generate a list of elements from individual generators.
 
       Shrinks on the elements of the list, in the list order.
@@ -1004,7 +1004,7 @@ module Gen : sig
 
       @since NEXT_RELEASE *)
 
-  val flatten_a : 'a t array -> 'a array t
+  val flatten_a : 'a t array -> 'a array t [@@deprecated "Use [flatten_array] instead"]
   (** Generate an array of elements from individual generators.
 
       Shrinks on the elements of the array, in the array order.
@@ -1020,7 +1020,7 @@ module Gen : sig
 
       @since NEXT_RELEASE *)
 
-  val flatten_opt : 'a t option -> 'a option t
+  val flatten_opt : 'a t option -> 'a option t [@@deprecated "Use [flatten_option] instead"]
   (** Generate an option from an optional generator.
 
       Shrinks towards [None] then shrinks on the value.
@@ -1037,7 +1037,7 @@ module Gen : sig
 
       @since NEXT_RELEASE *)
 
-  val flatten_res : ('a t, 'e) result -> ('a,'e) result t
+  val flatten_res : ('a t, 'e) result -> ('a,'e) result t [@@deprecated "Use [flatten_result] instead"]
   (** Generate a result from [Ok gen], an error from [Error e].
 
       Shrinks on [gen] if [Ok gen].
@@ -1469,7 +1469,7 @@ module Print : sig
       ['a] using [f], and then by {i printing} this value of type ['a] using [p].
   *)
 
-  val comap : ('b -> 'a) -> 'a t -> 'b t
+  val comap : ('b -> 'a) -> 'a t -> 'b t [@@deprecated "Use [contramap] instead"]
   (** @deprecated use {!contramap} instead. *)
 
   val tup2 : 'a t -> 'b t -> ('a * 'b) t
@@ -1578,7 +1578,7 @@ module Shrink : sig
 
       {b Be careful about time and memory} as the resulting list can be huge *)
 
-  val int_aggressive : int -> int Seq.t
+  val int_aggressive : int -> int Seq.t [@@deprecated "Use [int_aggressive_towards 0] instead"]
   (** @deprecated Use [int_aggressive_towards 0] instead.
       @since 0.7 *)
 
@@ -1677,7 +1677,7 @@ module Observable : sig
       ['a] using [f], and then by {i consuming} this value of type ['a] using [o].
   *)
 
-  val map : ('b -> 'a) -> 'a t -> 'b t
+  val map : ('b -> 'a) -> 'a t -> 'b t [@@deprecated "Use [contramap] instead"]
   (** @deprecated use {!contramap} instead. *)
 
   val option : 'a t -> 'a option t
@@ -1980,17 +1980,17 @@ module TestResult : sig
   val is_failed : _ t -> bool
   (** Returns true iff the state is [Failed _] *)
 
-  val stats : 'a t -> ('a stat * (int,int) Hashtbl.t) list
+  val stats : 'a t -> ('a stat * (int,int) Hashtbl.t) list [@@deprecated "Use [get_stats] instead"]
   (** Obtain statistics
       @since 0.6
       @deprecated use {!get_stats} instead *)
 
-  val warnings : _ t -> string list
+  val warnings : _ t -> string list [@@deprecated "Use [get_warnings] instead"]
   (** Obtain list of warnings
       @since 0.10
       @deprecated use {!get_warnings} instead *)
 
-  val collect : _ t -> (string,int) Hashtbl.t option
+  val collect : _ t -> (string,int) Hashtbl.t option [@@deprecated "Use [get_collect] instead"]
   (** Obtain statistics
       @since 0.6
       @deprecated use {!get_collect} instead *)

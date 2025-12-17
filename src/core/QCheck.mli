@@ -209,7 +209,7 @@ module Gen : sig
       @raise Invalid_argument or Failure if list is empty
       @since NEXT_RELEASE *)
 
-  val oneofl : 'a list -> 'a t
+  val oneofl : 'a list -> 'a t [@@deprecated "Use [oneof_list] instead"]
   (** Constructs a generator that selects among a given list of values.
       @raise Invalid_argument or Failure if list is empty
       @deprecated use {!oneof_list} instead. *)
@@ -219,7 +219,7 @@ module Gen : sig
       @raise Invalid_argument or Failure if list is empty
       @since NEXT_RELEASE *)
 
-  val oneofa : 'a array -> 'a t
+  val oneofa : 'a array -> 'a t [@@deprecated "Use [oneof_array] instead"]
   (** Constructs a generator that selects among a given array of values.
       @raise Invalid_argument or Failure if list is empty
       @deprecated use {!oneof_array} instead. *)
@@ -229,7 +229,7 @@ module Gen : sig
       Each of the given generators are chosen based on a positive integer weight.
       @since NEXT_RELEASE *)
 
-  val frequency : (int * 'a t) list -> 'a t
+  val frequency : (int * 'a t) list -> 'a t [@@deprecated "Use [oneof_weighted] instead"]
   (** Constructs a generator that selects among a given list of generators.
       Each of the given generators are chosen based on a positive integer weight.
       @deprecated use {!oneof_weighted} instead. *)
@@ -239,7 +239,7 @@ module Gen : sig
       Each of the given values are chosen based on a positive integer weight.
       @since NEXT_RELEASE *)
 
-  val frequencyl : (int * 'a) list -> 'a t
+  val frequencyl : (int * 'a) list -> 'a t [@@deprecated "Use [oneof_weighted_list] instead"]
   (** Constructs a generator that selects among a given list of values.
       Each of the given values are chosen based on a positive integer weight.
       @deprecated use {!oneof_weighted_list} instead. *)
@@ -249,7 +249,7 @@ module Gen : sig
       Each of the array entries are chosen based on a positive integer weight.
       @since NEXT_RELEASE *)
 
-  val frequencya : (int * 'a) array -> 'a t
+  val frequencya : (int * 'a) array -> 'a t [@@deprecated "Use [oneof_weighted_array] instead"]
   (** Constructs a generator that selects among a given array of values.
       Each of the array entries are chosen based on a positive integer weight.
       @deprecated use {!oneof_weighted_array} instead. *)
@@ -258,7 +258,7 @@ module Gen : sig
   (** Creates a generator of shuffled arrays.
       @since NEXT_RELEASE *)
 
-  val shuffle_a : 'a array -> unit t
+  val shuffle_a : 'a array -> unit t [@@deprecated "Use [shuffle_array] instead"]
   (** Shuffles the array in place.
       @deprecated Use {!shuffle_array} instead. *)
 
@@ -266,7 +266,7 @@ module Gen : sig
   (** Creates a generator of shuffled lists.
       @since NEXT_RELEASE *)
 
-  val shuffle_l : 'a list -> 'a list t
+  val shuffle_l : 'a list -> 'a list t [@@deprecated "Use [shuffle_list] instead"]
   (** Creates a generator of shuffled lists.
       @deprecated Use {!shuffle_list} instead. *)
 
@@ -283,7 +283,7 @@ module Gen : sig
 
       @since NEXT_RELEASE *)
 
-  val shuffle_w_l : (int * 'a) list -> 'a list t
+  val shuffle_w_l : (int * 'a) list -> 'a list t [@@deprecated "Use [shuffle_weighted_list] instead"]
   (** An alias for {!shuffle_weighted_list} since NEXT_RELEASE.
       @since 0.11
       @deprecated use {!shuffle_weighted_list} instead. *)
@@ -324,11 +324,11 @@ module Gen : sig
 
   val float_neg : float t (** Generates negative floating point numbers (-0. included). *)
 
-  val pfloat : float t
+  val pfloat : float t [@@deprecated "Use [float_pos] instead"]
   (** Generates positive floating point numbers (0. included).
       @deprecated use {!float_pos} instead. *)
 
-  val nfloat : float t
+  val nfloat : float t [@@deprecated "Use [float_neg] instead"]
   (** Generates negative floating point numbers (-0. included).
       @deprecated use {!float_neg} instead. *)
 
@@ -371,7 +371,7 @@ module Gen : sig
       Synonym for {!nat}.
       @since NEXT_RELEASE *)
 
-  val big_nat : int t
+  val big_nat : int t [@@deprecated "Use [map abs int] instead"]
   (** Generates natural numbers, possibly large.
       @since 0.10
       @deprecated use [map abs int] instead. *)
@@ -380,7 +380,7 @@ module Gen : sig
   (** Generates strictly negative integers uniformly (0 excluded).
       @since NEXT_RELEASE *)
 
-  val neg_int : int t
+  val neg_int : int t [@@deprecated "Use [int_neg] or [map (fun i -> -i) nat] instead"]
   (** Generates non-strictly negative integers (0 included).
       @deprecated use {!int_neg} or [map (fun i -> -i) nat] instead. *)
 
@@ -388,7 +388,7 @@ module Gen : sig
   (** Generates non-strictly positive integers uniformly (0 included).
       @since NEXT_RELEASE *)
 
-  val pint : int t
+  val pint : int t [@@deprecated "Use [int_pos] instead"]
   (** Generates non-strictly positive integers uniformly (0 included).
       @deprecated use {!int_pos} instead. *)
 
@@ -407,16 +407,16 @@ module Gen : sig
       Synonym for {!int_pos_small}.
       @since NEXT_RELEASE *)
 
-  val small_nat : int t
+  val small_nat : int t [@@deprecated "Use [nat_small] instead"]
   (** Small integers (< 100)
       @since 0.5.1
       @deprecated use {!nat_small} instead *)
 
-  val small_int : int t
+  val small_int : int t [@@deprecated "Use [nat_small] instead"]
   (** Small UNSIGNED integers, for retrocompatibility.
       @deprecated use {!nat_small}. *)
 
-  val small_signed_int : int t
+  val small_signed_int : int t [@@deprecated "Use [int_small] instead"]
   (** Small SIGNED integers, based on {!small_nat}.
       @since 0.5.2
       @deprecated use {!int_small} instead. *)
@@ -469,12 +469,12 @@ module Gen : sig
   (** Generates [int64] values uniformly.
       @since 0.24 *)
 
-  val ui32 : int32 t
+  val ui32 : int32 t [@@deprecated "Use [int32] instead"]
   (** Generates [int32] values.
       @deprecated use {!val:int32} instead, the name is wrong, values {i are} signed.
   *)
 
-  val ui64 : int64 t
+  val ui64 : int64 t [@@deprecated "Use [int64] instead"]
   (** Generates [int64] values.
       @deprecated use {!val:int64} instead, the name is wrong, values {i are} signed.
   *)
@@ -485,7 +485,7 @@ module Gen : sig
   val list_size : int t -> 'a t -> 'a list t
   (** Builds a list generator from a (non-negative) size generator and an element generator. *)
 
-  val list_repeat : int -> 'a t -> 'a list t
+  val list_repeat : int -> 'a t -> 'a list t [@@deprecated "Use [list_size (return i) g] instead"]
   (** [list_repeat i g] builds a list generator from exactly [i] elements generated by [g].
       @deprecated use [list_size (return i) g] instead. *)
 
@@ -495,7 +495,7 @@ module Gen : sig
   val array_size : int t -> 'a t -> 'a array t
   (** Builds an array generator from a (non-negative) size generator and an element generator. *)
 
-  val array_repeat : int -> 'a t -> 'a array t
+  val array_repeat : int -> 'a t -> 'a array t [@@deprecated "Use [array_size (return i) g] instead"]
   (** [array_repeat i g] builds an array generator from exactly [i] elements generated by [g].
       @deprecated use [array_size (return i) g] instead. *)
 
@@ -507,7 +507,7 @@ module Gen : sig
       @since 0.19 (renamed from [opt])
   *)
 
-  val opt : ?ratio:float -> 'a t -> 'a option t
+  val opt : ?ratio:float -> 'a t -> 'a option t [@@deprecated "Use [option] instead"]
   (** [opt] is an alias of {!val:option} for backward compatibility.
 
       @since 0.18 ([?ratio] parameter)
@@ -598,17 +598,16 @@ module Gen : sig
   (** Builds a string generator using the given character generator.
       @since 0.11 *)
 
-  val string_readable : string t
+  val string_readable : string t [@@deprecated "Use [string_printable] instead"]
   (** Builds a string generator using the {!printable} character generator.
       @since 0.11
       @deprecated use {!string_printable} *)
-  [@@deprecated "see string_printable"]
 
   val string_printable : string t
   (** Builds a string generator using the {!printable} character generator.
       @since 0.18 *)
 
-  val small_string : ?gen:char t -> string t
+  val small_string : ?gen:char t -> string t [@@deprecated "Use [string_small] instead"]
   (** Builds a string generator, length is {!nat_small}
       Accepts an optional character generator (the default is {!char}).
       @deprecated use {!string_small} *)
@@ -625,7 +624,7 @@ module Gen : sig
   (** Generates lists of small size (see {!nat_small}).
       @since NEXT_RELEASE *)
 
-  val small_list : 'a t -> 'a list t
+  val small_list : 'a t -> 'a list t [@@deprecated "Use [list_small] instead"]
   (** Generates lists of small size (see {!nat_small}).
       @since 0.5.3
       @deprecated use {!list_small} instead. *)
@@ -634,7 +633,7 @@ module Gen : sig
   (** Generate a list of elements from individual generators
       @since NEXT_RELEASE *)
 
-  val flatten_l : 'a t list -> 'a list t
+  val flatten_l : 'a t list -> 'a list t [@@deprecated "Use [flatten_list] instead"]
   (** Generate a list of elements from individual generators
       @since 0.13
       @deprecated use {!flatten_list} instead.  *)
@@ -643,7 +642,7 @@ module Gen : sig
   (** Generate an array of elements from individual generators
       @since NEXT_RELEASE *)
 
-  val flatten_a : 'a t array -> 'a array t
+  val flatten_a : 'a t array -> 'a array t [@@deprecated "Use [flatten_array] instead"]
   (** Generate an array of elements from individual generators
       @since 0.13
       @deprecated use {!flatten_array} instead.  *)
@@ -652,7 +651,7 @@ module Gen : sig
   (** Generate an option from an optional generator
       @since NEXT_RELEASE *)
 
-  val flatten_opt : 'a t option -> 'a option t
+  val flatten_opt : 'a t option -> 'a option t [@@deprecated "Use [flatten_option] instead"]
   (** Generate an option from an optional generator
       @since 0.13
       @deprecated use {!flatten_option} instead.  *)
@@ -661,7 +660,7 @@ module Gen : sig
   (** Generate a result from [Ok g], an error from [Error e]
       @since NEXT_RELEASE *)
 
-  val flatten_res : ('a t, 'e) result -> ('a,'e) result t
+  val flatten_res : ('a t, 'e) result -> ('a,'e) result t [@@deprecated "Use [flatten_result] instead"]
   (** Generate a result from [Ok g], an error from [Error e]
       @since 0.13
       @deprecated use {!flatten_result} instead.  *)
@@ -670,7 +669,7 @@ module Gen : sig
   (** Generates arrays of small size (see {!nat_small}).
       @since NEXT_RELEASE *)
 
-  val small_array : 'a t -> 'a array t
+  val small_array : 'a t -> 'a array t [@@deprecated "Use [array_small] instead"]
   (** Generates arrays of small size (see {!nat_small}).
       @since 0.10
       @deprecated use {!array_small} instead. *)
@@ -1297,11 +1296,11 @@ val float_pos : float arbitrary
 val float_neg : float arbitrary
 (** Negative float generator (no infinities). *)
 
-val pos_float : float arbitrary
+val pos_float : float arbitrary [@@deprecated "Use [float_pos] instead"]
 (** Positive float generator (no infinities).
     @deprecated use {!float_pos} instead. *)
 
-val neg_float : float arbitrary
+val neg_float : float arbitrary [@@deprecated "Use [float_neg] instead"]
 (** Negative float generator (no infinities).
     @deprecated use {!float_neg} instead. *)
 
@@ -1368,19 +1367,19 @@ val nat_small : int arbitrary
     Synonym for {!int_pos_small}.
     @since NEXT_RELEASE *)
 
-val small_nat : int arbitrary
+val small_nat : int arbitrary [@@deprecated "Use [nat_small] instead"]
 (** Small unsigned integers.
     @since 0.5.1
     @deprecated use {!nat_small} instead *)
 
-val small_int : int arbitrary
+val small_int : int arbitrary [@@deprecated "Use [nat_small] instead"]
 (** Small unsigned integers. See {!Gen.small_int}.
-    @deprecated use {!small_signed_int}. *)
+    @deprecated use {!nat_small} instead *)
 
-val small_signed_int : int arbitrary
+val small_signed_int : int arbitrary [@@deprecated "Use [int_small] instead"]
 (** Small signed integers.
     @since 0.5.2
-    @deprecated use {!int_small}. *)
+    @deprecated use {!int_small} instead *)
 
 val (--) : int -> int -> int arbitrary
 (** Synonym for {!int_range}. *)
@@ -1395,7 +1394,7 @@ val int_pos : int arbitrary
 (** Positive int generator (0 included). Uniformly distributed.
     See {!Gen.int_pos} *)
 
-val pos_int : int arbitrary
+val pos_int : int arbitrary [@@deprecated "Use [int_pos] instead"]
 (** Positive int generator (0 included). Uniformly distributed.
     See {!Gen.int_pos}
     @deprecated use {!int_pos} instead. *)
@@ -1420,7 +1419,7 @@ val int_small_corners : unit -> int arbitrary
     ]}
 *)
 
-val small_int_corners : unit -> int arbitrary
+val small_int_corners : unit -> int arbitrary [@@deprecated "Use [int_small_corners] instead"]
 (** As [small_int], but each newly created generator starts with
     a list of corner cases before falling back on random generation.
 
@@ -1433,9 +1432,9 @@ val small_int_corners : unit -> int arbitrary
       let t = QCheck.Test.make ~name:"never max_int" gen (fun i -> i <> max_int)
       let _ = QCheck_base_runner.run_tests ~verbose:true [t;t]
     ]}
-    @deprecated consider using uniform {!int_small_corners} instead. *)
+    @deprecated consider using {!int_small_corners} instead. *)
 
-val neg_int : int arbitrary
+val neg_int : int arbitrary [@@deprecated "Use uniform [int_neg] instead"]
 (** Negative int generator (0 included, see {!Gen.neg_int}).
     The distribution is non-uniform and similar to that of
     [int_small], not of [int_pos].
@@ -1459,7 +1458,7 @@ val printable : char arbitrary
 (** Synonym for {!char_printable}.
     @since NEXT_RELEASE *)
 
-val printable_char : char arbitrary
+val printable_char : char arbitrary [@@deprecated "Use [char_printable] instead"]
 (** Synonym for {!char_printable}.
     @deprecated use {!char_printable} instead. *)
 
@@ -1471,7 +1470,7 @@ val numeral : char arbitrary
 (** Synonym for {!char_numeral}.
     @since NEXT_RELEASE *)
 
-val numeral_char : char arbitrary
+val numeral_char : char arbitrary [@@deprecated "Use [char_numeral] instead"]
 (** Synonym for {!char_numeral}.
     @deprecated use {!char_numeral} instead. *)
 
@@ -1485,7 +1484,7 @@ val bytes_size_of : int Gen.t -> char Gen.t -> bytes arbitrary
     and a character generator.
     @since NEXT_RELEASE *)
 
-val bytes_gen_of_size : int Gen.t -> char Gen.t -> bytes arbitrary
+val bytes_gen_of_size : int Gen.t -> char Gen.t -> bytes arbitrary [@@deprecated "Use [bytes_size] instead"]
 (** Builds a bytes generator from a (non-negative) size generator and a character generator.
     @since 0.20
     @deprecated use {!bytes_size} instead. *)
@@ -1507,7 +1506,7 @@ val bytes_small_of : char Gen.t -> bytes arbitrary
 (** Same as {!bytes_of} but with a small length (ie {!Gen.nat_small} ).
     @since 0.20 *)
 
-val bytes_of_size : int Gen.t -> bytes arbitrary
+val bytes_of_size : int Gen.t -> bytes arbitrary [@@deprecated "Use [bytes_size] instead"]
 (** Generates bytes with distribution of characters of [char].
     @since 0.20
     @deprecated use {!bytes_size} instead. *)
@@ -1517,11 +1516,11 @@ val bytes_printable : bytes arbitrary
     and distribution of characters of [printable_char].
     @since 0.20 *)
 
-val string_gen_of_size : int Gen.t -> char Gen.t -> string arbitrary
+val string_gen_of_size : int Gen.t -> char Gen.t -> string arbitrary [@@deprecated "Use [string_size_of] instead"]
 (** Builds a string generator from a (non-negative) size generator and a character generator.
     @deprecated use {!string_size_of} instead. *)
 
-val string_gen : char Gen.t -> string arbitrary
+val string_gen : char Gen.t -> string arbitrary [@@deprecated "Use [string_of] instead"]
 (** Generates strings with a distribution of length of {!Gen.nat}.
     @deprecated use {!string_of} instead. *)
 
@@ -1543,7 +1542,7 @@ val string_size_of : int Gen.t -> char Gen.t -> string arbitrary
     and a character generator.
     @since NEXT_RELEASE *)
 
-val small_string : string arbitrary
+val small_string : string arbitrary [@@deprecated "Use [string_small] instead"]
 (** Same as {!string} but with a small length (ie {!Gen.nat_small} ).
     @deprecated use {!string_small} *)
 
@@ -1559,16 +1558,16 @@ val list_small : 'a arbitrary -> 'a list arbitrary
 (** Generates lists of small size (see {!Gen.nat_small}).
     @since NEXT_RELEASE *)
 
-val small_list : 'a arbitrary -> 'a list arbitrary
+val small_list : 'a arbitrary -> 'a list arbitrary [@@deprecated "Use [list_small] instead"]
 (** Generates lists of small size (see {!Gen.nat_small}).
     @since 0.5.3
     @deprecated use {!list_small} instead. *)
 
-val string_of_size : int Gen.t -> string arbitrary
+val string_of_size : int Gen.t -> string arbitrary [@@deprecated "Use [string_size] instead"]
 (** Generates strings with distribution of characters of [char].
     @deprecated use {!string_size} instead. *)
 
-val printable_string : string arbitrary
+val printable_string : string arbitrary [@@deprecated "Use [string_printable] instead"]
 (** Generates strings with a distribution of length of {!Gen.nat}
     and distribution of characters of [char_printable].
     @deprecated use {!string_printable} instead. *)
@@ -1578,40 +1577,40 @@ val string_printable : string arbitrary
     and distribution of characters of [char_printable].
     @since 0.20 *)
 
-val printable_string_of_size : int Gen.t -> string arbitrary
+val printable_string_of_size : int Gen.t -> string arbitrary [@@deprecated "Use [string_size_of] instead"]
 (** Generates strings with distribution of characters of [char_printable].
     @deprecated use {!string_size_of} instead. *)
 
-val string_printable_of_size : int Gen.t -> string arbitrary
+val string_printable_of_size : int Gen.t -> string arbitrary [@@deprecated "Use [string_size_of] instead"]
 (** Synonym for [printable_string_of_size] added for convenience.
     @since 0.20
     @deprecated use {!string_size_of} instead. *)
 
-val small_printable_string : string arbitrary
+val small_printable_string : string arbitrary [@@deprecated "Use [string_size_of] instead"]
 (** Generates strings with a length of [Gen.nat_small]
     and distribution of characters of [char_printable].
     @deprecated use {!string_size_of} instead. *)
 
-val string_small_printable : string arbitrary
+val string_small_printable : string arbitrary [@@deprecated "Use [string_size_of] instead"]
 (** Synonym for [small_printable_string] added for convenience.
     @since 0.20
     @deprecated use {!string_size_of} instead. *)
 
-val numeral_string : string arbitrary
+val numeral_string : string arbitrary [@@deprecated "Use [string_of] instead"]
 (** Generates strings with a distribution of length of {!Gen.nat}
     and distribution of characters of [char_numeral].
     @deprecated use {!string_of} instead. *)
 
-val string_numeral : string arbitrary
+val string_numeral : string arbitrary [@@deprecated "Use [string_of] instead"]
 (** Synonym for [numeral_string] added for convenience.
     @since 0.20
     @deprecated use {!string_of} instead. *)
 
-val numeral_string_of_size : int Gen.t -> string arbitrary
+val numeral_string_of_size : int Gen.t -> string arbitrary [@@deprecated "Use [string_size_of] instead"]
 (** Generates strings with a distribution of characters of [char_numeral].
     @deprecated use {!string_size_of} instead. *)
 
-val string_numeral_of_size : int Gen.t -> string arbitrary
+val string_numeral_of_size : int Gen.t -> string arbitrary [@@deprecated "Use [string_size_of] instead"]
 (** Synonym for [numeral_string_of_size] added for convenience.
     @since 0.20
     @deprecated use {!string_size_of} instead. *)
@@ -1623,7 +1622,7 @@ val list_size : int Gen.t -> 'a arbitrary -> 'a list arbitrary
 (** Generates lists with length from the given distribution.
     @since NEXT_RELEASE *)
 
-val list_of_size : int Gen.t -> 'a arbitrary -> 'a list arbitrary
+val list_of_size : int Gen.t -> 'a arbitrary -> 'a list arbitrary [@@deprecated "Use [list_size] instead"]
 (** Generates lists with length from the given distribution.
     @deprecated use {!list_size} instead. *)
 
@@ -1638,7 +1637,7 @@ val array_size : int Gen.t -> 'a arbitrary -> 'a array arbitrary
 (** Generates arrays with length from the given distribution.
     @since NEXT_RELEASE *)
 
-val array_of_size : int Gen.t -> 'a arbitrary -> 'a array arbitrary
+val array_of_size : int Gen.t -> 'a arbitrary -> 'a array arbitrary [@@deprecated "Use [array_size] instead"]
 (** Generates arrays with length from the given distribution.
     @deprecated use {!array_size} instead. *)
 
@@ -1764,7 +1763,7 @@ val tup9 :
 
 (** {2 Combinatoric arbitrary combinators } *)
 
-val choose : 'a arbitrary list -> 'a arbitrary
+val choose : 'a arbitrary list -> 'a arbitrary [@@deprecated "Use [oneof] instead"]
 (** Choose among the given list of generators. The list must not
     be empty; if it is [Invalid_argument] is raised.
     @deprecated use {!oneof} instead. *)
@@ -1774,7 +1773,7 @@ val oneof_list : ?print:'a Print.t -> ?small:('a -> int) -> 'a list -> 'a arbitr
     @since NEXT_RELEASE *)
 
 val oneofl : ?print:'a Print.t -> ?collect:('a -> string) ->
-  'a list -> 'a arbitrary
+  'a list -> 'a arbitrary [@@deprecated "Use [oneof_list] instead"]
 (** Pick an element randomly in the list.
     @deprecated use {!oneof_list} instead. *)
 
@@ -1783,7 +1782,7 @@ val oneof_array : ?print:'a Print.t -> ?small:('a -> int) -> 'a array -> 'a arbi
     @since NEXT_RELEASE *)
 
 val oneofa : ?print:'a Print.t -> ?collect:('a -> string) ->
-  'a array -> 'a arbitrary
+  'a array -> 'a arbitrary [@@deprecated "Use [oneof_array] instead"]
 (** Pick an element randomly in the array.
     @deprecated use {!oneof_array} instead. *)
 
@@ -1809,7 +1808,7 @@ val oneof_weighted : ?print:'a Print.t -> ?small:('a -> int) ->
 
 val frequency : ?print:'a Print.t -> ?small:('a -> int) ->
   ?shrink:'a Shrink.t -> ?collect:('a -> string) ->
-  (int * 'a arbitrary) list -> 'a arbitrary
+  (int * 'a arbitrary) list -> 'a arbitrary [@@deprecated "Use [oneof_weighted] instead"]
 (** Similar to {!oneof} but with frequencies.
     @deprecated use {!oneof_weighted} instead. *)
 
@@ -1820,7 +1819,7 @@ val oneof_weighted_list : ?print:'a Print.t -> ?small:('a -> int) ->
     @since NEXT_RELEASE *)
 
 val frequencyl : ?print:'a Print.t -> ?small:('a -> int) ->
-  (int * 'a) list -> 'a arbitrary
+  (int * 'a) list -> 'a arbitrary [@@deprecated "Use [oneof_weighted_list] instead"]
 (** Same as {!oneof_list}, but each element is paired with its frequency in
     the probability distribution (the higher, the more likely).
     @deprecated use {!oneof_weighted_list} instead. *)
@@ -1831,7 +1830,7 @@ val oneof_weighted_array : ?print:'a Print.t -> ?small:('a -> int) ->
     @since NEXT_RELEASE *)
 
 val frequencya : ?print:'a Print.t -> ?small:('a -> int) ->
-  (int * 'a) array -> 'a arbitrary
+  (int * 'a) array -> 'a arbitrary [@@deprecated "Use [oneof_weighted_array] instead"]
 (** Same as {!oneof_frequency_list}, but with an array.
     @deprecated use {!oneof_weighted_array} instead. *)
 
