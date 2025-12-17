@@ -69,7 +69,7 @@ all rights reserved.
                             (fun self n -> match n with
                                | 0 -> map leaf nat
                                | n ->
-                                 frequency
+                                 oneof_weighted
                                    [1, map leaf nat;
                                     2, map2 node (self (n/2)) (self (n/2))]
                             ))
@@ -224,9 +224,15 @@ module Gen : sig
       @raise Invalid_argument or Failure if list is empty
       @deprecated use {!oneof_array} instead. *)
 
+  val oneof_weighted : (int * 'a t) list -> 'a t
+  (** Constructs a generator that selects among a given list of generators.
+      Each of the given generators are chosen based on a positive integer weight.
+      @since NEXT_RELEASE *)
+
   val frequency : (int * 'a t) list -> 'a t
   (** Constructs a generator that selects among a given list of generators.
-      Each of the given generators are chosen based on a positive integer weight. *)
+      Each of the given generators are chosen based on a positive integer weight.
+      @deprecated use {!oneof_weighted} instead. *)
 
   val frequencyl : (int * 'a) list -> 'a t
   (** Constructs a generator that selects among a given list of values.
@@ -735,7 +741,7 @@ module Gen : sig
                               (fun self n -> match n with
                                  | 0 -> map leaf nat
                                  | n ->
-                                   frequency
+                                   oneof_weighted
                                      [1, map leaf nat;
                                       2, map2 node (self (n/2)) (self (n/2))]
                               ))

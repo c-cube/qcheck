@@ -153,7 +153,9 @@ module Gen = struct
 
   let frequencya a = frequencyl (Array.to_list a)
 
-  let frequency l st = frequencyl l st st
+  let oneof_weighted l st = frequencyl l st st
+
+  let frequency = oneof_weighted
 
   let int_pos_small st =
     let p = RS.float st 1. in
