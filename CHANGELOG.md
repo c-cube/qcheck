@@ -120,6 +120,7 @@
 - Add `QCheck.no_shrink` for consistency
 - Fix shrinking for `QCheck2.Gen.exponential` which could shrink to `infinity`
 - Remove deprecation annotations for `QCheck.Test.{get,set}*` helpers
+- Remove deprecation annotation for `QCheck2.Gen.add_shrink_invariant`
 
 
 ## 0.27 (2025-10-31)
