@@ -1826,12 +1826,12 @@ val frequencyl : ?print:'a Print.t -> ?small:('a -> int) ->
 
 val oneof_weighted_array : ?print:'a Print.t -> ?small:('a -> int) ->
   (int * 'a) array -> 'a arbitrary
-(** Same as {!oneof_frequency_list}, but with an array.
+(** Same as {!oneof_weighted_list}, but with an array.
     @since NEXT_RELEASE *)
 
 val frequencya : ?print:'a Print.t -> ?small:('a -> int) ->
   (int * 'a) array -> 'a arbitrary [@@deprecated "Use [oneof_weighted_array] instead"]
-(** Same as {!oneof_frequency_list}, but with an array.
+(** Same as {!oneof_weighted_list}, but with an array.
     @deprecated use {!oneof_weighted_array} instead. *)
 
 val map : ?rev:('b -> 'a) -> ('a -> 'b) -> 'a arbitrary -> 'b arbitrary
