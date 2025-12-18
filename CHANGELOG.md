@@ -109,6 +109,7 @@
 - Add missing `QCheck2.Gen.map_keep_input` for consistency
 - Add `QCheck.no_shrink` for consistency
 - Fix shrinking for `QCheck2.Gen.exponential` which could shrink to `infinity`
+- Remove deprecation annotations for `QCheck.Test.{get,set}*` helpers
 
 
 ## 0.27 (2025-10-31)
