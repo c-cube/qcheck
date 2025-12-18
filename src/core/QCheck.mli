@@ -1812,27 +1812,27 @@ val frequency : ?print:'a Print.t -> ?small:('a -> int) ->
 (** Similar to {!oneof} but with frequencies.
     @deprecated use {!oneof_weighted} instead. *)
 
-val oneof_weighted_list : ?print:'a Print.t -> ?small:('a -> int) ->
+val oneof_list_weighted : ?print:'a Print.t -> ?small:('a -> int) ->
   (int * 'a) list -> 'a arbitrary
 (** Same as {!oneof_list}, but each element is paired with its frequency in
     the probability distribution (the higher, the more likely).
     @since NEXT_RELEASE *)
 
 val frequencyl : ?print:'a Print.t -> ?small:('a -> int) ->
-  (int * 'a) list -> 'a arbitrary [@@deprecated "Use [oneof_weighted_list] instead"]
+  (int * 'a) list -> 'a arbitrary [@@deprecated "Use [oneof_list_weighted] instead"]
 (** Same as {!oneof_list}, but each element is paired with its frequency in
     the probability distribution (the higher, the more likely).
-    @deprecated use {!oneof_weighted_list} instead. *)
+    @deprecated use {!oneof_list_weighted} instead. *)
 
-val oneof_weighted_array : ?print:'a Print.t -> ?small:('a -> int) ->
+val oneof_array_weighted : ?print:'a Print.t -> ?small:('a -> int) ->
   (int * 'a) array -> 'a arbitrary
-(** Same as {!oneof_weighted_list}, but with an array.
+(** Same as {!oneof_list_weighted}, but with an array.
     @since NEXT_RELEASE *)
 
 val frequencya : ?print:'a Print.t -> ?small:('a -> int) ->
-  (int * 'a) array -> 'a arbitrary [@@deprecated "Use [oneof_weighted_array] instead"]
-(** Same as {!oneof_weighted_list}, but with an array.
-    @deprecated use {!oneof_weighted_array} instead. *)
+  (int * 'a) array -> 'a arbitrary [@@deprecated "Use [oneof_array_weighted] instead"]
+(** Same as {!oneof_list_weighted}, but with an array.
+    @deprecated use {!oneof_array_weighted} instead. *)
 
 val map : ?rev:('b -> 'a) -> ('a -> 'b) -> 'a arbitrary -> 'b arbitrary
 (** [map f a] returns a new arbitrary instance that generates values using
