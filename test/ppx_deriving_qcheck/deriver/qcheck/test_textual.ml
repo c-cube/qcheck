@@ -73,7 +73,7 @@ let test_bool () =
 
 let test_int32 () =
   let expected = [
-      [%stri let gen = QCheck.Gen.ui32];
+      [%stri let gen = QCheck.Gen.int32];
       [%stri let arb = QCheck.make @@ gen];
     ] in
   let actual = f @@ extract [%stri type t = int32] in
@@ -82,7 +82,7 @@ let test_int32 () =
 
 let test_int32' () =
   let expected = [
-      [%stri let gen = QCheck.Gen.ui32];
+      [%stri let gen = QCheck.Gen.int32];
       [%stri let arb = QCheck.make @@ gen];
     ] in
   let actual = f @@ extract [%stri type t = Int32.t] in
@@ -91,7 +91,7 @@ let test_int32' () =
 
 let test_int64 () =
   let expected = [
-      [%stri let gen = QCheck.Gen.ui64];
+      [%stri let gen = QCheck.Gen.int64];
       [%stri let arb = QCheck.make @@ gen];
     ] in
   let actual = f @@ extract [%stri type t = int64] in
@@ -100,7 +100,7 @@ let test_int64 () =
 
 let test_int64' () =
   let expected = [
-      [%stri let gen = QCheck.Gen.ui64];
+      [%stri let gen = QCheck.Gen.int64];
       [%stri let arb = QCheck.make @@ gen];
     ] in
   let actual = f @@ extract [%stri type t = Int64.t] in

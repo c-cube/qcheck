@@ -39,20 +39,20 @@ let test_float () =
 type int32' = int32 [@@deriving qcheck2]
 
 let test_int32 () =
-  test_compare ~msg:"Gen.int32 <=> deriving int32" ~eq:Alcotest.int32 Gen.ui32 gen_int32'
+  test_compare ~msg:"Gen.int32 <=> deriving int32" ~eq:Alcotest.int32 Gen.int32 gen_int32'
 
 type int64' = int64 [@@deriving qcheck2]
 
 let test_int64 () =
-  test_compare ~msg:"Gen.int64 <=> deriving int64" ~eq:Alcotest.int64 Gen.ui64 gen_int64'
+  test_compare ~msg:"Gen.int64 <=> deriving int64" ~eq:Alcotest.int64 Gen.int64 gen_int64'
 
 type 'a option' = 'a option [@@deriving qcheck2]
 
 let test_option () =
   let zero = Gen.pure 0 in
-  test_compare ~msg:"Gen.opt <=> deriving opt"
+  test_compare ~msg:"Gen.option <=> deriving opt"
     ~eq:Alcotest.(option int)
-    (Gen.opt zero) (gen_option' zero)
+    (Gen.option zero) (gen_option' zero)
 
 type 'a array' = 'a array [@@deriving qcheck2]
 
