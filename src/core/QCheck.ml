@@ -1276,14 +1276,15 @@ let make_int ?collect gen =
 let adapt_ o gen =
   make ?print:o.print ?small:o.small ?shrink:o.shrink ?collect:o.collect gen
 
-let oneof l = match l with
+let oneof ?print ?small ?shrink l = match l with
   | [] -> raise (Invalid_argument "QCheck.oneof")
   | l ->
-      let a = Array.of_list l in
-      adapt_ a.(0)
-        (fun st ->
-          let arb = a.(RS.int st (Array.length a)) in
-          arb.gen st)
+    let first = List.hd l in
+    let print = _opt_sum print first.print in
+    let small = _opt_sum small first.small in
+    let shrink = _opt_sum shrink first.shrink in
+    let gens = List.map (fun x -> x.gen) l in
+    make ?print ?small ?shrink (Gen.oneof gens)
 
 let unit : unit arbitrary =
   make ~small:small1 ~shrink:Shrink.nil ~print:Print.unit Gen.unit
@@ -1864,14 +1865,14 @@ let fun4 o1 o2 o3 o4 ret =
 (* Generator combinators *)
 
 (** given a list, returns generator that picks at random from list *)
-let oneof_list ?print xs = make ?print (Gen.oneof_list xs)
+let oneof_list ?print ?small xs = make ?print ?small (Gen.oneof_list xs)
 let oneofl ?print ?collect xs = make ?print ?collect (Gen.oneof_list xs)
-let oneof_array ?print xs = make ?print (Gen.oneof_array xs)
+let oneof_array ?print ?small xs = make ?print ?small (Gen.oneof_array xs)
 let oneofa ?print ?collect xs = make ?print ?collect (Gen.oneof_array xs)
 
 (** Given a list of generators, returns generator that randomly uses one of the generators
     from the list *)
-let choose = oneof
+let choose l = oneof l
 
 (** Generator that always returns given value *)
 let always ?print x =
