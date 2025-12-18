@@ -660,15 +660,15 @@ module Gen = struct
 
   let frequency = oneof_weighted
 
-  let oneof_weighted_list (l : (int * 'a) list) : 'a t =
+  let oneof_list_weighted (l : (int * 'a) list) : 'a t =
     List.map (fun (weight, value) -> (weight, pure value)) l
     |> oneof_weighted
 
-  let frequencyl = oneof_weighted_list
+  let frequencyl = oneof_list_weighted
 
-  let oneof_weighted_array a = oneof_weighted_list (Array.to_list a)
+  let oneof_array_weighted a = oneof_list_weighted (Array.to_list a)
 
-  let frequencya = oneof_weighted_array
+  let frequencya = oneof_array_weighted
 
   let char_range ?(origin : char option) (a : char) (b : char) : char t =
     (int_range ~origin:(Char.code (Option.value ~default:a origin)) (Char.code a) (Char.code b)) >|= Char.chr
@@ -779,7 +779,7 @@ module Gen = struct
 
   let shuffle_l = shuffle_list
 
-  let shuffle_weighted_list (l : ((int * 'a) list)) : 'a list t = fun st ->
+  let shuffle_list_weighted (l : ((int * 'a) list)) : 'a list t = fun st ->
     let sample (w, v) =
       let Tree.Tree (p, _) = float_bound_inclusive 1. st in
       let fl_w = float_of_int w in
@@ -791,7 +791,7 @@ module Gen = struct
     |> List.rev_map snd
     |> Tree.pure
 
-  let shuffle_w_l = shuffle_weighted_list
+  let shuffle_w_l = shuffle_list_weighted
 
   let pair (g1 : 'a t) (g2 : 'b t) : ('a * 'b) t = liftA2 (fun a b -> (a, b)) g1 g2
 
