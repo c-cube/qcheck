@@ -2006,20 +2006,23 @@ module Test : sig
   *)
 
   val get_law : 'a cell -> ('a -> bool)
-  (** @deprecated use {!QCheck2.Test.get_law} instead *)
+  (** Get the tested property of a cell.
+      Synonym for {!QCheck2.Test.get_law} *)
   val get_name : _ cell -> string
-  (** @deprecated use {!QCheck2.Test.get_name} instead *)
+  (** Get the name of a cell.
+      Synonym for {!QCheck2.Test.get_name} *)
   val set_name : _ cell -> string -> unit
-  (** @deprecated use {!QCheck2.Test.set_name} instead *)
+  (** Set the name of a cell.
+      Synonym for {!QCheck2.Test.set_name} *)
 
   val get_count : _ cell -> int
   (** Get the count of a cell.
-      @deprecated use {!QCheck2.Test.get_count} instead
+      Synonym for {!QCheck2.Test.get_count}
       @since 0.5.3 *)
 
   val get_long_factor : _ cell -> int
   (** Get the long factor of a cell.
-      @deprecated use {!QCheck2.Test.get_long_factor} instead
+      Synonym for {!QCheck2.Test.get_long_factor}
       @since 0.5.3 *)
 
   val make :

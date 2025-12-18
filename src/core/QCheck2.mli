@@ -2079,12 +2079,19 @@ module Test : sig
    *)
 
   val get_law : 'a cell -> ('a -> bool)
+  (** Get the tested property of a cell. *)
   val get_name : _ cell -> string
+  (** Get the name of a cell. *)
   val get_gen : 'a cell -> 'a Gen.t
+  (** Get the generator of a cell. *)
   val get_print_opt : 'a cell -> ('a Print.t) option
+  (** Get the optional printer of a cell. *)
   val get_collect_opt : 'a cell -> ('a -> string) option
+  (** Get the optional to-string collector of a cell. *)
   val get_stats : 'a cell -> ('a stat list)
+  (** Get the statistics of a cell. *)
   val set_name : _ cell -> string -> unit
+  (** Set the name of a cell. *)
 
   val get_count : _ cell -> int
   (** Get the count of a cell.
