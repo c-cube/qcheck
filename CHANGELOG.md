@@ -106,6 +106,16 @@
     like `QCheck.oneof_weighted` and deprecate `QCheck.choose` for consistency
   - Add `QCheck2.Gen.oneof_list` and deprecate `QCheck2.Gen.oneofl`
   - Add `QCheck2.Gen.oneof_array` and deprecate `QCheck2.Gen.oneofa`
+- Renamed `frequency` combinators:
+  - Add `QCheck.Gen.oneof_weighted` and deprecate `QCheck.Gen.frequency`
+  - Add `QCheck.Gen.oneof_weighted_list` and deprecate `QCheck.Gen.frequencyl`
+  - Add `QCheck.Gen.oneof_weighted_array` and deprecate `QCheck.Gen.frequencya`
+  - Add `QCheck.oneof_weighted` and deprecate `QCheck.frequency`
+  - Add `QCheck.oneof_weighted_list` and deprecate `QCheck.frequency_list`
+  - Add `QCheck.oneof_weighted_array` and deprecate `QCheck.frequency_array`
+  - Add `QCheck2.Gen.oneof_weighted` and deprecate `QCheck2.Gen.frequency`
+  - Add `QCheck2.Gen.oneof_weighted_list` and deprecate `QCheck2.Gen.frequencyl`
+  - Add `QCheck2.Gen.oneof_weighted_array` and deprecate `QCheck2.Gen.frequencya`
 - Add missing `QCheck2.Gen.map_keep_input` for consistency
 - Add `QCheck.no_shrink` for consistency
 - Fix shrinking for `QCheck2.Gen.exponential` which could shrink to `infinity`
