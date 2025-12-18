@@ -234,25 +234,25 @@ module Gen : sig
       Each of the given generators are chosen based on a positive integer weight.
       @deprecated use {!oneof_weighted} instead. *)
 
-  val oneof_weighted_list : (int * 'a) list -> 'a t
+  val oneof_list_weighted : (int * 'a) list -> 'a t
   (** Constructs a generator that selects among a given list of values.
       Each of the given values are chosen based on a positive integer weight.
       @since NEXT_RELEASE *)
 
-  val frequencyl : (int * 'a) list -> 'a t [@@deprecated "Use [oneof_weighted_list] instead"]
+  val frequencyl : (int * 'a) list -> 'a t [@@deprecated "Use [oneof_list_weighted] instead"]
   (** Constructs a generator that selects among a given list of values.
       Each of the given values are chosen based on a positive integer weight.
-      @deprecated use {!oneof_weighted_list} instead. *)
+      @deprecated use {!oneof_list_weighted} instead. *)
 
-  val oneof_weighted_array : (int * 'a) array -> 'a t
+  val oneof_array_weighted : (int * 'a) array -> 'a t
   (** Constructs a generator that selects among a given array of values.
       Each of the array entries are chosen based on a positive integer weight.
       @since NEXT_RELEASE *)
 
-  val frequencya : (int * 'a) array -> 'a t [@@deprecated "Use [oneof_weighted_array] instead"]
+  val frequencya : (int * 'a) array -> 'a t [@@deprecated "Use [oneof_array_weighted] instead"]
   (** Constructs a generator that selects among a given array of values.
       Each of the array entries are chosen based on a positive integer weight.
-      @deprecated use {!oneof_weighted_array} instead. *)
+      @deprecated use {!oneof_array_weighted} instead. *)
 
   val shuffle_array : 'a array -> 'a array t
   (** Creates a generator of shuffled arrays.
@@ -270,7 +270,7 @@ module Gen : sig
   (** Creates a generator of shuffled lists.
       @deprecated Use {!shuffle_list} instead. *)
 
-  val shuffle_weighted_list : (int * 'a) list -> 'a list t
+  val shuffle_list_weighted : (int * 'a) list -> 'a list t
   (** Creates a generator of weighted shuffled lists. A given list is shuffled on each
       generation according to the weights of its elements. An element with a larger weight
       is more likely to be at the front of the list than an element with a smaller weight.
@@ -283,10 +283,10 @@ module Gen : sig
 
       @since NEXT_RELEASE *)
 
-  val shuffle_w_l : (int * 'a) list -> 'a list t [@@deprecated "Use [shuffle_weighted_list] instead"]
-  (** An alias for {!shuffle_weighted_list} since NEXT_RELEASE.
+  val shuffle_w_l : (int * 'a) list -> 'a list t [@@deprecated "Use [shuffle_list_weighted] instead"]
+  (** An alias for {!shuffle_list_weighted} since NEXT_RELEASE.
       @since 0.11
-      @deprecated use {!shuffle_weighted_list} instead. *)
+      @deprecated use {!shuffle_list_weighted} instead. *)
 
   val range_subset : size:int -> int -> int -> int array t
   (** [range_subset ~size:k low high] generates an array of length [k]
@@ -1812,27 +1812,27 @@ val frequency : ?print:'a Print.t -> ?small:('a -> int) ->
 (** Similar to {!oneof} but with frequencies.
     @deprecated use {!oneof_weighted} instead. *)
 
-val oneof_weighted_list : ?print:'a Print.t -> ?small:('a -> int) ->
+val oneof_list_weighted : ?print:'a Print.t -> ?small:('a -> int) ->
   (int * 'a) list -> 'a arbitrary
 (** Same as {!oneof_list}, but each element is paired with its frequency in
     the probability distribution (the higher, the more likely).
     @since NEXT_RELEASE *)
 
 val frequencyl : ?print:'a Print.t -> ?small:('a -> int) ->
-  (int * 'a) list -> 'a arbitrary [@@deprecated "Use [oneof_weighted_list] instead"]
+  (int * 'a) list -> 'a arbitrary [@@deprecated "Use [oneof_list_weighted] instead"]
 (** Same as {!oneof_list}, but each element is paired with its frequency in
     the probability distribution (the higher, the more likely).
-    @deprecated use {!oneof_weighted_list} instead. *)
+    @deprecated use {!oneof_list_weighted} instead. *)
 
-val oneof_weighted_array : ?print:'a Print.t -> ?small:('a -> int) ->
+val oneof_array_weighted : ?print:'a Print.t -> ?small:('a -> int) ->
   (int * 'a) array -> 'a arbitrary
-(** Same as {!oneof_weighted_list}, but with an array.
+(** Same as {!oneof_list_weighted}, but with an array.
     @since NEXT_RELEASE *)
 
 val frequencya : ?print:'a Print.t -> ?small:('a -> int) ->
-  (int * 'a) array -> 'a arbitrary [@@deprecated "Use [oneof_weighted_array] instead"]
-(** Same as {!oneof_weighted_list}, but with an array.
-    @deprecated use {!oneof_weighted_array} instead. *)
+  (int * 'a) array -> 'a arbitrary [@@deprecated "Use [oneof_array_weighted] instead"]
+(** Same as {!oneof_list_weighted}, but with an array.
+    @deprecated use {!oneof_array_weighted} instead. *)
 
 val map : ?rev:('b -> 'a) -> ('a -> 'b) -> 'a arbitrary -> 'b arbitrary
 (** [map f a] returns a new arbitrary instance that generates values using
