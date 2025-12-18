@@ -46,9 +46,9 @@ let bool loc version = with_prefix_gen loc version "bool"
 
 let float loc version = with_prefix_gen loc version "float"
 
-let int32 loc version = with_prefix_gen loc version "ui32"
+let int32 loc version = with_prefix_gen loc version "int32"
 
-let int64 loc version = with_prefix_gen loc version "ui64"
+let int64 loc version = with_prefix_gen loc version "int64"
 
 let option ~loc ~version e =
   let gen = with_prefix_gen loc version "option" in

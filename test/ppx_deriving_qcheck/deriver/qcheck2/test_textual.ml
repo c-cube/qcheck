@@ -55,25 +55,25 @@ let test_bool () =
   check_eq ~expected ~actual "deriving bool"
 
 let test_int32 () =
-  let expected = [ [%stri let gen = QCheck2.Gen.ui32] ] in
+  let expected = [ [%stri let gen = QCheck2.Gen.int32] ] in
   let actual = f @@ extract [%stri type t = int32] in
 
   check_eq ~expected ~actual "deriving int32"
 
 let test_int32' () =
-  let expected = [ [%stri let gen = QCheck2.Gen.ui32] ] in
+  let expected = [ [%stri let gen = QCheck2.Gen.int32] ] in
   let actual = f @@ extract [%stri type t = Int32.t] in
 
   check_eq ~expected ~actual "deriving int32'"
 
 let test_int64 () =
-  let expected = [ [%stri let gen = QCheck2.Gen.ui64] ] in
+  let expected = [ [%stri let gen = QCheck2.Gen.int64] ] in
   let actual = f @@ extract [%stri type t = int64] in
 
   check_eq ~expected ~actual "deriving int64"
 
 let test_int64' () =
-  let expected = [ [%stri let gen = QCheck2.Gen.ui64] ] in
+  let expected = [ [%stri let gen = QCheck2.Gen.int64] ] in
   let actual = f @@ extract [%stri type t = Int64.t] in
 
   check_eq ~expected ~actual "deriving int64'"

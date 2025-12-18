@@ -136,7 +136,7 @@ module Raw = struct
     if verbose then (
       print.info "%slaw %s: %d relevant cases (%d total)\n"
         reset_line name (R.get_count result) (R.get_count_gen result);
-      begin match QCheck2.TestResult.collect result with
+      begin match QCheck2.TestResult.get_collect result with
         | None -> ()
         | Some tbl ->
           print_string (QCheck2.Test.print_collect tbl)
@@ -339,7 +339,7 @@ let print_messages ~colors out cell l =
   )
 
 let print_success ~colors out cell r =
-  begin match QCheck2.TestResult.collect r with
+  begin match QCheck2.TestResult.get_collect r with
     | None -> ()
     | Some tbl ->
       Printf.fprintf out
@@ -352,16 +352,16 @@ let print_success ~colors out cell r =
          "\n!!! %a %s\n\nWarning for test %s:\n\n%s%!"
         (Color.pp_str_c ~colors `Yellow) "Warning" (String.make 68 '!')
         (QCheck2.Test.get_name cell) msg)
-    (QCheck2.TestResult.warnings r);
+    (QCheck2.TestResult.get_warnings r);
 
-  if QCheck2.TestResult.stats r <> []  then
+  if QCheck2.TestResult.get_stats r <> []  then
      Printf.fprintf out
        "\n+++ %a %s\n%!"
        (Color.pp_str_c ~colors `Blue) ("Stats for " ^ QCheck2.Test.get_name cell)
        (String.make 56 '+');
   List.iter
     (fun st -> Printf.fprintf out "\n%s%!" (QCheck2.Test.print_stat st))
-    (QCheck2.TestResult.stats r);
+    (QCheck2.TestResult.get_stats r);
   ()
 
 let print_fail ~colors out cell c_ex =

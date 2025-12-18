@@ -63,7 +63,7 @@ let rec length = function
 let test_length =
   Test.make
     ~name:"gen_list_sized n >>= fun l -> length l <= n"
-    Gen.small_int
+    Gen.int_small
     (fun n ->
       let l = Gen.(generate1 (gen_my_list_sized Gen.int n)) in
       length l <= n)

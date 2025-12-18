@@ -317,18 +317,6 @@ module Generator = struct
       ~print:Print.(list unit)
       Gen.(list unit) (fun l -> let len = List.length l in 0 <= len && len < 10_000)
 
-  let list_repeat_test =
-    Test.make ~name:"list_repeat has constant length" ~count:1000
-      ~print:Print.(pair int (list unit))
-      Gen.(nat_small >>= fun i -> list_repeat i unit >>= fun l -> return (i,l))
-      (fun (i,l) -> List.length l = i)
-
-  let array_repeat_test =
-    Test.make ~name:"array_repeat has constant length" ~count:1000
-      ~print:Print.(pair int (array unit))
-      Gen.(nat_small >>= fun i -> array_repeat i unit >>= fun l -> return (i,l))
-      (fun (i,l) -> Array.length l = i)
-
   let int_option_test =
     Test.make ~name:"int option right range" ~count:1000 ~print:Print.(option int)
       Gen.(option (int_bound 1000))
@@ -376,8 +364,6 @@ module Generator = struct
     bind_test;
     bind_pair_list_length;
     list_test;
-    list_repeat_test;
-    array_repeat_test;
     int_option_test;
     int_string_result_test;
     passing_tree_rev;
@@ -1137,7 +1123,6 @@ module Stats = struct
       Test.make ~name:"list len dist"        ~count:5_000 ~stats:[len] Gen.(list int)                       (fun _ -> true);
       Test.make ~name:"list_small len dist"  ~count:5_000 ~stats:[len] Gen.(list_small int)                 (fun _ -> true);
       Test.make ~name:"list_size len dist"   ~count:5_000 ~stats:[len] Gen.(list_size (int_range 5 10) int) (fun _ -> true);
-      Test.make ~name:"list_repeat len dist" ~count:5_000 ~stats:[len] Gen.(list_repeat 42 int)             (fun _ -> true);
     ]
 
   let array_len_tests =
@@ -1146,14 +1131,13 @@ module Stats = struct
       Test.make ~name:"array len dist"        ~count:5_000 ~stats:[len] Gen.(array int)                       (fun _ -> true);
       Test.make ~name:"array_small len dist"  ~count:5_000 ~stats:[len] Gen.(array_small int)                 (fun _ -> true);
       Test.make ~name:"array_size len dist"   ~count:5_000 ~stats:[len] Gen.(array_size (int_range 5 10) int) (fun _ -> true);
-      Test.make ~name:"array_repeat len dist" ~count:5_000 ~stats:[len] Gen.(array_repeat 42 int)             (fun _ -> true);
     ]
 
   let int_dist_tests =
     let dist = ("dist",fun x -> x) in
     [
       (* test from issue #40 *)
-      Test.make ~name:"int_stats_neg"                  ~count:5000   ~stats:[dist] Gen.small_signed_int                 (fun _ -> true);
+      Test.make ~name:"int_stats_neg"                  ~count:5000   ~stats:[dist] Gen.int_small                        (fun _ -> true);
       (* distribution tests from PR #45 *)
       Test.make ~name:"int dist"                       ~count:100000 ~stats:[dist] Gen.int                              (fun _ -> true);
       Test.make ~name:"int_bound 1000 dist"            ~count:10000  ~stats:[dist] (Gen.int_bound 1000)                 (fun _ -> true);
