@@ -121,6 +121,11 @@
 - Fix shrinking for `QCheck2.Gen.exponential` which could shrink to `infinity`
 - Remove deprecation annotations for `QCheck.Test.{get,set}*` helpers
 - Remove deprecation annotation for `QCheck2.Gen.add_shrink_invariant`
+- Renamed `corners` bindings
+  - Add `QCheck.Gen.int_corner_cases` and deprecate `QCheck.Gen.int_corners`
+  - Deprecate `QCheck.Gen.int_pos_corners`
+  - Add `QCheck2.Gen.int_corner_cases` and deprecate `QCheck2.Gen.int_corners`
+  - Deprecate `QCheck2.Gen.int_pos_corners`
 
 
 ## 0.27 (2025-10-31)
