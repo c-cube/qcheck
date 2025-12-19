@@ -816,15 +816,17 @@ module Gen : sig
 
       @since 0.6 *)
 
-  val int_pos_corners : int list
+  val int_pos_corners : int list [@@deprecated "Define your own list of corner cases instead"]
   (** Non-negative corner cases for int.
 
-      @since 0.6 *)
+      @since 0.6
+      @deprecated define your own list of corner cases instead *)
 
-  val int_corners : int list
+  val int_corners : int list [@@deprecated "Define your own list of corner cases instead"]
   (** All corner cases for int.
 
-      @since 0.6 *)
+      @since 0.6
+      @deprecated define your own list of corner cases instead *)
 
   (** {3 Lists, arrays and options} *)
 
