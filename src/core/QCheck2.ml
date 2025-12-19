@@ -942,9 +942,10 @@ module Gen = struct
 
   let int_pos_corners = [0; 1; 2; max_int]
 
-  let int_corners = int_pos_corners @ [min_int; -2; -1]
+  let int_corner_cases = int_pos_corners @ [min_int; -2; -1]
+  let int_corners = int_corner_cases
 
-  let int_small_corners () : int t = graft_corners int_small int_corners ()
+  let int_small_corners () : int t = graft_corners int_small int_corner_cases ()
   let small_int_corners () : int t = graft_corners nat int_pos_corners ()
 
   (* sized, fix *)
