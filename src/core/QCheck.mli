@@ -442,19 +442,15 @@ module Gen : sig
 
       @since 0.6 *)
 
-  val int_corner_cases : int list
-  (** A list of corner cases for type [int].
-      @since NEXT_RELEASE *)
-
-  val int_pos_corners : int list [@@deprecated "Consider [int_corner_cases] instead"]
+  val int_pos_corners : int list [@@deprecated "Define your own list of corner cases instead"]
   (** Non-negative corner cases for int.
       @since 0.6
-      @deprecated consider {!int_corner_cases} instead *)
+      @deprecated define your own list of corner cases instead *)
 
-  val int_corners : int list [@@deprecated "Use [int_corner_cases] instead"]
+  val int_corners : int list [@@deprecated "Define your own list of corner cases instead"]
   (** All corner cases for int.
       @since 0.6
-      @deprecated use {!int_corner_cases} instead *)
+      @deprecated define your own list of corner cases instead *)
 
   val int_small_corners : unit -> int t
   (** As [int_small], but each newly created generator starts with
