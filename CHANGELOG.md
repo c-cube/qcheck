@@ -1,5 +1,9 @@
 # Changes
 
+## NEXT RELEASE (202?-??-??)
+
+- ...
+
 ## 0.90 (2025-12-19)
 
 - Remove deprecated function generators `QCheck.{fun1_unsafe,fun2_unsafe}`
