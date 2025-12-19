@@ -570,11 +570,6 @@ module Gen : sig
       generators, when shrinking values
 
       @since 0.8
-
-      @deprecated is this function still useful? I feel like it is either useless (invariants
-      should already be part of the shrinking logic, not be added later) or a special,
-      incomplete case of {!Gen.t} being an Alternative (not implemented yet). For now we
-      keep it and wait for users feedback (hence deprecation to raise attention).
   *)
 
   val set_shrink : ('a -> 'a Seq.t) -> 'a t -> 'a t
