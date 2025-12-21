@@ -283,7 +283,7 @@ module Gen : sig
 
       @since 0.90 *)
 
-  val shuffle_w_l : (int * 'a) list -> 'a list t [@@deprecated "Use [shuffle_list_weighted] instead"][@@migrate { repl = Rel.shuffle_weighted }]
+  val shuffle_w_l : (int * 'a) list -> 'a list t [@@deprecated "Use [shuffle_list_weighted] instead"][@@migrate { repl = Rel.shuffle_list_weighted }]
   (** An alias for {!shuffle_list_weighted} since 0.90.
       @since 0.11
       @deprecated use {!shuffle_list_weighted} instead. *)
