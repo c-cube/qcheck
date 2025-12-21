@@ -2,7 +2,21 @@
 
 ## NEXT RELEASE (202?-??-??)
 
-- ...
+- Add ocamlmig `@@migrate` attributes to deprecated combinator names.
+  The following are missing a direct translation:
+  - `QCheck.Gen.big_nat` at most 1_000_000 without a direct translation in distribution
+  - `QCheck.Gen.neg_int` a non-uniform generator without a direct translation in distribution
+  - `QCheck.Gen.int_pos_corners` deprecated without a replacement
+  - `QCheck.Gen.int_corners` deprecated without a replacement
+  - `QCheck.Gen.shuffle_a` is in-place, whereas the replacement `QCheck.Gen.shuffle_array` isn't
+  - `QCheck.neg_int` a non-uniform generator without a direct translation in distribution
+  - `QCheck.small_int_corners` without a direct translation as `int_small_corners` is signed
+  - `QCheck2.Gen.big_nat` at most 1_000_000 without a direct translation in distribution
+  - `QCheck2.Gen.neg_int` a non-uniform generator without a direct translation in distribution
+  - `QCheck2.Gen.small_int_corners` without a direct translation as `int_small_corners` is signed
+  - `QCheck2.Gen.int_pos_corners` deprecated without a replacement
+  - `QCheck2.Gen.int_corners` deprecated without a replacement
+
 
 ## 0.90 (2025-12-19)
 
