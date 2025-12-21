@@ -258,9 +258,9 @@ module Gen : sig
   (** Creates a generator of shuffled arrays.
       @since 0.90 *)
 
-  val shuffle_a : 'a array -> unit t [@@deprecated "Use [shuffle_array] instead"][@@migrate { repl = Rel.shuffle_array }]
+  val shuffle_a : 'a array -> unit t [@@deprecated "Consider using [shuffle_array] instead"]
   (** Shuffles the array in place.
-      @deprecated Use {!shuffle_array} instead. *)
+      @deprecated Consider using {!shuffle_array} instead. *)
 
   val shuffle_list : 'a list -> 'a list t
   (** Creates a generator of shuffled lists.
