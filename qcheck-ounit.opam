@@ -11,7 +11,7 @@ QCheck is a QuickCheck inspired property-based testing library for OCaml.
 The `qcheck-ounit` library provides an integration layer for `QCheck` onto
 https://github.com/gildor478/ounit[`OUnit`], allowing to run property-based
 tests in `OUnit`."""
-version: "0.90"
+version: "0.91"
 tags: [
   "qcheck"
   "quickcheck"

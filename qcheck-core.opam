@@ -10,7 +10,7 @@ QCheck is a QuickCheck inspired property-based testing library for OCaml.
 The `qcheck-core` library provides the core property-based testing API with
 minimal dependendies: It requires only `unix` and `dune`."""
 doc: ["http://c-cube.github.io/qcheck/"]
-version: "0.90"
+version: "0.91"
 tags: [
   "test"
   "property"
