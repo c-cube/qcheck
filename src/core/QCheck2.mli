@@ -192,13 +192,6 @@ module Gen : sig
 
       @since 0.90 *)
 
-  val pint : ?origin : int -> int t [@@deprecated "Use [int_pos] instead"][@@migrate { repl = Rel.int_pos }]
-  (** Generates non-strictly positive integers uniformly ([0] included).
-
-      Shrinks towards [origin] if specified, otherwise towards [0].
-
-      @deprecated use {!int_pos} instead *)
-
   val int_pos_small : int t
   (** Small positive integers (< [100], [0] included).
 
@@ -215,17 +208,6 @@ module Gen : sig
 
       @since 0.90 *)
 
-  val small_nat : int t [@@deprecated "Use [nat_small] instead"][@@migrate { repl = Rel.nat_small }]
-  (** Small positive integers (< [100], [0] included).
-
-      Non-uniform: smaller numbers are more likely than bigger numbers.
-
-      Shrinks towards [0].
-
-      @since 0.5.1
-
-      @deprecated use {!nat_small} instead *)
-
   val nat : int t
   (** Generates natural numbers (< [10_000]).
 
@@ -241,50 +223,12 @@ module Gen : sig
 
       @since 0.90 *)
 
-  val big_nat : int t [@@deprecated "Use [map abs int] instead"]
-  (** Generates natural numbers, possibly large (< [1_000_000]).
-
-      Non-uniform: smaller numbers are more likely than bigger numbers.
-
-      Shrinks towards [0].
-
-      @since 0.10
-
-      @deprecated use [map abs int] instead. *)
-
   val int_neg : int t
   (** Generates strictly negative integers uniformly ([0] excluded).
 
       Shrinks towards [-1].
 
       @since 0.90 *)
-
-  val neg_int : int t [@@deprecated "Use [int_neg] or [map (fun i -> -i) nat] instead"]
-  (** Generates non-strictly negative integers ([0] included).
-
-      Non-uniform: smaller numbers (in absolute value) are more likely than bigger numbers.
-
-      Shrinks towards [0].
-
-      @deprecated use {!int_neg} or [map (fun i -> -i) nat] instead. *)
-
-  val small_int : int t [@@deprecated "Use [nat_small] instead"][@@migrate { repl = Rel.nat_small }]
-  (** Small UNSIGNED integers, for retrocompatibility.
-
-      Shrinks towards [0].
-
-      @deprecated use {!nat_small}. *)
-
-  val small_signed_int : int t [@@deprecated "Use [int_small] instead"][@@migrate { repl = Rel.int_small }]
-  (** Small SIGNED integers, based on {!small_nat}.
-
-      Non-uniform: smaller numbers (in absolute value) are more likely than bigger numbers.
-
-      Shrinks towards [0].
-
-      @since 0.5.2
-
-      @deprecated use {!int_small} instead. *)
 
   val int_small_corners : unit -> int t
   (** As {!int_small}, but each newly created generator starts with
@@ -302,48 +246,16 @@ module Gen : sig
 
     @since 0.90 *)
 
-  val small_int_corners : unit -> int t [@@deprecated "Use [int_small_corners] instead"]
-  (** As {!small_int}, but each newly created generator starts with
-    a list of corner cases before falling back on random generation.
-
-    Note that [small_int_corners ()] is stateful, meaning that once the list of
-    corner cases has been emitted, subsequent calls will not reproduce them.
-    As a consequence, in the following example, the first test fails with a
-    counter example, whereas the second rerun does not:
-    {[
-      let gen = QCheck2.Gen.small_int_corners ()
-      let t = QCheck2.Test.make ~name:"never max_int" gen (fun i -> i <> max_int)
-      let _ = QCheck_base_runner.run_tests ~verbose:true [t;t]
-    ]}
-
-    @deprecated use {!int_small_corners} instead. *)
-
   val int32 : int32 t
   (** Generates uniform {!int32} values.
 
       Shrinks towards [0l].
   *)
 
-  val ui32 : int32 t [@@deprecated "Use [int32] instead"][@@migrate { repl = Rel.int32 }]
-  (** Generates {!int32} values.
-
-      Shrinks towards [0l].
-
-      @deprecated use {!val:int32} instead, the name is wrong, values {i are} signed.
-  *)
-
   val int64 : int64 t
   (** Generates uniform {!int64} values.
 
       Shrinks towards [0L].
-  *)
-
-  val ui64 : int64 t [@@deprecated "Use [int64] instead"][@@migrate { repl = Rel.int64 }]
-  (** Generates {!int64} values.
-
-      Shrinks towards [0L].
-
-      @deprecated use {!val:int64} instead, the name is wrong, values {i are} signed.
   *)
 
   val float : float t
@@ -362,22 +274,6 @@ module Gen : sig
   (** Generates negative floating point numbers. ([-0.] included).
 
       Shrinks towards [-0.].
-  *)
-
-  val pfloat : float t [@@deprecated "Use [float_pos] instead"][@@migrate { repl = Rel.float_pos }]
-  (** Generates positive floating point numbers ([0.] included).
-
-      Shrinks towards [0.].
-
-      @deprecated use {!float_pos} instead.
-  *)
-
-  val nfloat : float t [@@deprecated "Use [float_neg] instead"][@@migrate { repl = Rel.float_neg }]
-  (** Generates negative floating point numbers. ([-0.] included).
-
-      Shrinks towards [-0.].
-
-      @deprecated use {!float_neg} instead.
   *)
 
   val char : char t
@@ -518,16 +414,6 @@ module Gen : sig
       Shrinks on the number of characters first, then on the characters.
 
       @since 0.20
-  *)
-
-  val small_string : ?gen:char t -> string t [@@deprecated "Use [string_small] instead"][@@migrate { repl = Rel.string_small }]
-  (** Builds a string generator, length is {!nat_small}.
-      Accepts an optional character generator (the default is {!char}).
-      Shrinks on the number of characters first, then on the characters.
-      This function is kept for backward compatibility:
-      The optional argument is in fact a mandatory [option], see c-cube/qcheck#162.
-      Use {!string_small} instead.
-      @deprecated use {!string_small} instead.
   *)
 
   val pure : 'a -> 'a t
@@ -692,28 +578,12 @@ module Gen : sig
       @since 0.90
   *)
 
-  val oneofl : 'a list -> 'a t [@@deprecated "Use [oneof_list] instead"][@@migrate { repl = Rel.oneof_list }]
-  (** [oneofl l] constructs a generator that selects among the given list of values [l].
-
-      Shrinks towards the first element of the list.
-      @raise Invalid_argument or Failure if [l] is empty
-      @deprecated use {!oneof_list} instead.
-  *)
-
   val oneof_array : 'a array -> 'a t
   (** [oneof_array a] constructs a generator that selects among the given array of values [a].
 
       Shrinks towards the first element of the array.
       @raise Invalid_argument or Failure if [a] is empty
       @since 0.90
-  *)
-
-  val oneofa : 'a array -> 'a t [@@deprecated "Use [oneof_array] instead"][@@migrate { repl = Rel.oneof_array }]
-  (** [oneofa a] constructs a generator that selects among the given array of values [a].
-
-      Shrinks towards the first element of the array.
-      @raise Invalid_argument or Failure if [a] is empty
-      @deprecated use {!oneof_array} instead.
   *)
 
   val oneof_weighted : (int * 'a t) list -> 'a t
@@ -724,28 +594,12 @@ module Gen : sig
       @since 0.90
   *)
 
-  val frequency : (int * 'a t) list -> 'a t [@@deprecated "Use [oneof_weighted] instead"][@@migrate { repl = Rel.oneof_weighted }]
-  (** Constructs a generator that selects among a given list of generators.
-      Each of the given generators are chosen based on a positive integer weight.
-
-      Shrinks towards the first element of the list.
-      @deprecated use {!oneof_weighted} instead.
-  *)
-
   val oneof_list_weighted : (int * 'a) list -> 'a t
   (** Constructs a generator that selects among a given list of values.
       Each of the given values are chosen based on a positive integer weight.
 
       Shrinks towards the first element of the list.
       @since 0.90
-  *)
-
-  val frequencyl : (int * 'a) list -> 'a t [@@deprecated "Use [oneof_list_weighted] instead"][@@migrate { repl = Rel.oneof_list_weighted }]
-  (** Constructs a generator that selects among a given list of values.
-      Each of the given values are chosen based on a positive integer weight.
-
-      Shrinks towards the first element of the list.
-      @deprecated use {!oneof_list_weighted} instead.
   *)
 
   val oneof_array_weighted : (int * 'a) array -> 'a t
@@ -756,31 +610,15 @@ module Gen : sig
       @since 0.90
   *)
 
-  val frequencya : (int * 'a) array -> 'a t [@@deprecated "Use [oneof_array_weighted] instead"][@@migrate { repl = Rel.oneof_array_weighted }]
-  (** Constructs a generator that selects among a given array of values.
-      Each of the array entries are chosen based on a positive integer weight.
-
-      Shrinks towards the first element of the array.
-      @deprecated use {!oneof_array_weighted} instead.
-  *)
-
   (** {3 Shuffling elements} *)
 
   val shuffle_array : 'a array -> 'a array t
   (** Returns a copy of the array with its elements shuffled.
       @since 0.90 *)
 
-  val shuffle_a : 'a array -> 'a array t [@@deprecated "Use [shuffle_array] instead"][@@migrate { repl = Rel.shuffle_array }]
-  (** Returns a copy of the array with its elements shuffled.
-      @deprecated use {!shuffle_array} instead. *)
-
   val shuffle_list : 'a list -> 'a list t
   (** Creates a generator of shuffled lists.
       @since 0.90 *)
-
-  val shuffle_l : 'a list -> 'a list t [@@deprecated "Use [shuffle_list] instead"][@@migrate { repl = Rel.shuffle_list }]
-  (** Creates a generator of shuffled lists.
-      @deprecated use {!shuffle_list} instead. *)
 
   val shuffle_list_weighted : (int * 'a) list -> 'a list t
   (** Creates a generator of weighted shuffled lists. A given list is shuffled on each
@@ -794,11 +632,6 @@ module Gen : sig
       [["one"; "ten"; "five"]] because "ten" and "five" have larger weights than "one".
 
       @since 0.90 *)
-
-  val shuffle_w_l : (int * 'a) list -> 'a list t [@@deprecated "Use [shuffle_list_weighted] instead"][@@migrate { repl = Rel.shuffle_list_weighted }]
-  (** A synonym for {!shuffle_list_weighted} since 0.90
-      @since 0.11
-      @deprecated use {!shuffle_list_weighted} instead. *)
 
   (** {3 Corner cases} *)
 
@@ -816,18 +649,6 @@ module Gen : sig
 
       @since 0.6 *)
 
-  val int_pos_corners : int list [@@deprecated "Define your own list of corner cases instead"]
-  (** Non-negative corner cases for int.
-
-      @since 0.6
-      @deprecated define your own list of corner cases instead *)
-
-  val int_corners : int list [@@deprecated "Define your own list of corner cases instead"]
-  (** All corner cases for int.
-
-      @since 0.6
-      @deprecated define your own list of corner cases instead *)
-
   (** {3 Lists, arrays and options} *)
 
   val list : 'a t -> 'a list t
@@ -843,27 +664,11 @@ module Gen : sig
 
       @since 0.90 *)
 
-  val small_list : 'a t -> 'a list t [@@deprecated "Use [list_small] instead"][@@migrate { repl = Rel.list_small }]
-  (** Generates lists of small size (see {!nat_small}).
-
-      Shrinks on the number of elements first, then on elements.
-
-      @since 0.5.3
-
-      @deprecated use {!list_small} instead. *)
-
   val list_size : int t -> 'a t -> 'a list t
   (** Builds a list generator from a (non-negative) size generator and an element generator.
 
       Shrinks on the number of elements first, then on elements.
   *)
-
-  val list_repeat : int -> 'a t -> 'a list t [@@deprecated "Use [list_size (return i) g] instead"][@@migrate { repl = (fun i g -> Rel.list_size (Rel.return i) g) }]
-  (** [list_repeat i g] builds a list generator from exactly [i] elements generated by [g].
-
-      Shrinks on elements only.
-
-      @deprecated use [list_size (return i) g] instead. *)
 
   val array : 'a t -> 'a array t
   (** Builds an array generator from an element generator. Array size is generated by {!nat}.
@@ -884,22 +689,6 @@ module Gen : sig
 
       @since 0.90 *)
 
-  val small_array : 'a t -> 'a array t [@@deprecated "Use [array_small] instead"][@@migrate { repl = Rel.array_small }]
-  (** Generates arrays of small size (see {!nat_small}).
-
-      Shrinks on the number of elements first, then on elements.
-
-      @since 0.10
-
-      @deprecated use {!array_small} instead. *)
-
-  val array_repeat : int -> 'a t -> 'a array t [@@deprecated "Use [array_size (return i) g] instead"][@@migrate { repl = (fun i g -> Rel.array_size (Rel.return i) g) }]
-  (** [array_repeat i g] builds an array generator from exactly [i] elements generated by [g].
-
-      Shrinks on elements only.
-
-      @deprecated use [array_size (return i) g] instead. *)
-
   val option : ?ratio:float -> 'a t -> 'a option t
   (** [option gen] is an [option] generator that uses [gen] when generating [Some] values.
 
@@ -910,10 +699,6 @@ module Gen : sig
 
       @since 0.19 (renamed from [opt])
   *)
-
-  val opt : ?ratio:float -> 'a t -> 'a option t [@@deprecated "Use [option] instead"][@@migrate { repl = Rel.option }]
-  (** [opt] is an alias of {!val:option} for backward compatibility.
-      @deprecated use {!val:option} instead. *)
 
   val result : ?ratio:float -> 'a t -> 'e t -> ('a, 'e) result t
   (** [result ~ratio okgen errgen] generates [Ok v] with [v] coming from [okgen]
@@ -985,30 +770,12 @@ module Gen : sig
 
       @since 0.90 *)
 
-  val flatten_l : 'a t list -> 'a list t [@@deprecated "Use [flatten_list] instead"][@@migrate { repl = Rel.flatten_list }]
-  (** Generate a list of elements from individual generators.
-
-      Shrinks on the elements of the list, in the list order.
-
-      @since 0.13
-
-      @deprecated use {!flatten_list} instead. *)
-
   val flatten_array : 'a t array -> 'a array t
   (** Generate an array of elements from individual generators.
 
       Shrinks on the elements of the array, in the array order.
 
       @since 0.90 *)
-
-  val flatten_a : 'a t array -> 'a array t [@@deprecated "Use [flatten_array] instead"][@@migrate { repl = Rel.flatten_array }]
-  (** Generate an array of elements from individual generators.
-
-      Shrinks on the elements of the array, in the array order.
-
-      @since 0.13
-
-      @deprecated use {!flatten_array} instead. *)
 
   val flatten_option : 'a t option -> 'a option t
   (** Generate an option from an optional generator.
@@ -1017,15 +784,6 @@ module Gen : sig
 
       @since 0.90 *)
 
-  val flatten_opt : 'a t option -> 'a option t [@@deprecated "Use [flatten_option] instead"][@@migrate { repl = Rel.flatten_option }]
-  (** Generate an option from an optional generator.
-
-      Shrinks towards [None] then shrinks on the value.
-
-      @since 0.13
-
-      @deprecated use {!flatten_option} instead. *)
-
   val flatten_result : ('a t, 'e) result -> ('a,'e) result t
   (** Generate a result from [Ok gen], an error from [Error e].
 
@@ -1033,16 +791,6 @@ module Gen : sig
       Does not shrink if [Error e].
 
       @since 0.90 *)
-
-  val flatten_res : ('a t, 'e) result -> ('a,'e) result t [@@deprecated "Use [flatten_result] instead"][@@migrate { repl = Rel.flatten_result }]
-  (** Generate a result from [Ok gen], an error from [Error e].
-
-      Shrinks on [gen] if [Ok gen].
-      Does not shrink if [Error e].
-
-      @since 0.13
-
-      @deprecated use {!flatten_result} instead. *)
 
   val join : 'a t t -> 'a t
   (** Collapses a generator of generators to a generator.
@@ -1466,9 +1214,6 @@ module Print : sig
       ['a] using [f], and then by {i printing} this value of type ['a] using [p].
   *)
 
-  val comap : ('b -> 'a) -> 'a t -> 'b t [@@deprecated "Use [contramap] instead"][@@migrate { repl = Rel.contramap }]
-  (** @deprecated use {!contramap} instead. *)
-
   val tup2 : 'a t -> 'b t -> ('a * 'b) t
   (** 2-tuple printer. Expects printers for each component. *)
 
@@ -1574,11 +1319,6 @@ module Shrink : sig
   (** [int_agressive_towards destination n] gives all integers from [destination] to [n] (excluded).
 
       {b Be careful about time and memory} as the resulting list can be huge *)
-
-  val int_aggressive : int -> int Seq.t [@@deprecated "Use [int_aggressive_towards 0] instead"][@@migrate { repl = Rel.int_aggressive_towards 0 }]
-  (** @deprecated Use [int_aggressive_towards 0] instead.
-      @since 0.7 *)
-
 end
 
 (** {1 Generating Functions}
@@ -1673,9 +1413,6 @@ module Observable : sig
       ['b] can be obtained by transforming a value of type ['b] to
       ['a] using [f], and then by {i consuming} this value of type ['a] using [o].
   *)
-
-  val map : ('b -> 'a) -> 'a t -> 'b t [@@deprecated "Use [contramap] instead"][@@migrate { repl = Rel.contramap }]
-  (** @deprecated use {!contramap} instead. *)
 
   val option : 'a t -> 'a option t
   (** [option o] wraps the observable [o] of ['a] into an observable of
@@ -1976,21 +1713,6 @@ module TestResult : sig
 
   val is_failed : _ t -> bool
   (** Returns true iff the state is [Failed _] *)
-
-  val stats : 'a t -> ('a stat * (int,int) Hashtbl.t) list [@@deprecated "Use [get_stats] instead"][@@migrate { repl = Rel.get_stats }]
-  (** Obtain statistics
-      @since 0.6
-      @deprecated use {!get_stats} instead *)
-
-  val warnings : _ t -> string list [@@deprecated "Use [get_warnings] instead"][@@migrate { repl = Rel.get_warnings }]
-  (** Obtain list of warnings
-      @since 0.10
-      @deprecated use {!get_warnings} instead *)
-
-  val collect : _ t -> (string,int) Hashtbl.t option [@@deprecated "Use [get_collect] instead"][@@migrate { repl = Rel.get_collect }]
-  (** Obtain statistics
-      @since 0.6
-      @deprecated use {!get_collect} instead *)
 end
 
 module Test_exceptions : sig

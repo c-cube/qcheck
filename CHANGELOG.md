@@ -2,7 +2,49 @@
 
 ## NEXT RELEASE (202?-??-??)
 
-- ...
+- Remove deprecated generator bindings:
+  - `QCheck.Gen`:
+    - `big_nat` `neg_int` `pint` `small_nat` `small_int` `small_signed_int` `int_pos_corners`, `int_corners`
+    - `ui32` `ui64`
+    - `pfloat` `nfloat`
+    - `opt`
+    - `string_readable` `small_string`
+    - `small_list` `list_repeat`
+    - `array_repeat` `small_array`
+    - `oneofl` `oneofa`
+    - `frequency` `frequencyl` `frequencya`
+    - `shuffle_a` `shuffle_l` `shuffle_w_l`
+    - `flatten_l` `flatten_a` `flatten_opt` `flatten_res`
+  - `QCheck.arbitrary`:
+    - `small_nat` `small_int` `small_signed_int` `pos_int` `neg_int` - `small_int_corners`
+    - `pos_float` `neg_float`
+    - `printable_char` `numeral_char`
+    - `string_gen_of_size` `string_gen` `small_string` `string_of_size`
+      `printable_string` `printable_string_of_size` `string_printable_of_size` `small_printable_string` `string_small_printable`
+      `numeral_string` `numeral string` `numeral_string_of_size` `string_numeral_of_size`
+    - `bytes_gen_of_size` `bytes_of_size`
+    - `small_list` `list_of_size`
+    - `array_of_size`
+    - `choose` `oneofl` `oneofa`
+    - `frequency` `frequencyl` `frequencya`
+  - `QCheck2.Gen`:
+    - `pint` `small_nat` `big_nat` `neg_int` `small_int` `small_signed_int`
+      `small_int_corners` `int_pos_corners` `int_corners`
+    - `ui32` `ui64`
+    - `pfloat` `nfloat`
+    - `opt`
+    - `small_string`
+    - `small_list` `list_repeat`
+    - `small_array` `array_repeat`
+    - `oneofl` `oneofa`
+    - `frequency` `frequencyl` `frequencya`
+    - `shuffle_a` `shuffle_l` `shuffle_w_l`
+    - `flatten_l` `flatten_a` `flatten_opt` `flatten_res`
+- Other removed deprecated `QCheck2` bindings:
+  - `Print.comap`
+  - `Shrink.int_aggressive`
+  - `Observable.map`
+  - `TestResult.stats` `TestResult.warnings` `TestResult.collect`
 
 
 ## 0.91 (2025-12-21)
