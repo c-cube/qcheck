@@ -439,7 +439,6 @@ module Gen = struct
   let int_corners = int_pos_corners @ [min_int;-2;-1]
 
   let int_small_corners () = graft_corners int_small int_corners ()
-  let nng_corners () = graft_corners nat int_pos_corners ()
 
   (* sized, fix *)
 
@@ -1251,8 +1250,6 @@ let bool =
 let float = make_scalar Gen.float
 let float_pos = make_scalar Gen.float_pos
 let float_neg = make_scalar Gen.float_neg
-let pos_float = float_pos
-let neg_float = float_neg
 
 let float_bound_inclusive bound =
   make ~small:small1 ~shrink:(Shrink.float_bound bound) ~print:Print.float (Gen.float_bound_inclusive bound)
@@ -1274,20 +1271,14 @@ let int_bound n = make_int (Gen.int_bound n)
 let int_range a b = make_int (Gen.int_range a b)
 let (--) = int_range
 let int_pos = make_int Gen.int_pos
-let pos_int = int_pos
-let small_int = make_int Gen.int_pos_small
 
 let nat = make_int Gen.nat
 let int_pos_small = make_int Gen.int_pos_small
 let int_pos_mid = nat
 let nat_small = int_pos_small
-let small_nat = nat_small
 let int_small = make_int Gen.int_small
-let small_signed_int = int_small
-let small_int_corners () = make_int (Gen.nng_corners ())
 let int_small_corners () = make_int (Gen.int_small_corners ())
 let int_neg = make_int Gen.int_neg
-let neg_int = make_int (fun st -> -(Gen.nat st))
 
 let int32 =
   make ~print:Print.int32 ~small:small1 ~shrink:Shrink.int32 Gen.int32
@@ -1303,23 +1294,19 @@ let char_range low high =
 let char_printable =
   make ~print:Print.char ~small:(small_char 'a') ~shrink:Shrink.char_printable Gen.char_printable
 let printable = char_printable
-let printable_char = char_printable
 let char_numeral =
   make ~print:Print.char ~small:(small_char '0') ~shrink:Shrink.char_numeral Gen.char_numeral
 let numeral = char_numeral
-let numeral_char = char_numeral
 
 let bytes_size ?(gen = Gen.char) size =
   make ~shrink:Shrink.bytes ~small:Bytes.length
     ~print:Print.bytes (Gen.bytes_size ~gen size)
 let bytes_size_of size gen = bytes_size ~gen size
-let bytes_gen_of_size size gen = bytes_size ~gen size
 let bytes_of gen =
   make ~shrink:Shrink.bytes ~small:Bytes.length
     ~print:Print.bytes (Gen.bytes_of gen)
 
 let bytes = bytes_of Gen.char
-let bytes_of_size size = bytes_size ~gen:Gen.char size
 let bytes_small = bytes_size ~gen:Gen.char Gen.nat_small
 let bytes_small_of gen = bytes_size ~gen Gen.nat_small
 let bytes_printable =
@@ -1335,38 +1322,12 @@ let string_of gen =
 
 let string = string_of Gen.char
 let string_size ?(gen=Gen.char) size = string_size_of size gen
-let string_of_size size = string_size_of size Gen.char
 let string_small = string_size_of Gen.nat_small Gen.char
 let string_small_of gen = string_size_of Gen.nat_small gen
-let small_string = string_small
-let string_gen = string_of
-let string_gen_of_size = string_size_of
 
 let string_printable =
   make ~shrink:(Shrink.string ~shrink:Shrink.char_printable) ~small:String.length
     ~print:Print.string (Gen.string_of Gen.char_printable)
-
-let printable_string_of_size size =
-  make ~shrink:(Shrink.string ~shrink:Shrink.char_printable) ~small:String.length
-    ~print:Print.string (Gen.string_size ~gen:Gen.char_printable size)
-
-let small_printable_string =
-  make ~shrink:(Shrink.string ~shrink:Shrink.char_printable) ~small:String.length
-    ~print:Print.string (Gen.string_size ~gen:Gen.char_printable Gen.nat_small)
-
-let numeral_string =
-  make ~shrink:(Shrink.string ~shrink:Shrink.char_numeral) ~small:String.length
-    ~print:Print.string (Gen.string_of Gen.char_numeral)
-
-let numeral_string_of_size size =
-  make ~shrink:(Shrink.string ~shrink:Shrink.char_numeral) ~small:String.length
-    ~print:Print.string (Gen.string_size ~gen:Gen.char_numeral size)
-
-let printable_string = string_printable
-let string_printable_of_size = printable_string_of_size
-let string_small_printable = small_printable_string
-let string_numeral = numeral_string
-let string_numeral_of_size = numeral_string_of_size
 
 let list_sum_ f l = List.fold_left (fun acc x-> f x+acc) 0 l
 
@@ -1378,9 +1339,7 @@ let mk_list a gen =
 
 let list a = mk_list a (Gen.list a.gen)
 let list_size size a = mk_list a (Gen.list_size size a.gen)
-let list_of_size = list_size
 let list_small a = mk_list a (Gen.list_small a.gen)
-let small_list = list_small
 
 let array_sum_ f a = Array.fold_left (fun acc x -> f x+acc) 0 a
 
@@ -1407,8 +1366,6 @@ let array_size size a =
     ~shrink:(Shrink.array ?shrink:a.shrink)
     ?print:(_opt_map ~f:Print.array a.print)
     (Gen.array_size size a.gen)
-
-let array_of_size = array_size
 
 let pair a b =
   make
@@ -1824,13 +1781,7 @@ let fun4 o1 o2 o3 o4 ret =
 
 (** given a list, returns generator that picks at random from list *)
 let oneof_list ?print ?small xs = make ?print ?small (Gen.oneof_list xs)
-let oneofl ?print ?collect xs = make ?print ?collect (Gen.oneof_list xs)
 let oneof_array ?print ?small xs = make ?print ?small (Gen.oneof_array xs)
-let oneofa ?print ?collect xs = make ?print ?collect (Gen.oneof_array xs)
-
-(** Given a list of generators, returns generator that randomly uses one of the generators
-    from the list *)
-let choose l = oneof l
 
 (** Generator that always returns given value *)
 let always ?print x =
@@ -1845,12 +1796,6 @@ let oneof_weighted ?print ?small ?shrink l =
   let shrink = _opt_sum shrink first.shrink in
   let gens = List.map (fun (x,y) -> x, y.gen) l in
   make ?print ?small ?shrink (Gen.oneof_weighted gens)
-
-let frequency ?print ?small ?shrink ?collect l =
-  let arb = oneof_weighted ?print ?small ?shrink l in
-  match collect with
-  | None -> arb
-  | Some c -> set_collect c arb
 
 (** Given list of [(frequency,value)] pairs, returns value with probability proportional
     to given frequency *)

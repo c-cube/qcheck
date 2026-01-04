@@ -1151,14 +1151,6 @@ val float_pos : float arbitrary
 val float_neg : float arbitrary
 (** Negative float generator (no infinities). *)
 
-val pos_float : float arbitrary [@@deprecated "Use [float_pos] instead"][@@migrate { repl = Rel.float_pos }]
-(** Positive float generator (no infinities).
-    @deprecated use {!float_pos} instead. *)
-
-val neg_float : float arbitrary [@@deprecated "Use [float_neg] instead"][@@migrate { repl = Rel.float_neg }]
-(** Negative float generator (no infinities).
-    @deprecated use {!float_neg} instead. *)
-
 val float_bound_inclusive : float -> float arbitrary
 (** [float_bound_inclusive n] is uniform between [0] and [n] included. If [bound] is
     negative, the result is negative or zero.  If [bound] is 0, the result is 0.
@@ -1222,20 +1214,6 @@ val nat_small : int arbitrary
     Synonym for {!int_pos_small}.
     @since 0.90 *)
 
-val small_nat : int arbitrary [@@deprecated "Use [nat_small] instead"][@@migrate { repl = Rel.nat_small }]
-(** Small unsigned integers.
-    @since 0.5.1
-    @deprecated use {!nat_small} instead *)
-
-val small_int : int arbitrary [@@deprecated "Use [nat_small] instead"][@@migrate { repl = Rel.nat_small }]
-(** Small unsigned integers. See {!Gen.small_int}.
-    @deprecated use {!nat_small} instead *)
-
-val small_signed_int : int arbitrary [@@deprecated "Use [int_small] instead"][@@migrate { repl = Rel.int_small }]
-(** Small signed integers.
-    @since 0.5.2
-    @deprecated use {!int_small} instead *)
-
 val (--) : int -> int -> int arbitrary
 (** Synonym for {!int_range}. *)
 
@@ -1248,11 +1226,6 @@ val int64 : int64 arbitrary
 val int_pos : int arbitrary
 (** Positive int generator (0 included). Uniformly distributed.
     See {!Gen.int_pos} *)
-
-val pos_int : int arbitrary [@@deprecated "Use [int_pos] instead"][@@migrate { repl = Rel.int_pos }]
-(** Positive int generator (0 included). Uniformly distributed.
-    See {!Gen.int_pos}
-    @deprecated use {!int_pos} instead. *)
 
 val int_neg : int arbitrary
 (** Negative int generator (0 excluded). Uniformly distributed.
@@ -1274,27 +1247,6 @@ val int_small_corners : unit -> int arbitrary
     ]}
 *)
 
-val small_int_corners : unit -> int arbitrary [@@deprecated "Use [int_small_corners] instead"]
-(** As [small_int], but each newly created generator starts with
-    a list of corner cases before falling back on random generation.
-
-    Note that [small_int_corners ()] is stateful, meaning that once the list of
-    corner cases has been emitted, subsequent calls will not reproduce them.
-    As a consequence, in the following example, the first test fails with a
-    counter example, whereas the second rerun does not:
-    {[
-      let gen = QCheck.small_int_corners ()
-      let t = QCheck.Test.make ~name:"never max_int" gen (fun i -> i <> max_int)
-      let _ = QCheck_base_runner.run_tests ~verbose:true [t;t]
-    ]}
-    @deprecated consider using {!int_small_corners} instead. *)
-
-val neg_int : int arbitrary [@@deprecated "Use uniform [int_neg] instead"]
-(** Negative int generator (0 included, see {!Gen.neg_int}).
-    The distribution is non-uniform and similar to that of
-    [int_small], not of [int_pos].
-    @deprecated consider using uniform {!int_neg} instead. *)
-
 val char : char arbitrary
 (** Uniformly distributed on all the chars (not just ascii or
     valid latin-1). *)
@@ -1313,10 +1265,6 @@ val printable : char arbitrary
 (** Synonym for {!char_printable}.
     @since 0.90 *)
 
-val printable_char : char arbitrary [@@deprecated "Use [char_printable] instead"][@@migrate { repl = Rel.char_printable }]
-(** Synonym for {!char_printable}.
-    @deprecated use {!char_printable} instead. *)
-
 val char_numeral : char arbitrary
 (** Uniformly distributed over ['0'..'9'].
     @since 0.90 *)
@@ -1324,10 +1272,6 @@ val char_numeral : char arbitrary
 val numeral : char arbitrary
 (** Synonym for {!char_numeral}.
     @since 0.90 *)
-
-val numeral_char : char arbitrary [@@deprecated "Use [char_numeral] instead"][@@migrate { repl = Rel.char_numeral }]
-(** Synonym for {!char_numeral}.
-    @deprecated use {!char_numeral} instead. *)
 
 val bytes_size : ?gen:char Gen.t -> int Gen.t -> bytes arbitrary
 (** Builds a bytes generator from a (non-negative) size generator.
@@ -1338,11 +1282,6 @@ val bytes_size_of : int Gen.t -> char Gen.t -> bytes arbitrary
 (** Builds a bytes generator from a (non-negative) size generator
     and a character generator.
     @since 0.90 *)
-
-val bytes_gen_of_size : int Gen.t -> char Gen.t -> bytes arbitrary [@@deprecated "Use [bytes_size] instead"][@@migrate { repl = (fun s gen -> Rel.bytes_size ~gen s) }]
-(** Builds a bytes generator from a (non-negative) size generator and a character generator.
-    @since 0.20
-    @deprecated use {!bytes_size} instead. *)
 
 val bytes_of : char Gen.t -> bytes arbitrary
 (** Generates bytes with a distribution of length of {!Gen.nat}.
@@ -1361,23 +1300,10 @@ val bytes_small_of : char Gen.t -> bytes arbitrary
 (** Same as {!bytes_of} but with a small length (ie {!Gen.nat_small} ).
     @since 0.20 *)
 
-val bytes_of_size : int Gen.t -> bytes arbitrary [@@deprecated "Use [bytes_size] instead"][@@migrate { repl = Rel.bytes_size }]
-(** Generates bytes with distribution of characters of [char].
-    @since 0.20
-    @deprecated use {!bytes_size} instead. *)
-
 val bytes_printable : bytes arbitrary
 (** Generates bytes with a distribution of length of {!Gen.nat}
     and distribution of characters of [printable_char].
     @since 0.20 *)
-
-val string_gen_of_size : int Gen.t -> char Gen.t -> string arbitrary [@@deprecated "Use [string_size_of] instead"][@@migrate { repl = Rel.string_size_of }]
-(** Builds a string generator from a (non-negative) size generator and a character generator.
-    @deprecated use {!string_size_of} instead. *)
-
-val string_gen : char Gen.t -> string arbitrary [@@deprecated "Use [string_of] instead"][@@migrate { repl = Rel.string_of }]
-(** Generates strings with a distribution of length of {!Gen.nat}.
-    @deprecated use {!string_of} instead. *)
 
 val string_of : char Gen.t -> string arbitrary
 (** Synonym for {!string_gen} added for convenience.
@@ -1397,10 +1323,6 @@ val string_size_of : int Gen.t -> char Gen.t -> string arbitrary
     and a character generator.
     @since 0.90 *)
 
-val small_string : string arbitrary [@@deprecated "Use [string_small] instead"][@@migrate { repl = Rel.string_small }]
-(** Same as {!string} but with a small length (ie {!Gen.nat_small} ).
-    @deprecated use {!string_small} *)
-
 val string_small : string arbitrary
 (** Same as {!string} but with a small length (ie {!Gen.nat_small} ).
     @since 0.20 *)
@@ -1413,62 +1335,10 @@ val list_small : 'a arbitrary -> 'a list arbitrary
 (** Generates lists of small size (see {!Gen.nat_small}).
     @since 0.90 *)
 
-val small_list : 'a arbitrary -> 'a list arbitrary [@@deprecated "Use [list_small] instead"][@@migrate { repl = Rel.list_small }]
-(** Generates lists of small size (see {!Gen.nat_small}).
-    @since 0.5.3
-    @deprecated use {!list_small} instead. *)
-
-val string_of_size : int Gen.t -> string arbitrary [@@deprecated "Use [string_size] instead"][@@migrate { repl = Rel.string_size }]
-(** Generates strings with distribution of characters of [char].
-    @deprecated use {!string_size} instead. *)
-
-val printable_string : string arbitrary [@@deprecated "Use [string_printable] instead"][@@migrate { repl = Rel.string_printable }]
-(** Generates strings with a distribution of length of {!Gen.nat}
-    and distribution of characters of [char_printable].
-    @deprecated use {!string_printable} instead. *)
-
 val string_printable : string arbitrary
 (** Generates strings with a distribution of length of {!Gen.nat}
     and distribution of characters of [char_printable].
     @since 0.20 *)
-
-val printable_string_of_size : int Gen.t -> string arbitrary [@@deprecated "Use [string_size_of] instead"][@@migrate { repl = (fun s -> Rel.string_size_of s Rel.Gen.char_printable) }]
-(** Generates strings with distribution of characters of [char_printable].
-    @deprecated use {!string_size_of} instead. *)
-
-val string_printable_of_size : int Gen.t -> string arbitrary [@@deprecated "Use [string_size_of] instead"][@@migrate { repl = (fun s -> Rel.string_size_of s Rel.Gen.char_printable) }]
-(** Synonym for [printable_string_of_size] added for convenience.
-    @since 0.20
-    @deprecated use {!string_size_of} instead. *)
-
-val small_printable_string : string arbitrary [@@deprecated "Use [string_size_of] instead"][@@migrate { repl = Rel.string_size_of Rel.Gen.nat_small Rel.Gen.char_printable }]
-(** Generates strings with a length of [Gen.nat_small]
-    and distribution of characters of [char_printable].
-    @deprecated use {!string_size_of} instead. *)
-
-val string_small_printable : string arbitrary [@@deprecated "Use [string_size_of] instead"][@@migrate { repl = Rel.string_size_of Rel.Gen.nat_small Rel.Gen.char_printable }]
-(** Synonym for [small_printable_string] added for convenience.
-    @since 0.20
-    @deprecated use {!string_size_of} instead. *)
-
-val numeral_string : string arbitrary [@@deprecated "Use [string_of] instead"][@@migrate { repl = Rel.string_of Rel.Gen.char_numeral }]
-(** Generates strings with a distribution of length of {!Gen.nat}
-    and distribution of characters of [char_numeral].
-    @deprecated use {!string_of} instead. *)
-
-val string_numeral : string arbitrary [@@deprecated "Use [string_of] instead"][@@migrate { repl = Rel.string_of Rel.Gen.char_numeral }]
-(** Synonym for [numeral_string] added for convenience.
-    @since 0.20
-    @deprecated use {!string_of} instead. *)
-
-val numeral_string_of_size : int Gen.t -> string arbitrary [@@deprecated "Use [string_size_of] instead"][@@migrate { repl = (fun s -> Rel.string_size_of s Rel.Gen.char_numeral) }]
-(** Generates strings with a distribution of characters of [char_numeral].
-    @deprecated use {!string_size_of} instead. *)
-
-val string_numeral_of_size : int Gen.t -> string arbitrary [@@deprecated "Use [string_size_of] instead"][@@migrate { repl = (fun s -> Rel.string_size_of s Rel.Gen.char_numeral) }]
-(** Synonym for [numeral_string_of_size] added for convenience.
-    @since 0.20
-    @deprecated use {!string_size_of} instead. *)
 
 val list : 'a arbitrary -> 'a list arbitrary
 (** Generates lists with length generated by {!Gen.nat}. *)
@@ -1476,10 +1346,6 @@ val list : 'a arbitrary -> 'a list arbitrary
 val list_size : int Gen.t -> 'a arbitrary -> 'a list arbitrary
 (** Generates lists with length from the given distribution.
     @since 0.90 *)
-
-val list_of_size : int Gen.t -> 'a arbitrary -> 'a list arbitrary [@@deprecated "Use [list_size] instead"][@@migrate { repl = Rel.list_size }]
-(** Generates lists with length from the given distribution.
-    @deprecated use {!list_size} instead. *)
 
 val array : 'a arbitrary -> 'a array arbitrary
 (** Generates arrays with length generated by {!Gen.nat}. *)
@@ -1491,10 +1357,6 @@ val array_small : 'a arbitrary -> 'a array arbitrary
 val array_size : int Gen.t -> 'a arbitrary -> 'a array arbitrary
 (** Generates arrays with length from the given distribution.
     @since 0.90 *)
-
-val array_of_size : int Gen.t -> 'a arbitrary -> 'a array arbitrary [@@deprecated "Use [array_size] instead"][@@migrate { repl = Rel.array_size }]
-(** Generates arrays with length from the given distribution.
-    @deprecated use {!array_size} instead. *)
 
 val option : ?ratio:float -> 'a arbitrary -> 'a option arbitrary
 (** Choose between returning Some random value with optional ratio, or None. *)
@@ -1618,28 +1480,13 @@ val tup9 :
 
 (** {2 Combinatoric arbitrary combinators } *)
 
-val choose : 'a arbitrary list -> 'a arbitrary [@@deprecated "Use [oneof] instead"][@@migrate { repl = Rel.oneof }]
-(** Choose among the given list of generators. The list must not
-    be empty; if it is [Invalid_argument] is raised.
-    @deprecated use {!oneof} instead. *)
-
 val oneof_list : ?print:'a Print.t -> ?small:('a -> int) -> 'a list -> 'a arbitrary
 (** Pick an element randomly in the list.
     @since 0.90 *)
 
-val oneofl : ?print:'a Print.t -> ?collect:('a -> string) ->
-  'a list -> 'a arbitrary [@@deprecated "Use [oneof_list] instead"][@@migrate { repl = Rel.oneof_list }]
-(** Pick an element randomly in the list.
-    @deprecated use {!oneof_list} instead. *)
-
 val oneof_array : ?print:'a Print.t -> ?small:('a -> int) -> 'a array -> 'a arbitrary
 (** Pick an element randomly in the array.
     @since 0.90 *)
-
-val oneofa : ?print:'a Print.t -> ?collect:('a -> string) ->
-  'a array -> 'a arbitrary [@@deprecated "Use [oneof_array] instead"][@@migrate { repl = Rel.oneof_array }]
-(** Pick an element randomly in the array.
-    @deprecated use {!oneof_array} instead. *)
 
 val oneof : ?print:'a Print.t -> ?small:('a -> int) ->
   ?shrink:'a Shrink.t -> 'a arbitrary list -> 'a arbitrary
@@ -1661,33 +1508,16 @@ val oneof_weighted : ?print:'a Print.t -> ?small:('a -> int) ->
 (** Similar to {!oneof} but with frequencies.
     @since 0.90 *)
 
-val frequency : ?print:'a Print.t -> ?small:('a -> int) ->
-  ?shrink:'a Shrink.t -> ?collect:('a -> string) ->
-  (int * 'a arbitrary) list -> 'a arbitrary [@@deprecated "Use [oneof_weighted] instead"][@@migrate { repl = Rel.oneof_weighted }]
-(** Similar to {!oneof} but with frequencies.
-    @deprecated use {!oneof_weighted} instead. *)
-
 val oneof_list_weighted : ?print:'a Print.t -> ?small:('a -> int) ->
   (int * 'a) list -> 'a arbitrary
 (** Same as {!oneof_list}, but each element is paired with its frequency in
     the probability distribution (the higher, the more likely).
     @since 0.90 *)
 
-val frequencyl : ?print:'a Print.t -> ?small:('a -> int) ->
-  (int * 'a) list -> 'a arbitrary [@@deprecated "Use [oneof_list_weighted] instead"][@@migrate { repl = Rel.oneof_list_weighted }]
-(** Same as {!oneof_list}, but each element is paired with its frequency in
-    the probability distribution (the higher, the more likely).
-    @deprecated use {!oneof_list_weighted} instead. *)
-
 val oneof_array_weighted : ?print:'a Print.t -> ?small:('a -> int) ->
   (int * 'a) array -> 'a arbitrary
 (** Same as {!oneof_list_weighted}, but with an array.
     @since 0.90 *)
-
-val frequencya : ?print:'a Print.t -> ?small:('a -> int) ->
-  (int * 'a) array -> 'a arbitrary [@@deprecated "Use [oneof_array_weighted] instead"][@@migrate { repl = Rel.oneof_array_weighted }]
-(** Same as {!oneof_list_weighted}, but with an array.
-    @deprecated use {!oneof_array_weighted} instead. *)
 
 val map : ?rev:('b -> 'a) -> ('a -> 'b) -> 'a arbitrary -> 'b arbitrary
 (** [map f a] returns a new arbitrary instance that generates values using
