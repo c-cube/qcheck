@@ -138,9 +138,7 @@ module Gen = struct
 
   let oneof l st = List.nth l (Random.State.int st (List.length l)) st
   let oneof_list xs st = List.nth xs (Random.State.int st (List.length xs))
-  let oneofl = oneof_list
   let oneof_array xs st = Array.get xs (Random.State.int st (Array.length xs))
-  let oneofa = oneof_array
 
   let oneof_list_weighted l st =
     let sums = sum_int (List.map fst l) in
@@ -151,21 +149,14 @@ module Gen = struct
     in
     aux 0 l
 
-  let frequencyl = oneof_list_weighted
-
   let oneof_array_weighted a = oneof_list_weighted (Array.to_list a)
 
-  let frequencya = oneof_array_weighted
-
   let oneof_weighted l st = oneof_list_weighted l st st
-
-  let frequency = oneof_weighted
 
   let int_pos_small st =
     let p = RS.float st 1. in
     if p < 0.75 then RS.int st 10 else RS.int st 100
   let nat_small = int_pos_small
-  let small_nat = int_pos_small
 
   (* natural number generator *)
   let nat st =
@@ -176,11 +167,6 @@ module Gen = struct
     else RS.int st 10_000
 
   let int_pos_mid = nat
-
-  let big_nat st =
-    let p = RS.float st 1. in
-    if p < 0.75 then nat st
-    else RS.int st 1_000_000
 
   let unit _st = ()
 
@@ -199,9 +185,6 @@ module Gen = struct
 
   let float_pos st = abs_float (float st)
   let float_neg st = -.(float_pos st)
-
-  let pfloat = float_pos
-  let nfloat = float_neg
 
   let float_bound_inclusive bound st = RS.float st bound
 
@@ -225,14 +208,10 @@ module Gen = struct
 
   let exponential = float_exp
 
-  let neg_int st = -(nat st)
-
   let option ?(ratio = 0.85) f st =
     let p = RS.float st 1. in
     if p < (1.0 -. ratio) then None
     else Some (f st)
-
-  let opt = option
 
   let result ?(ratio = 0.75) vg eg st =
     let p = RS.float st 1. in
@@ -255,8 +234,6 @@ module Gen = struct
       (* Bottom 30 bits *)
       let right = RS.bits st in
       left lor middle lor right
-
-  let pint = int_pos
 
   let int_neg st = -(int_pos st)-1
 
@@ -284,16 +261,10 @@ module Gen = struct
 
   let (--) = int_range
 
-  (* NOTE: we keep this alias to not break code that uses [small_int]
-     for sizes of strings, arrays, etc. *)
-  let small_int = small_nat
-
   let int_small st =
     if bool st
     then nat_small st
     else - (nat_small st)
-
-  let small_signed_int = int_small
 
   let char_range a b = map Char.chr (Char.code a -- Char.code b)
 
@@ -310,9 +281,6 @@ module Gen = struct
   let int32 st = Int32.of_string (random_binary_string st 32)
   let int64 st = Int64.of_string (random_binary_string st 64)
 
-  let ui32 = int32
-  let ui64 = int64
-
   let list_size size gen st =
     foldn ~f:(fun acc _ -> (gen st)::acc) ~init:[] (size st)
   let list gen st = list_size nat gen st
@@ -321,12 +289,9 @@ module Gen = struct
   let array_size size gen st =
     Array.init (size st) (fun _ -> gen st)
   let array gen st = array_size nat gen st
-  let array_repeat n g = array_size (return n) g
 
   let flatten_list l st = List.map (fun f->f st) l
-  let flatten_l = flatten_list
   let flatten_array a st = Array.map (fun f->f st) a
-  let flatten_a = flatten_array
   let flatten_option o st =
     match o with
     | None -> None
@@ -356,8 +321,6 @@ module Gen = struct
     shuffle_a a st;
     Array.to_list a
 
-  let shuffle_l = shuffle_list
-
   let shuffle_list_weighted l st =
     let sample (w, v) =
       let fl_w = float_of_int w in
@@ -365,8 +328,6 @@ module Gen = struct
     in
     let samples = List.rev_map sample l in
     List.sort (fun (w1, _) (w2, _) -> poly_compare w1 w2) samples |> List.rev_map snd
-
-  let shuffle_w_l = shuffle_list_weighted
 
   let range_subset ~size low high st =
     let range_size = high - low + 1 in
@@ -458,14 +419,10 @@ module Gen = struct
   let string_of gen = string_size ~gen nat
   let bytes_printable = bytes_size ~gen:char_printable nat
   let string_printable = string_size ~gen:char_printable nat
-  let string_readable = string_printable
   let bytes_small st = bytes_size nat_small st
   let bytes_small_of gen st = bytes_size ~gen nat_small st
-  let small_string ?gen st = string_size ?gen nat_small st
   let list_small gen = list_size nat_small gen
-  let small_list = list_small
   let array_small gen = array_size nat_small gen
-  let small_array = array_small
   let string_small st = string_size nat_small st
   let string_small_of gen st = string_size ~gen nat_small st
 
@@ -1318,18 +1275,19 @@ let int_range a b = make_int (Gen.int_range a b)
 let (--) = int_range
 let int_pos = make_int Gen.int_pos
 let pos_int = int_pos
-let small_int = make_int Gen.small_int
+let small_int = make_int Gen.int_pos_small
+
 let nat = make_int Gen.nat
 let int_pos_small = make_int Gen.int_pos_small
 let int_pos_mid = nat
 let nat_small = int_pos_small
 let small_nat = nat_small
-let int_small = make_int Gen.small_signed_int
+let int_small = make_int Gen.int_small
 let small_signed_int = int_small
 let small_int_corners () = make_int (Gen.nng_corners ())
 let int_small_corners () = make_int (Gen.int_small_corners ())
 let int_neg = make_int Gen.int_neg
-let neg_int = make_int Gen.neg_int
+let neg_int = make_int (fun st -> -(Gen.nat st))
 
 let int32 =
   make ~print:Print.int32 ~small:small1 ~shrink:Shrink.int32 Gen.int32
@@ -1421,7 +1379,7 @@ let mk_list a gen =
 let list a = mk_list a (Gen.list a.gen)
 let list_size size a = mk_list a (Gen.list_size size a.gen)
 let list_of_size = list_size
-let list_small a = mk_list a (Gen.small_list a.gen)
+let list_small a = mk_list a (Gen.list_small a.gen)
 let small_list = list_small
 
 let array_sum_ f a = Array.fold_left (fun acc x -> f x+acc) 0 a
@@ -1551,7 +1509,7 @@ let tup9 a b c d e f g h i =
     (Gen.tup9 a.gen b.gen c.gen d.gen e.gen f.gen g.gen h.gen i.gen)
 
 let option ?ratio a =
-  let g = Gen.opt ?ratio a.gen
+  let g = Gen.option ?ratio a.gen
   and shrink = _opt_map a.shrink ~f:Shrink.option
   and small =
     _opt_map_or a.small ~d:(function None -> 0 | Some _ -> 1)

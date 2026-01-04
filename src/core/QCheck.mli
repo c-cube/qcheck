@@ -209,66 +209,33 @@ module Gen : sig
       @raise Invalid_argument or Failure if list is empty
       @since 0.90 *)
 
-  val oneofl : 'a list -> 'a t [@@deprecated "Use [oneof_list] instead"][@@migrate { repl = Rel.oneof_list }]
-  (** Constructs a generator that selects among a given list of values.
-      @raise Invalid_argument or Failure if list is empty
-      @deprecated use {!oneof_list} instead. *)
-
   val oneof_array : 'a array -> 'a t
   (** Constructs a generator that selects among a given array of values.
       @raise Invalid_argument or Failure if list is empty
       @since 0.90 *)
-
-  val oneofa : 'a array -> 'a t [@@deprecated "Use [oneof_array] instead"][@@migrate { repl = Rel.oneof_array }]
-  (** Constructs a generator that selects among a given array of values.
-      @raise Invalid_argument or Failure if list is empty
-      @deprecated use {!oneof_array} instead. *)
 
   val oneof_weighted : (int * 'a t) list -> 'a t
   (** Constructs a generator that selects among a given list of generators.
       Each of the given generators are chosen based on a positive integer weight.
       @since 0.90 *)
 
-  val frequency : (int * 'a t) list -> 'a t [@@deprecated "Use [oneof_weighted] instead"][@@migrate { repl = Rel.oneof_weighted }]
-  (** Constructs a generator that selects among a given list of generators.
-      Each of the given generators are chosen based on a positive integer weight.
-      @deprecated use {!oneof_weighted} instead. *)
-
   val oneof_list_weighted : (int * 'a) list -> 'a t
   (** Constructs a generator that selects among a given list of values.
       Each of the given values are chosen based on a positive integer weight.
       @since 0.90 *)
-
-  val frequencyl : (int * 'a) list -> 'a t [@@deprecated "Use [oneof_list_weighted] instead"][@@migrate { repl = Rel.oneof_list_weighted }]
-  (** Constructs a generator that selects among a given list of values.
-      Each of the given values are chosen based on a positive integer weight.
-      @deprecated use {!oneof_list_weighted} instead. *)
 
   val oneof_array_weighted : (int * 'a) array -> 'a t
   (** Constructs a generator that selects among a given array of values.
       Each of the array entries are chosen based on a positive integer weight.
       @since 0.90 *)
 
-  val frequencya : (int * 'a) array -> 'a t [@@deprecated "Use [oneof_array_weighted] instead"][@@migrate { repl = Rel.oneof_array_weighted }]
-  (** Constructs a generator that selects among a given array of values.
-      Each of the array entries are chosen based on a positive integer weight.
-      @deprecated use {!oneof_array_weighted} instead. *)
-
   val shuffle_array : 'a array -> 'a array t
   (** Creates a generator of shuffled arrays.
       @since 0.90 *)
 
-  val shuffle_a : 'a array -> unit t [@@deprecated "Consider using [shuffle_array] instead"]
-  (** Shuffles the array in place.
-      @deprecated Consider using {!shuffle_array} instead. *)
-
   val shuffle_list : 'a list -> 'a list t
   (** Creates a generator of shuffled lists.
       @since 0.90 *)
-
-  val shuffle_l : 'a list -> 'a list t [@@deprecated "Use [shuffle_list] instead"][@@migrate { repl = Rel.shuffle_list }]
-  (** Creates a generator of shuffled lists.
-      @deprecated Use {!shuffle_list} instead. *)
 
   val shuffle_list_weighted : (int * 'a) list -> 'a list t
   (** Creates a generator of weighted shuffled lists. A given list is shuffled on each
@@ -282,11 +249,6 @@ module Gen : sig
       [["one"; "ten"; "five"]] because "ten" and "five" have larger weights than "one".
 
       @since 0.90 *)
-
-  val shuffle_w_l : (int * 'a) list -> 'a list t [@@deprecated "Use [shuffle_list_weighted] instead"][@@migrate { repl = Rel.shuffle_list_weighted }]
-  (** An alias for {!shuffle_list_weighted} since 0.90.
-      @since 0.11
-      @deprecated use {!shuffle_list_weighted} instead. *)
 
   val range_subset : size:int -> int -> int -> int array t
   (** [range_subset ~size:k low high] generates an array of length [k]
@@ -323,14 +285,6 @@ module Gen : sig
   val float_pos : float t (** Generates positive floating point numbers (0. included). *)
 
   val float_neg : float t (** Generates negative floating point numbers (-0. included). *)
-
-  val pfloat : float t [@@deprecated "Use [float_pos] instead"][@@migrate { repl = Rel.float_pos }]
-  (** Generates positive floating point numbers (0. included).
-      @deprecated use {!float_pos} instead. *)
-
-  val nfloat : float t [@@deprecated "Use [float_neg] instead"][@@migrate { repl = Rel.float_neg }]
-  (** Generates negative floating point numbers (-0. included).
-      @deprecated use {!float_neg} instead. *)
 
   val float_bound_inclusive : float -> float t
   (** [float_bound_inclusive bound] returns a random floating-point number between 0 and
@@ -371,26 +325,13 @@ module Gen : sig
       Synonym for {!nat}.
       @since 0.90 *)
 
-  val big_nat : int t [@@deprecated "Use [map abs int] instead"]
-  (** Generates natural numbers, possibly large.
-      @since 0.10
-      @deprecated use [map abs int] instead. *)
-
   val int_neg : int t
   (** Generates strictly negative integers uniformly (0 excluded).
       @since 0.90 *)
 
-  val neg_int : int t [@@deprecated "Use [int_neg] or [map (fun i -> -i) nat] instead"]
-  (** Generates non-strictly negative integers (0 included).
-      @deprecated use {!int_neg} or [map (fun i -> -i) nat] instead. *)
-
   val int_pos : int t
   (** Generates non-strictly positive integers uniformly (0 included).
       @since 0.90 *)
-
-  val pint : int t [@@deprecated "Use [int_pos] instead"][@@migrate { repl = Rel.int_pos }]
-  (** Generates non-strictly positive integers uniformly (0 included).
-      @deprecated use {!int_pos} instead. *)
 
   val int : int t (** Generates integers uniformly. *)
 
@@ -406,20 +347,6 @@ module Gen : sig
   (** Small integers (< 100)
       Synonym for {!int_pos_small}.
       @since 0.90 *)
-
-  val small_nat : int t [@@deprecated "Use [nat_small] instead"][@@migrate { repl = Rel.nat_small }]
-  (** Small integers (< 100)
-      @since 0.5.1
-      @deprecated use {!nat_small} instead *)
-
-  val small_int : int t [@@deprecated "Use [nat_small] instead"][@@migrate { repl = Rel.nat_small }]
-  (** Small UNSIGNED integers, for retrocompatibility.
-      @deprecated use {!nat_small}. *)
-
-  val small_signed_int : int t [@@deprecated "Use [int_small] instead"][@@migrate { repl = Rel.int_small }]
-  (** Small SIGNED integers, based on {!small_nat}.
-      @since 0.5.2
-      @deprecated use {!int_small} instead. *)
 
   val int_bound : int -> int t
   (** Uniform integer generator producing integers between [0] and [bound]
@@ -442,16 +369,6 @@ module Gen : sig
 
       @since 0.6 *)
 
-  val int_pos_corners : int list [@@deprecated "Define your own list of corner cases instead"]
-  (** Non-negative corner cases for int.
-      @since 0.6
-      @deprecated define your own list of corner cases instead *)
-
-  val int_corners : int list [@@deprecated "Define your own list of corner cases instead"]
-  (** All corner cases for int.
-      @since 0.6
-      @deprecated define your own list of corner cases instead *)
-
   val int_small_corners : unit -> int t
   (** As [int_small], but each newly created generator starts with
       a list of corner cases before falling back on random generation.
@@ -471,25 +388,11 @@ module Gen : sig
   (** Generates [int64] values uniformly.
       @since 0.24 *)
 
-  val ui32 : int32 t [@@deprecated "Use [int32] instead"][@@migrate { repl = Rel.int32 }]
-  (** Generates [int32] values.
-      @deprecated use {!val:int32} instead, the name is wrong, values {i are} signed.
-  *)
-
-  val ui64 : int64 t [@@deprecated "Use [int64] instead"][@@migrate { repl = Rel.int64 }]
-  (** Generates [int64] values.
-      @deprecated use {!val:int64} instead, the name is wrong, values {i are} signed.
-  *)
-
   val list : 'a t -> 'a list t
   (** Builds a list generator from an element generator. List size is generated by {!nat}. *)
 
   val list_size : int t -> 'a t -> 'a list t
   (** Builds a list generator from a (non-negative) size generator and an element generator. *)
-
-  val list_repeat : int -> 'a t -> 'a list t [@@deprecated "Use [list_size (return i) g] instead"][@@migrate { repl = (fun i g -> Rel.list_size (Rel.return i) g) }]
-  (** [list_repeat i g] builds a list generator from exactly [i] elements generated by [g].
-      @deprecated use [list_size (return i) g] instead. *)
 
   val array : 'a t -> 'a array t
   (** Builds an array generator from an element generator. Array size is generated by {!nat}. *)
@@ -497,23 +400,12 @@ module Gen : sig
   val array_size : int t -> 'a t -> 'a array t
   (** Builds an array generator from a (non-negative) size generator and an element generator. *)
 
-  val array_repeat : int -> 'a t -> 'a array t [@@deprecated "Use [array_size (return i) g] instead"][@@migrate { repl = (fun i g -> Rel.array_size (Rel.return i) g) }]
-  (** [array_repeat i g] builds an array generator from exactly [i] elements generated by [g].
-      @deprecated use [array_size (return i) g] instead. *)
-
   val option : ?ratio:float -> 'a t -> 'a option t
   (** An option generator, with optional ratio.
       @param ratio a float between [0.] and [1.] indicating the probability of a sample to be [Some _]
       rather than [None].
 
-      @since 0.19 (renamed from [opt])
-  *)
-
-  val opt : ?ratio:float -> 'a t -> 'a option t [@@deprecated "Use [option] instead"][@@migrate { repl = Rel.option }]
-  (** [opt] is an alias of {!val:option} for backward compatibility.
-
-      @since 0.18 ([?ratio] parameter)
-      @deprecated use {!val:option} instead.
+      @since 0.19
   *)
 
   val result : ?ratio:float -> 'a t -> 'e t -> ('a, 'e) result t
@@ -600,19 +492,9 @@ module Gen : sig
   (** Builds a string generator using the given character generator.
       @since 0.11 *)
 
-  val string_readable : string t [@@deprecated "Use [string_printable] instead"][@@migrate { repl = Rel.string_printable }]
-  (** Builds a string generator using the {!printable} character generator.
-      @since 0.11
-      @deprecated use {!string_printable} *)
-
   val string_printable : string t
   (** Builds a string generator using the {!printable} character generator.
       @since 0.18 *)
-
-  val small_string : ?gen:char t -> string t [@@deprecated "Use [string_small] instead"][@@migrate { repl = Rel.string_small }]
-  (** Builds a string generator, length is {!nat_small}
-      Accepts an optional character generator (the default is {!char}).
-      @deprecated use {!string_small} *)
 
   val string_small : string t
   (** Builds a string generator using the {!char} character generator, length is {!nat_small}
@@ -626,55 +508,26 @@ module Gen : sig
   (** Generates lists of small size (see {!nat_small}).
       @since 0.90 *)
 
-  val small_list : 'a t -> 'a list t [@@deprecated "Use [list_small] instead"][@@migrate { repl = Rel.list_small }]
-  (** Generates lists of small size (see {!nat_small}).
-      @since 0.5.3
-      @deprecated use {!list_small} instead. *)
-
   val flatten_list : 'a t list -> 'a list t
   (** Generate a list of elements from individual generators
       @since 0.90 *)
-
-  val flatten_l : 'a t list -> 'a list t [@@deprecated "Use [flatten_list] instead"][@@migrate { repl = Rel.flatten_list }]
-  (** Generate a list of elements from individual generators
-      @since 0.13
-      @deprecated use {!flatten_list} instead.  *)
 
   val flatten_array : 'a t array -> 'a array t
   (** Generate an array of elements from individual generators
       @since 0.90 *)
 
-  val flatten_a : 'a t array -> 'a array t [@@deprecated "Use [flatten_array] instead"][@@migrate { repl = Rel.flatten_array }]
-  (** Generate an array of elements from individual generators
-      @since 0.13
-      @deprecated use {!flatten_array} instead.  *)
-
   val flatten_option : 'a t option -> 'a option t
   (** Generate an option from an optional generator
       @since 0.90 *)
-
-  val flatten_opt : 'a t option -> 'a option t [@@deprecated "Use [flatten_option] instead"][@@migrate { repl = Rel.flatten_option }]
-  (** Generate an option from an optional generator
-      @since 0.13
-      @deprecated use {!flatten_option} instead.  *)
 
   val flatten_result : ('a t, 'e) result -> ('a,'e) result t
   (** Generate a result from [Ok g], an error from [Error e]
       @since 0.90 *)
 
-  val flatten_res : ('a t, 'e) result -> ('a,'e) result t [@@deprecated "Use [flatten_result] instead"][@@migrate { repl = Rel.flatten_result }]
-  (** Generate a result from [Ok g], an error from [Error e]
-      @since 0.13
-      @deprecated use {!flatten_result} instead.  *)
-
   val array_small : 'a t -> 'a array t
   (** Generates arrays of small size (see {!nat_small}).
       @since 0.90 *)
 
-  val small_array : 'a t -> 'a array t [@@deprecated "Use [array_small] instead"][@@migrate { repl = Rel.array_small }]
-  (** Generates arrays of small size (see {!nat_small}).
-      @since 0.10
-      @deprecated use {!array_small} instead. *)
 
   (** {3 Tuple generators}
 
