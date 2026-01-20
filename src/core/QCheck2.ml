@@ -188,9 +188,6 @@ module Shrink = struct
         else if current < n then let next = succ current in Some (next, next)
         else let next = pred current in Some (next, next)
       ) destination ()
-
-  let int_aggressive n = fun () -> int_aggressive_towards 0 n ()
-
 end
 
 module Tree = struct
@@ -392,7 +389,6 @@ module Gen = struct
     Tree.make_primitive shrink x
 
   let nat_small = int_pos_small
-  let small_nat = nat_small
 
   (** Natural number generator *)
   let nat : int t = fun st ->
@@ -407,14 +403,6 @@ module Gen = struct
     Tree.make_primitive shrink x
 
   let int_pos_mid = nat
-
-  let big_nat : int t = fun st ->
-    let p = RS.float st 1. in
-    if p < 0.75
-    then nat st
-    else
-      let shrink a = fun () -> Shrink.int_towards 0 a () in
-      Tree.make_primitive shrink (RS.int st 1_000_000)
 
   let unit : unit t = fun _st -> Tree.pure ()
 
@@ -440,10 +428,6 @@ module Gen = struct
   let float_pos : float t = float >|= abs_float
 
   let float_neg : float t = float_pos >|= Float.neg
-
-  let pfloat = float_pos
-
-  let nfloat = float_neg
 
   let float_bound_inclusive ?(origin : float = 0.) (bound : float) : float t = fun st ->
     let (low, high) = Float.min_max_num 0. bound in
@@ -497,17 +481,12 @@ module Gen = struct
 
   let exponential = float_exp
 
-  let neg_int : int t = nat >|= Int.neg
-
   (** [option gen] shrinks towards [None] then towards shrinks of [gen]. *)
   let option ?(ratio : float = 0.85) (gen : 'a t) : 'a option t = fun st ->
     let p = RS.float st 1. in
     if p < (1. -. ratio)
     then Tree.pure None
     else Tree.opt (gen st)
-
-  (** [opt] is an alias of {!val:option} for backward compatibility. *)
-  let opt = option
 
   let result ?(ratio : float = 0.75) (ok_gen : 'a t) (err_gen : 'e t) : ('a, 'e) result t = fun st ->
     let p = RS.float st 1. in
@@ -552,15 +531,10 @@ module Gen = struct
       let right = RS.bits st in
       left lor middle lor right
 
-  let pint ?(origin : int = 0) : int t = fun st ->
+  let int_pos : int t = fun st ->
     let x = pint_raw st in
-    let shrink a = fun () ->
-      let origin = parse_origin "Gen.pint" Format.pp_print_int ~origin ~low:0 ~high:max_int in
-      Shrink.int_towards origin a ()
-    in
+    let shrink a = fun () -> Shrink.int_towards 0 a () in
     Tree.make_primitive shrink x
-
-  let int_pos = pint ~origin:0
 
   let int_neg = int_pos >|= (fun n -> - n - 1)
 
@@ -627,23 +601,13 @@ module Gen = struct
   let oneof_list (l : 'a list) : 'a t =
     int_bound (List.length l - 1) >|= List.nth l
 
-  let oneofl = oneof_list
-
   let oneof_array (a : 'a array) : 'a t =
     int_bound (Array.length a - 1) >|= Array.get a
-
-  let oneofa = oneof_array
-
-  (* NOTE: we keep this alias to not break code that uses [small_int]
-     for sizes of strings, arrays, etc. *)
-  let small_int = small_nat
 
   let int_small : int t = fun st ->
     if RS.bool st
     then nat_small st
     else (nat_small >|= Int.neg) st
-
-  let small_signed_int = int_small
 
   (** Shrink towards the first element of the list *)
   let oneof_weighted (l : (int * 'a t) list) : 'a t =
@@ -658,17 +622,11 @@ module Gen = struct
     in
     aux 0 l
 
-  let frequency = oneof_weighted
-
   let oneof_list_weighted (l : (int * 'a) list) : 'a t =
     List.map (fun (weight, value) -> (weight, pure value)) l
     |> oneof_weighted
 
-  let frequencyl = oneof_list_weighted
-
   let oneof_array_weighted a = oneof_list_weighted (Array.to_list a)
-
-  let frequencya = oneof_array_weighted
 
   let char_range ?(origin : char option) (a : char) (b : char) : char t =
     (int_range ~origin:(Char.code (Option.value ~default:a origin)) (Char.code a) (Char.code b)) >|= Char.chr
@@ -688,14 +646,10 @@ module Gen = struct
     let shrink a = fun () -> Shrink.int32_towards 0l a () in
     Tree.make_primitive shrink x
 
-  let ui32 : int32 t = map Int32.abs int32
-
   let int64 : int64 t = fun st ->
     let x = random_binary_string 64 st |> Int64.of_string in
     let shrink a = fun () -> Shrink.int64_towards 0L a () in
     Tree.make_primitive shrink x
-
-  let ui64 : int64 t = map Int64.abs int64
 
   (* A tail-recursive implementation over Tree.t *)
   let list_size (size : int t) (gen : 'a t) : 'a list t =
@@ -734,33 +688,23 @@ module Gen = struct
 
   let array (gen : 'a t) : 'a array t = list gen >|= Array.of_list
 
-  let array_repeat (n : int) (gen : 'a t) : 'a array t = list_repeat n gen >|= Array.of_list
-
   let rec flatten_list (l : 'a t list) : 'a list t =
     match l with
     | [] -> pure []
     | gen :: gens -> liftA2 List.cons gen (flatten_list gens)
 
-  let flatten_l = flatten_list
-
   let flatten_array (a : 'a t array) : 'a array t =
     Array.to_list a |> flatten_list >|= Array.of_list
-
-  let flatten_a = flatten_array
 
   let flatten_option (o : 'a t option) : 'a option t =
     match o with
     | None -> pure None
     | Some gen -> option gen
 
-  let flatten_opt = flatten_option
-
   let flatten_result (res : ('a t, 'e) result) : ('a, 'e) result t =
     match res with
     | Ok gen -> gen >|= Result.ok
     | Error e -> pure (Error e)
-
-  let flatten_res = flatten_result
 
   let shuffle_array (a : 'a array) : 'a array t = fun st ->
     let a = Array.copy a in
@@ -772,12 +716,8 @@ module Gen = struct
     done;
     Tree.pure a
 
-  let shuffle_a = shuffle_array
-
   let shuffle_list (l : 'a list) : 'a list t =
     Array.of_list l |> shuffle_array >|= Array.to_list
-
-  let shuffle_l = shuffle_list
 
   let shuffle_list_weighted (l : ((int * 'a) list)) : 'a list t = fun st ->
     let sample (w, v) =
@@ -790,8 +730,6 @@ module Gen = struct
     |> List.sort (fun (w1, _) (w2, _) -> poly_compare w1 w2)
     |> List.rev_map snd
     |> Tree.pure
-
-  let shuffle_w_l = shuffle_list_weighted
 
   let pair (g1 : 'a t) (g2 : 'b t) : ('a * 'b) t = liftA2 (fun a b -> (a, b)) g1 g2
 
@@ -921,15 +859,9 @@ module Gen = struct
 
   let string_small_of gen = list_ignore_size_tree nat_small gen >|= string_of_char_list
 
-  let small_string ?(gen=char) = string_small_of gen
-
   let list_small gen = list_ignore_size_tree nat_small gen
 
-  let small_list = list_small
-
   let array_small gen = list_ignore_size_tree nat_small gen >|= Array.of_list
-
-  let small_array = array_small
 
   let join (gen : 'a t t) : 'a t = gen >>= Fun.id
 
@@ -945,7 +877,6 @@ module Gen = struct
   let int_corners = int_pos_corners @ [min_int; -2; -1]
 
   let int_small_corners () : int t = graft_corners int_small int_corners ()
-  let small_int_corners () : int t = graft_corners nat int_pos_corners ()
 
   (* sized, fix *)
 
@@ -1036,8 +967,6 @@ module Print = struct
     Buffer.contents b
 
   let contramap f p x = p (f x)
-
-  let comap = contramap
 
   let default = fun _ -> "<no printer>"
 
@@ -1283,8 +1212,6 @@ module Observable = struct
   let contramap f p =
     make ~hash:(fun x -> p.hash (f x)) ~eq:(fun x y -> p.eq (f x)(f y))
       (fun x -> p.print (f x))
-
-  let map = contramap
 
   let pair a b =
     make ~hash:(H.pair a.hash b.hash) ~eq:(Eq.pair a.eq b.eq) (Print.pair a.print b.print)
@@ -1601,15 +1528,9 @@ module TestResult = struct
   let get_collect r =
     if Lazy.is_val r.collect_tbl then Some (Lazy.force r.collect_tbl) else None
 
-  let collect = get_collect
-
   let get_stats r = r.stats_tbl
 
-  let stats = get_stats
-
   let get_warnings r = r.warnings
-
-  let warnings = get_warnings
 
   let is_success r = match r.state with
     | Success -> true
