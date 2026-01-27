@@ -186,14 +186,14 @@ module Gen : sig
       @since 0.90 *)
 
   val int_pos : int t
-  (** Generates non-strictly positive integers uniformly ([0] included).
+  (** Generates positive integers uniformly ([0] included).
 
       Shrinks towards towards [0].
 
       @since 0.90 *)
 
   val int_pos_small : int t
-  (** Small positive integers (< [100], [0] included).
+  (** Generates small positive integers (< [100], [0] included).
 
       Non-uniform: smaller numbers are more likely than bigger numbers.
 
@@ -202,14 +202,14 @@ module Gen : sig
       @since 0.90 *)
 
   val nat_small : int t
-  (** Small positive integers (< [100], [0] included).
+  (** Generates small positive integers (< [100], [0] included).
 
       Synonym for {!int_pos_small}.
 
       @since 0.90 *)
 
   val nat : int t
-  (** Generates natural numbers (< [10_000]).
+  (** Generates natural numbers (< [10_000], [0] included).
 
       Non-uniform: smaller numbers are more likely than bigger numbers.
 
@@ -217,7 +217,7 @@ module Gen : sig
   *)
 
   val int_pos_mid : int t
-  (** Generates natural numbers (< [10_000]).
+  (** Generates natural numbers (< [10_000], [0] included).
 
       Synonym for {!nat}.
 

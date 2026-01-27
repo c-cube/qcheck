@@ -45,6 +45,7 @@
   - `Shrink.int_aggressive`
   - `Observable.map`
   - `TestResult.stats` `TestResult.warnings` `TestResult.collect`
+- Clarify documentation for the `int*` and `nat*` generators
 
 
 ## 0.91 (2025-12-21)

@@ -318,10 +318,10 @@ module Gen : sig
       @since 0.23 *)
 
   val nat : int t
-  (** Generates small natural numbers. *)
+  (** Generates small natural numbers ([0] included). *)
 
   val int_pos_mid : int t
-  (** Generates small natural numbers.
+  (** Generates small natural numbers ([0] included).
       Synonym for {!nat}.
       @since 0.90 *)
 
@@ -330,21 +330,22 @@ module Gen : sig
       @since 0.90 *)
 
   val int_pos : int t
-  (** Generates non-strictly positive integers uniformly (0 included).
+  (** Generates positive integers uniformly (0 included).
       @since 0.90 *)
 
-  val int : int t (** Generates integers uniformly. *)
+  val int : int t
+  (** Generates integers uniformly. *)
 
   val int_small : int t
-  (** Generated small signed integers.
+  (** Generates small signed integers.
       @since 0.90 *)
 
   val int_pos_small : int t
-  (** Small integers (< 100)
+  (** Generates small positive integers (< 100, [0] included)
       @since 0.90 *)
 
   val nat_small : int t
-  (** Small integers (< 100)
+  (** Generates small positive integers (< 100, [0] included)
       Synonym for {!int_pos_small}.
       @since 0.90 *)
 
@@ -1182,35 +1183,35 @@ val exponential : float -> float arbitrary
     @since 0.23 *)
 
 val int : int arbitrary
-(** Int generator. Uniformly distributed. *)
+(** Generates integers uniformly. *)
 
 val int_bound : int -> int arbitrary
-(** [int_bound n] is uniform between [0] and [n] included. *)
+(** [int_bound n] generates integers uniformly between [0] and [n] included. *)
 
 val int_range : int -> int -> int arbitrary
-(** [int_range a b] is uniform between [a] and [b] included. [b] must be
-    larger than [a]. *)
+(** [int_range a b] generates integers uniformly between [a] and [b] included.
+    [b] must be larger than [a]. *)
 
 val int_small : int arbitrary
 (** Generates small signed integers.
     @since 0.90 *)
 
 val nat : int arbitrary
-(** Generates natural numbers (< [10_000]).
+(** Generates small natural numbers (< [10_000], [0] included).
     Non-uniform: smaller numbers are more likely than bigger numbers.
     @since 0.90 *)
 
 val int_pos_small : int arbitrary
-(** Small unsigned integers.
+(** Generates small positive integers ([0] included).
     @since 0.90 *)
 
 val int_pos_mid : int arbitrary
-(** Generates natural numbers (< [10_000]).
+(** Generates small natural numbers (< [10_000], [0] included).
     Synonym for {!nat}.
     @since 0.90 *)
 
 val nat_small : int arbitrary
-(** Small unsigned integers.
+(** Generates small positive integers ([0] included).
     Synonym for {!int_pos_small}.
     @since 0.90 *)
 
