@@ -14,8 +14,8 @@ let rec rev tree = match tree with
 let test =
   QCheck.Test.make
     ~name:"tree -> rev (rev tree) = tree"
-	(QCheck.make gen_tree)
-	(fun tree -> rev (rev tree) = tree)
+    (QCheck.make gen_tree)
+    (fun tree -> rev (rev tree) = tree)
 ```
 
 For `type tree` we derive two generators:
@@ -51,10 +51,10 @@ This attribute has 2 advantages:
   [@@deriving qcheck]
   ^^^^^^^^^^^^^^^^
   Error: Unbound value gen_my_other_type
-  
+
   (* Possible fix *)
   let gen_my_other_type = (* add your implementation here *)
-  
+
   type my_foo =
   | Foo of my_other_type [@gen gen_my_other_type]
   | Bar of bool
@@ -199,9 +199,9 @@ let gen =
 ## Records
 ```ocaml
 type service = {
-	service_name : string;
-	port : int;
-	protocol : string;
+  service_name : string;
+  port : int;
+  protocol : string;
 } [@@deriving qcheck]
 
 (* ==> *)
@@ -257,7 +257,7 @@ let rec gen_tree_sized n =
     QCheck.Gen.oneof_weighted
       [(1, (QCheck.Gen.map (fun gen0 -> Leaf gen0) QCheck.Gen.int));
        (1,
-		   (QCheck.Gen.map (fun (gen0, gen1) -> Node (gen0, gen1))
+           (QCheck.Gen.map (fun (gen0, gen1) -> Node (gen0, gen1))
              (QCheck.Gen.pair (self (n / 2)) (self (n / 2)))))]))
 
 let gen_tree = QCheck.Gen.sized @@ gen_tree_sized
@@ -274,7 +274,7 @@ let gen_tree =
   (QCheck.Gen.sized @@ QCheck.Gen.fix (fun self -> function
   | 0 ->
     QCheck.Gen.oneof_weighted [
-	  ( 1, QCheck.Gen.map (fun gen0 -> `Leaf gen0) QCheck.Gen.int);
+      ( 1, QCheck.Gen.map (fun gen0 -> `Leaf gen0) QCheck.Gen.int);
     ]
   | n ->
     QCheck.Gen.oneof_weighted [
