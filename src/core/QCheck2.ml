@@ -820,10 +820,10 @@ module Gen = struct
 
   let bytes_size (size : int t) : bytes t = bytes_size_of size char
 
-  let string_size ?(gen = char) (size : int t) : string t =
+  let string_size_of size gen : string t =
     bytes_size_of size gen >|= Bytes.unsafe_to_string
 
-  let string_size_of size gen : string t = string_size ~gen size
+  let string_size (size : int t) : string t = string_size_of size char
 
   let bytes_of_char_list cs =
     let b = Buffer.create (List.length cs) in
