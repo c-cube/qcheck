@@ -793,7 +793,7 @@ module Gen = struct
     int_range ~origin:zero zero nine >|= char_of_int
   let numeral = char_numeral
 
-  let bytes_size ?(gen = char) (size : int t) : bytes t = fun st ->
+  let bytes_size_of size gen : bytes t = fun st ->
     let open Tree in
     let st' = RS.split st in
     size st >>= fun size ->
@@ -818,10 +818,10 @@ module Gen = struct
     in
     Tree (bytes, shrink)
 
-  let bytes_size_of size gen : bytes t = bytes_size ~gen size
+  let bytes_size (size : int t) : bytes t = bytes_size_of size char
 
   let string_size ?(gen = char) (size : int t) : string t =
-    bytes_size ~gen size >|= Bytes.unsafe_to_string
+    bytes_size_of size gen >|= Bytes.unsafe_to_string
 
   let string_size_of size gen : string t = string_size ~gen size
 
