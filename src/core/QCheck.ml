@@ -1321,7 +1321,7 @@ let string_of gen =
     ~print:Print.string (Gen.string_of gen)
 
 let string = string_of Gen.char
-let string_size ?(gen=Gen.char) size = string_size_of size gen
+let string_size size = string_size_of size Gen.char
 let string_small = string_size_of Gen.nat_small Gen.char
 let string_small_of gen = string_size_of Gen.nat_small gen
 
