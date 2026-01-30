@@ -222,7 +222,7 @@ type color = Red | Blue | Green
 (* ==> *)
 
 let gen_color =
-  QCheck.Gen.frequency
+  QCheck.Gen.oneof_weighted
     [(1, (QCheck.Gen.pure Red));
      (1, (QCheck.Gen.pure Blue));
      (1, (QCheck.Gen.pure Green))]
@@ -236,7 +236,7 @@ type color = [ `Red | `Blue | `Green ]
 (* ==> *)
 
 let gen_color =
-  (QCheck.Gen.frequency
+  (QCheck.Gen.oneof_weighted
     [(1, (QCheck.Gen.pure `Red));
      (1, (QCheck.Gen.pure `Blue));
      (1, (QCheck.Gen.pure `Green))] : color QCheck.Gen.t)
@@ -254,7 +254,7 @@ let rec gen_tree_sized n =
   match n with
   | 0 -> QCheck.Gen.map (fun gen0 -> Leaf gen0) QCheck.Gen.int
   | n ->
-    QCheck.Gen.frequency
+    QCheck.Gen.oneof_weighted
       [(1, (QCheck.Gen.map (fun gen0 -> Leaf gen0) QCheck.Gen.int));
        (1,
 		   (QCheck.Gen.map (fun (gen0, gen1) -> Node (gen0, gen1))
@@ -273,11 +273,11 @@ type tree = [ `Leaf of int | `Node of tree * tree ]
 let gen_tree =
   (QCheck.Gen.sized @@ QCheck.Gen.fix (fun self -> function
   | 0 ->
-    QCheck.Gen.frequency [
+    QCheck.Gen.oneof_weighted [
 	  ( 1, QCheck.Gen.map (fun gen0 -> `Leaf gen0) QCheck.Gen.int);
     ]
   | n ->
-    QCheck.Gen.frequency [
+    QCheck.Gen.oneof_weighted [
       ( 1, QCheck.Gen.map (fun gen0 -> `Leaf gen0) QCheck.Gen.int);
       ( 1,
            QCheck.Gen.map (fun gen0 -> `Node gen0)
@@ -297,7 +297,7 @@ and forest = Nil | Cons of (tree * forest)
 (* ==> *)
 
 let rec gen_tree () =
-  QCheck.Gen.frequency
+  QCheck.Gen.oneof_weighted
     [(1,
       (QCheck.Gen.map (fun gen0 -> Node gen0)
         (QCheck.Gen.map (fun (gen0, gen1) -> (gen0, gen1))
@@ -307,9 +307,9 @@ and gen_forest () =
   QCheck.Gen.sized @@
     (QCheck.Gen.fix
       (fun self -> function
-        | 0 -> QCheck.Gen.frequency [(1, (QCheck.Gen.pure Nil))]
+        | 0 -> QCheck.Gen.oneof_weighted [(1, (QCheck.Gen.pure Nil))]
         | n ->
-          QCheck.Gen.frequency
+          QCheck.Gen.oneof_weighted
             [(1, (QCheck.Gen.pure Nil));
              (1,
                  (QCheck.Gen.map (fun gen0 -> Cons gen0)
