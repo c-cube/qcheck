@@ -349,12 +349,12 @@ module Shrink = struct
          ~actual:(Gen.(generate_tree ~rand:(rand_init 3347) (array_small (int_bound 10))) |> repeated_success)
          ~expected:[ [|1; 10; 10; 7; 3|]; [|1; 10; 10|]; [|10; 10|]; [|10|]; [||]; ])
 
-  let test_bytes_size () =
+  let test_bytes_size_of () =
     if ocaml_major_version < 5
     then
       (Alcotest.(check' (list bytes))
          ~msg:"\"H Ap>&U\" on repeated failure"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (bytes_size ~gen:char_printable (int_bound 8))) |> repeated_failure)
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (bytes_size_of (int_bound 8) char_printable)) |> repeated_failure)
          ~expected:(List.map Bytes.of_string
                       [ "H Ap>&U"; ""; "H A"; "H Ap>"; "H Ap>&"; "a Ap>&U"; "' Ap>&U";
                         "8 Ap>&U"; "@ Ap>&U"; "D Ap>&U"; "F Ap>&U"; "G Ap>&U";
@@ -366,12 +366,12 @@ module Shrink = struct
                         "H Ap>&a"; "H Ap>&-"; "H Ap>&A"; "H Ap>&K"; "H Ap>&P"; "H Ap>&R"; "H Ap>&S"; "H Ap>&T"; ] );
        Alcotest.(check' (list bytes))
          ~msg:"\"H Ap>&U\" on repeated success"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (bytes_size ~gen:char_printable (int_bound 8))) |> repeated_success)
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (bytes_size_of (int_bound 8) char_printable)) |> repeated_success)
          ~expected:(List.map Bytes.of_string ["H Ap>&U"; ""]))
     else
       (Alcotest.(check' (list bytes))
          ~msg:"\"Ns<>W\\\" on repeated failure"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (bytes_size ~gen:char_printable (int_bound 8))) |> repeated_failure)
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (bytes_size_of (int_bound 8) char_printable)) |> repeated_failure)
          ~expected:(List.map Bytes.of_string
                       ["Ns<>W\\"; ""; "Ns<"; "Ns<>W";
                        "as<>W\\"; "*s<>W\\"; "<s<>W\\"; "Es<>W\\"; "Js<>W\\"; "Ls<>W\\"; "Ms<>W\\";
@@ -382,7 +382,7 @@ module Shrink = struct
                        "Ns<>Wa"; "Ns<>W1"; "Ns<>WG"; "Ns<>WR"; "Ns<>WW"; "Ns<>WZ"; "Ns<>W["; ] );
        Alcotest.(check' (list bytes))
          ~msg:"\"Ns<>W\\\" on repeated success"
-         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (bytes_size ~gen:char_printable (int_bound 8))) |> repeated_success)
+         ~actual:(Gen.(generate_tree ~rand:(rand_init 3346) (bytes_size_of (int_bound 8) char_printable)) |> repeated_success)
          ~expected:(List.map Bytes.of_string ["Ns<>W\\"; ""; ]))
 
   let test_bytes () =
@@ -555,7 +555,7 @@ module Shrink = struct
       test_case "Gen.array_size int" `Quick test_array_size_int;
       test_case "Gen.array int" `Quick test_array_int;
       test_case "Gen.array_small int" `Quick test_array_small_int;
-      test_case "Gen.bytes_size" `Quick test_bytes_size;
+      test_case "Gen.bytes_size_of" `Quick test_bytes_size_of;
       test_case "Gen.bytes" `Quick test_bytes;
       test_case "Gen.bytes_small" `Quick test_bytes_small;
       test_case "Gen.string_size" `Quick test_string_size;
