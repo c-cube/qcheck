@@ -400,27 +400,27 @@ module Gen = struct
   let char_numeral st = char_of_int (48 + RS.int st 10)
   let numeral = char_numeral
 
-  let bytes_size ?(gen = char) size st =
+  let bytes_size_of size gen st =
     let s = Bytes.create (size st) in
     for i = 0 to Bytes.length s - 1 do
       Bytes.set s i (gen st)
     done;
     s
-  let bytes_size_of size gen = bytes_size ~gen size
+  let bytes_size size = bytes_size_of size char
 
   let string_size ?(gen = char) size st =
-    let s = bytes_size ~gen size st in
+    let s = bytes_size_of size gen st in
     Bytes.unsafe_to_string s
   let string_size_of size gen = string_size ~gen size
 
   let bytes st = bytes_size nat st
   let string st = string_size nat st
-  let bytes_of gen = bytes_size ~gen nat
+  let bytes_of gen = bytes_size_of nat gen
   let string_of gen = string_size ~gen nat
-  let bytes_printable = bytes_size ~gen:char_printable nat
+  let bytes_printable = bytes_size_of nat char_printable
   let string_printable = string_size ~gen:char_printable nat
   let bytes_small st = bytes_size nat_small st
-  let bytes_small_of gen st = bytes_size ~gen nat_small st
+  let bytes_small_of gen st = bytes_size_of nat_small gen st
   let list_small gen = list_size nat_small gen
   let array_small gen = array_size nat_small gen
   let string_small st = string_size nat_small st
@@ -1300,7 +1300,7 @@ let numeral = char_numeral
 
 let bytes_size ?(gen = Gen.char) size =
   make ~shrink:Shrink.bytes ~small:Bytes.length
-    ~print:Print.bytes (Gen.bytes_size ~gen size)
+    ~print:Print.bytes (Gen.bytes_size_of size gen)
 let bytes_size_of size gen = bytes_size ~gen size
 let bytes_of gen =
   make ~shrink:Shrink.bytes ~small:Bytes.length
