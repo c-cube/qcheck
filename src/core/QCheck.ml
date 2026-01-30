@@ -408,23 +408,23 @@ module Gen = struct
     s
   let bytes_size size = bytes_size_of size char
 
-  let string_size ?(gen = char) size st =
+  let string_size_of size gen st =
     let s = bytes_size_of size gen st in
     Bytes.unsafe_to_string s
-  let string_size_of size gen = string_size ~gen size
+  let string_size size = string_size_of size char
 
   let bytes st = bytes_size nat st
   let string st = string_size nat st
   let bytes_of gen = bytes_size_of nat gen
-  let string_of gen = string_size ~gen nat
+  let string_of gen = string_size_of nat gen
   let bytes_printable = bytes_size_of nat char_printable
-  let string_printable = string_size ~gen:char_printable nat
+  let string_printable = string_size_of nat char_printable
   let bytes_small st = bytes_size nat_small st
   let bytes_small_of gen st = bytes_size_of nat_small gen st
   let list_small gen = list_size nat_small gen
   let array_small gen = array_size nat_small gen
   let string_small st = string_size nat_small st
-  let string_small_of gen st = string_size ~gen nat_small st
+  let string_small_of gen st = string_size_of nat_small gen st
 
   let join g st = (g st) st
 
@@ -1315,7 +1315,7 @@ let bytes_printable =
 
 let string_size_of size gen =
   make ~shrink:Shrink.string ~small:String.length
-    ~print:Print.string (Gen.string_size ~gen size)
+    ~print:Print.string (Gen.string_size_of size gen)
 let string_of gen =
   make ~shrink:Shrink.string ~small:String.length
     ~print:Print.string (Gen.string_of gen)
