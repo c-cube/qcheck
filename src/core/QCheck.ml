@@ -413,18 +413,18 @@ module Gen = struct
     Bytes.unsafe_to_string s
   let string_size size = string_size_of size char
 
-  let bytes st = bytes_size nat st
-  let string st = string_size nat st
+  let bytes = bytes_size nat
+  let string = string_size nat
   let bytes_of gen = bytes_size_of nat gen
   let string_of gen = string_size_of nat gen
   let bytes_printable = bytes_size_of nat char_printable
   let string_printable = string_size_of nat char_printable
-  let bytes_small st = bytes_size nat_small st
-  let bytes_small_of gen st = bytes_size_of nat_small gen st
+  let bytes_small = bytes_size nat_small
+  let bytes_small_of gen = bytes_size_of nat_small gen
   let list_small gen = list_size nat_small gen
   let array_small gen = array_size nat_small gen
-  let string_small st = string_size nat_small st
-  let string_small_of gen st = string_size_of nat_small gen st
+  let string_small = string_size nat_small
+  let string_small_of gen = string_size_of nat_small gen
 
   let join g st = (g st) st
 
