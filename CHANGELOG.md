@@ -2,7 +2,14 @@
 
 ## NEXT RELEASE (202?-??-??)
 
-- Remove deprecated generator bindings:
+- Remove optional `gen` parameter from (API breaking):
+  -`QCheck.Gen.bytes_size` - use `QCheck.Gen.bytes_size_of` instead
+  -`QCheck.bytes_size` - use `QCheck.bytes_size_of` instead
+  -`QCheck2.Gen.bytes_size` - use `QCheck2.Gen.bytes_size_of` instead
+  -`QCheck.Gen.string_size` - use `QCheck.Gen.string_size_of` instead
+  -`QCheck.string_size` - use `QCheck.string_size_of` instead
+  -`QCheck2.Gen.string_size` - use `QCheck2.Gen.string_size_of` instead
+- Remove deprecated generator bindings (API breaking):
   - `QCheck.Gen`:
     - `big_nat` `neg_int` `pint` `small_nat` `small_int` `small_signed_int` `int_pos_corners`, `int_corners`
     - `ui32` `ui64`
