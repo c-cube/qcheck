@@ -1618,7 +1618,7 @@ module Test = struct
     let count = global_count count in
     let long_factor = global_long_factor long_factor in
     let positive = not negative in
-    let max_gen = match max_gen with None -> count + 200 | Some x->x in
+    let max_gen = match max_gen with None -> max count (count + 200) | Some x->x in
     {
       law;
       gen;
@@ -1645,7 +1645,7 @@ module Test = struct
     let positive = not negative in
     (* Make a "fake" QCheck2 arbitrary with no shrinking *)
     let fake_gen = Gen.make_primitive ~gen ~shrink:(fun _ -> Seq.empty) in
-    let max_gen = match max_gen with None -> count + 200 | Some x->x in
+    let max_gen = match max_gen with None -> max count (count + 200) | Some x->x in
     {
       law;
       gen = fake_gen;

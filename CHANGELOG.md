@@ -54,6 +54,7 @@
   - `TestResult.stats` `TestResult.warnings` `TestResult.collect`
 - Clarify documentation for the `int*` and `nat*` generators
 - Disabled duplicated pretty-printed feedback when using `QCheck_alcotest` runner
+- Fixed the overflow bug when `~count > max_int - 200` affecting `Test.{make_cell,make,make_neg}` in both QCheck and QCheck2
 
 
 ## 0.91 (2025-12-21)

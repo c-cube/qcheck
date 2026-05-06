@@ -617,6 +617,23 @@ module TestCount = struct
     with
     | _ -> ()
 
+  (* Regression for https://github.com/c-cube/qcheck/issues/408:
+     [make_cell] computed [max_gen = count + 200] without checking for
+     overflow, so [count >= max_int - 199] wrapped to a negative int
+     and [check_cell] silently ran zero iterations. *)
+  let test_count_max_int_no_overflow () =
+    let cell =
+      QCheck2.(Test.make_cell ~name:"never_true" ~count:max_int
+                 Gen.int (fun _ -> false))
+    in
+    let result =
+      QCheck2.Test.check_cell ~rand:(Random.State.make [|0|]) cell
+    in
+    let tested = QCheck2.TestResult.get_count_gen result in
+    Alcotest.(check bool)
+      "check_cell with count=max_int runs at least one iteration"
+      true (tested >= 1)
+
   let tests =
     ("Test.make ~count", Alcotest.[
          test_case "make with custom count" `Quick test_count_10;
@@ -625,6 +642,8 @@ module TestCount = struct
          test_case "make with 0 count" `Quick test_count_0;
          test_case "make with negative count should fail"
            `Quick test_count_negative_fail;
+         test_case "check_cell with count=max_int does not overflow"
+           `Quick test_count_max_int_no_overflow;
        ])
 end
 
