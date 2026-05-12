@@ -718,6 +718,29 @@ module Gen : sig
       Shrinks on [gen1] and then [gen2].
   *)
 
+  val dep_pair : 'a t -> ('a -> 'b t) -> ('a * 'b) t
+  (** [dep_pair gen f] generates dependent pairs where the second element
+      depends on the first.
+
+      First generates a value [x] from [gen], then generates a value [y]
+      from [f x], and returns the pair [(x, y)].
+
+      This is useful for generating pairs with dependencies, such as an
+      array and a valid index into that array, without using {!assume} to
+      filter out invalid combinations.
+
+      Example:
+      {[
+        let array_index =
+          dep_pair
+            (array_size (int_range 1 100) nat_small)
+            (fun t -> int_bound (pred (Array.length t)))
+      ]}
+
+      Shrinks on the first element and then on the second element (given
+      the shrunk first element).
+  *)
+
   val triple : 'a t -> 'b t -> 'c t -> ('a * 'b * 'c) t
   (** [triple gen1 gen2 gen3] generates triples.
 

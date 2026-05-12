@@ -733,6 +733,9 @@ module Gen = struct
 
   let pair (g1 : 'a t) (g2 : 'b t) : ('a * 'b) t = liftA2 (fun a b -> (a, b)) g1 g2
 
+  let dep_pair (g : 'a t) (f : 'a -> 'b t) : ('a * 'b) t =
+    g >>= fun x -> tup2 (pure x) (f x)
+
   let triple (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) : ('a * 'b * 'c) t = (fun a b c -> (a, b, c)) <$> g1 <*> g2 <*> g3
 
   let quad (g1 : 'a t) (g2 : 'b t) (g3 : 'c t) (g4 : 'd t) : ('a * 'b * 'c * 'd) t =

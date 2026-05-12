@@ -583,10 +583,24 @@ module Gen = struct
     let b = nb > 400 && nb < 600 in
     Alcotest.(check bool) "Gen.option produces around 50% of Some" b true
 
+  let test_dep_pair_array_index () =
+    let array_index_gen =
+      Gen.dep_pair
+        (Gen.array_size (Gen.int_range 1 100) Gen.nat_small)
+        (fun arr -> Gen.int_bound (pred (Array.length arr)))
+    in
+    for _i = 0 to 1000 do
+      let (arr, idx) = Gen.generate1 array_index_gen in
+      let len = Array.length arr in
+      let valid = len >= 1 && idx >= 0 && idx < len in
+      Alcotest.(check bool) "dep_pair generates valid array-index pairs" valid true
+    done
+
   let tests =
     ("Gen", Alcotest.[
          test_case "option with default ratio" `Quick test_gen_option_default;
          test_case "option with custom ratio" `Quick test_gen_option_custom;
+         test_case "dep_pair generates valid dependent pairs" `Quick test_dep_pair_array_index;
        ])
 end
 
