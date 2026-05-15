@@ -1610,6 +1610,12 @@ val (==>) : bool -> bool -> bool
     better with {!Test.check_exn} and the likes, because they will know
     the precondition was not satisfied.).
 
+    {b Note}: [==>] inherits the precedence of OCaml's [=] operator,
+    {{:https://ocaml.org/manual/5.4/expr.html#ss:precedence-and-associativity}which is higher than the logical connectives [&&] and [||]}.
+    As a consequence OCaml will parse [a && b ==> c] as [a && (b ==> c)] - and
+    similarly for [||] - which is likely not the intention. Put explicit
+    parentheses [(a && b) ==> c] or use the {!assume} function to avoid this issue.
+
     ⚠️ This function should only be used in a property
     (see {!Test.make}), because it raises a special exception in case of
     failure of the first argument, to distinguish between failed test
