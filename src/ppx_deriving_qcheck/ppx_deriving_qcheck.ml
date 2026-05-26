@@ -621,6 +621,61 @@ let derive_arbs ~loc xs =
   in
   gens @ List.map derive_arb flatten_gens
 
+(** {2. Signature derivation} *)
+
+(** [derive_gen_sigs ~version ~loc xs] creates generator signatures for type
+    declarations in [xs]. The signatures can either use [QCheck.Gen.t] or
+    [QCheck2.Gen.t] based on [version]. *)
+let derive_gen_sigs ~version ~loc ((_rf, tds) : rec_flag * type_declaration list) : signature =
+  let (module A) = Ast_builder.make loc in
+  let gen_t = G.ty version in
+  let sig_of_td td =
+    let ty_name = td.ptype_name.txt in
+    let gen_name = name ty_name in
+    let params = List.map fst td.ptype_params in
+    let applied_type =
+      A.ptyp_constr (A.Located.mk (Lident ty_name)) params
+    in
+    let return_type =
+      A.ptyp_constr (A.Located.mk gen_t) [applied_type]
+    in
+    let gen_type =
+      List.fold_right (fun param acc ->
+        A.ptyp_arrow Nolabel (A.ptyp_constr (A.Located.mk gen_t) [param]) acc
+      ) params return_type
+    in
+    A.psig_value
+      (A.value_description ~name:(A.Located.mk gen_name) ~type_:gen_type ~prim:[])
+  in
+  List.map sig_of_td tds
+
+(** [derive_arb_sigs ~loc xs] creates generator and arbitrary signatures for
+    type declarations in [xs]. *)
+let derive_arb_sigs ~loc ((_rf, tds) as xs) : signature =
+  let gen_sigs = derive_gen_sigs ~version:`QCheck ~loc xs in
+  let (module A) = Ast_builder.make loc in
+  let gen_t = G.ty `QCheck in
+  let arb_t = Ldot (Lident "QCheck", "arbitrary") in
+  let arb_sig_of_td td =
+    let ty_name = td.ptype_name.txt in
+    let arb_name = name_gen_to_arb (name ty_name) in
+    let params = List.map fst td.ptype_params in
+    let applied_type =
+      A.ptyp_constr (A.Located.mk (Lident ty_name)) params
+    in
+    let return_type =
+      A.ptyp_constr (A.Located.mk arb_t) [applied_type]
+    in
+    let arb_type =
+      List.fold_right (fun param acc ->
+        A.ptyp_arrow Nolabel (A.ptyp_constr (A.Located.mk gen_t) [param]) acc
+      ) params return_type
+    in
+    A.psig_value
+      (A.value_description ~name:(A.Located.mk arb_name) ~type_:arb_type ~prim:[])
+  in
+  gen_sigs @ List.map arb_sig_of_td tds
+
 (** {2. Ppxlib machinery} *)
 
 let create_gens version ~ctxt (decls : rec_flag * type_declaration list) : structure =
@@ -631,10 +686,26 @@ let create_arbs ~ctxt (decls : rec_flag * type_declaration list) : structure =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
   derive_arbs ~loc decls
 
+let create_gen_sigs version ~ctxt (decls : rec_flag * type_declaration list) : signature =
+  let loc = Expansion_context.Deriver.derived_item_loc ctxt in
+  derive_gen_sigs ~version ~loc decls
+
+let create_arb_sigs ~ctxt (decls : rec_flag * type_declaration list) : signature =
+  let loc = Expansion_context.Deriver.derived_item_loc ctxt in
+  derive_arb_sigs ~loc decls
+
 let gen_expander_qcheck = Deriving.Generator.V2.make_noarg create_arbs
 
 let gen_expander_qcheck2 = Deriving.Generator.V2.make_noarg (create_gens `QCheck2)
 
-let _ = Deriving.add "qcheck" ~str_type_decl:gen_expander_qcheck
+let sig_expander_qcheck = Deriving.Generator.V2.make_noarg create_arb_sigs
 
-let _ = Deriving.add "qcheck2" ~str_type_decl:gen_expander_qcheck2
+let sig_expander_qcheck2 = Deriving.Generator.V2.make_noarg (create_gen_sigs `QCheck2)
+
+let _ = Deriving.add "qcheck"
+    ~str_type_decl:gen_expander_qcheck
+    ~sig_type_decl:sig_expander_qcheck
+
+let _ = Deriving.add "qcheck2"
+    ~str_type_decl:gen_expander_qcheck2
+    ~sig_type_decl:sig_expander_qcheck2

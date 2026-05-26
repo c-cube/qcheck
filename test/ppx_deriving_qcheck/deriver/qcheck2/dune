@@ -2,6 +2,7 @@
  (package ppx_deriving_qcheck)
  (names
    test_textual
+   test_textual_sig
    test_primitives
    test_qualified_names
    test_recursive
