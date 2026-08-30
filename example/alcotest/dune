@@ -1,18 +1,10 @@
 (rule
- (enabled_if (and (= %{arch_sixtyfour} true) (>= %{ocaml_version} 5)))
+ (enabled_if (>= %{ocaml_version} 5))
  (action (copy QCheck_alcotest_test.expected.ocaml5.64 QCheck_alcotest_test.expected)))
 
 (rule
- (enabled_if (and (= %{arch_sixtyfour} false) (>= %{ocaml_version} 5)))
- (action (copy QCheck_alcotest_test.expected.ocaml5.32 QCheck_alcotest_test.expected)))
-
-(rule
- (enabled_if (and (= %{arch_sixtyfour} true) (< %{ocaml_version} 5)))
+ (enabled_if (< %{ocaml_version} 5))
  (action (copy QCheck_alcotest_test.expected.ocaml4.64 QCheck_alcotest_test.expected)))
-
-(rule
- (enabled_if (and (= %{arch_sixtyfour} false) (< %{ocaml_version} 5)))
- (action (copy QCheck_alcotest_test.expected.ocaml4.32 QCheck_alcotest_test.expected)))
 
 (executable
  (name QCheck_alcotest_test)
