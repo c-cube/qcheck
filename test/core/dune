@@ -9,20 +9,12 @@
   (libraries qcheck-core))
 
 (rule
- (enabled_if (and (= %{arch_sixtyfour} true) (>= %{ocaml_version} 5)))
+ (enabled_if (>= %{ocaml_version} 5))
  (action (copy QCheck_expect_test.expected.ocaml5.64 QCheck_expect_test.expected)))
 
 (rule
- (enabled_if (and (= %{arch_sixtyfour} false) (>= %{ocaml_version} 5)))
- (action (copy QCheck_expect_test.expected.ocaml5.32 QCheck_expect_test.expected)))
-
-(rule
- (enabled_if (and (= %{arch_sixtyfour} true) (< %{ocaml_version} 5)))
+ (enabled_if (< %{ocaml_version} 5))
  (action (copy QCheck_expect_test.expected.ocaml4.64 QCheck_expect_test.expected)))
-
-(rule
- (enabled_if (and (= %{arch_sixtyfour} false) (< %{ocaml_version} 5)))
- (action (copy QCheck_expect_test.expected.ocaml4.32 QCheck_expect_test.expected)))
 
 ;; implicitly compared against QCheck_expect_test.expected
 (test
@@ -33,20 +25,12 @@
  (action (run ./%{test} --no-colors -s 1234)))
 
 (rule
- (enabled_if (and (= %{arch_sixtyfour} true) (>= %{ocaml_version} 5)))
+ (enabled_if (>= %{ocaml_version} 5))
  (action (copy QCheck2_expect_test.expected.ocaml5.64 QCheck2_expect_test.expected)))
 
 (rule
- (enabled_if (and (= %{arch_sixtyfour} false) (>= %{ocaml_version} 5)))
- (action (copy QCheck2_expect_test.expected.ocaml5.32 QCheck2_expect_test.expected)))
-
-(rule
- (enabled_if (and (= %{arch_sixtyfour} true) (< %{ocaml_version} 5)))
+ (enabled_if (< %{ocaml_version} 5))
  (action (copy QCheck2_expect_test.expected.ocaml4.64 QCheck2_expect_test.expected)))
-
-(rule
- (enabled_if (and (= %{arch_sixtyfour} false) (< %{ocaml_version} 5)))
- (action (copy QCheck2_expect_test.expected.ocaml4.32 QCheck2_expect_test.expected)))
 
 ;; implicitly compared against QCheck2_expect_test.expected
 (test
