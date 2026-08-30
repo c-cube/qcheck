@@ -1,5 +1,9 @@
 # ppx_deriving_qcheck
 
+This `ppx_deriving` plugin allows to derive a generator from a type declaration
+in both module structures and module signatures with an attribute annotation.
+
+
 ## Generator
 Derive `QCheck.Gen.t` from a type declaration
 
