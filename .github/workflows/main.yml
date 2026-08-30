@@ -25,6 +25,7 @@ jobs:
           - "5.2"
           - "5.3"
           - "5.4"
+          - "5.5"
         exclude:
           - os: macos-latest
             ocaml-compiler: "4.11"
