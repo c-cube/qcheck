@@ -3,20 +3,12 @@
  (libraries ounit2 qcheck-ounit))
 
 (rule
- (enabled_if (and (= %{arch_sixtyfour} true) (>= %{ocaml_version} 5)))
+ (enabled_if (>= %{ocaml_version} 5))
  (action (copy QCheck_ounit_test.expected.ocaml5.64 QCheck_ounit_test.expected)))
 
 (rule
- (enabled_if (and (= %{arch_sixtyfour} false) (>= %{ocaml_version} 5)))
- (action (copy QCheck_ounit_test.expected.ocaml5.32 QCheck_ounit_test.expected)))
-
-(rule
- (enabled_if (and (= %{arch_sixtyfour} true) (< %{ocaml_version} 5)))
+ (enabled_if (< %{ocaml_version} 5))
  (action (copy QCheck_ounit_test.expected.ocaml4.64 QCheck_ounit_test.expected)))
-
-(rule
- (enabled_if (and (= %{arch_sixtyfour} false) (< %{ocaml_version} 5)))
- (action (copy QCheck_ounit_test.expected.ocaml4.32 QCheck_ounit_test.expected)))
 
 (rule
  (targets QCheck_ounit_test.output)

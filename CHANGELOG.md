@@ -56,6 +56,8 @@
 - Disabled duplicated pretty-printed feedback when using `QCheck_alcotest` runner
 - Fixed the overflow bug when `~count > max_int - 200` affecting `Test.{make_cell,make,make_neg}` in both QCheck and QCheck2
 - Add a documentation warning about the precedence of `==>` to `QCheck` and `QCheck2`
+- Remove 32-bit support from QCheck's internal test suite. The libraries
+  themselves are expected to continue running on 32-bit platforms.
 
 
 ## 0.91 (2025-12-21)
