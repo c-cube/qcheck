@@ -856,6 +856,50 @@ module Gen : sig
       in a generator.
       @since 0.17 *)
 
+  val recursive :
+    ?scale:(int -> int) ->
+    ('a t list -> 'a t) ->
+    'a t list ->
+    ('a t -> 'a t) list ->
+    'a t
+  (** [recursive combine base rec_cases] builds a generator for a recursive
+      type out of its non-recursive cases [base] and its recursive cases
+      [rec_cases], combined with [combine] - typically {!oneof}, or
+      {!oneof_weighted} composed with a weighting function.
+
+      A size is drawn with {!val:sized}, and every generator in [rec_cases] is
+      handed a generator for the same type at a smaller size. The size is
+      multiplied by the reciprocal of the golden ratio (approximately [0.618])
+      at each level, so the expected depth grows with the drawn size instead of
+      being bounded by a fixed division schedule. Once the size reaches [1] only
+      [base] is used, which is what terminates the recursion.
+
+      Compared to writing the recursion by hand with {!val:sized} and {!fix}, this
+      combinator picks the size schedule for you and makes the base cases
+      syntactically distinct from the recursive ones, so a generator cannot
+      accidentally be written without a terminating case.
+
+      Example:
+      {[
+        type tree = Leaf of int | Node of tree * tree
+
+        let tree_gen =
+          QCheck2.Gen.(recursive oneof
+                         [ map (fun i -> Leaf i) nat ]
+                         [ (fun self -> map2 (fun l r -> Node (l, r)) self self) ])
+      ]}
+
+      Shrinks on the size first, then on the selected cases.
+
+      @param scale how the size is reduced at each level, [0.618] times the
+      size by default. Its result is clamped to the range [\[0, n - 1\]], so a
+      [scale] that fails to decrease cannot make generation diverge.
+
+      @raise Failure if [base] is empty, since the recursion could then never
+      stop.
+
+      @since 0.92 *)
+
   (** {2:composing_generators Composing generators}
 
       QCheck generators compose well: it means one can easily craft generators for new values

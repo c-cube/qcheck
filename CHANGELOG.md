@@ -58,6 +58,10 @@
 - Add a documentation warning about the precedence of `==>` to `QCheck` and `QCheck2`
 - Remove 32-bit support from QCheck's internal test suite. The libraries
   themselves are expected to continue running on 32-bit platforms.
+- Add `QCheck2.Gen.recursive`, a combinator for building generators of
+  recursive types from their base and recursive cases. It scales the size by
+  the reciprocal of the golden ratio (~0.618) at each level rather than
+  halving, and takes an optional `?scale` to override that schedule.
 
 
 ## 0.91 (2025-12-21)

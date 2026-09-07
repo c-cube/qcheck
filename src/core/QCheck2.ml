@@ -889,6 +889,27 @@ module Gen = struct
     let rec f' n st = f f' n st in
     f'
 
+  (* The reciprocal of the golden ratio, the default per-level size scaling
+     factor of [recursive]. *)
+  let golden_ratio_scale (n : int) : int =
+    int_of_float (Float.round (float_of_int n *. 0.618033988749895))
+
+  let recursive ?(scale = golden_ratio_scale)
+      (combine : 'a t list -> 'a t)
+      (base : 'a t list)
+      (rec_cases : ('a t -> 'a t) list) : 'a t =
+    match base with
+    | [] -> failwith "QCheck2.Gen.recursive called with an empty list of base cases"
+    | _ ->
+      sized (fix (fun self n ->
+          if n <= 1
+          then combine base
+          else
+            (* Clamping to [n - 1] keeps the recursion well-founded whatever
+               [scale] returns. *)
+            let smaller = delay (fun () -> self (max 0 (min (n - 1) (scale n)))) in
+            combine (base @ List.map (fun rec_case -> rec_case smaller) rec_cases)))
+
   let generate ?(rand=RS.make_self_init()) ~(n : int) (gen : 'a t) : 'a list =
     list_repeat n gen rand |> Tree.root
 

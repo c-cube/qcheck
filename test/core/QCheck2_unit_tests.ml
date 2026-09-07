@@ -583,10 +583,75 @@ module Gen = struct
     let b = nb > 400 && nb < 600 in
     Alcotest.(check bool) "Gen.option produces around 50% of Some" b true
 
+  type tree = Leaf of int | Node of tree * tree
+
+  let tree_gen =
+    Gen.(recursive oneof
+           [ map (fun i -> Leaf i) nat ]
+           [ (fun self -> map2 (fun l r -> Node (l, r)) self self) ])
+
+  let rec tree_depth = function
+    | Leaf _ -> 1
+    | Node (l, r) -> 1 + max (tree_depth l) (tree_depth r)
+
+  let sample_depths ?(count = 200) ~seed gen =
+    let rand = rand_init seed in
+    List.init count (fun _ -> tree_depth (Gen.generate1 ~rand gen))
+
+  let test_gen_recursive_terminates () =
+    let depths = sample_depths ~seed:1234 tree_gen in
+    let max_depth = List.fold_left max 0 depths in
+    (* [nat] draws at most 9999 and the size is multiplied by 0.618 per level,
+       so no sample can be deeper than log(9999) / log(1/0.618) ~ 20 levels. *)
+    Alcotest.(check bool)
+      "Gen.recursive bounds the depth by the golden ratio schedule"
+      true (max_depth <= 25);
+    Alcotest.(check bool)
+      "Gen.recursive actually uses its recursive cases"
+      true (max_depth > 1)
+
+  let test_gen_recursive_requires_base_case () =
+    Alcotest.check_raises
+      "Gen.recursive rejects an empty list of base cases"
+      (Failure "QCheck2.Gen.recursive called with an empty list of base cases")
+      (fun () -> ignore (Gen.recursive Gen.oneof [] [ (fun self -> self) ]))
+
+  let test_gen_recursive_scale_cannot_diverge () =
+    (* A [scale] that grows the size is clamped to [n - 1], so the recursion
+       still terminates - here on a linear structure, to keep it cheap. *)
+    let list_gen =
+      Gen.(recursive ~scale:(fun n -> n * 100) oneof
+             [ pure [] ]
+             [ (fun self -> map2 (fun x xs -> x :: xs) nat self) ])
+    in
+    let rand = rand_init 99 in
+    let lengths = List.init 20 (fun _ -> List.length (Gen.generate1 ~rand list_gen)) in
+    Alcotest.(check bool)
+      "Gen.recursive clamps a non-decreasing scale"
+      true (List.for_all (fun n -> n <= 10_000) lengths)
+
+  let test_gen_recursive_shrinks_to_base_case () =
+    let rand = rand_init 7 in
+    let rec find_recursive_tree remaining =
+      if remaining = 0
+      then Alcotest.fail "Gen.recursive produced no recursive tree in 100 tries"
+      else
+        let t = Gen.generate_tree ~rand tree_gen in
+        if tree_depth (Tree.root t) > 1 then t else find_recursive_tree (remaining - 1)
+    in
+    let path = repeated_success (find_recursive_tree 100) in
+    Alcotest.(check bool)
+      "Gen.recursive shrinks down to a base case"
+      true (List.exists (fun v -> tree_depth v = 1) path)
+
   let tests =
     ("Gen", Alcotest.[
          test_case "option with default ratio" `Quick test_gen_option_default;
          test_case "option with custom ratio" `Quick test_gen_option_custom;
+         test_case "recursive terminates" `Quick test_gen_recursive_terminates;
+         test_case "recursive requires a base case" `Quick test_gen_recursive_requires_base_case;
+         test_case "recursive clamps its scale" `Quick test_gen_recursive_scale_cannot_diverge;
+         test_case "recursive shrinks to a base case" `Quick test_gen_recursive_shrinks_to_base_case;
        ])
 end
 
