@@ -431,7 +431,6 @@ let run_tests
     in
     Res (cell, r)
   in
-  let res = List.map aux_map l in
   let aux_fold (total, fail, error, warns) (Res (cell, r)) =
     let warns = warns + List.length (R.get_warnings r) in
     let acc = match R.get_state r, QCheck2.Test.get_positive cell with
@@ -457,7 +456,7 @@ let run_tests
     in
     acc
   in
-  let total, fail, error, warns = List.fold_left aux_fold (0, 0, 0,0) res in
+  let total, fail, error, warns = List.fold_left (fun counts input -> aux_fold counts (aux_map input)) (0, 0, 0,0) l in
   Printf.fprintf out "%s\n" (String.make 80 '=');
   if warns > 0 then Printf.fprintf out "%d warning(s)\n" warns;
   if fail = 0 && error = 0 then (
