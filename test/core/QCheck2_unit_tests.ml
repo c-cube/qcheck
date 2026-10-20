@@ -889,6 +889,92 @@ module Incomplete = struct
     ])
 end
 
+module Incomplete_prefix = struct
+  open QCheck2
+
+  let rand () = Random.State.make [|0|]
+
+  let run ?incomplete_prefix law =
+    Test.check_cell ~rand:(rand ())
+      (Test.make_cell ~count:50 ?incomplete_prefix Gen.int law)
+
+  let reasons r = List.map fst (TestResult.get_incomplete_reasons r)
+
+  let test_prefix_on () =
+    let r = run ~incomplete_prefix:"TODO:" (fun _ -> failwith "TODO:x") in
+    Alcotest.(check bool) "state is Success" true (TestResult.is_success r);
+    Alcotest.(check (list (pair string int))) "the reason is the rest of the message"
+      ["x", TestResult.get_count_gen r] (TestResult.get_incomplete_reasons r)
+
+  let test_prefix_is_exact () =
+    List.iter (fun msg ->
+        match TestResult.get_state (run ~incomplete_prefix:"TODO:" (fun _ -> failwith msg)) with
+        | TestResult.Error {exn = Failure m; _} -> Alcotest.(check string) "message" msg m
+        | _ -> Alcotest.failf "%S must still be an error" msg)
+      ["boom"; "TODO"; "todo:x"; " TODO:x"; "a TODO:x"]
+
+  let test_off_by_default () =
+    match TestResult.get_state (run (fun _ -> failwith "TODO:x")) with
+    | TestResult.Error {exn = Failure m; _} -> Alcotest.(check string) "message" "TODO:x" m
+    | _ -> Alcotest.fail "without a prefix, Failure \"TODO:x\" must be an error"
+
+  let test_env_default () =
+    Unix.putenv "QCHECK_INCOMPLETE_PREFIX" "TODO:";
+    let r = run (fun _ -> failwith "TODO:from env") in
+    Unix.putenv "QCHECK_INCOMPLETE_PREFIX" "";
+    Alcotest.(check (list string)) "the environment enables the prefix" ["from env"] (reasons r);
+    match TestResult.get_state (run (fun _ -> failwith "TODO:x")) with
+    | TestResult.Error _ -> ()
+    | _ -> Alcotest.fail "an empty QCHECK_INCOMPLETE_PREFIX must disable the adapter"
+
+  let test_argument_wins_over_env () =
+    Unix.putenv "QCHECK_INCOMPLETE_PREFIX" "TODO:";
+    let other = run ~incomplete_prefix:"FIXME:" (fun _ -> failwith "TODO:x") in
+    let off = run ~incomplete_prefix:"" (fun _ -> failwith "TODO:x") in
+    Unix.putenv "QCHECK_INCOMPLETE_PREFIX" "";
+    (match TestResult.get_state other with
+     | TestResult.Error _ -> ()
+     | _ -> Alcotest.fail "the explicit prefix must override the environment");
+    match TestResult.get_state off with
+    | TestResult.Error _ -> ()
+    | _ -> Alcotest.fail "an explicit empty prefix must disable the adapter"
+
+  let test_incomplete_always_recognised () =
+    let with_prefix = run ~incomplete_prefix:"TODO:" (fun _ -> incomplete "typed") in
+    let without = run (fun _ -> incomplete "typed") in
+    Alcotest.(check (list string)) "with a prefix" ["typed"] (reasons with_prefix);
+    Alcotest.(check (list string)) "without a prefix" ["typed"] (reasons without)
+
+  let test_reraised_failure () =
+    let r = run ~incomplete_prefix:"TODO:"
+        (fun _ -> try failwith "TODO:re-raised" with exn -> raise exn) in
+    Alcotest.(check (list string)) "reason" ["re-raised"] (reasons r)
+
+  let test_message_equal_to_prefix () =
+    let r = run ~incomplete_prefix:"TODO:" (fun _ -> failwith "TODO:") in
+    Alcotest.(check (list string)) "empty reason" [""] (reasons r)
+
+  let test_shrink_skips_prefixed_candidates () =
+    let cell = Test.make_cell ~count:100 ~incomplete_prefix:"TODO:" (Gen.int_bound 1000)
+        (fun i -> if i < 300 then failwith "TODO:small" else i < 500) in
+    match TestResult.get_state (Test.check_cell ~rand:(rand ()) cell) with
+    | TestResult.Failed {instances = [c]} ->
+      Alcotest.(check int) "shrunk to the smallest counterexample" 500 c.TestResult.instance
+    | _ -> Alcotest.fail "a genuine counterexample must not become incomplete"
+
+  let tests = ("Incomplete cases (incomplete_prefix)", Alcotest.[
+      test_case "prefixed Failure is incomplete" `Quick test_prefix_on;
+      test_case "the prefix is exact and case-sensitive" `Quick test_prefix_is_exact;
+      test_case "off by default" `Quick test_off_by_default;
+      test_case "QCHECK_INCOMPLETE_PREFIX sets the default" `Quick test_env_default;
+      test_case "the argument wins over the environment" `Quick test_argument_wins_over_env;
+      test_case "Incomplete is recognised with or without a prefix" `Quick test_incomplete_always_recognised;
+      test_case "a re-raised Failure is still recognised" `Quick test_reraised_failure;
+      test_case "message equal to the prefix: empty reason" `Quick test_message_equal_to_prefix;
+      test_case "shrinking skips prefixed candidates" `Quick test_shrink_skips_prefixed_candidates;
+    ])
+end
+
 let () =
   Alcotest.run "QCheck2"
     [
@@ -899,4 +985,5 @@ let () =
       String.tests;
       Check_exn.tests;
       Incomplete.tests;
+      Incomplete_prefix.tests;
     ]

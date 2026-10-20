@@ -1248,8 +1248,12 @@ module Incomplete = struct
     Test.make ~name:"Failure \"TODO:...\" is still an error" ~count:10 ~print:Print.int
       Gen.int (fun _ -> failwith "TODO:not implemented")
 
+  let todo_convention =
+    Test.make ~name:"failwith \"TODO:...\" with incomplete_prefix" ~count:10 ~print:Print.int
+      ~incomplete_prefix:"TODO:" Gen.int (fun _ -> failwith "TODO:not implemented")
+
   (* summary: incomplete, exit code 0 *)
-  let tolerated = [pos_all_incomplete; pos_mixed; neg_all_incomplete; neg_caught]
+  let tolerated = [pos_all_incomplete; pos_mixed; neg_all_incomplete; neg_caught; todo_convention]
 
   (* summary: failure ... with incomplete cases, exit code 1 *)
   let failing = [pos_fail; failure_is_an_error]

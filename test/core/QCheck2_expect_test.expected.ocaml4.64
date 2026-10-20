@@ -2155,8 +2155,13 @@ Negative test negative, all cases incomplete found no counterexample, but 210 ca
 
 Test negative, counterexample found despite incomplete cases had 20 incomplete cases:
   below 900 (20 times)
+
++++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Test failwith "TODO:..." with incomplete_prefix had 210 incomplete cases:
+  not implemented (210 times)
 ================================================================================
-incomplete (ran 4 tests, 4 with incomplete cases)
+incomplete (ran 5 tests, 5 with incomplete cases)
 random seed: 1234
 
 --- Failure --------------------------------------------------------------------

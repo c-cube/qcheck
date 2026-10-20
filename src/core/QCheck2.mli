@@ -1803,6 +1803,7 @@ module Test : sig
 
   val make_cell :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?incomplete_prefix:string ->
     ?count:int -> ?long_factor:int ->  ?negative:bool -> ?max_gen:int -> ?max_fail:int -> ?retries:int ->
     ?name:string -> ?print:'a Print.t -> ?collect:('a -> string) -> ?stats:('a stat list) ->
      'a Gen.t -> ('a -> bool) ->
@@ -1817,7 +1818,7 @@ module Test : sig
       @param negative whether the test is expected not to satisfy the tested property.
       @param max_gen maximum number of times the generation function
         is called in total to replace inputs that do not satisfy
-        preconditions (should be >= count).
+        preconditions or were incomplete (should be >= count).
       @param max_fail maximum number of failures before we stop generating
         inputs. This is useful if shrinking takes too much time.
       @param retries number of times to retry the tested property while shrinking.
@@ -1829,6 +1830,10 @@ module Test : sig
         the flag is [`Warning], the test will be a failure if the flag is [`Fatal].
         Incomplete cases count as having satisfied the precondition.
         (since 0.10)
+      @param incomplete_prefix a [Failure] raised by the property whose message
+        starts with this prefix is an incomplete case, the rest of the message
+        being the reason. Default: the environment variable
+        [QCHECK_INCOMPLETE_PREFIX], if set and not empty. (since NEXT_RELEASE)
       @param print used in {!Print} to display generated values failing the [prop]
       @param collect (* collect values by tag, useful to display distribution of generated *)
       @param stats on a distribution of values of type 'a
@@ -1836,6 +1841,7 @@ module Test : sig
 
   val make_cell_from_QCheck1 :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?incomplete_prefix:string ->
     ?count:int -> ?long_factor:int -> ?negative:bool -> ?max_gen:int -> ?max_fail:int ->
     ?retries:int -> ?name:string -> gen:(Random.State.t -> 'a) -> ?shrink:('a -> ('a -> unit) -> unit) ->
     ?print:('a -> string) -> ?collect:('a -> string) -> stats:'a stat list -> ('a -> bool) ->
@@ -1877,6 +1883,7 @@ module Test : sig
 
   val make :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?incomplete_prefix:string ->
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int -> ?retries:int ->
     ?name:string -> ?print:('a Print.t) -> ?collect:('a -> string) -> ?stats:('a stat list) ->
     'a Gen.t -> ('a -> bool) -> t
@@ -1887,6 +1894,7 @@ module Test : sig
 
   val make_neg :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?incomplete_prefix:string ->
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int -> ?retries:int ->
     ?name:string -> ?print:('a Print.t) -> ?collect:('a -> string) -> ?stats:('a stat list) ->
     'a Gen.t -> ('a -> bool) -> t

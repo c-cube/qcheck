@@ -1579,6 +1579,7 @@ module Test = struct
     stats : 'a stat list; (* distribution of values of type 'a *)
     qcheck1_shrink : ('a -> ('a -> unit) -> unit) option; (* QCheck1-backward-compatible shrinking *)
     if_assumptions_fail: [`Fatal | `Warning] * float;
+    incomplete_prefix : string option; (* a [Failure] with this prefix is an incomplete case *)
     mutable name : string; (* name of the law *)
   }
 
@@ -1620,17 +1621,27 @@ module Test = struct
 
   let global_long_factor long_factor = global_nonnegative_var default_long_factor "QCHECK_LONG_FACTOR" long_factor
 
+  (* explicit argument > QCHECK_INCOMPLETE_PREFIX > none; the empty string disables *)
+  let global_incomplete_prefix = function
+    | Some "" -> None
+    | Some p -> Some p
+    | None ->
+      (match Sys.getenv_opt "QCHECK_INCOMPLETE_PREFIX" with
+       | None | Some "" -> None
+       | Some p -> Some p)
+
   let fresh_name =
     let r = ref 0 in
     (fun () -> incr r; Printf.sprintf "anon_test_%d" !r)
 
   let default_if_assumptions_fail = `Warning, 0.05
 
-  let make_cell ?(if_assumptions_fail=default_if_assumptions_fail)
+  let make_cell ?(if_assumptions_fail=default_if_assumptions_fail) ?incomplete_prefix
       ?(count) ?long_factor ?(negative=false) ?max_gen
       ?(max_fail=1) ?(retries=1) ?(name=fresh_name()) ?print ?collect ?(stats=[]) gen law
     =
     let count = global_count count in
+    let incomplete_prefix = global_incomplete_prefix incomplete_prefix in
     let long_factor = global_long_factor long_factor in
     let positive = not negative in
     let max_gen = match max_gen with None -> max count (count + 200) | Some x->x in
@@ -1648,14 +1659,16 @@ module Test = struct
       long_factor;
       positive;
       if_assumptions_fail;
+      incomplete_prefix;
       qcheck1_shrink = None;
     }
 
-  let make_cell_from_QCheck1 ?(if_assumptions_fail=default_if_assumptions_fail)
+  let make_cell_from_QCheck1 ?(if_assumptions_fail=default_if_assumptions_fail) ?incomplete_prefix
       ?(count) ?long_factor ?(negative=false) ?max_gen
       ?(max_fail=1) ?(retries=1) ?(name=fresh_name()) ~gen ?shrink ?print ?collect ~stats law
     =
     let count = global_count count in
+    let incomplete_prefix = global_incomplete_prefix incomplete_prefix in
     let long_factor = global_long_factor long_factor in
     let positive = not negative in
     (* Make a "fake" QCheck2 arbitrary with no shrinking *)
@@ -1675,11 +1688,12 @@ module Test = struct
       long_factor;
       positive;
       if_assumptions_fail;
+      incomplete_prefix;
       qcheck1_shrink = shrink;
     }
 
-  let make' ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats ~negative arb law =
-    Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats ~negative arb law)
+  let make' ?if_assumptions_fail ?incomplete_prefix ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats ~negative arb law =
+    Test (make_cell ?if_assumptions_fail ?incomplete_prefix ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats ~negative arb law)
 
   let make = make' ~negative:false
   let make_neg = make' ~negative:true
@@ -1773,6 +1787,14 @@ module Test = struct
   type 'a run_res =
     | Run_ok
     | Run_fail of string list
+    | Run_incomplete of string
+
+  (* no [String.starts_with], which needs OCaml 4.13 *)
+  let prefixed_reason prefix msg =
+    let n = String.length prefix in
+    if String.length msg >= n && String.sub msg 0 n = prefix
+    then Some (String.sub msg n (String.length msg - n))
+    else None
 
   (* run_law is a helper function for testing a property [law] on a
      generated input [x].
@@ -1794,14 +1816,24 @@ module Test = struct
      test 100 times during shrinking: thus we stopped shrinking a test
      case only when all of its candidate shrinkings passed 100 tests
      in a row."  *)
-  let run_law ~retries law x =
-    let rec loop i = match law x with
+  let run_law ~retries cell x =
+    let rec loop i = match cell.law x with
       | false -> Run_fail []
       | true ->
         if i<=1 then Run_ok else loop (i-1) in
     try
       loop retries
-    with User_fail msg -> Run_fail [msg]
+    with
+    | User_fail msg -> Run_fail [msg]
+    | Incomplete reason -> Run_incomplete reason
+    | Failure msg as e ->
+      let bt = Printexc.get_raw_backtrace () in
+      (match cell.incomplete_prefix with
+       | Some prefix ->
+         (match prefixed_reason prefix msg with
+          | Some reason -> Run_incomplete reason
+          | None -> Printexc.raise_with_backtrace e bt)
+       | None -> Printexc.raise_with_backtrace e bt)
 
   (* QCheck1-compatibility code *)
   exception Iter_exit
@@ -1835,13 +1867,12 @@ module Test = struct
                try
                  incr count;
                  st.handler st.test.name st.test (Shrinking (steps, !count, x));
-                 begin match run_law ~retries:st.test.retries st.test.law x with
+                 begin match run_law ~retries:st.test.retries st.test x with
                  | Run_fail m when not is_err -> Some (Tree.pure x, Shrink_fail, m)
                  | _ -> None
                  end
                with
                | Failed_precondition | No_example_found _ -> None
-               | Incomplete _ -> None (* incomplete candidate: not a counterexample, try the next one *)
                | e when is_err -> Some (Tree.pure x, Shrink_exn e, []) (* fail test (by error) *)
              ) (f i)
         | None -> (* QCheck2 (or QCheck1 with a shrinkless tree): use the shrink tree *)
@@ -1851,13 +1882,12 @@ module Test = struct
              try
                incr count;
                st.handler st.test.name st.test (Shrinking (steps, !count, x));
-               begin match run_law ~retries:st.test.retries st.test.law x with
+               begin match run_law ~retries:st.test.retries st.test x with
                  | Run_fail m when not is_err -> Some (x_tree, Shrink_fail, m)
                  | _ -> None
                end
              with
              | Failed_precondition | No_example_found _ -> None
-             | Incomplete _ -> None (* incomplete candidate: not a counterexample, try the next one *)
              | e when is_err -> Some (x_tree, Shrink_exn e, []) (* fail test (by error) *)
           ) shrinks
                |> Seq.hd
@@ -1930,7 +1960,7 @@ module Test = struct
     let res =
       try
         state.handler state.test.name state.test (Testing input);
-        begin match run_law ~retries:1 state.test.law input with
+        begin match run_law ~retries:1 state.test input with
           | Run_ok ->
             (* one test ok *)
             decr_count state;
@@ -1938,7 +1968,7 @@ module Test = struct
             CR_continue
           | Run_fail msg_l ->
             handle_fail state input_tree msg_l
-          | exception Incomplete reason ->
+          | Run_incomplete reason ->
             record_incomplete state reason;
             state.step state.test.name state.test input FalseAssumption;
             CR_continue

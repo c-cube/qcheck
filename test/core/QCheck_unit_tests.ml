@@ -700,9 +700,18 @@ module Incomplete = struct
     Alcotest.(check int) "every generated case is incomplete"
       (QCheck.TestResult.get_count_gen r) (QCheck2.TestResult.get_count_incomplete r)
 
+  let test_incomplete_prefix () =
+    let cell = QCheck.(Test.make_cell ~count:50 ~incomplete_prefix:"TODO:" int
+                         (fun _ -> failwith "TODO:x")) in
+    let r = QCheck.Test.check_cell ~rand:(rand ()) cell in
+    Alcotest.(check bool) "state is Success" true (QCheck.TestResult.is_success r);
+    Alcotest.(check (list string)) "reason" ["x"]
+      (List.map fst (QCheck2.TestResult.get_incomplete_reasons r))
+
   let tests = ("Incomplete cases (Incomplete exception)", Alcotest.[
       test_case "shrinking skips incomplete candidates" `Quick test_shrink_skips_incomplete_candidates;
       test_case "all cases incomplete" `Quick test_all_incomplete;
+      test_case "prefixed Failure with incomplete_prefix" `Quick test_incomplete_prefix;
     ])
 end
 
