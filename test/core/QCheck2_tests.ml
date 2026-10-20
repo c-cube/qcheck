@@ -1214,3 +1214,43 @@ module Stats = struct
     @ float_exp_tests
     @ float_tests
 end
+
+(* tests with cases that reach code that is not implemented yet *)
+module Incomplete = struct
+  open QCheck2
+
+  let pos_all_incomplete =
+    Test.make ~name:"all cases incomplete" ~count:10 ~print:Print.int
+      Gen.int (fun _ -> incomplete "not implemented")
+
+  let pos_mixed =
+    Test.make ~name:"some cases incomplete" ~count:100 ~print:Print.int
+      Gen.int (fun i -> match abs i mod 3 with
+          | 0 -> incomplete "multiples of 3"
+          | 1 -> incomplete "remainder 1"
+          | _ -> true)
+
+  let neg_all_incomplete =
+    Test.make_neg ~name:"negative, all cases incomplete" ~count:10 ~print:Print.int
+      Gen.int (fun _ -> incomplete "not implemented")
+
+  let neg_caught =
+    Test.make_neg ~name:"negative, counterexample found despite incomplete cases"
+      ~count:100 ~print:Print.int (Gen.int_bound 1000)
+      (fun i -> if i < 900 then incomplete "below 900" else i < 950)
+
+  let pos_fail =
+    Test.make ~name:"counterexample found despite incomplete cases"
+      ~count:100 ~print:Print.int (Gen.int_bound 1000)
+      (fun i -> if i < 900 then incomplete "below 900" else i < 950)
+
+  let failure_is_an_error =
+    Test.make ~name:"Failure \"TODO:...\" is still an error" ~count:10 ~print:Print.int
+      Gen.int (fun _ -> failwith "TODO:not implemented")
+
+  (* summary: incomplete, exit code 0 *)
+  let tolerated = [pos_all_incomplete; pos_mixed; neg_all_incomplete; neg_caught]
+
+  (* summary: failure ... with incomplete cases, exit code 1 *)
+  let failing = [pos_fail; failure_is_an_error]
+end

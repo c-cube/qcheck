@@ -1930,6 +1930,11 @@ module Test : sig
   val print_test_fail : string -> string list -> string
   val print_test_error : string -> string -> exn -> string -> string
 
+  val print_test_incomplete : string -> (string * int) list -> string
+  (** [print_test_incomplete name reasons] is the message of
+      [Test_incomplete (name, reasons)].
+      @since NEXT_RELEASE *)
+
   val print_collect : (string,int) Hashtbl.t -> string
   (** Print "collect" results.
       @since 0.6 *)
