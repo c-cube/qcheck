@@ -782,6 +782,113 @@ module Check_exn = struct
        ])
 end
 
+module Incomplete = struct
+  open QCheck2
+
+  let rand () = Random.State.make [|0|]
+
+  let run ?(negative=false) ?if_assumptions_fail gen law =
+    Test.check_cell ~rand:(rand ())
+      (Test.make_cell ~count:100 ~negative ?if_assumptions_fail gen law)
+
+  let test_all_incomplete () =
+    let r = run Gen.int (fun _ -> incomplete "later") in
+    let gen = TestResult.get_count_gen r in
+    Alcotest.(check bool) "state is Success" true (TestResult.is_success r);
+    Alcotest.(check int) "no case was decided" 0 (TestResult.get_count r);
+    Alcotest.(check int) "every generated case is incomplete"
+      gen (TestResult.get_count_incomplete r);
+    Alcotest.(check (list (pair string int))) "reasons"
+      ["later", gen] (TestResult.get_incomplete_reasons r);
+    Alcotest.(check (list string)) "no precondition warning"
+      [] (TestResult.get_warnings r)
+
+  let test_several_reasons () =
+    let r = run Gen.int (fun i -> match abs i mod 3 with
+        | 0 -> incomplete "a"
+        | 1 -> incomplete "b"
+        | _ -> true) in
+    let reasons = TestResult.get_incomplete_reasons r in
+    Alcotest.(check (list string)) "both reasons"
+      ["a"; "b"] (List.sort compare (List.map fst reasons));
+    Alcotest.(check int) "counts add up"
+      (TestResult.get_count_incomplete r)
+      (List.fold_left (fun acc (_, n) -> acc + n) 0 reasons);
+    Alcotest.(check bool) "sorted by decreasing count, then by reason" true
+      (reasons = List.sort (fun (r1, n1) (r2, n2) ->
+           match compare n2 n1 with 0 -> compare r1 r2 | c -> c) reasons);
+    Alcotest.(check int) "decided + incomplete = generated"
+      (TestResult.get_count_gen r)
+      (TestResult.get_count r + TestResult.get_count_incomplete r)
+
+  let test_empty_reason () =
+    let r = run Gen.int (fun _ -> incomplete "") in
+    Alcotest.(check (list (pair string int))) "the empty reason is kept"
+      ["", TestResult.get_count_gen r] (TestResult.get_incomplete_reasons r)
+
+  let test_other_failures_stay_errors () =
+    List.iter (fun msg ->
+        match TestResult.get_state (run Gen.int (fun _ -> failwith msg)) with
+        | TestResult.Error {exn = Failure m; _} ->
+          Alcotest.(check string) "message" msg m
+        | _ -> Alcotest.failf "%S must still be an error" msg)
+      ["boom"; "TODO"; "TODO:x"]
+
+  let test_shrink_skips_incomplete_candidates () =
+    let r = run (Gen.int_bound 1000)
+        (fun i -> if i < 300 then incomplete "small" else i < 500) in
+    match TestResult.get_state r with
+    | TestResult.Failed {instances = [c]} ->
+      Alcotest.(check int) "shrunk to the smallest counterexample"
+        500 c.TestResult.instance
+    | _ -> Alcotest.fail "a genuine counterexample must not become incomplete"
+
+  exception Boom
+
+  let test_shrink_skips_incomplete_candidates_on_error () =
+    let r = run (Gen.int_bound 1000)
+        (fun i ->
+           if i < 300 then incomplete "small"
+           else if i >= 500 then raise Boom
+           else true) in
+    match TestResult.get_state r with
+    | TestResult.Error {exn = Boom; instance = {TestResult.instance = 500; _}; _} -> ()
+    | _ -> Alcotest.fail "the error must keep its exception and shrink to 500"
+
+  let test_fatal_precondition_still_checked () =
+    let r = run ~if_assumptions_fail:(`Fatal, 0.5) Gen.int
+        (fun i ->
+           if i mod 50 = 0 then incomplete "x";
+           assume (i mod 100 = 1);
+           true) in
+    match TestResult.get_state r with
+    | TestResult.Failed_other _ -> ()
+    | _ -> Alcotest.fail "`Fatal must still fire when most inputs are discarded"
+
+  let test_check_cell_exn_raises_test_incomplete () =
+    List.iter (fun negative ->
+        let cell = Test.make_cell ~name:"t" ~count:10 ~negative Gen.int
+            (fun _ -> incomplete "later") in
+        match Test.check_cell_exn ~rand:(rand ()) cell with
+        | () -> Alcotest.fail "an incomplete run must not pass silently"
+        | exception Test.Test_incomplete ("t", ["later", _]) -> ()
+        | exception e ->
+          Alcotest.failf "an incomplete run must raise Test_incomplete, not %s"
+            (Printexc.to_string e))
+      [false; true]
+
+  let tests = ("Incomplete cases (Incomplete exception)", Alcotest.[
+      test_case "all cases incomplete" `Quick test_all_incomplete;
+      test_case "several reasons, sorted by count" `Quick test_several_reasons;
+      test_case "empty reason" `Quick test_empty_reason;
+      test_case "other exceptions stay errors, Failure \"TODO:...\" included" `Quick test_other_failures_stay_errors;
+      test_case "shrinking skips incomplete candidates" `Quick test_shrink_skips_incomplete_candidates;
+      test_case "shrinking skips incomplete candidates (error)" `Quick test_shrink_skips_incomplete_candidates_on_error;
+      test_case "`Fatal precondition check still fires" `Quick test_fatal_precondition_still_checked;
+      test_case "check_cell_exn raises Test_incomplete" `Quick test_check_cell_exn_raises_test_incomplete;
+    ])
+end
+
 let () =
   Alcotest.run "QCheck2"
     [
@@ -791,4 +898,5 @@ let () =
       TestLongFactor.tests;
       String.tests;
       Check_exn.tests;
+      Incomplete.tests;
     ]

@@ -1639,6 +1639,30 @@ val assume_fail : unit -> 'a
     @since 0.5.1
 *)
 
+(** {1 Incomplete cases}
+
+    A property that reaches code which is not implemented yet can raise
+    {!Incomplete}. Such a case is neither a pass nor a failure: it is
+    counted by reason in {!TestResult}, and testing continues with the
+    next input. *)
+
+exception Incomplete of string
+(** [Incomplete reason] signals that the property reached code that is not
+    implemented yet.
+    @since NEXT_RELEASE *)
+
+val incomplete : string -> 'a
+(** [incomplete reason] raises [Incomplete reason]. Like {!assume_fail}, it
+    can be used in any position.
+
+    Example:
+    {[
+      Test.make Gen.int
+        (fun i -> if i < 0 then incomplete "negative inputs" else f i >= 0)
+    ]}
+
+    @since NEXT_RELEASE *)
+
 (** {1 Tests}
 
     A test is a universal property of type [foo -> bool] for some type [foo],
@@ -1696,10 +1720,20 @@ module TestResult : sig
   (** [get_state t] returns the final state after a test execution. *)
 
   val get_count : _ t -> int
-  (** [get_count t] returns the number of tests executed. *)
+  (** [get_count t] returns the number of tests executed, not counting
+      incomplete cases. *)
 
   val get_count_gen : _ t -> int
   (** [get_count_gen t] returns the number of generated cases. *)
+
+  val get_count_incomplete : _ t -> int
+  (** [get_count_incomplete t] returns the number of incomplete cases.
+      @since NEXT_RELEASE *)
+
+  val get_incomplete_reasons : _ t -> (string * int) list
+  (** [get_incomplete_reasons t] returns the [(reason, n)] pairs of the
+      incomplete cases, sorted by decreasing [n], then by [reason].
+      @since NEXT_RELEASE *)
 
   val get_collect : _ t -> (string,int) Hashtbl.t option
   (** [get_collect t] returns the repartition of generated values.
@@ -1738,6 +1772,13 @@ module Test_exceptions : sig
   (** Exception raised when a negative test failed.
       [Test_unexpected_success name] means test [name] failed to find an
       expected counter example. *)
+
+  exception Test_incomplete of string * (string * int) list
+  (** Exception raised when a test had incomplete cases and no failure.
+      [Test_incomplete (name, reasons)] means test [name] had incomplete
+      cases, [reasons] being {!QCheck2.TestResult.get_incomplete_reasons} of its
+      result.
+      @since NEXT_RELEASE *)
 end
 
 (** A test is a pair of a generator and a property that all generated values must satisfy. *)
@@ -1786,6 +1827,7 @@ module Test : sig
         The fraction should be between 0. and 1.
         A warning will be emitted otherwise if
         the flag is [`Warning], the test will be a failure if the flag is [`Fatal].
+        Incomplete cases count as having satisfied the precondition.
         (since 0.10)
       @param print used in {!Print} to display generated values failing the [prop]
       @param collect (* collect values by tag, useful to display distribution of generated *)
@@ -1902,12 +1944,15 @@ module Test : sig
       Otherwise, it raises some exception.
       @raise Test_fail  if the test is positive and [res = Failed _]
       @raise Test_unexpected_success  if the test is negative and [res = Ok _]
+      @raise Test_incomplete if [res = Success _] and the run had incomplete
+      cases, whatever the polarity (since NEXT_RELEASE)
       @raise Test_error if [res = Error _] *)
 
   type res =
     | Success
     | Failure
     | FalseAssumption
+    (** a discard, or an incomplete case (since NEXT_RELEASE) *)
     | Error of exn * string
 
   type 'a event =
@@ -1958,6 +2003,8 @@ module Test : sig
       without finding a counterexample and expects negative tests to fail by finding one.
       @raise Test_fail  if the test is positive and [res = Failed _]
       @raise Test_unexpected_success  if the test is negative and [res = Success _]
+      @raise Test_incomplete if [res = Success _] and the run had incomplete
+      cases, whatever the polarity (since NEXT_RELEASE)
       @raise Test_error if [res = Error _] *)
 
   val check_exn : ?long:bool -> ?rand:Random.State.t -> t -> unit
@@ -1967,6 +2014,8 @@ module Test : sig
       without finding a counterexample and expects negative tests to fail by finding one.
       @raise Test_fail  if the test is positive and [res = Failed _]
       @raise Test_unexpected_success  if the test is negative and [res = Success _]
+      @raise Test_incomplete if [res = Success _] and the run had incomplete
+      cases, whatever the polarity (since NEXT_RELEASE)
       @raise Test_error if [res = Error _] *)
 end
 

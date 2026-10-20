@@ -680,6 +680,32 @@ module TestLongFactor = struct
      ])
 end
 
+module Incomplete = struct
+  let rand () = Random.State.make [|0|]
+
+  let test_shrink_skips_incomplete_candidates () =
+    let cell = QCheck.(Test.make_cell ~count:100 (int_bound 1000)
+                         (fun i -> if i < 300 then QCheck.incomplete "small" else i < 500)) in
+    match QCheck.TestResult.get_state (QCheck.Test.check_cell ~rand:(rand ()) cell) with
+    | QCheck.TestResult.Failed {instances = [c]} ->
+      Alcotest.(check int) "shrunk to the smallest counterexample"
+        500 c.QCheck.TestResult.instance
+    | _ -> Alcotest.fail "a genuine counterexample must not become incomplete"
+
+  let test_all_incomplete () =
+    let cell = QCheck.(Test.make_cell ~count:100 int (fun _ -> QCheck.incomplete "later")) in
+    let r = QCheck.Test.check_cell ~rand:(rand ()) cell in
+    Alcotest.(check bool) "state is Success" true (QCheck.TestResult.is_success r);
+    Alcotest.(check int) "no case was decided" 0 (QCheck.TestResult.get_count r);
+    Alcotest.(check int) "every generated case is incomplete"
+      (QCheck.TestResult.get_count_gen r) (QCheck2.TestResult.get_count_incomplete r)
+
+  let tests = ("Incomplete cases (Incomplete exception)", Alcotest.[
+      test_case "shrinking skips incomplete candidates" `Quick test_shrink_skips_incomplete_candidates;
+      test_case "all cases incomplete" `Quick test_all_incomplete;
+    ])
+end
+
 let () =
   Alcotest.run "QCheck"
     [
@@ -687,4 +713,5 @@ let () =
       Check_exn.tests;
       TestCount.tests;
       TestLongFactor.tests;
+      Incomplete.tests;
     ]

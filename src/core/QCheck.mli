@@ -135,6 +135,11 @@ val assume_fail : unit -> 'a
     @since 0.5.1
 *)
 
+val incomplete : string -> 'a
+(** [incomplete reason] raises [QCheck2.Incomplete reason]. See
+    {!QCheck2.incomplete}.
+    @since NEXT_RELEASE *)
+
 (** {1 Generate Random Values} *)
 
 module Gen : sig
