@@ -128,8 +128,8 @@ val run_tests :
 (** Run a suite of tests, and print its results. This is an heritage from
     the "qcheck" library.
 
-    The incomplete cases of each test are reported with their reasons. They
-    do not make the run fail.
+    A test with no counterexample and some incomplete cases is reported as
+    incomplete, with its reasons, and does not make the run fail.
     @return an error code, [0] if no test failed or errored, [1] otherwise.
     @param colors if true (default), colorful output
     @param verbose if true, prints more information about test cases (default: [false])

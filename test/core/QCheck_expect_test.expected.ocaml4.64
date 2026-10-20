@@ -2095,12 +2095,12 @@ Test some cases incomplete had 173 incomplete cases:
 
 +++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Negative test negative, all cases incomplete found no counterexample, but 210 cases were incomplete; a counterexample may lie among them:
+Negative test negative, all cases incomplete is inconclusive: no counterexample in the 0 cases that completed, and 210 cases were incomplete, so the expected counterexample may be hidden among them:
   not implemented (210 times)
 
-+++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+--- Info -----------------------------------------------------------------------
 
-Test negative, counterexample found despite incomplete cases had 20 incomplete cases:
+Test negative, counterexample found despite incomplete cases also had 20 incomplete cases; its verdict does not depend on them:
   below 900 (20 times)
 
 +++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -2108,7 +2108,7 @@ Test negative, counterexample found despite incomplete cases had 20 incomplete c
 Test failwith "TODO:..." with incomplete_prefix had 210 incomplete cases:
   not implemented (210 times)
 ================================================================================
-incomplete (ran 5 tests, 5 with incomplete cases)
+incomplete (ran 5 tests, 4 incomplete)
 random seed: 1234
 
 --- Failure --------------------------------------------------------------------
@@ -2117,9 +2117,9 @@ Test counterexample found despite incomplete cases failed (3 shrink steps):
 
 950
 
-+++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+--- Info -----------------------------------------------------------------------
 
-Test counterexample found despite incomplete cases had 20 incomplete cases:
+Test counterexample found despite incomplete cases also had 20 incomplete cases; its verdict does not depend on them:
   below 900 (20 times)
 
 === Error ======================================================================
@@ -2131,4 +2131,4 @@ Test Failure "TODO:..." is still an error errored on (63 shrink steps):
 exception Failure("TODO:not implemented")
 
 ================================================================================
-failure (1 tests failed, 1 tests errored, ran 2 tests, 1 with incomplete cases)
+failure (1 tests failed, 1 tests errored, ran 2 tests)

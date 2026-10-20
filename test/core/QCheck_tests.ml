@@ -1327,6 +1327,6 @@ module Incomplete = struct
   (* summary: incomplete, exit code 0 *)
   let tolerated = [pos_all_incomplete; pos_mixed; neg_all_incomplete; neg_caught; todo_convention]
 
-  (* summary: failure ... with incomplete cases, exit code 1 *)
+  (* summary: failure, exit code 1 *)
   let failing = [pos_fail; failure_is_an_error]
 end

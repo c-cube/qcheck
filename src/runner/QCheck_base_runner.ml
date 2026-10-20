@@ -305,19 +305,20 @@ let step ~colors ~size ~out ~verbose c name _ _ r =
       (if colors then Color.reset_line else "\n") (pp_counter ~size) c name
   )
 
+(* no counterexample and some incomplete cases, whatever the polarity *)
+let is_incomplete r =
+  QCheck2.TestResult.is_success r && QCheck2.TestResult.get_count_incomplete r > 0
+
 let callback ~size ~out ~verbose ~colors c name cell r =
   let module R = QCheck2.TestResult in
-  let incomplete = R.get_count_incomplete r > 0 in
   let pass =
     if QCheck2.Test.get_positive cell
-    then R.is_success r
-    else R.is_failed r
-         (* no counterexample but incomplete cases: inconclusive, not a failure *)
-         || (R.is_success r && incomplete) in
+    then R.is_success r && not (is_incomplete r)
+    else R.is_failed r in
   let color, mark =
-    if not pass then `Red, "✗"
-    else if incomplete then `Yellow, "?"
-    else `Green, "✓" in
+    if pass then `Green, "✓"
+    else if is_incomplete r then `Yellow, "?"
+    else `Red, "✗" in
   if verbose then (
     (* print final test status line regardless of rate-limiting for responsive user feedback *)
     Printf.fprintf out "%s[%a] %a %s\n%!"
@@ -407,15 +408,22 @@ let print_incomplete ~colors out cell r =
   let module R = QCheck2.TestResult in
   let count = R.get_count_incomplete r in
   if count > 0 then (
-    Printf.fprintf out "\n+++ %a %s\n\n"
-      (Color.pp_str_c ~colors `Yellow) "Incomplete" (String.make 65 '+');
-    if QCheck2.Test.get_positive cell || not (R.is_success r) then
-      Printf.fprintf out "Test %s had %d incomplete cases:\n%!"
+    if is_incomplete r then (
+      Printf.fprintf out "\n+++ %a %s\n\n"
+        (Color.pp_str_c ~colors `Yellow) "Incomplete" (String.make 65 '+');
+      if QCheck2.Test.get_positive cell then
+        Printf.fprintf out "Test %s had %d incomplete cases:\n%!"
+          (QCheck2.Test.get_name cell) count
+      else
+        Printf.fprintf out
+          "Negative test %s is inconclusive: no counterexample in the %d cases that completed, and %d cases were incomplete, so the expected counterexample may be hidden among them:\n%!"
+          (QCheck2.Test.get_name cell) (R.get_count r) count
+    ) else (
+      (* the verdict is conclusive: the incomplete cases are information only *)
+      Printf.fprintf out "\n--- %a %s\n\n" (Color.pp_str_c ~colors `Blue) "Info" (String.make 71 '-');
+      Printf.fprintf out "Test %s also had %d incomplete cases; its verdict does not depend on them:\n%!"
         (QCheck2.Test.get_name cell) count
-    else
-      Printf.fprintf out
-        "Negative test %s found no counterexample, but %d cases were incomplete; a counterexample may lie among them:\n%!"
-        (QCheck2.Test.get_name cell) count;
+    );
     List.iter
       (fun (reason, n) -> Printf.fprintf out "  %s (%d times)\n%!" reason n)
       (R.get_incomplete_reasons r)
@@ -463,13 +471,12 @@ let run_tests
   let res = List.map aux_map l in
   let aux_fold (total, fail, error, incomplete, warns) (Res (cell, r)) =
     let warns = warns + List.length (R.get_warnings r) in
-    let incomplete =
-      if R.get_count_incomplete r > 0 then incomplete + 1 else incomplete in
+    let incomplete = if is_incomplete r then incomplete + 1 else incomplete in
     let acc = match R.get_state r, QCheck2.Test.get_positive cell with
       | R.Success, true ->
         print_success ~colors out cell r;
         (total + 1, fail, error, incomplete, warns)
-      | R.Success, false when R.get_count_incomplete r > 0 ->
+      | R.Success, false when is_incomplete r ->
         (* reported by [print_incomplete] *)
         (total + 1, fail, error, incomplete, warns)
       | R.Success, false ->
@@ -500,7 +507,7 @@ let run_tests
       Printf.fprintf out "%a (ran %d tests)\n%!"
         (pp_color `Green) "success" total
     else
-      Printf.fprintf out "%a (ran %d tests, %d with incomplete cases)\n%!"
+      Printf.fprintf out "%a (ran %d tests, %d incomplete)\n%!"
         (pp_color `Yellow) "incomplete" total incomplete;
     0
   ) else (
@@ -510,7 +517,7 @@ let run_tests
         (pp_color `Red) "failure" fail error total
     else
       Printf.fprintf out
-        "%a (%d tests failed, %d tests errored, ran %d tests, %d with incomplete cases)\n%!"
+        "%a (%d tests failed, %d tests errored, ran %d tests, %d incomplete)\n%!"
         (pp_color `Red) "failure" fail error total incomplete;
     1
   )
