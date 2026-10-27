@@ -1663,6 +1663,21 @@ val incomplete : string -> 'a
 
     @since NEXT_RELEASE *)
 
+val register_incomplete : (exn -> string option) -> unit
+(** [register_incomplete f] makes [f] a signal of incompleteness for every
+    test: an exception [e] raised by a property is an incomplete case with
+    reason [r] when [f e = Some r]. Code under test can thus keep an exception
+    of its own for its unimplemented parts, without depending on QCheck:
+    {[
+      exception Todo of string (* in Mylib, the library under test *)
+      let () = QCheck2.register_incomplete
+          (function Mylib.Todo reason -> Some reason | _ -> None)
+    ]}
+    Registered functions are tried in registration order, after the other
+    signals, and never see a discard ({!assume}, {!No_example_found}); one
+    that raises counts as returning [None].
+    @since NEXT_RELEASE *)
+
 (** {1 Tests}
 
     A test is a universal property of type [foo -> bool] for some type [foo],

@@ -140,6 +140,10 @@ val incomplete : string -> 'a
     {!QCheck2.incomplete}.
     @since NEXT_RELEASE *)
 
+val register_incomplete : (exn -> string option) -> unit
+(** Synonym for {!QCheck2.register_incomplete}.
+    @since NEXT_RELEASE *)
+
 (** {1 Generate Random Values} *)
 
 module Gen : sig

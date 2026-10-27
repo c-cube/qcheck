@@ -83,6 +83,11 @@ let assume_fail () = raise Failed_precondition
 
 let incomplete reason = raise (Incomplete reason)
 
+let incomplete_classifiers : (exn -> string option) list ref = ref []
+
+let register_incomplete f =
+  incomplete_classifiers := !incomplete_classifiers @ [f]
+
 let (==>) b1 b2 = if b1 then b2 else raise Failed_precondition
 
 (** Enhancement of Stdlib [Seq] to backport some recent functions, and add a few useful others. *)
@@ -1796,6 +1801,28 @@ module Test = struct
     then Some (String.sub msg n (String.length msg - n))
     else None
 
+  (* The first reason given by a signal: [Incomplete], then the [Failure]
+     prefixed for the test, then the registered functions. A registered
+     function that raises counts as returning [None]. *)
+  let classify_incomplete cell e =
+    let rec registered = function
+      | [] -> None
+      | f :: fs ->
+        (match (try f e with _ -> None) with
+         | Some _ as reason -> reason
+         | None -> registered fs) in
+    match e with
+    | Incomplete reason -> Some reason
+    | Failed_precondition | No_example_found _ ->
+      None (* a discard, QCheck's own control flow: never an incomplete case *)
+    | _ ->
+      let prefixed = match e, cell.incomplete_prefix with
+        | Failure msg, Some prefix -> prefixed_reason prefix msg
+        | _ -> None in
+      (match prefixed with
+       | Some _ -> prefixed
+       | None -> registered !incomplete_classifiers)
+
   (* run_law is a helper function for testing a property [law] on a
      generated input [x].
 
@@ -1821,19 +1848,18 @@ module Test = struct
       | false -> Run_fail []
       | true ->
         if i<=1 then Run_ok else loop (i-1) in
+    (* a guard, not a catch and re-raise, so that other exceptions keep
+       their backtrace *)
+    let incomplete = ref None in
+    let recognised e = incomplete := classify_incomplete cell e; !incomplete <> None in
     try
       loop retries
     with
     | User_fail msg -> Run_fail [msg]
-    | Incomplete reason -> Run_incomplete reason
-    | Failure msg as e ->
-      let bt = Printexc.get_raw_backtrace () in
-      (match cell.incomplete_prefix with
-       | Some prefix ->
-         (match prefixed_reason prefix msg with
-          | Some reason -> Run_incomplete reason
-          | None -> Printexc.raise_with_backtrace e bt)
-       | None -> Printexc.raise_with_backtrace e bt)
+    | e when recognised e ->
+      (match !incomplete with
+       | Some reason -> Run_incomplete reason
+       | None -> assert false)
 
   (* QCheck1-compatibility code *)
   exception Iter_exit

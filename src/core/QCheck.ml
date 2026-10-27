@@ -115,6 +115,8 @@ let assume_fail = QCheck2.assume_fail
 
 let incomplete = QCheck2.incomplete
 
+let register_incomplete = QCheck2.register_incomplete
+
 let (==>) = QCheck2.(==>)
 
 module Gen = struct

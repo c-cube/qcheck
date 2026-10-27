@@ -975,6 +975,78 @@ module Incomplete_prefix = struct
     ])
 end
 
+module Register_incomplete = struct
+  (* registrations are global: each one here recognises an exception that
+     no other test raises *)
+  open QCheck2
+
+  exception Todo of string
+  exception Not_a_signal of string
+  exception Confusing
+
+  let () =
+    register_incomplete (function Todo reason -> Some reason | _ -> None);
+    (* a registered function that raises counts as returning [None] *)
+    register_incomplete (function Confusing -> failwith "broken signal" | _ -> None);
+    (* a discarded case is never submitted to the registered functions *)
+    register_incomplete (function No_example_found _ -> Some "discard" | _ -> None)
+
+  let rand () = Random.State.make [|0|]
+
+  let run ?incomplete_prefix law =
+    Test.check_cell ~rand:(rand ())
+      (Test.make_cell ~count:50 ?incomplete_prefix Gen.int law)
+
+  let reasons r = List.map fst (TestResult.get_incomplete_reasons r)
+
+  let test_registered_exception () =
+    let r = run (fun _ -> raise (Todo "later")) in
+    Alcotest.(check bool) "state is Success" true (TestResult.is_success r);
+    Alcotest.(check int) "no case was decided" 0 (TestResult.get_count r);
+    Alcotest.(check (list (pair string int))) "the reason comes from the payload"
+      ["later", TestResult.get_count_gen r] (TestResult.get_incomplete_reasons r)
+
+  let test_unregistered_exception_stays_error () =
+    match TestResult.get_state (run (fun _ -> raise (Not_a_signal "x"))) with
+    | TestResult.Error {exn = Not_a_signal "x"; _} -> ()
+    | _ -> Alcotest.fail "an exception no registered function recognises must be an error"
+
+  let test_signals_combine () =
+    let r = run ~incomplete_prefix:"TODO:" (fun i -> match abs i mod 3 with
+        | 0 -> raise (Todo "registered")
+        | 1 -> incomplete "typed"
+        | _ -> failwith "TODO:prefixed") in
+    Alcotest.(check (list string)) "the three signals are recognised in one run"
+      ["prefixed"; "registered"; "typed"] (List.sort compare (reasons r))
+
+  let test_raising_function_counts_as_none () =
+    match TestResult.get_state (run (fun _ -> raise Confusing)) with
+    | TestResult.Error {exn = Confusing; _} -> ()
+    | _ -> Alcotest.fail "a registered function that raises must not change the verdict"
+
+  let test_discards_are_not_submitted () =
+    let r = run (fun _ -> raise (No_example_found "x")) in
+    Alcotest.(check int) "no incomplete case" 0 (TestResult.get_count_incomplete r);
+    Alcotest.(check int) "no case was decided" 0 (TestResult.get_count r)
+
+  let test_shrink_skips_registered_candidates () =
+    let cell = Test.make_cell ~count:100 (Gen.int_bound 1000)
+        (fun i -> if i < 300 then raise (Todo "small") else i < 500) in
+    match TestResult.get_state (Test.check_cell ~rand:(rand ()) cell) with
+    | TestResult.Failed {instances = [c]} ->
+      Alcotest.(check int) "shrunk to the smallest counterexample" 500 c.TestResult.instance
+    | _ -> Alcotest.fail "a genuine counterexample must not become incomplete"
+
+  let tests = ("Incomplete cases (register_incomplete)", Alcotest.[
+      test_case "registered exception is incomplete" `Quick test_registered_exception;
+      test_case "unregistered exception stays an error" `Quick test_unregistered_exception_stays_error;
+      test_case "the three signals combine in one run" `Quick test_signals_combine;
+      test_case "a function that raises counts as None" `Quick test_raising_function_counts_as_none;
+      test_case "discards are not submitted" `Quick test_discards_are_not_submitted;
+      test_case "shrinking skips registered candidates" `Quick test_shrink_skips_registered_candidates;
+    ])
+end
+
 let () =
   Alcotest.run "QCheck2"
     [
@@ -986,4 +1058,5 @@ let () =
       Check_exn.tests;
       Incomplete.tests;
       Incomplete_prefix.tests;
+      Register_incomplete.tests;
     ]
