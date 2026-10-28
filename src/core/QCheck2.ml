@@ -1801,27 +1801,29 @@ module Test = struct
     then Some (String.sub msg n (String.length msg - n))
     else None
 
-  (* The first reason given by a signal: [Incomplete], then the [Failure]
-     prefixed for the test, then the registered functions. A registered
-     function that raises counts as returning [None]. *)
-  let classify_incomplete cell e =
+  (* The first reason given by a signal: [Incomplete], then [Fun.Todo]
+     (OCaml 5.6), then the [Failure] prefixed for the test, then the
+     registered functions. A registered function that raises counts as
+     returning [None]. *)
+  let classify_incomplete cell (e : exn) =
     let rec registered = function
       | [] -> None
       | f :: fs ->
         (match (try f e with _ -> None) with
          | Some _ as reason -> reason
          | None -> registered fs) in
+    let prefixed = match e, cell.incomplete_prefix with
+      | Failure msg, Some prefix -> prefixed_reason prefix msg
+      | _ -> None in
     match e with
     | Incomplete reason -> Some reason
     | Failed_precondition | No_example_found _ ->
       None (* a discard, QCheck's own control flow: never an incomplete case *)
     | _ ->
-      let prefixed = match e, cell.incomplete_prefix with
-        | Failure msg, Some prefix -> prefixed_reason prefix msg
-        | _ -> None in
-      (match prefixed with
-       | Some _ -> prefixed
-       | None -> registered !incomplete_classifiers)
+      (match QCheck_fun_todo.reason e, prefixed with
+       | (Some _ as todo), _ -> todo
+       | None, (Some _ as prefixed) -> prefixed
+       | None, None -> registered !incomplete_classifiers)
 
   (* run_law is a helper function for testing a property [law] on a
      generated input [x].

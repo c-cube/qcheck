@@ -1,0 +1,96 @@
+(* Compiled on OCaml >= 5.6 only, see test/core/dune. *)
+open QCheck2
+
+let rand () = Random.State.make [|0|]
+
+let run ?incomplete_prefix ?(count=50) gen law =
+  Test.check_cell ~rand:(rand ()) (Test.make_cell ~count ?incomplete_prefix gen law)
+
+let reasons r = List.map fst (TestResult.get_incomplete_reasons r)
+
+(* as Fun's printer prints it *)
+let location line = Printf.sprintf "File %S, line %d" __FILE__ line
+
+(* each [__LINE__] is taken on the line of its [Fun.todo ()] *)
+let f_line = __LINE__ and f i = if i < 0 then Fun.todo () else i
+let hole_a_line = __LINE__ and hole_a () = Fun.todo ()
+let hole_b_line = __LINE__ and hole_b () = Fun.todo ()
+
+let test_todo_is_incomplete () =
+  let r = run Gen.int (fun _ -> hole_a ()) in
+  Alcotest.(check bool) "state is Success" true (TestResult.is_success r);
+  Alcotest.(check int) "no case was decided" 0 (TestResult.get_count r);
+  Alcotest.(check int) "every generated case is incomplete"
+    (TestResult.get_count_gen r) (TestResult.get_count_incomplete r)
+
+let test_reason_is_the_location () =
+  let r = run Gen.int (fun i -> f i >= 0) in
+  Alcotest.(check (list string)) "the reason is the file and line of the hole"
+    [location f_line] (reasons r);
+  Alcotest.(check bool) "the reason is one line" false
+    (String.contains (List.hd (reasons r)) '\n');
+  Alcotest.(check bool) "the implemented part is tested" true
+    (TestResult.get_count r > 0 && TestResult.get_count_incomplete r > 0)
+
+let test_each_hole_has_its_own_reason () =
+  let r = run Gen.int (fun i -> if i mod 2 = 0 then hole_a () else hole_b ()) in
+  Alcotest.(check (list string)) "one reason per hole"
+    [location hole_a_line; location hole_b_line] (List.sort compare (reasons r));
+  Alcotest.(check int) "counts add up" (TestResult.get_count_gen r)
+    (List.fold_left (fun n (_, k) -> n + k) 0 (TestResult.get_incomplete_reasons r))
+
+let test_signals_combine () =
+  let r = run ~incomplete_prefix:"TODO:" Gen.int (fun i -> match abs i mod 3 with
+      | 0 -> hole_a ()
+      | 1 -> incomplete "typed"
+      | _ -> failwith "TODO:prefixed") in
+  Alcotest.(check (list string)) "Fun.todo combines with the other signals in one run"
+    [location hole_a_line; "prefixed"; "typed"] (List.sort compare (reasons r))
+
+let test_shrink_skips_todo_candidates () =
+  let r = run ~count:100 (Gen.int_bound 1000)
+      (fun i -> if i < 300 then Fun.todo () else i < 500) in
+  match TestResult.get_state r with
+  | TestResult.Failed {instances = [c]} ->
+    Alcotest.(check int) "shrunk to the smallest counterexample" 500 c.TestResult.instance
+  | _ -> Alcotest.fail "a genuine counterexample must not become incomplete"
+
+let test_todo_wins_over_registered () =
+  register_incomplete (function Fun.Todo _ -> Some "registered" | _ -> None);
+  let r = run Gen.int (fun i -> f i >= 0) in
+  Alcotest.(check (list string)) "the reason is still the location"
+    [location f_line] (reasons r)
+
+let test_todo_in_generator_is_an_error () =
+  let r = run (Gen.map (fun _ -> hole_a ()) Gen.int) (fun _ -> true) in
+  match TestResult.get_state r with
+  | TestResult.Failed_other _ -> ()
+  | _ -> Alcotest.fail "a hole in the generator must be an error"
+
+let test_check_cell_exn_raises_test_incomplete () =
+  let cell = Test.make_cell ~name:"t" ~count:10 Gen.int (fun _ -> hole_a ()) in
+  match Test.check_cell_exn ~rand:(rand ()) cell with
+  | () -> Alcotest.fail "an incomplete run must not pass silently"
+  | exception Test.Test_incomplete ("t", [loc, _]) ->
+    Alcotest.(check string) "the location reaches the reporters" (location hole_a_line) loc
+  | exception e ->
+    Alcotest.failf "an incomplete run must raise Test_incomplete, not %s" (Printexc.to_string e)
+
+(* the QCheck (v1) facade goes through the same core, and shares its result type *)
+let test_qcheck_facade () =
+  let r = QCheck.Test.check_cell ~rand:(rand ())
+      (QCheck.Test.make_cell ~count:50 QCheck.int (fun _ -> hole_b ())) in
+  Alcotest.(check (list string)) "incomplete through QCheck too"
+    [location hole_b_line] (reasons r)
+
+let tests = ("Incomplete cases (Fun.todo)", Alcotest.[
+    test_case "Fun.todo () is incomplete" `Quick test_todo_is_incomplete;
+    test_case "the reason is the location of the hole" `Quick test_reason_is_the_location;
+    test_case "each hole has its own reason" `Quick test_each_hole_has_its_own_reason;
+    test_case "Fun.todo combines with the other signals" `Quick test_signals_combine;
+    test_case "shrinking skips candidates that reach the hole" `Quick test_shrink_skips_todo_candidates;
+    test_case "the built-in signal wins over a registered function" `Quick test_todo_wins_over_registered;
+    test_case "a hole in the generator is an error" `Quick test_todo_in_generator_is_an_error;
+    test_case "check_cell_exn raises Test_incomplete with the location" `Quick test_check_cell_exn_raises_test_incomplete;
+    test_case "the QCheck facade reports it too" `Quick test_qcheck_facade;
+  ])

@@ -1644,7 +1644,9 @@ val assume_fail : unit -> 'a
     A property that reaches code which is not implemented yet can raise
     {!Incomplete}. Such a case is neither a pass nor a failure: it is
     counted by reason in {!TestResult}, and testing continues with the
-    next input. *)
+    next input. On OCaml 5.6 and later,
+    [Fun.todo ()] is recognised as well, with the location of the call as
+    the reason. *)
 
 exception Incomplete of string
 (** [Incomplete reason] signals that the property reached code that is not

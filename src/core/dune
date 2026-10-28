@@ -3,6 +3,16 @@
   (name qcheck_core)
   (public_name qcheck-core)
   (wrapped false)
+  (private_modules QCheck_fun_todo)
   (libraries unix)
   (flags :standard -w +a-4-42-44-48-50-58-32-60@8 -safe-string)
   )
+
+;; Fun.Todo exists since OCaml 5.6: one source per side, picked by enabled_if
+(rule
+ (enabled_if (>= %{ocaml_version} 5.6))
+ (action (copy QCheck_fun_todo.ml.ocaml5.6 QCheck_fun_todo.ml)))
+
+(rule
+ (enabled_if (< %{ocaml_version} 5.6))
+ (action (copy QCheck_fun_todo.ml.pre5.6 QCheck_fun_todo.ml)))

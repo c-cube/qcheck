@@ -1059,4 +1059,5 @@ let () =
       Incomplete.tests;
       Incomplete_prefix.tests;
       Register_incomplete.tests;
+      Fun_todo_tests.tests;
     ]
