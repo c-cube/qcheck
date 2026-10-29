@@ -42,12 +42,12 @@
 
 ;; Fun.todo exists since OCaml 5.6: selected by version as in src/core/dune
 (rule
- (enabled_if (>= %{ocaml_version} 5.6))
- (action (copy Fun_todo_tests.ml.ocaml5.6 Fun_todo_tests.ml)))
-
-(rule
- (enabled_if (< %{ocaml_version} 5.6))
- (action (copy Fun_todo_tests.ml.pre5.6 Fun_todo_tests.ml)))
+ (targets Fun_todo_tests.ml)
+ (deps Fun_todo_tests.ml.ocaml5.6 Fun_todo_tests.ml.pre5.6)
+ (action
+  (with-stdout-to %{targets}
+   (run %{ocaml} -noinit %{dep:../../src/core/select_by_version.ml} 5.6
+        Fun_todo_tests.ml.ocaml5.6 Fun_todo_tests.ml.pre5.6))))
 
 (tests
   (names QCheck_unit_tests QCheck2_unit_tests)
