@@ -1655,7 +1655,8 @@ exception Incomplete of string
 
 val incomplete : string -> 'a
 (** [incomplete reason] raises [Incomplete reason]. Like {!assume_fail}, it
-    can be used in any position.
+    can be used in any position. The incomplete cases are counted by reason:
+    [reason] should name the unimplemented part, not the input.
 
     Example:
     {[
@@ -2033,7 +2034,9 @@ module Test : sig
   (** [check_cell ~long ~rand test] generates up to [count] random
       values of type ['a] using [Gen.t] and the random state [st]. The
       predicate [law] is called on them and if it returns [false] or raises an
-      exception then we have a counter-example for the [law].
+      exception then we have a counter-example for the [law], unless the
+      exception is a signal of incompleteness (see {!Incomplete}): the case is
+      then incomplete and the next value is tried.
 
       Note: [check_cell] ignores a test's polarity, acting as
       described above regardless of whether the tested cell is a

@@ -2125,10 +2125,12 @@ module Test = struct
 
   let print_unexpected_success name = Format.sprintf "@[negative test `%s`@ succeeded unexpectedly@]" name
 
+  (* reasons may contain commas (the location of a [Fun.todo ()] does) *)
   let print_test_incomplete name reasons =
+    let times n = if n = 1 then "once" else Printf.sprintf "%d times" n in
     Format.sprintf "@[test `%s`@ had incomplete cases:@ %s@]" name
-      (String.concat ", "
-         (List.map (fun (reason, n) -> Printf.sprintf "%s (%d times)" reason n) reasons))
+      (String.concat "; "
+         (List.map (fun (reason, n) -> Printf.sprintf "%s (%s)" reason (times n)) reasons))
 
   let print_test_error name i e stack =
     Format.sprintf "@[test `%s`@ raised exception `%s`@ on `%s`@,%s@]"
@@ -2253,6 +2255,7 @@ module Test = struct
         | Test_error (name,i,e,st) -> Some (print_test_error name i e st)
         | Test_unexpected_success name -> Some (print_unexpected_success name)
         | Test_incomplete (name, reasons) -> Some (print_test_incomplete name reasons)
+        | Incomplete reason -> Some ("qcheck: incomplete: " ^ reason)
         | User_fail s -> Some ("qcheck: user fail:\n" ^ s)
         | _ -> None)
 

@@ -139,8 +139,13 @@ module Raw = struct
     let module T = QCheck2.Test in
     let reset_line = if colors then Color.reset_line else "\n" in
     if verbose then (
-      print.info "%slaw %s: %d relevant cases (%d total)\n"
-        reset_line name (R.get_count result) (R.get_count_gen result);
+      (match R.get_count_incomplete result with
+       | 0 ->
+         print.info "%slaw %s: %d relevant cases (%d total)\n"
+           reset_line name (R.get_count result) (R.get_count_gen result)
+       | incomplete ->
+         print.info "%slaw %s: %d relevant cases, %d incomplete (%d total)\n"
+           reset_line name (R.get_count result) incomplete (R.get_count_gen result));
       begin match QCheck2.TestResult.get_collect result with
         | None -> ()
         | Some tbl ->
@@ -424,7 +429,9 @@ let print_incomplete ~colors out cell r =
           (QCheck2.Test.get_name cell) count
       else
         Printf.fprintf out
-          "Negative test %s is inconclusive: no counterexample in the %d cases that completed, and %d cases were incomplete, so the expected counterexample may be hidden among them:\n%!"
+          "Negative test %s is inconclusive: no counterexample in the %d cases \
+           that completed, and %d cases were incomplete, so the expected \
+           counterexample may be hidden among them:\n%!"
           (QCheck2.Test.get_name cell) (R.get_count r) count
     ) else (
       (* the verdict is conclusive: the incomplete cases are information only *)
@@ -433,7 +440,11 @@ let print_incomplete ~colors out cell r =
         (QCheck2.Test.get_name cell) count
     );
     List.iter
-      (fun (reason, n) -> Printf.fprintf out "  %s (%d times)\n%!" reason n)
+      (fun (reason, n) ->
+         (* a reason on several lines keeps the indentation *)
+         let reason = String.concat "\n  " (String.split_on_char '\n' reason) in
+         let times = if n = 1 then "once" else Printf.sprintf "%d times" n in
+         Printf.fprintf out "  %s (%s)\n%!" reason times)
       (R.get_incomplete_reasons r)
   )
 

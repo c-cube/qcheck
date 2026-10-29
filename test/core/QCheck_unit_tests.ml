@@ -698,7 +698,7 @@ module Incomplete = struct
     Alcotest.(check bool) "state is Success" true (QCheck.TestResult.is_success r);
     Alcotest.(check int) "no case was decided" 0 (QCheck.TestResult.get_count r);
     Alcotest.(check int) "every generated case is incomplete"
-      (QCheck.TestResult.get_count_gen r) (QCheck2.TestResult.get_count_incomplete r)
+      (QCheck.TestResult.get_count_gen r) (QCheck.TestResult.get_count_incomplete r)
 
   let test_incomplete_prefix () =
     let cell = QCheck.(Test.make_cell ~count:50 ~incomplete_prefix:"TODO:" int
@@ -706,7 +706,7 @@ module Incomplete = struct
     let r = QCheck.Test.check_cell ~rand:(rand ()) cell in
     Alcotest.(check bool) "state is Success" true (QCheck.TestResult.is_success r);
     Alcotest.(check (list string)) "reason" ["x"]
-      (List.map fst (QCheck2.TestResult.get_incomplete_reasons r))
+      (List.map fst (QCheck.TestResult.get_incomplete_reasons r))
 
   exception Todo of string
   let () = QCheck.register_incomplete (function Todo reason -> Some reason | _ -> None)
@@ -716,7 +716,7 @@ module Incomplete = struct
     let r = QCheck.Test.check_cell ~rand:(rand ()) cell in
     Alcotest.(check bool) "state is Success" true (QCheck.TestResult.is_success r);
     Alcotest.(check (list string)) "reason" ["later"]
-      (List.map fst (QCheck2.TestResult.get_incomplete_reasons r))
+      (List.map fst (QCheck.TestResult.get_incomplete_reasons r))
 
   exception Local of string
 
@@ -726,7 +726,7 @@ module Incomplete = struct
                          (fun _ -> raise (Local "later"))) in
     let r = QCheck.Test.check_cell ~rand:(rand ()) cell in
     Alcotest.(check (list string)) "reason" ["later"]
-      (List.map fst (QCheck2.TestResult.get_incomplete_reasons r))
+      (List.map fst (QCheck.TestResult.get_incomplete_reasons r))
 
   let tests = ("Incomplete cases (Incomplete exception)", Alcotest.[
       test_case "shrinking skips incomplete candidates" `Quick test_shrink_skips_incomplete_candidates;

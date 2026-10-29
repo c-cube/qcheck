@@ -135,6 +135,10 @@ val assume_fail : unit -> 'a
     @since 0.5.1
 *)
 
+exception Incomplete of string
+(** Same exception as {!QCheck2.Incomplete}.
+    @since NEXT_RELEASE *)
+
 val incomplete : string -> 'a
 (** [incomplete reason] raises [QCheck2.Incomplete reason]. See
     {!QCheck2.incomplete}.
@@ -1623,6 +1627,14 @@ module TestResult : sig
 
   val get_count_gen : _ t -> int
 
+  val get_count_incomplete : _ t -> int
+  (** See {!QCheck2.TestResult.get_count_incomplete}.
+      @since NEXT_RELEASE *)
+
+  val get_incomplete_reasons : _ t -> (string * int) list
+  (** See {!QCheck2.TestResult.get_incomplete_reasons}.
+      @since NEXT_RELEASE *)
+
   val get_state : 'a t -> 'a state
 
   val collect : _ t -> (string,int) Hashtbl.t option
@@ -1695,7 +1707,7 @@ module Test : sig
       @param negative whether the test is expected not to satisfy the tested property.
       @param max_gen maximum number of times the generation function
         is called in total to replace inputs that do not satisfy
-        preconditions (should be >= count).
+        preconditions or were incomplete (should be >= count).
       @param max_fail maximum number of failures before we stop generating
         inputs. This is useful if shrinking takes too much time.
       @param incomplete see {!QCheck2.Test.make_cell} (since NEXT_RELEASE).

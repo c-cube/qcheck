@@ -113,6 +113,8 @@ let assume = QCheck2.assume
 
 let assume_fail = QCheck2.assume_fail
 
+exception Incomplete = QCheck2.Incomplete
+
 let incomplete = QCheck2.incomplete
 
 let register_incomplete = QCheck2.register_incomplete
@@ -1860,6 +1862,8 @@ module TestResult = struct
 
   let get_count = QCheck2.TestResult.get_count
   let get_count_gen = QCheck2.TestResult.get_count_gen
+  let get_count_incomplete = QCheck2.TestResult.get_count_incomplete
+  let get_incomplete_reasons = QCheck2.TestResult.get_incomplete_reasons
   let get_state = QCheck2.TestResult.get_state
   let stats = QCheck2.TestResult.get_stats
   let collect = QCheck2.TestResult.get_collect
