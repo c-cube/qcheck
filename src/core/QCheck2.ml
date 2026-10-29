@@ -88,6 +88,48 @@ let incomplete_classifiers : (exn -> string option) list ref = ref []
 let register_incomplete f =
   incomplete_classifiers := !incomplete_classifiers @ [f]
 
+(* no [String.starts_with], which needs OCaml 4.13 *)
+let prefixed_reason prefix msg =
+  let n = String.length prefix in
+  if String.length msg >= n && String.sub msg 0 n = prefix
+  then Some (String.sub msg n (String.length msg - n))
+  else None
+
+let prefix_signal prefix = function
+  | Failure msg -> prefixed_reason prefix msg
+  | _ -> None
+
+(* explicit argument > QCHECK_INCOMPLETE_PREFIX > none; the empty string disables *)
+let global_incomplete_prefix = function
+  | Some "" -> None
+  | Some p -> Some p
+  | None ->
+    (match Sys.getenv_opt "QCHECK_INCOMPLETE_PREFIX" with
+     | None | Some "" -> None
+     | Some p -> Some p)
+
+let builtin_reason = function
+  | Incomplete reason -> Some reason
+  | e -> QCheck_fun_todo.reason e
+
+(* QCheck's own control flow, a discard: never submitted to any signal *)
+let is_control_flow = function
+  | Failed_precondition | No_example_found _ -> true
+  | _ -> false
+
+let first_reason signals e =
+  let rec go = function
+    | [] -> None
+    | f :: fs -> (match f e with Some _ as reason -> reason | None -> go fs) in
+  go signals
+
+let incomplete_reason e =
+  if is_control_flow e then None
+  else
+    let prefix = match global_incomplete_prefix None with
+      | Some p -> [prefix_signal p] | None -> [] in
+    first_reason (builtin_reason :: prefix @ !incomplete_classifiers) e
+
 let (==>) b1 b2 = if b1 then b2 else raise Failed_precondition
 
 (** Enhancement of Stdlib [Seq] to backport some recent functions, and add a few useful others. *)
@@ -1584,7 +1626,7 @@ module Test = struct
     stats : 'a stat list; (* distribution of values of type 'a *)
     qcheck1_shrink : ('a -> ('a -> unit) -> unit) option; (* QCheck1-backward-compatible shrinking *)
     if_assumptions_fail: [`Fatal | `Warning] * float;
-    incomplete_prefix : string option; (* a [Failure] with this prefix is an incomplete case *)
+    incomplete_signals : (exn -> string option) list; (* [~incomplete], then [~incomplete_prefix] *)
     mutable name : string; (* name of the law *)
   }
 
@@ -1626,14 +1668,10 @@ module Test = struct
 
   let global_long_factor long_factor = global_nonnegative_var default_long_factor "QCHECK_LONG_FACTOR" long_factor
 
-  (* explicit argument > QCHECK_INCOMPLETE_PREFIX > none; the empty string disables *)
-  let global_incomplete_prefix = function
-    | Some "" -> None
-    | Some p -> Some p
-    | None ->
-      (match Sys.getenv_opt "QCHECK_INCOMPLETE_PREFIX" with
-       | None | Some "" -> None
-       | Some p -> Some p)
+  let test_signals ?incomplete ?incomplete_prefix () =
+    (match incomplete with Some f -> [f] | None -> [])
+    @ (match global_incomplete_prefix incomplete_prefix with
+       | Some p -> [prefix_signal p] | None -> [])
 
   let fresh_name =
     let r = ref 0 in
@@ -1641,12 +1679,12 @@ module Test = struct
 
   let default_if_assumptions_fail = `Warning, 0.05
 
-  let make_cell ?(if_assumptions_fail=default_if_assumptions_fail) ?incomplete_prefix
+  let make_cell ?(if_assumptions_fail=default_if_assumptions_fail) ?incomplete ?incomplete_prefix
       ?(count) ?long_factor ?(negative=false) ?max_gen
       ?(max_fail=1) ?(retries=1) ?(name=fresh_name()) ?print ?collect ?(stats=[]) gen law
     =
     let count = global_count count in
-    let incomplete_prefix = global_incomplete_prefix incomplete_prefix in
+    let incomplete_signals = test_signals ?incomplete ?incomplete_prefix () in
     let long_factor = global_long_factor long_factor in
     let positive = not negative in
     let max_gen = match max_gen with None -> max count (count + 200) | Some x->x in
@@ -1664,16 +1702,16 @@ module Test = struct
       long_factor;
       positive;
       if_assumptions_fail;
-      incomplete_prefix;
+      incomplete_signals;
       qcheck1_shrink = None;
     }
 
-  let make_cell_from_QCheck1 ?(if_assumptions_fail=default_if_assumptions_fail) ?incomplete_prefix
+  let make_cell_from_QCheck1 ?(if_assumptions_fail=default_if_assumptions_fail) ?incomplete ?incomplete_prefix
       ?(count) ?long_factor ?(negative=false) ?max_gen
       ?(max_fail=1) ?(retries=1) ?(name=fresh_name()) ~gen ?shrink ?print ?collect ~stats law
     =
     let count = global_count count in
-    let incomplete_prefix = global_incomplete_prefix incomplete_prefix in
+    let incomplete_signals = test_signals ?incomplete ?incomplete_prefix () in
     let long_factor = global_long_factor long_factor in
     let positive = not negative in
     (* Make a "fake" QCheck2 arbitrary with no shrinking *)
@@ -1693,12 +1731,12 @@ module Test = struct
       long_factor;
       positive;
       if_assumptions_fail;
-      incomplete_prefix;
+      incomplete_signals;
       qcheck1_shrink = shrink;
     }
 
-  let make' ?if_assumptions_fail ?incomplete_prefix ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats ~negative arb law =
-    Test (make_cell ?if_assumptions_fail ?incomplete_prefix ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats ~negative arb law)
+  let make' ?if_assumptions_fail ?incomplete ?incomplete_prefix ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats ~negative arb law =
+    Test (make_cell ?if_assumptions_fail ?incomplete ?incomplete_prefix ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats ~negative arb law)
 
   let make = make' ~negative:false
   let make_neg = make' ~negative:true
@@ -1794,37 +1832,12 @@ module Test = struct
     | Run_fail of string list
     | Run_incomplete of string
 
-  (* no [String.starts_with], which needs OCaml 4.13 *)
-  let prefixed_reason prefix msg =
-    let n = String.length prefix in
-    if String.length msg >= n && String.sub msg 0 n = prefix
-    then Some (String.sub msg n (String.length msg - n))
-    else None
-
-  (* The first reason given by a signal: [Incomplete], then [Fun.Todo]
-     (OCaml 5.6), then the [Failure] prefixed for the test, then the
-     registered functions. It runs in the guard of [run_law], so a registered
-     function that raises replaces the exception of the law and the test
-     errors. *)
+  (* The first reason given by a signal: the built-in ones, then the test's,
+     then the registered ones. It runs in the guard of [run_law], so a signal
+     that raises replaces the exception of the law and the test errors. *)
   let classify_incomplete cell (e : exn) =
-    let rec registered = function
-      | [] -> None
-      | f :: fs ->
-        (match f e with
-         | Some _ as reason -> reason
-         | None -> registered fs) in
-    let prefixed = match e, cell.incomplete_prefix with
-      | Failure msg, Some prefix -> prefixed_reason prefix msg
-      | _ -> None in
-    match e with
-    | Incomplete reason -> Some reason
-    | Failed_precondition | No_example_found _ ->
-      None (* a discard, QCheck's own control flow: never an incomplete case *)
-    | _ ->
-      (match QCheck_fun_todo.reason e, prefixed with
-       | (Some _ as todo), _ -> todo
-       | None, (Some _ as prefixed) -> prefixed
-       | None, None -> registered !incomplete_classifiers)
+    if is_control_flow e then None
+    else first_reason (builtin_reason :: cell.incomplete_signals @ !incomplete_classifiers) e
 
   (* run_law is a helper function for testing a property [law] on a
      generated input [x].

@@ -144,6 +144,10 @@ val register_incomplete : (exn -> string option) -> unit
 (** Synonym for {!QCheck2.register_incomplete}.
     @since NEXT_RELEASE *)
 
+val incomplete_reason : exn -> string option
+(** Synonym for {!QCheck2.incomplete_reason}.
+    @since NEXT_RELEASE *)
+
 (** {1 Generate Random Values} *)
 
 module Gen : sig
@@ -1675,6 +1679,7 @@ module Test : sig
 
   val make_cell :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?incomplete:(exn -> string option) ->
     ?incomplete_prefix:string ->
     ?count:int -> ?long_factor:int -> ?negative:bool -> ?max_gen:int -> ?max_fail:int ->
     ?small:('a -> int) -> ?retries:int -> ?name:string ->
@@ -1693,6 +1698,7 @@ module Test : sig
         preconditions (should be >= count).
       @param max_fail maximum number of failures before we stop generating
         inputs. This is useful if shrinking takes too much time.
+      @param incomplete see {!QCheck2.Test.make_cell} (since NEXT_RELEASE).
       @param incomplete_prefix see {!QCheck2.Test.make_cell} (since NEXT_RELEASE).
       @param small kept for compatibility reasons; if provided, replaces
         the field [arbitrary.small].
@@ -1729,6 +1735,7 @@ module Test : sig
 
   val make :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?incomplete:(exn -> string option) ->
     ?incomplete_prefix:string ->
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
     ?small:('a -> int) -> ?retries:int -> ?name:string -> 'a arbitrary ->
@@ -1740,6 +1747,7 @@ module Test : sig
 
   val make_neg :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?incomplete:(exn -> string option) ->
     ?incomplete_prefix:string ->
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
     ?small:('a -> int) -> ?retries:int -> ?name:string -> 'a arbitrary ->

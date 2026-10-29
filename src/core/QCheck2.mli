@@ -1680,6 +1680,22 @@ val register_incomplete : (exn -> string option) -> unit
     is never submitted to them.
     @since NEXT_RELEASE *)
 
+val incomplete_reason : exn -> string option
+(** [incomplete_reason e] is [Some reason] if [e] is [Incomplete reason],
+    [Fun.Todo] (OCaml 5.6), a [Failure] with the prefix of
+    [QCHECK_INCOMPLETE_PREFIX], or an exception recognised by a function
+    registered with {!register_incomplete}, and [None] otherwise, a discard
+    ({!assume}, {!No_example_found}) included. Code that catches the
+    exceptions of the code under test can use it to re-raise the signals of
+    incompleteness:
+    {[
+      let protect f x =
+        try Ok (f x) with
+        | e when QCheck2.incomplete_reason e <> None -> raise e
+        | e -> Error e
+    ]}
+    @since NEXT_RELEASE *)
+
 (** {1 Tests}
 
     A test is a universal property of type [foo -> bool] for some type [foo],
@@ -1820,6 +1836,7 @@ module Test : sig
 
   val make_cell :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?incomplete:(exn -> string option) ->
     ?incomplete_prefix:string ->
     ?count:int -> ?long_factor:int ->  ?negative:bool -> ?max_gen:int -> ?max_fail:int -> ?retries:int ->
     ?name:string -> ?print:'a Print.t -> ?collect:('a -> string) -> ?stats:('a stat list) ->
@@ -1847,6 +1864,8 @@ module Test : sig
         the flag is [`Warning], the test will be a failure if the flag is [`Fatal].
         Incomplete cases count as having satisfied the precondition.
         (since 0.10)
+      @param incomplete like {!register_incomplete}, but for this test only,
+        and tried before the registered functions. (since NEXT_RELEASE)
       @param incomplete_prefix a [Failure] raised by the property whose message
         starts with this prefix is an incomplete case, the rest of the message
         being the reason. Default: the environment variable
@@ -1858,6 +1877,7 @@ module Test : sig
 
   val make_cell_from_QCheck1 :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?incomplete:(exn -> string option) ->
     ?incomplete_prefix:string ->
     ?count:int -> ?long_factor:int -> ?negative:bool -> ?max_gen:int -> ?max_fail:int ->
     ?retries:int -> ?name:string -> gen:(Random.State.t -> 'a) -> ?shrink:('a -> ('a -> unit) -> unit) ->
@@ -1900,6 +1920,7 @@ module Test : sig
 
   val make :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?incomplete:(exn -> string option) ->
     ?incomplete_prefix:string ->
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int -> ?retries:int ->
     ?name:string -> ?print:('a Print.t) -> ?collect:('a -> string) -> ?stats:('a stat list) ->
@@ -1911,6 +1932,7 @@ module Test : sig
 
   val make_neg :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?incomplete:(exn -> string option) ->
     ?incomplete_prefix:string ->
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int -> ?retries:int ->
     ?name:string -> ?print:('a Print.t) -> ?collect:('a -> string) -> ?stats:('a stat list) ->

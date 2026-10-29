@@ -1050,6 +1050,88 @@ module Register_incomplete = struct
     ])
 end
 
+module Incomplete_signal = struct
+  open QCheck2
+
+  exception Local of string
+  exception Shared of string
+
+  let () = register_incomplete (function Shared r -> Some ("global:" ^ r) | _ -> None)
+
+  let rand () = Random.State.make [|0|]
+
+  let run ?incomplete ?incomplete_prefix law =
+    Test.check_cell ~rand:(rand ())
+      (Test.make_cell ~count:50 ?incomplete ?incomplete_prefix Gen.int law)
+
+  let reasons r = List.map fst (TestResult.get_incomplete_reasons r)
+
+  let local = function Local r -> Some r | _ -> None
+
+  let test_signal_of_the_test () =
+    let r = run ~incomplete:local (fun _ -> raise (Local "later")) in
+    Alcotest.(check (list string)) "recognised by the test it is given to" ["later"] (reasons r);
+    match TestResult.get_state (run (fun _ -> raise (Local "later"))) with
+    | TestResult.Error {exn = Local _; _} -> ()
+    | _ -> Alcotest.fail "a test without the signal must see an error"
+
+  let test_order () =
+    let r = run ~incomplete:(function Shared r -> Some ("local:" ^ r) | _ -> None)
+        (fun _ -> raise (Shared "x")) in
+    Alcotest.(check (list string)) "the signal of the test wins over a registered function"
+      ["local:x"] (reasons r);
+    let r = run ~incomplete:(function Failure _ -> Some "signal" | _ -> None)
+        ~incomplete_prefix:"TODO:" (fun _ -> failwith "TODO:x") in
+    Alcotest.(check (list string)) "the signal of the test wins over the prefix"
+      ["signal"] (reasons r);
+    let r = run ~incomplete:(function Incomplete _ -> Some "signal" | _ -> None)
+        (fun _ -> incomplete "typed") in
+    Alcotest.(check (list string)) "Incomplete wins over the signal of the test"
+      ["typed"] (reasons r)
+
+  let with_env var value f =
+    let previous = Sys.getenv_opt var in
+    Unix.putenv var value;
+    Fun.protect f
+      ~finally:(fun () -> Unix.putenv var (match previous with Some v -> v | None -> ""))
+
+  let test_incomplete_reason () =
+    let check msg expected e =
+      Alcotest.(check (option string)) msg expected (incomplete_reason e) in
+    check "Incomplete" (Some "x") (Incomplete "x");
+    check "a registered exception" (Some "global:x") (Shared "x");
+    check "an unknown exception" None Not_found;
+    check "a discard" None (try assume_fail () with e -> e);
+    check "No_example_found" None (No_example_found "n");
+    check "the signal of a test is not known at the level of the program" None (Local "x");
+    check "a Failure without the prefix in the environment" None (Failure "TODO:x");
+    with_env "QCHECK_INCOMPLETE_PREFIX" "TODO:" (fun () ->
+        check "a Failure with the prefix of the environment" (Some "x") (Failure "TODO:x"))
+
+  (* a harness that records the exceptions of the code under test as values *)
+  let protect f x =
+    try Ok (f x) with
+    | e when incomplete_reason e <> None -> raise e
+    | e -> Error e
+
+  let test_harness_lets_the_signal_through () =
+    let hole () = incomplete "hole" in
+    let r = run (fun _ -> match protect hole () with Ok () -> true | Error _ -> false) in
+    Alcotest.(check bool) "the case is incomplete, not a failure" true (TestResult.is_success r);
+    Alcotest.(check (list string)) "with its reason" ["hole"] (reasons r);
+    let reified = run (fun _ ->
+        match (try Ok (hole ()) with e -> Error e) with Ok () -> true | Error _ -> false) in
+    Alcotest.(check bool) "a harness that keeps every exception turns the hole into a failure"
+      true (TestResult.is_failed reified)
+
+  let tests = ("Incomplete cases (signal of a test, incomplete_reason)", Alcotest.[
+      test_case "a signal given to one test" `Quick test_signal_of_the_test;
+      test_case "built-in, then the test's, then registered" `Quick test_order;
+      test_case "incomplete_reason classifies at the level of the program" `Quick test_incomplete_reason;
+      test_case "a harness can let the signals through" `Quick test_harness_lets_the_signal_through;
+    ])
+end
+
 module Backtrace = struct
   (* The signals of incompleteness are recognised in the [when] guard of the
      handler that runs the property, so an exception that is none of them is
@@ -1107,6 +1189,7 @@ let () =
       Incomplete.tests;
       Incomplete_prefix.tests;
       Register_incomplete.tests;
+      Incomplete_signal.tests;
       Backtrace.tests;
       Fun_todo_tests.tests;
     ]

@@ -718,11 +718,22 @@ module Incomplete = struct
     Alcotest.(check (list string)) "reason" ["later"]
       (List.map fst (QCheck2.TestResult.get_incomplete_reasons r))
 
+  exception Local of string
+
+  let test_signal_of_the_test () =
+    let cell = QCheck.(Test.make_cell ~count:50 int
+                         ~incomplete:(function Local reason -> Some reason | _ -> None)
+                         (fun _ -> raise (Local "later"))) in
+    let r = QCheck.Test.check_cell ~rand:(rand ()) cell in
+    Alcotest.(check (list string)) "reason" ["later"]
+      (List.map fst (QCheck2.TestResult.get_incomplete_reasons r))
+
   let tests = ("Incomplete cases (Incomplete exception)", Alcotest.[
       test_case "shrinking skips incomplete candidates" `Quick test_shrink_skips_incomplete_candidates;
       test_case "all cases incomplete" `Quick test_all_incomplete;
       test_case "prefixed Failure with incomplete_prefix" `Quick test_incomplete_prefix;
       test_case "registered exception with register_incomplete" `Quick test_registered_exception;
+      test_case "a signal given to one test with ~incomplete" `Quick test_signal_of_the_test;
     ])
 end
 
