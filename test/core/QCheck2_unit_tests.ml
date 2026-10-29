@@ -805,9 +805,11 @@ module Incomplete = struct
     let r = run Gen.int (fun _ -> incomplete "later") in
     let gen = TestResult.get_count_gen r in
     Alcotest.(check bool) "state is Success" true (TestResult.is_success r);
-    Alcotest.(check int) "no case was decided" 0 (TestResult.get_count r);
+    Alcotest.(check int) "no case passed" 0 (TestResult.get_count r);
     Alcotest.(check int) "every generated case is incomplete"
       gen (TestResult.get_count_incomplete r);
+    Alcotest.(check int) "an incomplete case counts toward count: exactly count cases ran"
+      100 (TestResult.get_count_incomplete r);
     Alcotest.(check (list (pair string int))) "reasons"
       ["later", gen] (TestResult.get_incomplete_reasons r);
     Alcotest.(check (list string)) "no precondition warning"
@@ -827,9 +829,11 @@ module Incomplete = struct
     Alcotest.(check bool) "sorted by decreasing count, then by reason" true
       (reasons = List.sort (fun (r1, n1) (r2, n2) ->
            match compare n2 n1 with 0 -> compare r1 r2 | c -> c) reasons);
-    Alcotest.(check int) "decided + incomplete = generated"
+    Alcotest.(check int) "passed + incomplete = generated"
       (TestResult.get_count_gen r)
-      (TestResult.get_count r + TestResult.get_count_incomplete r)
+      (TestResult.get_count r + TestResult.get_count_incomplete r);
+    Alcotest.(check int) "passed + incomplete = count"
+      100 (TestResult.get_count r + TestResult.get_count_incomplete r)
 
   let test_empty_reason () =
     let r = run Gen.int (fun _ -> incomplete "") in

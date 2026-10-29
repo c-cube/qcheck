@@ -49,13 +49,13 @@ fail
 │ [FAIL]        suite              8   incomplete cases (unimplemented cod...  │
 └──────────────────────────────────────────────────────────────────────────────┘
 [exception] test `incomplete cases (unimplemented code reached)` had incomplete cases:
-even inputs (7 times)
+even inputs (5 times)
  ──────────────────────────────────────────────────────────────────────────────
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │ [FAIL]        suite              9   neg test incomplete (no counterexam...  │
 └──────────────────────────────────────────────────────────────────────────────┘
 [exception] test `neg test incomplete (no counterexample, unimplemented code reached)`
-had incomplete cases: not implemented (210 times)
+had incomplete cases: not implemented (10 times)
  ──────────────────────────────────────────────────────────────────────────────
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │ [FAIL]        shrinking          0   debug_shrink.                           │

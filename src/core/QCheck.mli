@@ -1700,14 +1700,15 @@ module Test : sig
       of the generator [arb].
       @param name the name of the test.
       @param count number of test cases to run, counting only
-        the test cases which satisfy preconditions.
+        the test cases which satisfy preconditions (incomplete cases
+        included).
       @param retries number of times to retry the tested property while shrinking.
       @param long_factor the factor by which to multiply count, max_gen and
         max_fail when running a long test (default: 1).
       @param negative whether the test is expected not to satisfy the tested property.
       @param max_gen maximum number of times the generation function
         is called in total to replace inputs that do not satisfy
-        preconditions or were incomplete (should be >= count).
+        preconditions (should be >= count).
       @param max_fail maximum number of failures before we stop generating
         inputs. This is useful if shrinking takes too much time.
       @param incomplete see {!QCheck2.Test.make_cell} (since NEXT_RELEASE).

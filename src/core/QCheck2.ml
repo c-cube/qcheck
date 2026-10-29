@@ -2011,7 +2011,9 @@ module Test = struct
           | Run_fail msg_l ->
             handle_fail state input_tree msg_l
           | Run_incomplete reason ->
+            (* counts toward [count] like a pass, but not in [res.count] *)
             record_incomplete state reason;
+            state.cur_count <- state.cur_count - 1;
             state.step state.test.name state.test input FalseAssumption;
             CR_continue
         end

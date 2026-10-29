@@ -2084,19 +2084,19 @@ random seed: 1234
 
 +++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Test all cases incomplete had 210 incomplete cases:
-  not implemented (210 times)
+Test all cases incomplete had 10 incomplete cases out of 10, 0 passed:
+  not implemented (10 times)
 
 +++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Test some cases incomplete had 173 incomplete cases:
-  multiples of 3 (91 times)
-  remainder 1 (82 times)
+Test some cases incomplete had 59 incomplete cases out of 100, 41 passed:
+  multiples of 3 (31 times)
+  remainder 1 (28 times)
 
 +++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Negative test negative, all cases incomplete is inconclusive: no counterexample in the 0 cases that completed, and 210 cases were incomplete, so the expected counterexample may be hidden among them:
-  not implemented (210 times)
+Negative test negative, all cases incomplete is inconclusive: no counterexample in the 0 cases that completed, and 10 cases were incomplete, so the expected counterexample may be hidden among them:
+  not implemented (10 times)
 
 --- Info -----------------------------------------------------------------------
 
@@ -2105,8 +2105,8 @@ Test negative, counterexample found despite incomplete cases also had 20 incompl
 
 +++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Test failwith "TODO:..." with incomplete_prefix had 210 incomplete cases:
-  not implemented (210 times)
+Test failwith "TODO:..." with incomplete_prefix had 10 incomplete cases out of 10, 0 passed:
+  not implemented (10 times)
 ================================================================================
 incomplete (ran 5 tests, 4 incomplete)
 random seed: 1234
@@ -2136,19 +2136,19 @@ random seed: 1234
 
 +++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Test all cases incomplete had 210 incomplete cases:
-  not implemented (210 times)
+Test all cases incomplete had 10 incomplete cases out of 10, 0 passed:
+  not implemented (10 times)
 
 +++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Test some cases incomplete had 173 incomplete cases:
-  multiples of 3 (91 times)
-  remainder 1 (82 times)
+Test some cases incomplete had 59 incomplete cases out of 100, 41 passed:
+  multiples of 3 (31 times)
+  remainder 1 (28 times)
 
 +++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Negative test negative, all cases incomplete is inconclusive: no counterexample in the 0 cases that completed, and 210 cases were incomplete, so the expected counterexample may be hidden among them:
-  not implemented (210 times)
+Negative test negative, all cases incomplete is inconclusive: no counterexample in the 0 cases that completed, and 10 cases were incomplete, so the expected counterexample may be hidden among them:
+  not implemented (10 times)
 
 --- Info -----------------------------------------------------------------------
 
@@ -2157,7 +2157,7 @@ Test negative, counterexample found despite incomplete cases also had 20 incompl
 
 +++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Test failwith "TODO:..." with incomplete_prefix had 210 incomplete cases:
-  not implemented (210 times)
+Test failwith "TODO:..." with incomplete_prefix had 10 incomplete cases out of 10, 0 passed:
+  not implemented (10 times)
 ================================================================================
 incomplete (ran 5 tests, 4 incomplete; incomplete tests fail this run)

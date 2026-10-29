@@ -425,8 +425,8 @@ let print_incomplete ~colors out cell r =
       Printf.fprintf out "\n+++ %a %s\n\n"
         (Color.pp_str_c ~colors `Yellow) "Incomplete" (String.make 65 '+');
       if QCheck2.Test.get_positive cell then
-        Printf.fprintf out "Test %s had %d incomplete cases:\n%!"
-          (QCheck2.Test.get_name cell) count
+        Printf.fprintf out "Test %s had %d incomplete cases out of %d, %d passed:\n%!"
+          (QCheck2.Test.get_name cell) count (R.get_count r + count) (R.get_count r)
       else
         Printf.fprintf out
           "Negative test %s is inconclusive: no counterexample in the %d cases \

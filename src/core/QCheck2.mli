@@ -1642,9 +1642,9 @@ val assume_fail : unit -> 'a
 (** {1 Incomplete cases}
 
     A property that reaches code which is not implemented yet can raise
-    {!Incomplete}. Such a case is neither a pass nor a failure: it is
-    counted by reason in {!TestResult}, and testing continues with the
-    next input. On OCaml 5.6 and later,
+    {!Incomplete}. Such a case is neither a pass nor a failure: it counts
+    toward [count] like a pass, it is counted by reason in {!TestResult},
+    and testing continues with the next input. On OCaml 5.6 and later,
     [Fun.todo ()] is recognised as well, with the location of the call as
     the reason. *)
 
@@ -1847,13 +1847,14 @@ module Test : sig
       of the generator [gen].
       @param name the name of the test.
       @param count number of test cases to run, counting only
-        the test cases which satisfy preconditions.
+        the test cases which satisfy preconditions (incomplete cases
+        included).
       @param long_factor the factor by which to multiply count, max_gen and
         max_fail when running a long test (default: 1).
       @param negative whether the test is expected not to satisfy the tested property.
       @param max_gen maximum number of times the generation function
         is called in total to replace inputs that do not satisfy
-        preconditions or were incomplete (should be >= count).
+        preconditions (should be >= count).
       @param max_fail maximum number of failures before we stop generating
         inputs. This is useful if shrinking takes too much time.
       @param retries number of times to retry the tested property while shrinking.

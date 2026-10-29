@@ -55,7 +55,7 @@ even inputs (3 times)
 │ [FAIL]        suite              9   neg test incomplete (no counterexam...  │
 └──────────────────────────────────────────────────────────────────────────────┘
 [exception] test `neg test incomplete (no counterexample, unimplemented code reached)`
-had incomplete cases: not implemented (210 times)
+had incomplete cases: not implemented (10 times)
  ──────────────────────────────────────────────────────────────────────────────
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │ [FAIL]        shrinking          0   debug_shrink.                           │
