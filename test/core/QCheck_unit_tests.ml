@@ -728,12 +728,27 @@ module Incomplete = struct
     Alcotest.(check (list string)) "reason" ["later"]
       (List.map fst (QCheck.TestResult.get_incomplete_reasons r))
 
+  (* as [Env.with_env] in QCheck2_unit_tests.ml *)
+  let with_env var value f =
+    let previous = Sys.getenv_opt var in
+    Unix.putenv var value;
+    Fun.protect f
+      ~finally:(fun () -> Unix.putenv var (match previous with Some v -> v | None -> ""))
+
+  let test_env_default_through_facade () =
+    let r = with_env "QCHECK_INCOMPLETE_PREFIX" "TODO:" (fun () ->
+        QCheck.Test.check_cell ~rand:(rand ())
+          (QCheck.(Test.make_cell ~count:20 int (fun _ -> failwith "TODO:from env")))) in
+    Alcotest.(check (list string)) "reason" ["from env"]
+      (List.map fst (QCheck.TestResult.get_incomplete_reasons r))
+
   let tests = ("Incomplete cases (Incomplete exception)", Alcotest.[
       test_case "shrinking skips incomplete candidates" `Quick test_shrink_skips_incomplete_candidates;
       test_case "all cases incomplete" `Quick test_all_incomplete;
       test_case "prefixed Failure with incomplete_prefix" `Quick test_incomplete_prefix;
       test_case "registered exception with register_incomplete" `Quick test_registered_exception;
       test_case "a signal given to one test with ~incomplete" `Quick test_signal_of_the_test;
+      test_case "QCHECK_INCOMPLETE_PREFIX reaches a test built through the facade" `Quick test_env_default_through_facade;
     ])
 end
 

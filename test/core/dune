@@ -53,7 +53,7 @@
   (names QCheck_unit_tests QCheck2_unit_tests)
   (modules QCheck_unit_tests QCheck2_unit_tests Fun_todo_tests)
   (package qcheck-core)
-  (libraries qcheck-core alcotest))
+  (libraries qcheck-core qcheck-core.runner alcotest))
 
 (executable
   (name shrink_benchmark)

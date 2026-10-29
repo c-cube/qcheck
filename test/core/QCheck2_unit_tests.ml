@@ -782,6 +782,16 @@ module Check_exn = struct
        ])
 end
 
+module Env = struct
+  (* [Unix] has no unsetenv: a variable that was absent is restored as
+     empty, which QCheck reads as unset for QCHECK_INCOMPLETE_PREFIX *)
+  let with_env var value f =
+    let previous = Sys.getenv_opt var in
+    Unix.putenv var value;
+    Fun.protect f
+      ~finally:(fun () -> Unix.putenv var (match previous with Some v -> v | None -> ""))
+end
+
 module Incomplete = struct
   open QCheck2
 
@@ -828,7 +838,8 @@ module Incomplete = struct
 
   let test_other_failures_stay_errors () =
     List.iter (fun msg ->
-        match TestResult.get_state (run Gen.int (fun _ -> failwith msg)) with
+        match Env.with_env "QCHECK_INCOMPLETE_PREFIX" "" (fun () ->
+            TestResult.get_state (run Gen.int (fun _ -> failwith msg))) with
         | TestResult.Error {exn = Failure m; _} ->
           Alcotest.(check string) "message" msg m
         | _ -> Alcotest.failf "%S must still be an error" msg)
@@ -877,6 +888,23 @@ module Incomplete = struct
             (Printexc.to_string e))
       [false; true]
 
+  let test_shrink_with_retries () =
+    let cell = Test.make_cell ~count:100 ~retries:3 (Gen.int_bound 1000)
+        (fun i -> if i < 300 then incomplete "small" else i < 500) in
+    match TestResult.get_state (Test.check_cell ~rand:(rand ()) cell) with
+    | TestResult.Failed {instances = [c]} ->
+      Alcotest.(check int) "shrunk to the smallest counterexample" 500 c.TestResult.instance
+    | _ -> Alcotest.fail "a genuine counterexample must not become incomplete"
+
+  let test_negative_caught_despite_incomplete_cases () =
+    let cell = Test.make_cell ~name:"neg" ~count:100 ~negative:true (Gen.int_bound 1000)
+        (fun i -> if i < 900 then incomplete "below 900" else i < 950) in
+    match Test.check_cell_exn ~rand:(rand ()) cell with
+    | () -> ()
+    | exception e ->
+      Alcotest.failf "a negative test that found its counterexample passes, not %s"
+        (Printexc.to_string e)
+
   let tests = ("Incomplete cases (Incomplete exception)", Alcotest.[
       test_case "all cases incomplete" `Quick test_all_incomplete;
       test_case "several reasons, sorted by count" `Quick test_several_reasons;
@@ -886,6 +914,8 @@ module Incomplete = struct
       test_case "shrinking skips incomplete candidates (error)" `Quick test_shrink_skips_incomplete_candidates_on_error;
       test_case "`Fatal precondition check still fires" `Quick test_fatal_precondition_still_checked;
       test_case "check_cell_exn raises Test_incomplete" `Quick test_check_cell_exn_raises_test_incomplete;
+      test_case "shrinking with retries" `Quick test_shrink_with_retries;
+      test_case "a negative test that found its counterexample is conclusive" `Quick test_negative_caught_despite_incomplete_cases;
     ])
 end
 
@@ -914,24 +944,25 @@ module Incomplete_prefix = struct
       ["boom"; "TODO"; "todo:x"; " TODO:x"; "a TODO:x"]
 
   let test_off_by_default () =
-    match TestResult.get_state (run (fun _ -> failwith "TODO:x")) with
+    match Env.with_env "QCHECK_INCOMPLETE_PREFIX" "" (fun () ->
+        TestResult.get_state (run (fun _ -> failwith "TODO:x"))) with
     | TestResult.Error {exn = Failure m; _} -> Alcotest.(check string) "message" "TODO:x" m
     | _ -> Alcotest.fail "without a prefix, Failure \"TODO:x\" must be an error"
 
   let test_env_default () =
-    Unix.putenv "QCHECK_INCOMPLETE_PREFIX" "TODO:";
-    let r = run (fun _ -> failwith "TODO:from env") in
-    Unix.putenv "QCHECK_INCOMPLETE_PREFIX" "";
+    let r = Env.with_env "QCHECK_INCOMPLETE_PREFIX" "TODO:" (fun () ->
+        run (fun _ -> failwith "TODO:from env")) in
     Alcotest.(check (list string)) "the environment enables the prefix" ["from env"] (reasons r);
-    match TestResult.get_state (run (fun _ -> failwith "TODO:x")) with
+    let off = Env.with_env "QCHECK_INCOMPLETE_PREFIX" "" (fun () ->
+        run (fun _ -> failwith "TODO:x")) in
+    match TestResult.get_state off with
     | TestResult.Error _ -> ()
     | _ -> Alcotest.fail "an empty QCHECK_INCOMPLETE_PREFIX must disable the adapter"
 
   let test_argument_wins_over_env () =
-    Unix.putenv "QCHECK_INCOMPLETE_PREFIX" "TODO:";
-    let other = run ~incomplete_prefix:"FIXME:" (fun _ -> failwith "TODO:x") in
-    let off = run ~incomplete_prefix:"" (fun _ -> failwith "TODO:x") in
-    Unix.putenv "QCHECK_INCOMPLETE_PREFIX" "";
+    let other, off = Env.with_env "QCHECK_INCOMPLETE_PREFIX" "TODO:" (fun () ->
+        run ~incomplete_prefix:"FIXME:" (fun _ -> failwith "TODO:x"),
+        run ~incomplete_prefix:"" (fun _ -> failwith "TODO:x")) in
     (match TestResult.get_state other with
      | TestResult.Error _ -> ()
      | _ -> Alcotest.fail "the explicit prefix must override the environment");
@@ -989,7 +1020,9 @@ module Register_incomplete = struct
     (* a registered function that raises: its exception is the error of the test *)
     register_incomplete (function Confusing -> failwith "broken signal" | _ -> None);
     (* a discarded case is never submitted to the registered functions *)
-    register_incomplete (function No_example_found _ -> Some "discard" | _ -> None)
+    register_incomplete (function No_example_found _ -> Some "discard" | _ -> None);
+    (* registered second for the same exception: the first reason wins *)
+    register_incomplete (function Todo reason -> Some ("second:" ^ reason) | _ -> None)
 
   let rand () = Random.State.make [|0|]
 
@@ -1027,6 +1060,10 @@ module Register_incomplete = struct
         (Printexc.to_string exn)
     | _ -> Alcotest.fail "a registered function that raises must make the test an error"
 
+  let test_first_registered_wins () =
+    Alcotest.(check (list string)) "the function registered first gives the reason"
+      ["later"] (reasons (run (fun _ -> raise (Todo "later"))))
+
   let test_discards_are_not_submitted () =
     let r = run (fun _ -> raise (No_example_found "x")) in
     Alcotest.(check int) "no incomplete case" 0 (TestResult.get_count_incomplete r);
@@ -1046,6 +1083,7 @@ module Register_incomplete = struct
       test_case "the three signals combine in one run" `Quick test_signals_combine;
       test_case "a function that raises is an error of the test" `Quick test_raising_function_is_an_error;
       test_case "discards are not submitted" `Quick test_discards_are_not_submitted;
+      test_case "the function registered first wins" `Quick test_first_registered_wins;
       test_case "shrinking skips registered candidates" `Quick test_shrink_skips_registered_candidates;
     ])
 end
@@ -1089,12 +1127,6 @@ module Incomplete_signal = struct
     Alcotest.(check (list string)) "Incomplete wins over the signal of the test"
       ["typed"] (reasons r)
 
-  let with_env var value f =
-    let previous = Sys.getenv_opt var in
-    Unix.putenv var value;
-    Fun.protect f
-      ~finally:(fun () -> Unix.putenv var (match previous with Some v -> v | None -> ""))
-
   let test_incomplete_reason () =
     let check msg expected e =
       Alcotest.(check (option string)) msg expected (incomplete_reason e) in
@@ -1105,7 +1137,7 @@ module Incomplete_signal = struct
     check "No_example_found" None (No_example_found "n");
     check "the signal of a test is not known at the level of the program" None (Local "x");
     check "a Failure without the prefix in the environment" None (Failure "TODO:x");
-    with_env "QCHECK_INCOMPLETE_PREFIX" "TODO:" (fun () ->
+    Env.with_env "QCHECK_INCOMPLETE_PREFIX" "TODO:" (fun () ->
         check "a Failure with the prefix of the environment" (Some "x") (Failure "TODO:x"))
 
   (* a harness that records the exceptions of the code under test as values *)
@@ -1177,6 +1209,39 @@ module Backtrace = struct
     ])
 end
 
+module Runner = struct
+  (* verbose mode, which the expect tests do not cover *)
+  let contains = Backtrace.contains
+
+  let run_tests tests =
+    let file = Filename.temp_file "qcheck_incomplete" ".out" in
+    let oc = open_out_bin file in
+    let code = Fun.protect ~finally:(fun () -> close_out oc) (fun () ->
+        QCheck_base_runner.run_tests ~colors:false ~verbose:true ~out:oc
+          ~rand:(Random.State.make [|0|]) tests) in
+    let ic = open_in_bin file in
+    let out = really_input_string ic (in_channel_length ic) in
+    close_in ic;
+    Sys.remove file;
+    code, Stdlib.String.split_on_char '\n' out
+
+  let test_verbose_mark () =
+    let holed = QCheck2.Test.make ~name:"holed" ~count:10 QCheck2.Gen.int
+        (fun _ -> QCheck2.incomplete "later") in
+    let fine = QCheck2.Test.make ~name:"fine" ~count:10 QCheck2.Gen.int (fun _ -> true) in
+    let code, lines = run_tests [holed; fine] in
+    let has mark name = List.exists (fun l -> contains l mark && contains l (" " ^ name)) lines in
+    Alcotest.(check int) "exit code" 0 code;
+    Alcotest.(check bool) "the incomplete test carries the ? mark" true (has "[?]" "holed");
+    Alcotest.(check bool) "the passing test carries the tick" true (has "[\xe2\x9c\x93]" "fine");
+    Alcotest.(check bool) "the summary says incomplete" true
+      (List.exists (fun l -> contains l "incomplete (ran 2 tests, 1 incomplete)") lines)
+
+  let tests = ("Incomplete cases (verbose runner)", Alcotest.[
+      test_case "the mark and the summary of an incomplete test" `Quick test_verbose_mark;
+    ])
+end
+
 let () =
   Alcotest.run "QCheck2"
     [
@@ -1191,5 +1256,6 @@ let () =
       Register_incomplete.tests;
       Incomplete_signal.tests;
       Backtrace.tests;
+      Runner.tests;
       Fun_todo_tests.tests;
     ]
