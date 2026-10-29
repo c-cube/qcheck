@@ -1753,6 +1753,7 @@ module Test = struct
     | Success
     | Failure
     | FalseAssumption
+    | Incomplete of string
     | Error of exn * string
 
   (* Step function, called after each instance test *)
@@ -2014,7 +2015,7 @@ module Test = struct
             (* counts toward [count] like a pass, but not in [res.count] *)
             record_incomplete state reason;
             state.cur_count <- state.cur_count - 1;
-            state.step state.test.name state.test input FalseAssumption;
+            state.step state.test.name state.test input (Incomplete reason);
             CR_continue
         end
       with
@@ -2251,8 +2252,9 @@ module Test = struct
     done;
     Buffer.contents out
 
+  (* [e : exn], as [Incomplete] is also a constructor of [res] here *)
   let () = Printexc.register_printer
-      (function
+      (fun (e : exn) -> match e with
         | Test_fail (name,l) -> Some (print_test_fail name l)
         | Test_error (name,i,e,st) -> Some (print_test_error name i e st)
         | Test_unexpected_success name -> Some (print_unexpected_success name)

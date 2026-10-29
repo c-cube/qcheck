@@ -225,7 +225,10 @@ type counter = {
   mutable passed : int;
   mutable failed : int;
   mutable errored : int;
+  mutable incomplete : int;
 }
+
+let incomplete_size size = max size (String.length "incomplete")
 
 type res =
   | Res : 'a QCheck2.Test.cell * 'a QCheck2.TestResult.t -> res
@@ -242,8 +245,9 @@ type handler_gen =
 
 let pp_counter ~size out c =
   let t = Unix.gettimeofday () -. c.start in
-  Printf.fprintf out "%*d %*d %*d %*d / %*d %7.1fs"
+  Printf.fprintf out "%*d %*d %*d %*d %*d / %*d %7.1fs"
     size c.gen size c.errored size c.failed
+    (incomplete_size size) c.incomplete
     size c.passed size c.expected t
 
 let debug_shrinking_counter_example cell out x =
@@ -307,6 +311,7 @@ let step ~colors ~size ~out ~verbose c name _ _ r =
     | QCheck2.Test.Success -> c.passed <- c.passed + 1
     | QCheck2.Test.Failure -> c.failed <- c.failed + 1
     | QCheck2.Test.FalseAssumption -> ()
+    | QCheck2.Test.Incomplete _ -> c.incomplete <- c.incomplete + 1
     | QCheck2.Test.Error _ -> c.errored <- c.errored + 1
   in
   c.gen <- c.gen + 1;
@@ -462,16 +467,16 @@ let run_tests
       max acc (expect_size long cell)) 4 l in
   if verbose then
     Printf.fprintf out
-      "%*s %*s %*s %*s / %*s     time test name\n%!"
+      "%*s %*s %*s %*s %*s / %*s     time test name\n%!"
       (size + 4) "generated" size "error"
-      size "fail" size "pass" size "total";
+      size "fail" (incomplete_size size) "incomplete" size "pass" size "total";
   let aux_map (T.Test cell) =
     let rand = Random.State.copy rand in
     let expected = expect long cell in
     let start = Unix.gettimeofday () in
     let c = {
       start; expected; gen = 0;
-      passed = 0; failed = 0; errored = 0;
+      passed = 0; failed = 0; errored = 0; incomplete = 0;
     } in
     if verbose then (
       (* print initial test status line regardless of rate-limiting for responsive user feedback *)

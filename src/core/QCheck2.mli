@@ -2006,7 +2006,7 @@ module Test : sig
     | Success
     | Failure
     | FalseAssumption
-    (** a discard, or an incomplete case (since NEXT_RELEASE) *)
+    | Incomplete of string (** an incomplete case, with its reason (since NEXT_RELEASE) *)
     | Error of exn * string
 
   type 'a event =
@@ -2036,8 +2036,8 @@ module Test : sig
       values of type ['a] using [Gen.t] and the random state [st]. The
       predicate [law] is called on them and if it returns [false] or raises an
       exception then we have a counter-example for the [law], unless the
-      exception is a signal of incompleteness (see {!Incomplete}): the case is
-      then incomplete and the next value is tried.
+      exception is a signal of incompleteness (see {!exception-Incomplete}):
+      the case is then incomplete and the next value is tried.
 
       Note: [check_cell] ignores a test's polarity, acting as
       described above regardless of whether the tested cell is a

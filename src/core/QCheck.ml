@@ -1876,6 +1876,7 @@ module Test = struct
     | Success
     | Failure
     | FalseAssumption
+    | Incomplete of string
     | Error of exn * string
   type 'a event = 'a QCheck2.Test.event =
     | Generating

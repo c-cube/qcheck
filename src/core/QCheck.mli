@@ -1665,6 +1665,7 @@ module Test : sig
     | Success
     | Failure
     | FalseAssumption
+    | Incomplete of string (** since NEXT_RELEASE *)
     | Error of exn * string
   type 'a event = 'a QCheck2.Test.event =
     | Generating

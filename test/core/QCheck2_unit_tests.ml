@@ -1239,7 +1239,9 @@ module Runner = struct
     Alcotest.(check bool) "the incomplete test carries the ? mark" true (has "[?]" "holed");
     Alcotest.(check bool) "the passing test carries the tick" true (has "[\xe2\x9c\x93]" "fine");
     Alcotest.(check bool) "the summary says incomplete" true
-      (List.exists (fun l -> contains l "incomplete (ran 2 tests, 1 incomplete)") lines)
+      (List.exists (fun l -> contains l "incomplete (ran 2 tests, 1 incomplete)") lines);
+    Alcotest.(check bool) "the header has the column of incomplete cases" true
+      (List.exists (fun l -> contains l "generated" && contains l "incomplete") lines)
 
   let tests = ("Incomplete cases (verbose runner)", Alcotest.[
       test_case "the mark and the summary of an incomplete test" `Quick test_verbose_mark;

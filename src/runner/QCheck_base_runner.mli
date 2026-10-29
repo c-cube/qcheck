@@ -94,6 +94,7 @@ type counter = private {
   mutable passed : int;
   mutable failed : int;
   mutable errored : int;
+  mutable incomplete : int; (** since NEXT_RELEASE *)
 }
 (** The type of counter used to keep tracks of the events received for a given
     test cell. *)
