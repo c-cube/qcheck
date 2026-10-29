@@ -100,6 +100,10 @@ let long_tests, set_long_tests =
   let r = ref false in
   (fun () -> !r), (fun b -> r := b)
 
+let fail_on_incomplete, set_fail_on_incomplete =
+  let r = ref false in
+  (fun () -> !r), (fun b -> r := b)
+
 let debug_shrink, set_debug_shrink =
   let r = ref None in
   (fun () -> !r), (fun s -> r := Some (open_out s))
@@ -124,6 +128,7 @@ module Raw = struct
     cli_colors: bool;
     cli_debug_shrink : out_channel option;
     cli_debug_shrink_list : string list;
+    cli_fail_on_incomplete : bool;
   }
 
   (* main callback for individual tests
@@ -170,6 +175,7 @@ module Raw = struct
     let print_list = ref false in
     let set_verbose () = set_verbose true in
     let set_long_tests () = set_long_tests true in
+    let set_fail_on_incomplete () = set_fail_on_incomplete true in
     let set_backtraces () = Printexc.record_backtrace true in
     let set_list () = print_list := true in
     let colors = ref true in
@@ -189,6 +195,7 @@ module Raw = struct
           [ "-s", Arg.Set_int seed, " "
           ; "--seed", Arg.Set_int seed, " set random seed (to repeat tests)"
           ; "--long", Arg.Unit set_long_tests, " run long tests"
+          ; "--fail-incomplete", Arg.Unit set_fail_on_incomplete, " return 1 if a test is incomplete"
           ; "-bt", Arg.Unit set_backtraces, " enable backtraces"
           ; "--debug-shrink", Arg.String set_debug_shrink, " enable shrinking debug to <file>"
           ; "--debug-shrink-list", Arg.String set_debug_shrink_list, " filter test to debug shrinking on"
@@ -199,7 +206,8 @@ module Raw = struct
     { cli_verbose=verbose(); cli_long_tests=long_tests(); cli_rand;
       cli_print_list= !print_list; cli_slow_test= !slow;
       cli_colors= !colors; cli_debug_shrink = debug_shrink();
-      cli_debug_shrink_list = debug_shrink_list(); }
+      cli_debug_shrink_list = debug_shrink_list();
+      cli_fail_on_incomplete = fail_on_incomplete(); }
 end
 
 open Raw
@@ -432,6 +440,7 @@ let print_incomplete ~colors out cell r =
 let run_tests
     ?(handler=default_handler)
     ?(colors=true) ?(verbose=verbose()) ?(long=long_tests())
+    ?(fail_on_incomplete=fail_on_incomplete())
     ?(debug_shrink=debug_shrink()) ?(debug_shrink_list=debug_shrink_list())
     ?(out=stdout) ?rand l =
   let rand = match rand with Some x -> x | None -> random_state_ ~colors () in
@@ -503,13 +512,19 @@ let run_tests
   Printf.fprintf out "%s\n" (String.make 80 '=');
   if warns > 0 then Printf.fprintf out "%d warning(s)\n" warns;
   if fail = 0 && error = 0 then (
-    if incomplete = 0 then
+    if incomplete = 0 then (
       Printf.fprintf out "%a (ran %d tests)\n%!"
-        (pp_color `Green) "success" total
-    else
+        (pp_color `Green) "success" total;
+      0
+    ) else if fail_on_incomplete then (
+      Printf.fprintf out "%a (ran %d tests, %d incomplete; incomplete tests fail this run)\n%!"
+        (pp_color `Red) "incomplete" total incomplete;
+      1
+    ) else (
       Printf.fprintf out "%a (ran %d tests, %d incomplete)\n%!"
         (pp_color `Yellow) "incomplete" total incomplete;
-    0
+      0
+    )
   ) else (
     if incomplete = 0 then
       Printf.fprintf out
@@ -529,7 +544,9 @@ let run_tests_main ?(argv=Sys.argv) l =
       (run_tests l
          ~colors:cli_args.cli_colors
          ~verbose:cli_args.cli_verbose
-         ~long:cli_args.cli_long_tests ~out:stdout ~rand:cli_args.cli_rand)
+         ~long:cli_args.cli_long_tests
+         ~fail_on_incomplete:cli_args.cli_fail_on_incomplete
+         ~out:stdout ~rand:cli_args.cli_rand)
   with
     | Arg.Bad msg -> print_endline msg; exit 1
     | Arg.Help msg -> print_endline msg; exit 0

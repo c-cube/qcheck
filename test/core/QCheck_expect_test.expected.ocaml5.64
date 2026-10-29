@@ -2141,3 +2141,32 @@ exception Failure("TODO:not implemented")
 
 ================================================================================
 failure (1 tests failed, 1 tests errored, ran 2 tests)
+random seed: 1234
+
++++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Test all cases incomplete had 210 incomplete cases:
+  not implemented (210 times)
+
++++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Test some cases incomplete had 181 incomplete cases:
+  multiples of 3 (98 times)
+  remainder 1 (83 times)
+
++++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Negative test negative, all cases incomplete is inconclusive: no counterexample in the 0 cases that completed, and 210 cases were incomplete, so the expected counterexample may be hidden among them:
+  not implemented (210 times)
+
+--- Info -----------------------------------------------------------------------
+
+Test negative, counterexample found despite incomplete cases also had 12 incomplete cases; its verdict does not depend on them:
+  below 900 (12 times)
+
++++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Test failwith "TODO:..." with incomplete_prefix had 210 incomplete cases:
+  not implemented (210 times)
+================================================================================
+incomplete (ran 5 tests, 4 incomplete; incomplete tests fail this run)

@@ -7,7 +7,8 @@
 val to_ounit_test :
   ?verbose:bool -> ?long:bool -> ?rand:Random.State.t ->
   QCheck2.Test.t -> OUnit.test
-(** [to_ounit_test ~rand t] wraps [t] into a OUnit test
+(** [to_ounit_test ~rand t] wraps [t] into a OUnit test. An incomplete test
+    ({!QCheck2.Test.Test_incomplete}) is an OUnit [todo] (since NEXT_RELEASE).
     @param verbose used to print information on stdout (default: [verbose()])
     @param rand the random generator to use (default: [random_state ()]) *)
 
@@ -20,7 +21,8 @@ val (>:::) : string -> QCheck2.Test.t list -> OUnit.test
 (** Same as [OUnit.(>:::)] but with a list of QCheck2 tests *)
 
 val to_ounit2_test : ?rand:Random.State.t -> QCheck2.Test.t -> OUnit2.test
-(** [to_ounit2_test ?rand t] wraps [t] into a OUnit2 test
+(** [to_ounit2_test ?rand t] wraps [t] into a OUnit2 test. An incomplete test
+    ({!QCheck2.Test.Test_incomplete}) is an OUnit [todo] (since NEXT_RELEASE).
     @param rand the random generator to use (default: a static seed for reproducibility),
     can be overridden with "-seed" on the command-line
 *)
