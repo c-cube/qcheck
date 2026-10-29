@@ -1676,8 +1676,8 @@ val register_incomplete : (exn -> string option) -> unit
           (function Mylib.Todo reason -> Some reason | _ -> None)
     ]}
     Registered functions are tried in registration order, after the other
-    signals, and never see a discard ({!assume}, {!No_example_found}); one
-    that raises counts as returning [None].
+    signals, and must not raise. A discard ({!assume}, {!No_example_found})
+    is never submitted to them.
     @since NEXT_RELEASE *)
 
 (** {1 Tests}

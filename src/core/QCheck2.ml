@@ -1803,13 +1803,14 @@ module Test = struct
 
   (* The first reason given by a signal: [Incomplete], then [Fun.Todo]
      (OCaml 5.6), then the [Failure] prefixed for the test, then the
-     registered functions. A registered function that raises counts as
-     returning [None]. *)
+     registered functions. It runs in the guard of [run_law], so a registered
+     function that raises replaces the exception of the law and the test
+     errors. *)
   let classify_incomplete cell (e : exn) =
     let rec registered = function
       | [] -> None
       | f :: fs ->
-        (match (try f e with _ -> None) with
+        (match f e with
          | Some _ as reason -> reason
          | None -> registered fs) in
     let prefixed = match e, cell.incomplete_prefix with

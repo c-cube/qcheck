@@ -986,7 +986,7 @@ module Register_incomplete = struct
 
   let () =
     register_incomplete (function Todo reason -> Some reason | _ -> None);
-    (* a registered function that raises counts as returning [None] *)
+    (* a registered function that raises: its exception is the error of the test *)
     register_incomplete (function Confusing -> failwith "broken signal" | _ -> None);
     (* a discarded case is never submitted to the registered functions *)
     register_incomplete (function No_example_found _ -> Some "discard" | _ -> None)
@@ -1019,10 +1019,13 @@ module Register_incomplete = struct
     Alcotest.(check (list string)) "the three signals are recognised in one run"
       ["prefixed"; "registered"; "typed"] (List.sort compare (reasons r))
 
-  let test_raising_function_counts_as_none () =
+  let test_raising_function_is_an_error () =
     match TestResult.get_state (run (fun _ -> raise Confusing)) with
-    | TestResult.Error {exn = Confusing; _} -> ()
-    | _ -> Alcotest.fail "a registered function that raises must not change the verdict"
+    | TestResult.Error {exn = Failure msg; _} when msg = "broken signal" -> ()
+    | TestResult.Error {exn; _} ->
+      Alcotest.failf "the error must carry the exception of the registered function, not %s"
+        (Printexc.to_string exn)
+    | _ -> Alcotest.fail "a registered function that raises must make the test an error"
 
   let test_discards_are_not_submitted () =
     let r = run (fun _ -> raise (No_example_found "x")) in
@@ -1041,9 +1044,54 @@ module Register_incomplete = struct
       test_case "registered exception is incomplete" `Quick test_registered_exception;
       test_case "unregistered exception stays an error" `Quick test_unregistered_exception_stays_error;
       test_case "the three signals combine in one run" `Quick test_signals_combine;
-      test_case "a function that raises counts as None" `Quick test_raising_function_counts_as_none;
+      test_case "a function that raises is an error of the test" `Quick test_raising_function_is_an_error;
       test_case "discards are not submitted" `Quick test_discards_are_not_submitted;
       test_case "shrinking skips registered candidates" `Quick test_shrink_skips_registered_candidates;
+    ])
+end
+
+module Backtrace = struct
+  (* The signals of incompleteness are recognised in the [when] guard of the
+     handler that runs the property, so an exception that is none of them is
+     not caught and re-raised: its backtrace keeps the frame of the raise. *)
+  open QCheck2
+
+  exception Boom
+
+  let boom_line = __LINE__ and boom () = raise Boom
+
+  let rand () = Random.State.make [|0|]
+
+  (* [String] is the test module of that name above: hence [Stdlib.String] *)
+  let contains s sub =
+    let n = Stdlib.String.length s and m = Stdlib.String.length sub in
+    let rec go i = i + m <= n && (Stdlib.String.sub s i m = sub || go (i + 1)) in
+    go 0
+
+  let test_error_keeps_the_raise_site () =
+    Printexc.record_backtrace true;
+    let r = Test.check_cell ~rand:(rand ())
+        (Test.make_cell ~count:10 Gen.int (fun _ -> boom ())) in
+    match TestResult.get_state r with
+    | TestResult.Error {exn = Boom; backtrace; _} ->
+      let first = match Stdlib.String.split_on_char '\n' backtrace with
+        | first :: _ -> first | [] -> "" in
+      Alcotest.(check bool)
+        (Printf.sprintf "the first frame is the raise in %S, line %d:\n%s" __FILE__ boom_line backtrace)
+        true (contains first "Raised at"
+              && contains first (Printf.sprintf "%S" __FILE__)
+              && contains first (Printf.sprintf "line %d," boom_line));
+      (* natively, the re-raise the compiler inserts when the guard is false
+         leaves no entry; in bytecode it does, so this is the native check *)
+      (match Sys.backend_type with
+       | Sys.Native ->
+         Alcotest.(check bool) ("no frame of qcheck re-raising it:\n" ^ backtrace)
+           false (contains backtrace "Re-raised at")
+       | Sys.Bytecode | Sys.Other _ -> ())
+    | _ -> Alcotest.fail "Boom must be an error"
+
+  let tests = ("Incomplete cases (backtrace of the other exceptions)", Alcotest.[
+      test_case "an error keeps the frame of its raise" `Quick test_error_keeps_the_raise_site;
     ])
 end
 
@@ -1059,5 +1107,6 @@ let () =
       Incomplete.tests;
       Incomplete_prefix.tests;
       Register_incomplete.tests;
+      Backtrace.tests;
       Fun_todo_tests.tests;
     ]
