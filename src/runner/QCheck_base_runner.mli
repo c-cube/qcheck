@@ -50,6 +50,14 @@ val set_verbose : bool -> unit
 val set_long_tests : bool -> unit
 (** Change the value of [long_tests ()] *)
 
+val fail_on_incomplete : unit -> bool
+(** Does a run with incomplete tests fail by default? See {!run_tests}.
+    @since NEXT_RELEASE *)
+
+val set_fail_on_incomplete : bool -> unit
+(** Change the value of [fail_on_incomplete ()]
+    @since NEXT_RELEASE *)
+
 
 (** {2 Console message printing}
 
@@ -86,6 +94,7 @@ type counter = private {
   mutable passed : int;
   mutable failed : int;
   mutable errored : int;
+  mutable incomplete : int; (** since NEXT_RELEASE *)
 }
 (** The type of counter used to keep tracks of the events received for a given
     test cell. *)
@@ -121,16 +130,24 @@ val debug_shrinking_choices:
 val run_tests :
   ?handler:handler_gen ->
   ?colors:bool -> ?verbose:bool -> ?long:bool ->
+  ?fail_on_incomplete:bool ->
   ?debug_shrink:(out_channel option) ->
   ?debug_shrink_list:(string list) ->
   ?out:out_channel -> ?rand:Random.State.t ->
   QCheck2.Test.t list -> int
 (** Run a suite of tests, and print its results. This is an heritage from
     the "qcheck" library.
-    @return an error code, [0] if all tests passed, [1] otherwise.
+
+    A test with no counterexample and some incomplete cases is reported as
+    incomplete, with its reasons, and does not make the run fail unless
+    [fail_on_incomplete] is set.
+    @return an error code, [0] if no test failed or errored, [1] otherwise
+    or if [fail_on_incomplete] is set and a test is incomplete.
     @param colors if true (default), colorful output
     @param verbose if true, prints more information about test cases (default: [false])
     @param long if true, runs the long versions of the tests (default: [false])
+    @param fail_on_incomplete if true, a run with incomplete tests returns [1]
+    (default: [fail_on_incomplete ()]) (since NEXT_RELEASE)
     @param debug_shrink [debug_shrink:(Some ch)] writes a log of successful shrink
     attempts to channel [ch], for example [~debug_shrink:(Some (open_out "mylog.txt"))].
     Use together with a non-empty list in [~debug_shrink_list].
@@ -150,6 +167,7 @@ val run_tests_main : ?argv:string array -> QCheck2.Test.t list -> 'a
     - "--verbose" (or "-v") for activating verbose tests
     - "--seed <n>" (or "-s <n>") for repeating a previous run by setting the random seed
     - "--long" for running the long versions of the tests
+    - "--fail-incomplete" for exiting with code 1 when a test is incomplete (since NEXT_RELEASE)
 
     Below is an example of the output of the [run_tests] and [run_tests_main]
     function:
@@ -238,6 +256,7 @@ module Raw : sig
     cli_colors: bool;
     cli_debug_shrink : out_channel option;
     cli_debug_shrink_list : string list;
+    cli_fail_on_incomplete : bool;
   }
 
   val parse_cli : full_options:bool -> string array -> cli_args

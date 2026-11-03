@@ -1639,6 +1639,64 @@ val assume_fail : unit -> 'a
     @since 0.5.1
 *)
 
+(** {1 Incomplete cases}
+
+    A property that reaches code which is not implemented yet can raise
+    {!Incomplete}. Such a case is neither a pass nor a failure: it counts
+    toward [count] like a pass, it is counted by reason in {!TestResult},
+    and testing continues with the next input. On OCaml 5.6 and later,
+    [Fun.todo ()] is recognised as well, with the location of the call as
+    the reason. *)
+
+exception Incomplete of string
+(** [Incomplete reason] signals that the property reached code that is not
+    implemented yet.
+    @since NEXT_RELEASE *)
+
+val incomplete : string -> 'a
+(** [incomplete reason] raises [Incomplete reason]. Like {!assume_fail}, it
+    can be used in any position. The incomplete cases are counted by reason:
+    [reason] should name the unimplemented part, not the input.
+
+    Example:
+    {[
+      Test.make Gen.int
+        (fun i -> if i < 0 then incomplete "negative inputs" else f i >= 0)
+    ]}
+
+    @since NEXT_RELEASE *)
+
+val register_incomplete : (exn -> string option) -> unit
+(** [register_incomplete f] makes [f] a signal of incompleteness for every
+    test: an exception [e] raised by a property is an incomplete case with
+    reason [r] when [f e = Some r]. Code under test can thus keep an exception
+    of its own for its unimplemented parts, without depending on QCheck:
+    {[
+      exception Todo of string (* in Mylib, the library under test *)
+      let () = QCheck2.register_incomplete
+          (function Mylib.Todo reason -> Some reason | _ -> None)
+    ]}
+    Registered functions are tried in registration order, after the other
+    signals, and must not raise. A discard ({!assume}, {!No_example_found})
+    is never submitted to them.
+    @since NEXT_RELEASE *)
+
+val incomplete_reason : exn -> string option
+(** [incomplete_reason e] is [Some reason] if [e] is [Incomplete reason],
+    [Fun.Todo] (OCaml 5.6), a [Failure] with the prefix of
+    [QCHECK_INCOMPLETE_PREFIX], or an exception recognised by a function
+    registered with {!register_incomplete}, and [None] otherwise, a discard
+    ({!assume}, {!No_example_found}) included. Code that catches the
+    exceptions of the code under test can use it to re-raise the signals of
+    incompleteness:
+    {[
+      let protect f x =
+        try Ok (f x) with
+        | e when QCheck2.incomplete_reason e <> None -> raise e
+        | e -> Error e
+    ]}
+    @since NEXT_RELEASE *)
+
 (** {1 Tests}
 
     A test is a universal property of type [foo -> bool] for some type [foo],
@@ -1696,10 +1754,20 @@ module TestResult : sig
   (** [get_state t] returns the final state after a test execution. *)
 
   val get_count : _ t -> int
-  (** [get_count t] returns the number of tests executed. *)
+  (** [get_count t] returns the number of tests executed, not counting
+      incomplete cases. *)
 
   val get_count_gen : _ t -> int
   (** [get_count_gen t] returns the number of generated cases. *)
+
+  val get_count_incomplete : _ t -> int
+  (** [get_count_incomplete t] returns the number of incomplete cases.
+      @since NEXT_RELEASE *)
+
+  val get_incomplete_reasons : _ t -> (string * int) list
+  (** [get_incomplete_reasons t] returns the [(reason, n)] pairs of the
+      incomplete cases, sorted by decreasing [n], then by [reason].
+      @since NEXT_RELEASE *)
 
   val get_collect : _ t -> (string,int) Hashtbl.t option
   (** [get_collect t] returns the repartition of generated values.
@@ -1738,6 +1806,13 @@ module Test_exceptions : sig
   (** Exception raised when a negative test failed.
       [Test_unexpected_success name] means test [name] failed to find an
       expected counter example. *)
+
+  exception Test_incomplete of string * (string * int) list
+  (** Exception raised when a test had incomplete cases and no failure.
+      [Test_incomplete (name, reasons)] means test [name] had incomplete
+      cases, [reasons] being {!QCheck2.TestResult.get_incomplete_reasons} of its
+      result.
+      @since NEXT_RELEASE *)
 end
 
 (** A test is a pair of a generator and a property that all generated values must satisfy. *)
@@ -1762,6 +1837,8 @@ module Test : sig
 
   val make_cell :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?incomplete:(exn -> string option) ->
+    ?incomplete_prefix:string ->
     ?count:int -> ?long_factor:int ->  ?negative:bool -> ?max_gen:int -> ?max_fail:int -> ?retries:int ->
     ?name:string -> ?print:'a Print.t -> ?collect:('a -> string) -> ?stats:('a stat list) ->
      'a Gen.t -> ('a -> bool) ->
@@ -1770,7 +1847,8 @@ module Test : sig
       of the generator [gen].
       @param name the name of the test.
       @param count number of test cases to run, counting only
-        the test cases which satisfy preconditions.
+        the test cases which satisfy preconditions (incomplete cases
+        included).
       @param long_factor the factor by which to multiply count, max_gen and
         max_fail when running a long test (default: 1).
       @param negative whether the test is expected not to satisfy the tested property.
@@ -1786,7 +1864,14 @@ module Test : sig
         The fraction should be between 0. and 1.
         A warning will be emitted otherwise if
         the flag is [`Warning], the test will be a failure if the flag is [`Fatal].
+        Incomplete cases count as having satisfied the precondition.
         (since 0.10)
+      @param incomplete like {!register_incomplete}, but for this test only,
+        and tried before the registered functions. (since NEXT_RELEASE)
+      @param incomplete_prefix a [Failure] raised by the property whose message
+        starts with this prefix is an incomplete case, the rest of the message
+        being the reason. Default: the environment variable
+        [QCHECK_INCOMPLETE_PREFIX], if set and not empty. (since NEXT_RELEASE)
       @param print used in {!Print} to display generated values failing the [prop]
       @param collect (* collect values by tag, useful to display distribution of generated *)
       @param stats on a distribution of values of type 'a
@@ -1794,6 +1879,8 @@ module Test : sig
 
   val make_cell_from_QCheck1 :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?incomplete:(exn -> string option) ->
+    ?incomplete_prefix:string ->
     ?count:int -> ?long_factor:int -> ?negative:bool -> ?max_gen:int -> ?max_fail:int ->
     ?retries:int -> ?name:string -> gen:(Random.State.t -> 'a) -> ?shrink:('a -> ('a -> unit) -> unit) ->
     ?print:('a -> string) -> ?collect:('a -> string) -> stats:'a stat list -> ('a -> bool) ->
@@ -1835,6 +1922,8 @@ module Test : sig
 
   val make :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?incomplete:(exn -> string option) ->
+    ?incomplete_prefix:string ->
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int -> ?retries:int ->
     ?name:string -> ?print:('a Print.t) -> ?collect:('a -> string) -> ?stats:('a stat list) ->
     'a Gen.t -> ('a -> bool) -> t
@@ -1845,6 +1934,8 @@ module Test : sig
 
   val make_neg :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?incomplete:(exn -> string option) ->
+    ?incomplete_prefix:string ->
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int -> ?retries:int ->
     ?name:string -> ?print:('a Print.t) -> ?collect:('a -> string) -> ?stats:('a stat list) ->
     'a Gen.t -> ('a -> bool) -> t
@@ -1888,6 +1979,11 @@ module Test : sig
   val print_test_fail : string -> string list -> string
   val print_test_error : string -> string -> exn -> string -> string
 
+  val print_test_incomplete : string -> (string * int) list -> string
+  (** [print_test_incomplete name reasons] is the message of
+      [Test_incomplete (name, reasons)].
+      @since NEXT_RELEASE *)
+
   val print_collect : (string,int) Hashtbl.t -> string
   (** Print "collect" results.
       @since 0.6 *)
@@ -1902,12 +1998,15 @@ module Test : sig
       Otherwise, it raises some exception.
       @raise Test_fail  if the test is positive and [res = Failed _]
       @raise Test_unexpected_success  if the test is negative and [res = Ok _]
+      @raise Test_incomplete if [res = Success _] and the run had incomplete
+      cases, whatever the polarity (since NEXT_RELEASE)
       @raise Test_error if [res = Error _] *)
 
   type res =
     | Success
     | Failure
     | FalseAssumption
+    | Incomplete of string (** an incomplete case, with its reason (since NEXT_RELEASE) *)
     | Error of exn * string
 
   type 'a event =
@@ -1936,7 +2035,9 @@ module Test : sig
   (** [check_cell ~long ~rand test] generates up to [count] random
       values of type ['a] using [Gen.t] and the random state [st]. The
       predicate [law] is called on them and if it returns [false] or raises an
-      exception then we have a counter-example for the [law].
+      exception then we have a counter-example for the [law], unless the
+      exception is a signal of incompleteness (see {!exception-Incomplete}):
+      the case is then incomplete and the next value is tried.
 
       Note: [check_cell] ignores a test's polarity, acting as
       described above regardless of whether the tested cell is a
@@ -1958,6 +2059,8 @@ module Test : sig
       without finding a counterexample and expects negative tests to fail by finding one.
       @raise Test_fail  if the test is positive and [res = Failed _]
       @raise Test_unexpected_success  if the test is negative and [res = Success _]
+      @raise Test_incomplete if [res = Success _] and the run had incomplete
+      cases, whatever the polarity (since NEXT_RELEASE)
       @raise Test_error if [res = Error _] *)
 
   val check_exn : ?long:bool -> ?rand:Random.State.t -> t -> unit
@@ -1967,6 +2070,8 @@ module Test : sig
       without finding a counterexample and expects negative tests to fail by finding one.
       @raise Test_fail  if the test is positive and [res = Failed _]
       @raise Test_unexpected_success  if the test is negative and [res = Success _]
+      @raise Test_incomplete if [res = Success _] and the run had incomplete
+      cases, whatever the polarity (since NEXT_RELEASE)
       @raise Test_error if [res = Error _] *)
 end
 

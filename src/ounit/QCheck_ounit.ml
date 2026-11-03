@@ -72,8 +72,12 @@ let to_ounit2_test ?(rand =default_rand()) (QCheck2.Test.Test cell) =
         fail = (fun fmt -> Printf.ksprintf assert_failure fmt);
         err = (fun fmt -> logf ctxt `Error fmt);
       } in
-      T.check_cell_exn cell
-        ~long ~rand ~call:(Raw.callback ~colors:false ~verbose ~print_res:true ~print))
+      (* an incomplete test is an OUnit todo *)
+      match T.check_cell_exn cell
+              ~long ~rand ~call:(Raw.callback ~colors:false ~verbose ~print_res:true ~print) with
+      | () -> ()
+      | exception T.Test_incomplete (name, reasons) ->
+        todo (T.print_test_incomplete name reasons))
 
 let to_ounit2_test_list ?rand lst =
   List.rev (List.rev_map (to_ounit2_test ?rand) lst)
@@ -89,8 +93,10 @@ let to_ounit_test_cell ?(verbose=verbose()) ?(long=long_tests())
       T.check_cell_exn cell ~long ~rand
         ~call:(Raw.callback ~colors:false ~verbose ~print_res:verbose ~print:Raw.print_std);
       true
-    with T.Test_fail _ ->
-      false
+    with
+    | T.Test_fail _ -> false
+    | T.Test_incomplete (name, reasons) ->
+      todo (T.print_test_incomplete name reasons); false
   in
   name >:: (fun () -> assert_bool name (run ()))
 

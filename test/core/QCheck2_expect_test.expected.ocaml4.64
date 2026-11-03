@@ -2133,3 +2133,84 @@ stats dist:
    4150517416584649600.. 4611686018427387903: ##                                                               22
 ================================================================================
 success (ran 1 tests)
+random seed: 1234
+
++++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Test all cases incomplete had 10 incomplete cases out of 10, 0 passed:
+  not implemented (10 times)
+
++++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Test some cases incomplete had 69 incomplete cases out of 100, 31 passed:
+  multiples of 3 (37 times)
+  remainder 1 (32 times)
+
++++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Negative test negative, all cases incomplete is inconclusive: no counterexample in the 0 cases that completed, and 10 cases were incomplete, so the expected counterexample may be hidden among them:
+  not implemented (10 times)
+
+--- Info -----------------------------------------------------------------------
+
+Test negative, counterexample found despite incomplete cases also had 20 incomplete cases; its verdict does not depend on them:
+  below 900 (20 times)
+
++++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Test failwith "TODO:..." with incomplete_prefix had 10 incomplete cases out of 10, 0 passed:
+  not implemented (10 times)
+================================================================================
+incomplete (ran 5 tests, 4 incomplete)
+random seed: 1234
+
+--- Failure --------------------------------------------------------------------
+
+Test counterexample found despite incomplete cases failed (2 shrink steps):
+
+950
+
+--- Info -----------------------------------------------------------------------
+
+Test counterexample found despite incomplete cases also had 20 incomplete cases; its verdict does not depend on them:
+  below 900 (20 times)
+
+=== Error ======================================================================
+
+Test Failure "TODO:..." is still an error errored on (1 shrink steps):
+
+0
+
+exception Failure("TODO:not implemented")
+
+================================================================================
+failure (1 tests failed, 1 tests errored, ran 2 tests)
+random seed: 1234
+
++++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Test all cases incomplete had 10 incomplete cases out of 10, 0 passed:
+  not implemented (10 times)
+
++++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Test some cases incomplete had 69 incomplete cases out of 100, 31 passed:
+  multiples of 3 (37 times)
+  remainder 1 (32 times)
+
++++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Negative test negative, all cases incomplete is inconclusive: no counterexample in the 0 cases that completed, and 10 cases were incomplete, so the expected counterexample may be hidden among them:
+  not implemented (10 times)
+
+--- Info -----------------------------------------------------------------------
+
+Test negative, counterexample found despite incomplete cases also had 20 incomplete cases; its verdict does not depend on them:
+  below 900 (20 times)
+
++++ Incomplete +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Test failwith "TODO:..." with incomplete_prefix had 10 incomplete cases out of 10, 0 passed:
+  not implemented (10 times)
+================================================================================
+incomplete (ran 5 tests, 4 incomplete; incomplete tests fail this run)

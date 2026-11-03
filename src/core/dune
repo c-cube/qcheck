@@ -3,6 +3,23 @@
   (name qcheck_core)
   (public_name qcheck-core)
   (wrapped false)
+  (modules (:standard \ select_by_version))
+  (private_modules QCheck_fun_todo)
   (libraries unix)
   (flags :standard -w +a-4-42-44-48-50-58-32-60@8 -safe-string)
   )
+
+;; Fun.Todo exists since OCaml 5.6. enabled_if compares versions as strings
+;; ("5.10" < "5.6"), so select_by_version.ml picks the source instead.
+(rule
+ (targets QCheck_fun_todo.ml)
+ (deps QCheck_fun_todo.ml.ocaml5.6 QCheck_fun_todo.ml.pre5.6)
+ (action
+  (with-stdout-to %{targets}
+   (run %{ocaml} -noinit %{dep:select_by_version.ml} 5.6
+        QCheck_fun_todo.ml.ocaml5.6 QCheck_fun_todo.ml.pre5.6))))
+
+;; the comparison itself, on versions no compiler at hand has
+(rule
+ (alias runtest)
+ (action (run %{ocaml} -noinit %{dep:select_by_version.ml} --self-test)))

@@ -1,0 +1,9 @@
+(* The payload of [Fun.Todo] has an abstract, deprecated type: the location
+   is read from [Fun]'s printer instead, whose second line it is. *)
+let reason = function
+  | Fun.Todo _ as e ->
+    let s = Printexc.to_string e in
+    (match String.index_opt s '\n' with
+     | Some i -> Some (String.sub s (i + 1) (String.length s - i - 1))
+     | None -> Some s)
+  | _ -> None

@@ -782,6 +782,472 @@ module Check_exn = struct
        ])
 end
 
+module Env = struct
+  (* [Unix] has no unsetenv: a variable that was absent is restored as
+     empty, which QCheck reads as unset for QCHECK_INCOMPLETE_PREFIX *)
+  let with_env var value f =
+    let previous = Sys.getenv_opt var in
+    Unix.putenv var value;
+    Fun.protect f
+      ~finally:(fun () -> Unix.putenv var (match previous with Some v -> v | None -> ""))
+end
+
+module Incomplete = struct
+  open QCheck2
+
+  let rand () = Random.State.make [|0|]
+
+  let run ?(negative=false) ?if_assumptions_fail gen law =
+    Test.check_cell ~rand:(rand ())
+      (Test.make_cell ~count:100 ~negative ?if_assumptions_fail gen law)
+
+  let test_all_incomplete () =
+    let r = run Gen.int (fun _ -> incomplete "later") in
+    let gen = TestResult.get_count_gen r in
+    Alcotest.(check bool) "state is Success" true (TestResult.is_success r);
+    Alcotest.(check int) "no case passed" 0 (TestResult.get_count r);
+    Alcotest.(check int) "every generated case is incomplete"
+      gen (TestResult.get_count_incomplete r);
+    Alcotest.(check int) "an incomplete case counts toward count: exactly count cases ran"
+      100 (TestResult.get_count_incomplete r);
+    Alcotest.(check (list (pair string int))) "reasons"
+      ["later", gen] (TestResult.get_incomplete_reasons r);
+    Alcotest.(check (list string)) "no precondition warning"
+      [] (TestResult.get_warnings r)
+
+  let test_several_reasons () =
+    let r = run Gen.int (fun i -> match abs i mod 3 with
+        | 0 -> incomplete "a"
+        | 1 -> incomplete "b"
+        | _ -> true) in
+    let reasons = TestResult.get_incomplete_reasons r in
+    Alcotest.(check (list string)) "both reasons"
+      ["a"; "b"] (List.sort compare (List.map fst reasons));
+    Alcotest.(check int) "counts add up"
+      (TestResult.get_count_incomplete r)
+      (List.fold_left (fun acc (_, n) -> acc + n) 0 reasons);
+    Alcotest.(check bool) "sorted by decreasing count, then by reason" true
+      (reasons = List.sort (fun (r1, n1) (r2, n2) ->
+           match compare n2 n1 with 0 -> compare r1 r2 | c -> c) reasons);
+    Alcotest.(check int) "passed + incomplete = generated"
+      (TestResult.get_count_gen r)
+      (TestResult.get_count r + TestResult.get_count_incomplete r);
+    Alcotest.(check int) "passed + incomplete = count"
+      100 (TestResult.get_count r + TestResult.get_count_incomplete r)
+
+  let test_empty_reason () =
+    let r = run Gen.int (fun _ -> incomplete "") in
+    Alcotest.(check (list (pair string int))) "the empty reason is kept"
+      ["", TestResult.get_count_gen r] (TestResult.get_incomplete_reasons r)
+
+  let test_other_failures_stay_errors () =
+    List.iter (fun msg ->
+        match Env.with_env "QCHECK_INCOMPLETE_PREFIX" "" (fun () ->
+            TestResult.get_state (run Gen.int (fun _ -> failwith msg))) with
+        | TestResult.Error {exn = Failure m; _} ->
+          Alcotest.(check string) "message" msg m
+        | _ -> Alcotest.failf "%S must still be an error" msg)
+      ["boom"; "TODO"; "TODO:x"]
+
+  let test_shrink_skips_incomplete_candidates () =
+    let r = run (Gen.int_bound 1000)
+        (fun i -> if i < 300 then incomplete "small" else i < 500) in
+    match TestResult.get_state r with
+    | TestResult.Failed {instances = [c]} ->
+      Alcotest.(check int) "shrunk to the smallest counterexample"
+        500 c.TestResult.instance
+    | _ -> Alcotest.fail "a genuine counterexample must not become incomplete"
+
+  exception Boom
+
+  let test_shrink_skips_incomplete_candidates_on_error () =
+    let r = run (Gen.int_bound 1000)
+        (fun i ->
+           if i < 300 then incomplete "small"
+           else if i >= 500 then raise Boom
+           else true) in
+    match TestResult.get_state r with
+    | TestResult.Error {exn = Boom; instance = {TestResult.instance = 500; _}; _} -> ()
+    | _ -> Alcotest.fail "the error must keep its exception and shrink to 500"
+
+  let test_fatal_precondition_still_checked () =
+    let r = run ~if_assumptions_fail:(`Fatal, 0.5) Gen.int
+        (fun i ->
+           if i mod 50 = 0 then incomplete "x";
+           assume (i mod 100 = 1);
+           true) in
+    match TestResult.get_state r with
+    | TestResult.Failed_other _ -> ()
+    | _ -> Alcotest.fail "`Fatal must still fire when most inputs are discarded"
+
+  let test_check_cell_exn_raises_test_incomplete () =
+    List.iter (fun negative ->
+        let cell = Test.make_cell ~name:"t" ~count:10 ~negative Gen.int
+            (fun _ -> incomplete "later") in
+        match Test.check_cell_exn ~rand:(rand ()) cell with
+        | () -> Alcotest.fail "an incomplete run must not pass silently"
+        | exception Test.Test_incomplete ("t", ["later", _]) -> ()
+        | exception e ->
+          Alcotest.failf "an incomplete run must raise Test_incomplete, not %s"
+            (Printexc.to_string e))
+      [false; true]
+
+  let test_shrink_with_retries () =
+    let cell = Test.make_cell ~count:100 ~retries:3 (Gen.int_bound 1000)
+        (fun i -> if i < 300 then incomplete "small" else i < 500) in
+    match TestResult.get_state (Test.check_cell ~rand:(rand ()) cell) with
+    | TestResult.Failed {instances = [c]} ->
+      Alcotest.(check int) "shrunk to the smallest counterexample" 500 c.TestResult.instance
+    | _ -> Alcotest.fail "a genuine counterexample must not become incomplete"
+
+  let test_negative_caught_despite_incomplete_cases () =
+    let cell = Test.make_cell ~name:"neg" ~count:100 ~negative:true (Gen.int_bound 1000)
+        (fun i -> if i < 900 then incomplete "below 900" else i < 950) in
+    match Test.check_cell_exn ~rand:(rand ()) cell with
+    | () -> ()
+    | exception e ->
+      Alcotest.failf "a negative test that found its counterexample passes, not %s"
+        (Printexc.to_string e)
+
+  let tests = ("Incomplete cases (Incomplete exception)", Alcotest.[
+      test_case "all cases incomplete" `Quick test_all_incomplete;
+      test_case "several reasons, sorted by count" `Quick test_several_reasons;
+      test_case "empty reason" `Quick test_empty_reason;
+      test_case "other exceptions stay errors, Failure \"TODO:...\" included" `Quick test_other_failures_stay_errors;
+      test_case "shrinking skips incomplete candidates" `Quick test_shrink_skips_incomplete_candidates;
+      test_case "shrinking skips incomplete candidates (error)" `Quick test_shrink_skips_incomplete_candidates_on_error;
+      test_case "`Fatal precondition check still fires" `Quick test_fatal_precondition_still_checked;
+      test_case "check_cell_exn raises Test_incomplete" `Quick test_check_cell_exn_raises_test_incomplete;
+      test_case "shrinking with retries" `Quick test_shrink_with_retries;
+      test_case "a negative test that found its counterexample is conclusive" `Quick test_negative_caught_despite_incomplete_cases;
+    ])
+end
+
+module Incomplete_prefix = struct
+  open QCheck2
+
+  let rand () = Random.State.make [|0|]
+
+  let run ?incomplete_prefix law =
+    Test.check_cell ~rand:(rand ())
+      (Test.make_cell ~count:50 ?incomplete_prefix Gen.int law)
+
+  let reasons r = List.map fst (TestResult.get_incomplete_reasons r)
+
+  let test_prefix_on () =
+    let r = run ~incomplete_prefix:"TODO:" (fun _ -> failwith "TODO:x") in
+    Alcotest.(check bool) "state is Success" true (TestResult.is_success r);
+    Alcotest.(check (list (pair string int))) "the reason is the rest of the message"
+      ["x", TestResult.get_count_gen r] (TestResult.get_incomplete_reasons r)
+
+  let test_prefix_is_exact () =
+    List.iter (fun msg ->
+        match TestResult.get_state (run ~incomplete_prefix:"TODO:" (fun _ -> failwith msg)) with
+        | TestResult.Error {exn = Failure m; _} -> Alcotest.(check string) "message" msg m
+        | _ -> Alcotest.failf "%S must still be an error" msg)
+      ["boom"; "TODO"; "todo:x"; " TODO:x"; "a TODO:x"]
+
+  let test_off_by_default () =
+    match Env.with_env "QCHECK_INCOMPLETE_PREFIX" "" (fun () ->
+        TestResult.get_state (run (fun _ -> failwith "TODO:x"))) with
+    | TestResult.Error {exn = Failure m; _} -> Alcotest.(check string) "message" "TODO:x" m
+    | _ -> Alcotest.fail "without a prefix, Failure \"TODO:x\" must be an error"
+
+  let test_env_default () =
+    let r = Env.with_env "QCHECK_INCOMPLETE_PREFIX" "TODO:" (fun () ->
+        run (fun _ -> failwith "TODO:from env")) in
+    Alcotest.(check (list string)) "the environment enables the prefix" ["from env"] (reasons r);
+    let off = Env.with_env "QCHECK_INCOMPLETE_PREFIX" "" (fun () ->
+        run (fun _ -> failwith "TODO:x")) in
+    match TestResult.get_state off with
+    | TestResult.Error _ -> ()
+    | _ -> Alcotest.fail "an empty QCHECK_INCOMPLETE_PREFIX must disable the adapter"
+
+  let test_argument_wins_over_env () =
+    let other, off = Env.with_env "QCHECK_INCOMPLETE_PREFIX" "TODO:" (fun () ->
+        run ~incomplete_prefix:"FIXME:" (fun _ -> failwith "TODO:x"),
+        run ~incomplete_prefix:"" (fun _ -> failwith "TODO:x")) in
+    (match TestResult.get_state other with
+     | TestResult.Error _ -> ()
+     | _ -> Alcotest.fail "the explicit prefix must override the environment");
+    match TestResult.get_state off with
+    | TestResult.Error _ -> ()
+    | _ -> Alcotest.fail "an explicit empty prefix must disable the adapter"
+
+  let test_incomplete_always_recognised () =
+    let with_prefix = run ~incomplete_prefix:"TODO:" (fun _ -> incomplete "typed") in
+    let without = run (fun _ -> incomplete "typed") in
+    Alcotest.(check (list string)) "with a prefix" ["typed"] (reasons with_prefix);
+    Alcotest.(check (list string)) "without a prefix" ["typed"] (reasons without)
+
+  let test_reraised_failure () =
+    let r = run ~incomplete_prefix:"TODO:"
+        (fun _ -> try failwith "TODO:re-raised" with exn -> raise exn) in
+    Alcotest.(check (list string)) "reason" ["re-raised"] (reasons r)
+
+  let test_message_equal_to_prefix () =
+    let r = run ~incomplete_prefix:"TODO:" (fun _ -> failwith "TODO:") in
+    Alcotest.(check (list string)) "empty reason" [""] (reasons r)
+
+  let test_shrink_skips_prefixed_candidates () =
+    let cell = Test.make_cell ~count:100 ~incomplete_prefix:"TODO:" (Gen.int_bound 1000)
+        (fun i -> if i < 300 then failwith "TODO:small" else i < 500) in
+    match TestResult.get_state (Test.check_cell ~rand:(rand ()) cell) with
+    | TestResult.Failed {instances = [c]} ->
+      Alcotest.(check int) "shrunk to the smallest counterexample" 500 c.TestResult.instance
+    | _ -> Alcotest.fail "a genuine counterexample must not become incomplete"
+
+  let tests = ("Incomplete cases (incomplete_prefix)", Alcotest.[
+      test_case "prefixed Failure is incomplete" `Quick test_prefix_on;
+      test_case "the prefix is exact and case-sensitive" `Quick test_prefix_is_exact;
+      test_case "off by default" `Quick test_off_by_default;
+      test_case "QCHECK_INCOMPLETE_PREFIX sets the default" `Quick test_env_default;
+      test_case "the argument wins over the environment" `Quick test_argument_wins_over_env;
+      test_case "Incomplete is recognised with or without a prefix" `Quick test_incomplete_always_recognised;
+      test_case "a re-raised Failure is still recognised" `Quick test_reraised_failure;
+      test_case "message equal to the prefix: empty reason" `Quick test_message_equal_to_prefix;
+      test_case "shrinking skips prefixed candidates" `Quick test_shrink_skips_prefixed_candidates;
+    ])
+end
+
+module Register_incomplete = struct
+  (* registrations are global: each one here recognises an exception that
+     no other test raises *)
+  open QCheck2
+
+  exception Todo of string
+  exception Not_a_signal of string
+  exception Confusing
+
+  let () =
+    register_incomplete (function Todo reason -> Some reason | _ -> None);
+    (* a registered function that raises: its exception is the error of the test *)
+    register_incomplete (function Confusing -> failwith "broken signal" | _ -> None);
+    (* a discarded case is never submitted to the registered functions *)
+    register_incomplete (function No_example_found _ -> Some "discard" | _ -> None);
+    (* registered second for the same exception: the first reason wins *)
+    register_incomplete (function Todo reason -> Some ("second:" ^ reason) | _ -> None)
+
+  let rand () = Random.State.make [|0|]
+
+  let run ?incomplete_prefix law =
+    Test.check_cell ~rand:(rand ())
+      (Test.make_cell ~count:50 ?incomplete_prefix Gen.int law)
+
+  let reasons r = List.map fst (TestResult.get_incomplete_reasons r)
+
+  let test_registered_exception () =
+    let r = run (fun _ -> raise (Todo "later")) in
+    Alcotest.(check bool) "state is Success" true (TestResult.is_success r);
+    Alcotest.(check int) "no case was decided" 0 (TestResult.get_count r);
+    Alcotest.(check (list (pair string int))) "the reason comes from the payload"
+      ["later", TestResult.get_count_gen r] (TestResult.get_incomplete_reasons r)
+
+  let test_unregistered_exception_stays_error () =
+    match TestResult.get_state (run (fun _ -> raise (Not_a_signal "x"))) with
+    | TestResult.Error {exn = Not_a_signal "x"; _} -> ()
+    | _ -> Alcotest.fail "an exception no registered function recognises must be an error"
+
+  let test_signals_combine () =
+    let r = run ~incomplete_prefix:"TODO:" (fun i -> match abs i mod 3 with
+        | 0 -> raise (Todo "registered")
+        | 1 -> incomplete "typed"
+        | _ -> failwith "TODO:prefixed") in
+    Alcotest.(check (list string)) "the three signals are recognised in one run"
+      ["prefixed"; "registered"; "typed"] (List.sort compare (reasons r))
+
+  let test_raising_function_is_an_error () =
+    match TestResult.get_state (run (fun _ -> raise Confusing)) with
+    | TestResult.Error {exn = Failure msg; _} when msg = "broken signal" -> ()
+    | TestResult.Error {exn; _} ->
+      Alcotest.failf "the error must carry the exception of the registered function, not %s"
+        (Printexc.to_string exn)
+    | _ -> Alcotest.fail "a registered function that raises must make the test an error"
+
+  let test_first_registered_wins () =
+    Alcotest.(check (list string)) "the function registered first gives the reason"
+      ["later"] (reasons (run (fun _ -> raise (Todo "later"))))
+
+  let test_discards_are_not_submitted () =
+    let r = run (fun _ -> raise (No_example_found "x")) in
+    Alcotest.(check int) "no incomplete case" 0 (TestResult.get_count_incomplete r);
+    Alcotest.(check int) "no case was decided" 0 (TestResult.get_count r)
+
+  let test_shrink_skips_registered_candidates () =
+    let cell = Test.make_cell ~count:100 (Gen.int_bound 1000)
+        (fun i -> if i < 300 then raise (Todo "small") else i < 500) in
+    match TestResult.get_state (Test.check_cell ~rand:(rand ()) cell) with
+    | TestResult.Failed {instances = [c]} ->
+      Alcotest.(check int) "shrunk to the smallest counterexample" 500 c.TestResult.instance
+    | _ -> Alcotest.fail "a genuine counterexample must not become incomplete"
+
+  let tests = ("Incomplete cases (register_incomplete)", Alcotest.[
+      test_case "registered exception is incomplete" `Quick test_registered_exception;
+      test_case "unregistered exception stays an error" `Quick test_unregistered_exception_stays_error;
+      test_case "the three signals combine in one run" `Quick test_signals_combine;
+      test_case "a function that raises is an error of the test" `Quick test_raising_function_is_an_error;
+      test_case "discards are not submitted" `Quick test_discards_are_not_submitted;
+      test_case "the function registered first wins" `Quick test_first_registered_wins;
+      test_case "shrinking skips registered candidates" `Quick test_shrink_skips_registered_candidates;
+    ])
+end
+
+module Incomplete_signal = struct
+  open QCheck2
+
+  exception Local of string
+  exception Shared of string
+
+  let () = register_incomplete (function Shared r -> Some ("global:" ^ r) | _ -> None)
+
+  let rand () = Random.State.make [|0|]
+
+  let run ?incomplete ?incomplete_prefix law =
+    Test.check_cell ~rand:(rand ())
+      (Test.make_cell ~count:50 ?incomplete ?incomplete_prefix Gen.int law)
+
+  let reasons r = List.map fst (TestResult.get_incomplete_reasons r)
+
+  let local = function Local r -> Some r | _ -> None
+
+  let test_signal_of_the_test () =
+    let r = run ~incomplete:local (fun _ -> raise (Local "later")) in
+    Alcotest.(check (list string)) "recognised by the test it is given to" ["later"] (reasons r);
+    match TestResult.get_state (run (fun _ -> raise (Local "later"))) with
+    | TestResult.Error {exn = Local _; _} -> ()
+    | _ -> Alcotest.fail "a test without the signal must see an error"
+
+  let test_order () =
+    let r = run ~incomplete:(function Shared r -> Some ("local:" ^ r) | _ -> None)
+        (fun _ -> raise (Shared "x")) in
+    Alcotest.(check (list string)) "the signal of the test wins over a registered function"
+      ["local:x"] (reasons r);
+    let r = run ~incomplete:(function Failure _ -> Some "signal" | _ -> None)
+        ~incomplete_prefix:"TODO:" (fun _ -> failwith "TODO:x") in
+    Alcotest.(check (list string)) "the signal of the test wins over the prefix"
+      ["signal"] (reasons r);
+    let r = run ~incomplete:(function Incomplete _ -> Some "signal" | _ -> None)
+        (fun _ -> incomplete "typed") in
+    Alcotest.(check (list string)) "Incomplete wins over the signal of the test"
+      ["typed"] (reasons r)
+
+  let test_incomplete_reason () =
+    let check msg expected e =
+      Alcotest.(check (option string)) msg expected (incomplete_reason e) in
+    check "Incomplete" (Some "x") (Incomplete "x");
+    check "a registered exception" (Some "global:x") (Shared "x");
+    check "an unknown exception" None Not_found;
+    check "a discard" None (try assume_fail () with e -> e);
+    check "No_example_found" None (No_example_found "n");
+    check "the signal of a test is not known at the level of the program" None (Local "x");
+    check "a Failure without the prefix in the environment" None (Failure "TODO:x");
+    Env.with_env "QCHECK_INCOMPLETE_PREFIX" "TODO:" (fun () ->
+        check "a Failure with the prefix of the environment" (Some "x") (Failure "TODO:x"))
+
+  (* a harness that records the exceptions of the code under test as values *)
+  let protect f x =
+    try Ok (f x) with
+    | e when incomplete_reason e <> None -> raise e
+    | e -> Error e
+
+  let test_harness_lets_the_signal_through () =
+    let hole () = incomplete "hole" in
+    let r = run (fun _ -> match protect hole () with Ok () -> true | Error _ -> false) in
+    Alcotest.(check bool) "the case is incomplete, not a failure" true (TestResult.is_success r);
+    Alcotest.(check (list string)) "with its reason" ["hole"] (reasons r);
+    let reified = run (fun _ ->
+        match (try Ok (hole ()) with e -> Error e) with Ok () -> true | Error _ -> false) in
+    Alcotest.(check bool) "a harness that keeps every exception turns the hole into a failure"
+      true (TestResult.is_failed reified)
+
+  let tests = ("Incomplete cases (signal of a test, incomplete_reason)", Alcotest.[
+      test_case "a signal given to one test" `Quick test_signal_of_the_test;
+      test_case "built-in, then the test's, then registered" `Quick test_order;
+      test_case "incomplete_reason classifies at the level of the program" `Quick test_incomplete_reason;
+      test_case "a harness can let the signals through" `Quick test_harness_lets_the_signal_through;
+    ])
+end
+
+module Backtrace = struct
+  (* The signals of incompleteness are recognised in the [when] guard of the
+     handler that runs the property, so an exception that is none of them is
+     not caught and re-raised: its backtrace keeps the frame of the raise. *)
+  open QCheck2
+
+  exception Boom
+
+  let boom_line = __LINE__ and boom () = raise Boom
+
+  let rand () = Random.State.make [|0|]
+
+  (* [String] is the test module of that name above: hence [Stdlib.String] *)
+  let contains s sub =
+    let n = Stdlib.String.length s and m = Stdlib.String.length sub in
+    let rec go i = i + m <= n && (Stdlib.String.sub s i m = sub || go (i + 1)) in
+    go 0
+
+  let test_error_keeps_the_raise_site () =
+    Printexc.record_backtrace true;
+    let r = Test.check_cell ~rand:(rand ())
+        (Test.make_cell ~count:10 Gen.int (fun _ -> boom ())) in
+    match TestResult.get_state r with
+    | TestResult.Error {exn = Boom; backtrace; _} ->
+      let first = match Stdlib.String.split_on_char '\n' backtrace with
+        | first :: _ -> first | [] -> "" in
+      Alcotest.(check bool)
+        (Printf.sprintf "the first frame is the raise in %S, line %d:\n%s" __FILE__ boom_line backtrace)
+        true (contains first "Raised at"
+              && contains first (Printf.sprintf "%S" __FILE__)
+              && contains first (Printf.sprintf "line %d," boom_line));
+      (* natively, the re-raise the compiler inserts when the guard is false
+         leaves no entry; in bytecode it does, so this is the native check *)
+      (match Sys.backend_type with
+       | Sys.Native ->
+         Alcotest.(check bool) ("no frame of qcheck re-raising it:\n" ^ backtrace)
+           false (contains backtrace "Re-raised at")
+       | Sys.Bytecode | Sys.Other _ -> ())
+    | _ -> Alcotest.fail "Boom must be an error"
+
+  let tests = ("Incomplete cases (backtrace of the other exceptions)", Alcotest.[
+      test_case "an error keeps the frame of its raise" `Quick test_error_keeps_the_raise_site;
+    ])
+end
+
+module Runner = struct
+  (* verbose mode, which the expect tests do not cover *)
+  let contains = Backtrace.contains
+
+  let run_tests tests =
+    let file = Filename.temp_file "qcheck_incomplete" ".out" in
+    let oc = open_out_bin file in
+    let code = Fun.protect ~finally:(fun () -> close_out oc) (fun () ->
+        QCheck_base_runner.run_tests ~colors:false ~verbose:true ~out:oc
+          ~rand:(Random.State.make [|0|]) tests) in
+    let ic = open_in_bin file in
+    let out = really_input_string ic (in_channel_length ic) in
+    close_in ic;
+    Sys.remove file;
+    code, Stdlib.String.split_on_char '\n' out
+
+  let test_verbose_mark () =
+    let holed = QCheck2.Test.make ~name:"holed" ~count:10 QCheck2.Gen.int
+        (fun _ -> QCheck2.incomplete "later") in
+    let fine = QCheck2.Test.make ~name:"fine" ~count:10 QCheck2.Gen.int (fun _ -> true) in
+    let code, lines = run_tests [holed; fine] in
+    let has mark name = List.exists (fun l -> contains l mark && contains l (" " ^ name)) lines in
+    Alcotest.(check int) "exit code" 0 code;
+    Alcotest.(check bool) "the incomplete test carries the ? mark" true (has "[?]" "holed");
+    Alcotest.(check bool) "the passing test carries the tick" true (has "[\xe2\x9c\x93]" "fine");
+    Alcotest.(check bool) "the summary says incomplete" true
+      (List.exists (fun l -> contains l "incomplete (ran 2 tests, 1 incomplete)") lines);
+    Alcotest.(check bool) "the header has the column of incomplete cases" true
+      (List.exists (fun l -> contains l "generated" && contains l "incomplete") lines)
+
+  let tests = ("Incomplete cases (verbose runner)", Alcotest.[
+      test_case "the mark and the summary of an incomplete test" `Quick test_verbose_mark;
+    ])
+end
+
 let () =
   Alcotest.run "QCheck2"
     [
@@ -791,4 +1257,11 @@ let () =
       TestLongFactor.tests;
       String.tests;
       Check_exn.tests;
+      Incomplete.tests;
+      Incomplete_prefix.tests;
+      Register_incomplete.tests;
+      Incomplete_signal.tests;
+      Backtrace.tests;
+      Runner.tests;
+      Fun_todo_tests.tests;
     ]

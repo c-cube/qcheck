@@ -135,6 +135,23 @@ val assume_fail : unit -> 'a
     @since 0.5.1
 *)
 
+exception Incomplete of string
+(** Same exception as {!QCheck2.Incomplete}.
+    @since NEXT_RELEASE *)
+
+val incomplete : string -> 'a
+(** [incomplete reason] raises [QCheck2.Incomplete reason]. See
+    {!QCheck2.incomplete}.
+    @since NEXT_RELEASE *)
+
+val register_incomplete : (exn -> string option) -> unit
+(** Synonym for {!QCheck2.register_incomplete}.
+    @since NEXT_RELEASE *)
+
+val incomplete_reason : exn -> string option
+(** Synonym for {!QCheck2.incomplete_reason}.
+    @since NEXT_RELEASE *)
+
 (** {1 Generate Random Values} *)
 
 module Gen : sig
@@ -1610,6 +1627,14 @@ module TestResult : sig
 
   val get_count_gen : _ t -> int
 
+  val get_count_incomplete : _ t -> int
+  (** See {!QCheck2.TestResult.get_count_incomplete}.
+      @since NEXT_RELEASE *)
+
+  val get_incomplete_reasons : _ t -> (string * int) list
+  (** See {!QCheck2.TestResult.get_incomplete_reasons}.
+      @since NEXT_RELEASE *)
+
   val get_state : 'a t -> 'a state
 
   val collect : _ t -> (string,int) Hashtbl.t option
@@ -1640,6 +1665,7 @@ module Test : sig
     | Success
     | Failure
     | FalseAssumption
+    | Incomplete of string (** since NEXT_RELEASE *)
     | Error of exn * string
   type 'a event = 'a QCheck2.Test.event =
     | Generating
@@ -1666,6 +1692,8 @@ module Test : sig
 
   val make_cell :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?incomplete:(exn -> string option) ->
+    ?incomplete_prefix:string ->
     ?count:int -> ?long_factor:int -> ?negative:bool -> ?max_gen:int -> ?max_fail:int ->
     ?small:('a -> int) -> ?retries:int -> ?name:string ->
     'a arbitrary -> ('a -> bool) -> 'a cell
@@ -1673,7 +1701,8 @@ module Test : sig
       of the generator [arb].
       @param name the name of the test.
       @param count number of test cases to run, counting only
-        the test cases which satisfy preconditions.
+        the test cases which satisfy preconditions (incomplete cases
+        included).
       @param retries number of times to retry the tested property while shrinking.
       @param long_factor the factor by which to multiply count, max_gen and
         max_fail when running a long test (default: 1).
@@ -1683,6 +1712,8 @@ module Test : sig
         preconditions (should be >= count).
       @param max_fail maximum number of failures before we stop generating
         inputs. This is useful if shrinking takes too much time.
+      @param incomplete see {!QCheck2.Test.make_cell} (since NEXT_RELEASE).
+      @param incomplete_prefix see {!QCheck2.Test.make_cell} (since NEXT_RELEASE).
       @param small kept for compatibility reasons; if provided, replaces
         the field [arbitrary.small].
         If there is no shrinking function but there is a [small]
@@ -1718,6 +1749,8 @@ module Test : sig
 
   val make :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?incomplete:(exn -> string option) ->
+    ?incomplete_prefix:string ->
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
     ?small:('a -> int) -> ?retries:int -> ?name:string -> 'a arbitrary ->
     ('a -> bool) -> t
@@ -1728,6 +1761,8 @@ module Test : sig
 
   val make_neg :
     ?if_assumptions_fail:([`Fatal | `Warning] * float) ->
+    ?incomplete:(exn -> string option) ->
+    ?incomplete_prefix:string ->
     ?count:int -> ?long_factor:int -> ?max_gen:int -> ?max_fail:int ->
     ?small:('a -> int) -> ?retries:int -> ?name:string -> 'a arbitrary ->
     ('a -> bool) -> t

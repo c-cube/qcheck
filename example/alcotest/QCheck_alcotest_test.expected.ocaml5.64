@@ -8,6 +8,8 @@ Testing `my test'.
   [FAIL]        suite              5   neg fail with error.
   [FAIL]        suite              6   fail_check_err_message.
   [OK]          suite              7   tree_rev_is_involutive.
+  [FAIL]        suite              8   incomplete cases (unimplemented code r...
+  [FAIL]        suite              9   neg test incomplete (no counterexample...
   [FAIL]        shrinking          0   debug_shrink.
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │ [FAIL]        suite              1   fail_sort_id.                           │
@@ -44,6 +46,18 @@ always
 fail
  ──────────────────────────────────────────────────────────────────────────────
 ┌──────────────────────────────────────────────────────────────────────────────┐
+│ [FAIL]        suite              8   incomplete cases (unimplemented cod...  │
+└──────────────────────────────────────────────────────────────────────────────┘
+[exception] test `incomplete cases (unimplemented code reached)` had incomplete cases:
+even inputs (5 times)
+ ──────────────────────────────────────────────────────────────────────────────
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ [FAIL]        suite              9   neg test incomplete (no counterexam...  │
+└──────────────────────────────────────────────────────────────────────────────┘
+[exception] test `neg test incomplete (no counterexample, unimplemented code reached)`
+had incomplete cases: not implemented (10 times)
+ ──────────────────────────────────────────────────────────────────────────────
+┌──────────────────────────────────────────────────────────────────────────────┐
 │ [FAIL]        shrinking          0   debug_shrink.                           │
 └──────────────────────────────────────────────────────────────────────────────┘
 ~~~ Shrink ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -64,4 +78,4 @@ Test debug_shrink successfully shrunk counter example (step 4) to:
 law debug_shrink: 1 relevant cases (1 total)
 [exception] test `debug_shrink` failed on ≥ 1 cases: (0, 1) (after 4 shrink steps)
  ──────────────────────────────────────────────────────────────────────────────
-6 failures! 9 tests run.
+8 failures! 11 tests run.

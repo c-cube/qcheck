@@ -680,6 +680,78 @@ module TestLongFactor = struct
      ])
 end
 
+module Incomplete = struct
+  let rand () = Random.State.make [|0|]
+
+  let test_shrink_skips_incomplete_candidates () =
+    let cell = QCheck.(Test.make_cell ~count:100 (int_bound 1000)
+                         (fun i -> if i < 300 then QCheck.incomplete "small" else i < 500)) in
+    match QCheck.TestResult.get_state (QCheck.Test.check_cell ~rand:(rand ()) cell) with
+    | QCheck.TestResult.Failed {instances = [c]} ->
+      Alcotest.(check int) "shrunk to the smallest counterexample"
+        500 c.QCheck.TestResult.instance
+    | _ -> Alcotest.fail "a genuine counterexample must not become incomplete"
+
+  let test_all_incomplete () =
+    let cell = QCheck.(Test.make_cell ~count:100 int (fun _ -> QCheck.incomplete "later")) in
+    let r = QCheck.Test.check_cell ~rand:(rand ()) cell in
+    Alcotest.(check bool) "state is Success" true (QCheck.TestResult.is_success r);
+    Alcotest.(check int) "no case was decided" 0 (QCheck.TestResult.get_count r);
+    Alcotest.(check int) "every generated case is incomplete"
+      (QCheck.TestResult.get_count_gen r) (QCheck.TestResult.get_count_incomplete r)
+
+  let test_incomplete_prefix () =
+    let cell = QCheck.(Test.make_cell ~count:50 ~incomplete_prefix:"TODO:" int
+                         (fun _ -> failwith "TODO:x")) in
+    let r = QCheck.Test.check_cell ~rand:(rand ()) cell in
+    Alcotest.(check bool) "state is Success" true (QCheck.TestResult.is_success r);
+    Alcotest.(check (list string)) "reason" ["x"]
+      (List.map fst (QCheck.TestResult.get_incomplete_reasons r))
+
+  exception Todo of string
+  let () = QCheck.register_incomplete (function Todo reason -> Some reason | _ -> None)
+
+  let test_registered_exception () =
+    let cell = QCheck.(Test.make_cell ~count:50 int (fun _ -> raise (Todo "later"))) in
+    let r = QCheck.Test.check_cell ~rand:(rand ()) cell in
+    Alcotest.(check bool) "state is Success" true (QCheck.TestResult.is_success r);
+    Alcotest.(check (list string)) "reason" ["later"]
+      (List.map fst (QCheck.TestResult.get_incomplete_reasons r))
+
+  exception Local of string
+
+  let test_signal_of_the_test () =
+    let cell = QCheck.(Test.make_cell ~count:50 int
+                         ~incomplete:(function Local reason -> Some reason | _ -> None)
+                         (fun _ -> raise (Local "later"))) in
+    let r = QCheck.Test.check_cell ~rand:(rand ()) cell in
+    Alcotest.(check (list string)) "reason" ["later"]
+      (List.map fst (QCheck.TestResult.get_incomplete_reasons r))
+
+  (* as [Env.with_env] in QCheck2_unit_tests.ml *)
+  let with_env var value f =
+    let previous = Sys.getenv_opt var in
+    Unix.putenv var value;
+    Fun.protect f
+      ~finally:(fun () -> Unix.putenv var (match previous with Some v -> v | None -> ""))
+
+  let test_env_default_through_facade () =
+    let r = with_env "QCHECK_INCOMPLETE_PREFIX" "TODO:" (fun () ->
+        QCheck.Test.check_cell ~rand:(rand ())
+          (QCheck.(Test.make_cell ~count:20 int (fun _ -> failwith "TODO:from env")))) in
+    Alcotest.(check (list string)) "reason" ["from env"]
+      (List.map fst (QCheck.TestResult.get_incomplete_reasons r))
+
+  let tests = ("Incomplete cases (Incomplete exception)", Alcotest.[
+      test_case "shrinking skips incomplete candidates" `Quick test_shrink_skips_incomplete_candidates;
+      test_case "all cases incomplete" `Quick test_all_incomplete;
+      test_case "prefixed Failure with incomplete_prefix" `Quick test_incomplete_prefix;
+      test_case "registered exception with register_incomplete" `Quick test_registered_exception;
+      test_case "a signal given to one test with ~incomplete" `Quick test_signal_of_the_test;
+      test_case "QCHECK_INCOMPLETE_PREFIX reaches a test built through the facade" `Quick test_env_default_through_facade;
+    ])
+end
+
 let () =
   Alcotest.run "QCheck"
     [
@@ -687,4 +759,5 @@ let () =
       Check_exn.tests;
       TestCount.tests;
       TestLongFactor.tests;
+      Incomplete.tests;
     ]

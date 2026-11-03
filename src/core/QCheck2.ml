@@ -74,9 +74,61 @@ exception Failed_precondition
 exception No_example_found of string
 (* raised if an example failed to be found *)
 
+exception Incomplete of string
+(* raised by a property that reached code not implemented yet *)
+
 let assume b = if not b then raise Failed_precondition
 
 let assume_fail () = raise Failed_precondition
+
+let incomplete reason = raise (Incomplete reason)
+
+let incomplete_classifiers : (exn -> string option) list ref = ref []
+
+let register_incomplete f =
+  incomplete_classifiers := !incomplete_classifiers @ [f]
+
+(* no [String.starts_with], which needs OCaml 4.13 *)
+let prefixed_reason prefix msg =
+  let n = String.length prefix in
+  if String.length msg >= n && String.sub msg 0 n = prefix
+  then Some (String.sub msg n (String.length msg - n))
+  else None
+
+let prefix_signal prefix = function
+  | Failure msg -> prefixed_reason prefix msg
+  | _ -> None
+
+(* explicit argument > QCHECK_INCOMPLETE_PREFIX > none; the empty string disables *)
+let global_incomplete_prefix = function
+  | Some "" -> None
+  | Some p -> Some p
+  | None ->
+    (match Sys.getenv_opt "QCHECK_INCOMPLETE_PREFIX" with
+     | None | Some "" -> None
+     | Some p -> Some p)
+
+let builtin_reason = function
+  | Incomplete reason -> Some reason
+  | e -> QCheck_fun_todo.reason e
+
+(* QCheck's own control flow, a discard: never submitted to any signal *)
+let is_control_flow = function
+  | Failed_precondition | No_example_found _ -> true
+  | _ -> false
+
+let first_reason signals e =
+  let rec go = function
+    | [] -> None
+    | f :: fs -> (match f e with Some _ as reason -> reason | None -> go fs) in
+  go signals
+
+let incomplete_reason e =
+  if is_control_flow e then None
+  else
+    let prefix = match global_incomplete_prefix None with
+      | Some p -> [prefix_signal p] | None -> [] in
+    first_reason (builtin_reason :: prefix @ !incomplete_classifiers) e
 
 let (==>) b1 b2 = if b1 then b2 else raise Failed_precondition
 
@@ -1501,6 +1553,7 @@ module TestResult = struct
     mutable state : 'a state;
     mutable count: int;  (* number of tests *)
     mutable count_gen: int; (* number of generated cases *)
+    incomplete: (string, int) Hashtbl.t; (* reason -> number of incomplete cases *)
     collect_tbl: (string, int) Hashtbl.t lazy_t;
     stats_tbl: ('a stat * (int, int) Hashtbl.t) list;
     mutable warnings: string list;
@@ -1511,6 +1564,14 @@ module TestResult = struct
   let get_count {count; _} = count
 
   let get_count_gen {count_gen; _} = count_gen
+
+  let get_count_incomplete {incomplete; _} =
+    Hashtbl.fold (fun _ n acc -> acc + n) incomplete 0
+
+  let get_incomplete_reasons {incomplete; _} =
+    Hashtbl.fold (fun reason n acc -> (reason, n) :: acc) incomplete []
+    |> List.sort (fun (r1, n1) (r2, n2) ->
+        match Int.compare n2 n1 with 0 -> String.compare r1 r2 | c -> c)
 
   (* indicate failure on the given [instance] *)
   let fail ~msg_l ~steps:shrink_steps res instance =
@@ -1546,6 +1607,7 @@ module Test_exceptions = struct
   exception Test_fail of string * string list
   exception Test_error of string * string * exn * string
   exception Test_unexpected_success of string
+  exception Test_incomplete of string * (string * int) list
 end
 
 module Test = struct
@@ -1564,6 +1626,7 @@ module Test = struct
     stats : 'a stat list; (* distribution of values of type 'a *)
     qcheck1_shrink : ('a -> ('a -> unit) -> unit) option; (* QCheck1-backward-compatible shrinking *)
     if_assumptions_fail: [`Fatal | `Warning] * float;
+    incomplete_signals : (exn -> string option) list; (* [~incomplete], then [~incomplete_prefix] *)
     mutable name : string; (* name of the law *)
   }
 
@@ -1605,17 +1668,23 @@ module Test = struct
 
   let global_long_factor long_factor = global_nonnegative_var default_long_factor "QCHECK_LONG_FACTOR" long_factor
 
+  let test_signals ?incomplete ?incomplete_prefix () =
+    (match incomplete with Some f -> [f] | None -> [])
+    @ (match global_incomplete_prefix incomplete_prefix with
+       | Some p -> [prefix_signal p] | None -> [])
+
   let fresh_name =
     let r = ref 0 in
     (fun () -> incr r; Printf.sprintf "anon_test_%d" !r)
 
   let default_if_assumptions_fail = `Warning, 0.05
 
-  let make_cell ?(if_assumptions_fail=default_if_assumptions_fail)
+  let make_cell ?(if_assumptions_fail=default_if_assumptions_fail) ?incomplete ?incomplete_prefix
       ?(count) ?long_factor ?(negative=false) ?max_gen
       ?(max_fail=1) ?(retries=1) ?(name=fresh_name()) ?print ?collect ?(stats=[]) gen law
     =
     let count = global_count count in
+    let incomplete_signals = test_signals ?incomplete ?incomplete_prefix () in
     let long_factor = global_long_factor long_factor in
     let positive = not negative in
     let max_gen = match max_gen with None -> max count (count + 200) | Some x->x in
@@ -1633,14 +1702,16 @@ module Test = struct
       long_factor;
       positive;
       if_assumptions_fail;
+      incomplete_signals;
       qcheck1_shrink = None;
     }
 
-  let make_cell_from_QCheck1 ?(if_assumptions_fail=default_if_assumptions_fail)
+  let make_cell_from_QCheck1 ?(if_assumptions_fail=default_if_assumptions_fail) ?incomplete ?incomplete_prefix
       ?(count) ?long_factor ?(negative=false) ?max_gen
       ?(max_fail=1) ?(retries=1) ?(name=fresh_name()) ~gen ?shrink ?print ?collect ~stats law
     =
     let count = global_count count in
+    let incomplete_signals = test_signals ?incomplete ?incomplete_prefix () in
     let long_factor = global_long_factor long_factor in
     let positive = not negative in
     (* Make a "fake" QCheck2 arbitrary with no shrinking *)
@@ -1660,11 +1731,12 @@ module Test = struct
       long_factor;
       positive;
       if_assumptions_fail;
+      incomplete_signals;
       qcheck1_shrink = shrink;
     }
 
-  let make' ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats ~negative arb law =
-    Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats ~negative arb law)
+  let make' ?if_assumptions_fail ?incomplete ?incomplete_prefix ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats ~negative arb law =
+    Test (make_cell ?if_assumptions_fail ?incomplete ?incomplete_prefix ?count ?long_factor ?max_gen ?max_fail ?retries ?name ?print ?collect ?stats ~negative arb law)
 
   let make = make' ~negative:false
   let make_neg = make' ~negative:true
@@ -1681,6 +1753,7 @@ module Test = struct
     | Success
     | Failure
     | FalseAssumption
+    | Incomplete of string
     | Error of exn * string
 
   (* Step function, called after each instance test *)
@@ -1758,6 +1831,14 @@ module Test = struct
   type 'a run_res =
     | Run_ok
     | Run_fail of string list
+    | Run_incomplete of string
+
+  (* The first reason given by a signal: the built-in ones, then the test's,
+     then the registered ones. It runs in the guard of [run_law], so a signal
+     that raises replaces the exception of the law and the test errors. *)
+  let classify_incomplete cell (e : exn) =
+    if is_control_flow e then None
+    else first_reason (builtin_reason :: cell.incomplete_signals @ !incomplete_classifiers) e
 
   (* run_law is a helper function for testing a property [law] on a
      generated input [x].
@@ -1779,14 +1860,23 @@ module Test = struct
      test 100 times during shrinking: thus we stopped shrinking a test
      case only when all of its candidate shrinkings passed 100 tests
      in a row."  *)
-  let run_law ~retries law x =
-    let rec loop i = match law x with
+  let run_law ~retries cell x =
+    let rec loop i = match cell.law x with
       | false -> Run_fail []
       | true ->
         if i<=1 then Run_ok else loop (i-1) in
+    (* a guard, not a catch and re-raise, so that other exceptions keep
+       their backtrace *)
+    let incomplete = ref None in
+    let recognised e = incomplete := classify_incomplete cell e; !incomplete <> None in
     try
       loop retries
-    with User_fail msg -> Run_fail [msg]
+    with
+    | User_fail msg -> Run_fail [msg]
+    | e when recognised e ->
+      (match !incomplete with
+       | Some reason -> Run_incomplete reason
+       | None -> assert false)
 
   (* QCheck1-compatibility code *)
   exception Iter_exit
@@ -1796,6 +1886,11 @@ module Test = struct
      with Iter_exit -> ()
     );
     !r
+
+  let record_incomplete state reason =
+    let tbl = state.res.R.incomplete in
+    let n = match Hashtbl.find_opt tbl reason with Some n -> n | None -> 0 in
+    Hashtbl.replace tbl reason (n + 1)
 
   (* try to shrink counter-ex [i] into a smaller one. Returns
      shrinked value and number of steps *)
@@ -1815,7 +1910,7 @@ module Test = struct
                try
                  incr count;
                  st.handler st.test.name st.test (Shrinking (steps, !count, x));
-                 begin match run_law ~retries:st.test.retries st.test.law x with
+                 begin match run_law ~retries:st.test.retries st.test x with
                  | Run_fail m when not is_err -> Some (Tree.pure x, Shrink_fail, m)
                  | _ -> None
                  end
@@ -1830,7 +1925,7 @@ module Test = struct
              try
                incr count;
                st.handler st.test.name st.test (Shrinking (steps, !count, x));
-               begin match run_law ~retries:st.test.retries st.test.law x with
+               begin match run_law ~retries:st.test.retries st.test x with
                  | Run_fail m when not is_err -> Some (x_tree, Shrink_fail, m)
                  | _ -> None
                end
@@ -1908,7 +2003,7 @@ module Test = struct
     let res =
       try
         state.handler state.test.name state.test (Testing input);
-        begin match run_law ~retries:1 state.test.law input with
+        begin match run_law ~retries:1 state.test input with
           | Run_ok ->
             (* one test ok *)
             decr_count state;
@@ -1916,6 +2011,12 @@ module Test = struct
             CR_continue
           | Run_fail msg_l ->
             handle_fail state input_tree msg_l
+          | Run_incomplete reason ->
+            (* counts toward [count] like a pass, but not in [res.count] *)
+            record_incomplete state reason;
+            state.cur_count <- state.cur_count - 1;
+            state.step state.test.name state.test input (Incomplete reason);
+            CR_continue
         end
       with
       | Failed_precondition | No_example_found _ ->
@@ -1936,7 +2037,9 @@ module Test = struct
   (* check that there are sufficiently many tests which passed, to avoid
      the case where they all passed by failed precondition *)
   let check_if_assumptions target_count cell res : unit =
-    let percentage_of_count = float_of_int res.R.count /. float_of_int target_count in
+    (* incomplete cases did reach the property: they are not discards *)
+    let decided = res.R.count + R.get_count_incomplete res in
+    let percentage_of_count = float_of_int decided /. float_of_int target_count in
     let assm_flag, assm_frac = cell.if_assumptions_fail in
     if R.is_success res && percentage_of_count < assm_frac then (
       let msg =
@@ -1973,6 +2076,7 @@ module Test = struct
       cur_max_fail=factor*cell.max_fail;
       res = {R.
               state=R.Success; count=0; count_gen=0;
+              incomplete=Hashtbl.create 8;
               collect_tbl=lazy (Hashtbl.create 10);
               warnings=[];
               stats_tbl= List.map (fun stat -> stat, Hashtbl.create 10) cell.stats;
@@ -2023,6 +2127,13 @@ module Test = struct
   let print_test_fail name l = asprintf "@[%a@]@?" (pp_print_test_fail name) l
 
   let print_unexpected_success name = Format.sprintf "@[negative test `%s`@ succeeded unexpectedly@]" name
+
+  (* reasons may contain commas (the location of a [Fun.todo ()] does) *)
+  let print_test_incomplete name reasons =
+    let times n = if n = 1 then "once" else Printf.sprintf "%d times" n in
+    Format.sprintf "@[test `%s`@ had incomplete cases:@ %s@]" name
+      (String.concat "; "
+         (List.map (fun (reason, n) -> Printf.sprintf "%s (%s)" reason (times n)) reasons))
 
   let print_test_error name i e stack =
     Format.sprintf "@[test `%s`@ raised exception `%s`@ on `%s`@,%s@]"
@@ -2141,11 +2252,14 @@ module Test = struct
     done;
     Buffer.contents out
 
+  (* [e : exn], as [Incomplete] is also a constructor of [res] here *)
   let () = Printexc.register_printer
-      (function
+      (fun (e : exn) -> match e with
         | Test_fail (name,l) -> Some (print_test_fail name l)
         | Test_error (name,i,e,st) -> Some (print_test_error name i e st)
         | Test_unexpected_success name -> Some (print_unexpected_success name)
+        | Test_incomplete (name, reasons) -> Some (print_test_incomplete name reasons)
+        | Incomplete reason -> Some ("qcheck: incomplete: " ^ reason)
         | User_fail s -> Some ("qcheck: user fail:\n" ^ s)
         | _ -> None)
 
@@ -2163,6 +2277,8 @@ module Test = struct
     print_test_error name (print_c_ex arb i) e st
 
   let check_result cell res = match res.R.state, cell.positive with
+    | R.Success, _ when R.get_count_incomplete res > 0 ->
+      raise (Test_incomplete (cell.name, R.get_incomplete_reasons res))
     | R.Success, true -> ()
     | R.Success, false ->
       raise (Test_unexpected_success cell.name)

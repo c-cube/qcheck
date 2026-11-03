@@ -64,6 +64,14 @@ let debug_shrink =
     QCheck.(pair (1 -- 3) (1 -- 3))
     (fun (a, b) -> a = b);;
 
+let incomplete_cases =
+  QCheck.Test.make ~count:10 ~name:"incomplete cases (unimplemented code reached)"
+    QCheck.int (fun i -> if i mod 2 = 0 then QCheck.incomplete "even inputs" else true)
+
+let neg_test_incomplete =
+  QCheck.Test.make_neg ~count:10 ~name:"neg test incomplete (no counterexample, unimplemented code reached)"
+    QCheck.int (fun _ -> QCheck.incomplete "not implemented")
+
 let () =
   Printexc.record_backtrace true;
   let module A = Alcotest in
@@ -71,7 +79,8 @@ let () =
     List.map QCheck_alcotest.to_alcotest
       [ passing; failing; error;
         neg_test_failing_as_expected; neg_test_unexpected_success; neg_test_error;
-        simple_qcheck; passing_tree_rev ]
+        simple_qcheck; passing_tree_rev;
+        incomplete_cases; neg_test_incomplete ]
   in
   A.run ~show_errors:true "my test" [
     "suite", suite;

@@ -2,6 +2,10 @@
 
 ## NEXT RELEASE (202?-??-??)
 
+- Add `QCheck{,2}.incomplete` and the `Incomplete` exception, for properties
+  that reach code that is not implemented yet: such a case is counted as
+  incomplete instead of as an error, and `QCheck_base_runner` reports it.
+  `Test.res` gains an `Incomplete` constructor (API breaking)
 - Remove optional `gen` parameter from (API breaking):
   -`QCheck.Gen.bytes_size` - use `QCheck.Gen.bytes_size_of` instead
   -`QCheck.bytes_size` - use `QCheck.bytes_size_of` instead

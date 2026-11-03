@@ -113,6 +113,14 @@ let assume = QCheck2.assume
 
 let assume_fail = QCheck2.assume_fail
 
+exception Incomplete = QCheck2.Incomplete
+
+let incomplete = QCheck2.incomplete
+
+let register_incomplete = QCheck2.register_incomplete
+
+let incomplete_reason = QCheck2.incomplete_reason
+
 let (==>) = QCheck2.(==>)
 
 module Gen = struct
@@ -1854,6 +1862,8 @@ module TestResult = struct
 
   let get_count = QCheck2.TestResult.get_count
   let get_count_gen = QCheck2.TestResult.get_count_gen
+  let get_count_incomplete = QCheck2.TestResult.get_count_incomplete
+  let get_incomplete_reasons = QCheck2.TestResult.get_incomplete_reasons
   let get_state = QCheck2.TestResult.get_state
   let stats = QCheck2.TestResult.get_stats
   let collect = QCheck2.TestResult.get_collect
@@ -1866,6 +1876,7 @@ module Test = struct
     | Success
     | Failure
     | FalseAssumption
+    | Incomplete of string
     | Error of exn * string
   type 'a event = 'a QCheck2.Test.event =
     | Generating
@@ -1896,15 +1907,15 @@ module Test = struct
   let get_count = QCheck2.Test.get_count
   let get_long_factor = QCheck2.Test.get_long_factor
 
-  let make_cell ?if_assumptions_fail
+  let make_cell ?if_assumptions_fail ?incomplete ?incomplete_prefix
       ?count ?long_factor ?negative ?max_gen
   ?max_fail ?small:_removed_in_qcheck_2 ?retries ?name arb law
   =
   let {gen; shrink; print; collect; stats; _} = arb in
-  QCheck2.Test.make_cell_from_QCheck1 ?if_assumptions_fail ?count ?long_factor ?negative ?max_gen ?max_fail ?retries ?name ~gen ?shrink ?print ?collect ~stats law
+  QCheck2.Test.make_cell_from_QCheck1 ?if_assumptions_fail ?incomplete ?incomplete_prefix ?count ?long_factor ?negative ?max_gen ?max_fail ?retries ?name ~gen ?shrink ?print ?collect ~stats law
 
-  let make' ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?small ?retries ?name ~negative arb law =
-    QCheck2.Test.Test (make_cell ?if_assumptions_fail ?count ?long_factor ?max_gen ?max_fail ?small ?retries ?name ~negative arb law)
+  let make' ?if_assumptions_fail ?incomplete ?incomplete_prefix ?count ?long_factor ?max_gen ?max_fail ?small ?retries ?name ~negative arb law =
+    QCheck2.Test.Test (make_cell ?if_assumptions_fail ?incomplete ?incomplete_prefix ?count ?long_factor ?max_gen ?max_fail ?small ?retries ?name ~negative arb law)
 
   let make = make' ~negative:false
   let make_neg = make' ~negative:true

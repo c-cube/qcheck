@@ -40,11 +40,20 @@
  (libraries qcheck-core qcheck-core.runner QCheck2_tests)
  (action (run ./%{test} --no-colors -s 1234)))
 
+;; Fun.todo exists since OCaml 5.6: selected by version as in src/core/dune
+(rule
+ (targets Fun_todo_tests.ml)
+ (deps Fun_todo_tests.ml.ocaml5.6 Fun_todo_tests.ml.pre5.6)
+ (action
+  (with-stdout-to %{targets}
+   (run %{ocaml} -noinit %{dep:../../src/core/select_by_version.ml} 5.6
+        Fun_todo_tests.ml.ocaml5.6 Fun_todo_tests.ml.pre5.6))))
+
 (tests
   (names QCheck_unit_tests QCheck2_unit_tests)
-  (modules QCheck_unit_tests QCheck2_unit_tests)
+  (modules QCheck_unit_tests QCheck2_unit_tests Fun_todo_tests)
   (package qcheck-core)
-  (libraries qcheck-core alcotest))
+  (libraries qcheck-core qcheck-core.runner alcotest))
 
 (executable
   (name shrink_benchmark)
