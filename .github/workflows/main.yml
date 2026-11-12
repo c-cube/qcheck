@@ -37,6 +37,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ocaml/setup-ocaml@v3
+        env:
+          CFLAGS="-std=gnu17"
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
       - run: opam update -y
