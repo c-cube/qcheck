@@ -508,7 +508,7 @@ Test float_neg > Float.pi failed (630 shrink steps):
 
 Test float_neg is not nan failed (0 shrink steps):
 
--nan
+-.nan
 
 --- Failure --------------------------------------------------------------------
 

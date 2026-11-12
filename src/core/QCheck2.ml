@@ -918,12 +918,14 @@ module Print = struct
 
   let bool = string_of_bool
 
-  let float f = (* Workaround for Windows and macOS to print negative nans consistently as "-nan" *)
+  let float f = (* Use "%F" so the output is legal OCaml syntax ("infinity"/"neg_infinity"
+                   rather than "inf"/"-inf") and consistent across architectures; negative
+                   nans are printed uniformly as "-.nan" *)
     if Float.is_nan f && Float.sign_bit f
-    then "-nan"
+    then "-.nan"
     else if Sys.win32 (* Windows workaround to avoid leading exponent zero such as "-1.00001604579e-010" *)
-    then string_of_float f |> cut_exp_zero
-    else string_of_float f
+    then Printf.sprintf "%F" f |> cut_exp_zero
+    else Printf.sprintf "%F" f
 
   let string s = Printf.sprintf "%S" s
 

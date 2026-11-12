@@ -782,6 +782,25 @@ module Check_exn = struct
        ])
 end
 
+module Print = struct
+  let test_float () =
+    let cases = [
+      (0.0, "0.");
+      (-0.0, "-0.");
+      (Float.pi, "3.14159265359");
+      (Float.infinity, "infinity");
+      (Float.neg_infinity, "neg_infinity");
+      (Float.nan, "nan");
+      (-. Float.nan, "-.nan");
+      (1e-10, "1e-10");
+    ] in
+    List.iter (fun (f, expected) ->
+      Alcotest.(check string) ("Print.float " ^ string_of_float f) expected (QCheck2.Print.float f)
+    ) cases
+
+  let tests = ("Print", Alcotest.[test_case "float" `Quick test_float])
+end
+
 let () =
   Alcotest.run "QCheck2"
     [
@@ -791,4 +810,5 @@ let () =
       TestLongFactor.tests;
       String.tests;
       Check_exn.tests;
+      Print.tests;
     ]
