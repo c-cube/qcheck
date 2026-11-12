@@ -2,6 +2,9 @@
 
 ## NEXT RELEASE (202?-??-??)
 
+- `QCheck.Print.float` and `QCheck2.Print.float` now print legal OCaml syntax:
+  infinities print as `infinity`/`neg_infinity` (rather than `inf`/`-inf`) and
+  negative nans print uniformly as `-.nan` (rather than `-nan`)
 - Remove optional `gen` parameter from (API breaking):
   -`QCheck.Gen.bytes_size` - use `QCheck.Gen.bytes_size_of` instead
   -`QCheck.bytes_size` - use `QCheck.bytes_size_of` instead
